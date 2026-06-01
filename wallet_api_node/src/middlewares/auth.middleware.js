@@ -1,0 +1,20 @@
+const jwt = require('jsonwebtoken');
+
+const verifyToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Không tìm thấy Access Token' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded; // Gắn thông tin user (userId, role) vào req để các API sau sử dụng
+        next(); // Cho phép đi tiếp vào Controller
+    } catch (error) {
+        return res.status(403).json({ error: 'Token không hợp lệ hoặc đã hết hạn' });
+    }
+};
+
+module.exports = verifyToken;
