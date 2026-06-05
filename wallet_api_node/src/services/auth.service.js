@@ -1,46 +1,75 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db'); // Vẫn cần pool để tạo Transaction (client)
-const { sendOTP } = require('../utils/mailer');
+const pool = require('../config/db'); 
+const { sendSMS } = require('../utils/sms');
 const userRepository = require('../repositories/user.repository');
 const walletRepository = require('../repositories/wallet.repository');
-
-global.otpStorage = {};
+const otpRepository = require('../repositories/otp.repository'); // Nhúng repo mới vào
 
 const authService = {
     requestOtp: async (email, phone) => {
-        // 1. Gọi Repo để kiểm tra tồn tại
+        // 1. Kiểm tra tồn tại trong bảng users
         const userExist = await userRepository.checkExists(email, phone);
-        if (userExist) {
-            throw new Error('Email_Phone_Exists');
+        if (userExist) throw new Error('Email_Phone_Exists');
+
+        // 2. Kiểm tra xem tài khoản có đang bị khóa hay không
+        const record = await otpRepository.findByPhone(phone);
+        if (record && record.locked_until && new Date(record.locked_until) > new Date()) {
+            throw new Error('Account_Locked');
         }
 
-        // 2. Sinh và lưu OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        global.otpStorage[email] = { 
-            otp: otpCode, 
-            phone: phone, 
-            expiresAt: Date.now() + 5 * 60 * 1000 
-        };
+        // 3. Sinh OTP và Lưu xuống DB thông qua Repository
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+        await otpRepository.upsertOtp(phone, email, otpCode);
 
-        // 3. Gửi mail
-        await sendOTP(email, otpCode);
+        // 4. Gửi SMS
+        await sendSMS(phone, otpCode);
         return true;
     },
 
-    verifyOtp: (email, otp) => {
-        // ... (Giữ nguyên logic kiểm tra và sinh JWT như cũ)
-        const record = global.otpStorage[email];
+    verifyOtp: async (phone, otp) => {
+        // 1. Lấy dữ liệu OTP từ DB
+        const record = await otpRepository.findByPhone(phone);
         if (!record) throw new Error('OTP_Not_Found');
-        if (Date.now() > record.expiresAt) throw new Error('OTP_Expired');
-        if (record.otp !== otp) throw new Error('OTP_Invalid');
 
+        // 2. Kiểm tra trạng thái khóa
+        if (record.locked_until && new Date(record.locked_until) > new Date()) {
+            throw new Error('Account_Locked');
+        }
+
+        // 3. Kiểm tra hết hạn (5 phút)
+        if (new Date() > new Date(record.expired_at)) {
+            throw new Error('OTP_Expired');
+        }
+
+        // 4. KIỂM TRA MÃ OTP SAI
+        if (record.otp_code !== otp) {
+            const newAttempts = record.failed_attempts + 1;
+            
+            // Nếu sai 5 lần -> Khóa 30 phút
+            if (newAttempts >= 5) {
+                await otpRepository.lockAccount(phone, newAttempts, 30);
+                throw new Error('Account_Locked_Now');
+            } else {
+                // Nếu sai < 5 lần -> Cập nhật số lần sai
+                await otpRepository.updateAttempts(phone, newAttempts);
+                
+                const remaining = 5 - newAttempts;
+                const err = new Error('OTP_Invalid');
+                err.remainingAttempts = remaining;
+                throw err; 
+            }
+        }
+
+        // 5. HỢP LỆ: Ký token và Xóa dữ liệu OTP tạm
         const registerToken = jwt.sign(
-            { email: email, phone: record.phone }, 
+            { email: record.email, phone: phone }, 
             process.env.JWT_SECRET, 
             { expiresIn: '15m' }
         );
-        delete global.otpStorage[email];
+        
+        await otpRepository.deleteByPhone(phone);
+        
         return registerToken;
     },
 
@@ -48,18 +77,13 @@ const authService = {
         const decoded = jwt.verify(registerToken, process.env.JWT_SECRET);
         const { email, phone } = decoded;
 
-        // Bắt đầu Transaction
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            
             const saltRounds = 10;
             const passwordHash = await bcrypt.hash(password, saltRounds);
             
-            // 1. Gọi Repo tạo User, BẮT BUỘC TRUYỀN 'client' XUỐNG
             const newUserId = await userRepository.create(client, email, phone, passwordHash);
-
-            // 2. Gọi Repo tạo Wallet, BẮT BUỘC TRUYỀN 'client' XUỐNG
             await walletRepository.create(client, newUserId);
 
             await client.query('COMMIT');
@@ -73,38 +97,62 @@ const authService = {
     },
 
     login: async (identifier, password) => {
-        // 1. Tìm user trong DB
         const user = await userRepository.findByEmailOrPhone(identifier);
-        if (!user) {
-            throw new Error('Invalid_Credentials'); // Không tìm thấy user
+        if (!user) throw new Error('Invalid_Credentials'); 
+
+        // 1. KIỂM TRA TÀI KHOẢN CÓ ĐANG BỊ KHÓA KHÔNG
+        if (user.locked_until) {
+            if (new Date(user.locked_until) > new Date()) {
+                throw new Error('Account_Locked');
+            } else {
+                user.failed_login_attempts = 0; 
+                await userRepository.resetFailedLogin(user.id);
+            }
         }
 
-        // 2. So sánh mật khẩu đã băm
         const isMatch = await bcrypt.compare(password, user.password_hash);
+        
+        // 2. XỬ LÝ KHI SAI MẬT KHẨU
         if (!isMatch) {
-            throw new Error('Invalid_Credentials'); // Sai mật khẩu
+            const newAttempts = (user.failed_login_attempts || 0) + 1;
+            
+            // Nếu sai 5 lần -> Khóa 30 phút
+            if (newAttempts >= 5) {
+                await userRepository.updateFailedLogin(user.id, newAttempts, 30);
+                throw new Error('Account_Locked_Now');
+            } 
+            // Nếu sai < 5 lần -> Cộng dồn số lần sai
+            else {
+                await userRepository.updateFailedLogin(user.id, newAttempts, 0);
+                const err = new Error('Invalid_Credentials');
+                err.remainingAttempts = 5 - newAttempts; // Báo về số lần thử còn lại
+                throw err;
+            }
+        } 
+
+        // 3. XỬ LÝ KHI ĐÚNG MẬT KHẨU
+        if (user.status !== 'ACTIVE') throw new Error('Account_Inactive');
+
+        // Reset lại số lần sai về 0 (nếu trước đó có nhập sai)
+        if (user.failed_login_attempts > 0 || user.locked_until) {
+            await userRepository.resetFailedLogin(user.id);
         }
 
-        // 3. Kiểm tra trạng thái tài khoản
-        if (user.status !== 'ACTIVE') {
-            throw new Error('Account_Inactive');
-        }
-
-        // 4. Sinh Access Token (Thời hạn sống 7 ngày)
+        // Tạo JWT Token
         const accessToken = jwt.sign(
-            { userId: user.id, role: user.role }, // Lưu thông tin cơ bản vào Payload
+            { userId: user.id, role: user.role }, 
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        // Trả về token và thông tin cơ bản (không trả về password)
         return {
             access_token: accessToken,
-            user_info: {
-                id: user.id,
-                email: user.email,
-                phone: user.phone,
-                role: user.role
+            user_info: { 
+                id: user.id, 
+                email: user.email, 
+                phone: user.phone, 
+                role: user.role,
+                is_kyc_verified: user.is_kyc_verified
             }
         };
     }

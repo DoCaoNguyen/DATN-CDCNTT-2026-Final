@@ -6,7 +6,6 @@ const cors = require('cors');
 const masterRouter = require('./src/routes');
 
 const app = express();
-
 // Middleware xử lý CORS và JSON
 app.use(cors());
 app.use(express.json());
