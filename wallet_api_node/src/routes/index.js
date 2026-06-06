@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-const authRoutes = require('./auth.routes');
-const transactionRoutes = require('./transaction.routes');
-const paymentRoutes = require('./payment.routes'); 
-const kycRoutes = require('./kyc.routes');
+const authRoutes = require('../modules/auth/auth.routes');
+const transactionRoutes = require('../modules/transaction/transaction.routes');
+const paymentRoutes = require('../modules/payment/payment.routes'); 
+const kycRoutes = require('../modules/kyc/kyc.routes');
 const apiLogger = require('../middlewares/logger.middleware');
-const walletRoutes = require('./wallet.routes');
-const userRoutes = require('./user.routes');
+const walletRoutes = require('../modules/wallet/wallet.routes');
+const userRoutes = require('../modules/user/user.routes');
 
 
 router.use(apiLogger);

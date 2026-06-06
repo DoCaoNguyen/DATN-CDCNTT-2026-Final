@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // Nhớ import các file chúng ta đã tạo
 import 'core/constants/app_colors.dart';
-import 'features/auth/screens/login_phone_screen.dart';
+import 'features/auth/login/sceens/login_phone_screen.dart';
 
 void main() {
   runApp(const MyApp());

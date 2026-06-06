@@ -13,5 +13,6 @@ class ApiConfig {
   static const String getWalletBalance = '$baseUrl/wallet/balance';
   static const String searchUsers = '$baseUrl/users/search';
   static const String transfer = '$baseUrl/transaction/transfer';
+  static const String setWalletCode = '$baseUrl/wallet/set-code';
   
 }

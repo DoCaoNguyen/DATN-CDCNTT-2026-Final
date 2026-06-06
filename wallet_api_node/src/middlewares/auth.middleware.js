@@ -10,8 +10,8 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; // Gắn thông tin user (userId, role) vào req để các API sau sử dụng
-        next(); // Cho phép đi tiếp vào Controller
+        req.user = decoded;
+        next();
     } catch (error) {
         return res.status(403).json({ error: 'Token không hợp lệ hoặc đã hết hạn' });
     }

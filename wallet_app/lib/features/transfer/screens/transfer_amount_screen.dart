@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import '../../../core/constants/api_config.dart';
+import 'transfer_confirm_screen.dart'; // Import màn hình xác nhận vừa tạo
 
 class TransferAmountScreen extends StatefulWidget {
   final String token;
@@ -23,12 +21,9 @@ class TransferAmountScreen extends StatefulWidget {
 class _TransferAmountScreenState extends State<TransferAmountScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
-  bool _isLoading = false;
   
-  // --- MỚI THÊM: Biến lưu lỗi số tiền ---
   String? _amountError;
 
-  // Format Text khi người dùng gõ
   String _formatAmount(String value) {
     if (value.isEmpty) return "";
     final number = int.tryParse(value.replaceAll('.', ''));
@@ -36,157 +31,40 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
     return number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
   }
 
-  Future<void> _handleTransfer() async {
+  // --- ĐÃ SỬA: Thay vì gọi API, giờ nó sẽ đẩy sang trang Xác nhận ---
+  void _goToConfirmScreen() {
     if (_amountController.text.isEmpty) return;
     
     final rawAmount = _amountController.text.replaceAll('.', '');
     final intAmount = int.parse(rawAmount);
 
-    if (intAmount < 1000) return; // Đã chặn ở giao diện, chốt chặn thêm ở đây cho an toàn
+    if (intAmount < 1000) return; 
 
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.transfer),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
-        body: jsonEncode({
-          'receiver_identifier': widget.receiverPhone,
-          'amount': rawAmount,
-          'note': _noteController.text.isNotEmpty ? _noteController.text : 'Chuyển tiền',
-        }),
-      );
-
-      setState(() => _isLoading = false);
-
-      if (response.statusCode == 200) {
-        _showSuccessDialog();
-      } else {
-        final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['error'] ?? 'Giao dịch thất bại';
-        _showBeautifulErrorDialog(errorMessage);
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showErrorSnackBar("Lỗi kết nối máy chủ");
-    }
-  }
-
-  void _showBeautifulErrorDialog(String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 48),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Giao dịch không thành công',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink, 
-                  foregroundColor: Colors.white, 
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-            )
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TransferConfirmScreen(
+          token: widget.token,
+          receiverName: widget.receiverName,
+          receiverPhone: widget.receiverPhone,
+          amount: rawAmount,
+          note: _noteController.text.isNotEmpty ? _noteController.text : 'Chuyển tiền',
         ),
       ),
     );
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-            ),
-            const SizedBox(height: 20),
-            const Text('Chuyển tiền thành công!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink, 
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-                ),
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('Về màn hình chính', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
   }
 
   @override
   Widget build(BuildContext context) {
     bool hasAmount = _amountController.text.isNotEmpty;
-    // Nút chỉ sáng lên khi có nhập số tiền, không load, và KHÔNG có lỗi (tiền >= 1000)
-    bool isButtonEnabled = hasAmount && !_isLoading && _amountError == null;
+    bool isButtonEnabled = hasAmount && _amountError == null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F9),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF0F5),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -205,7 +83,6 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Ô nhập số tiền (Hình 3)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(20),
@@ -224,11 +101,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                       fontWeight: FontWeight.bold, 
                       color: _amountError != null ? const Color(0xFFD32F2F) : (hasAmount ? Colors.black : Colors.grey)
                     ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '0đ',
-                      hintStyle: TextStyle(fontSize: 40, color: Colors.grey),
-                    ),
+                    decoration: const InputDecoration(border: InputBorder.none, hintText: '0đ', hintStyle: TextStyle(fontSize: 40, color: Colors.grey)),
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     onChanged: (val) {
                       String formatted = _formatAmount(val);
@@ -236,8 +109,6 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                         text: formatted,
                         selection: TextSelection.collapsed(offset: formatted.length),
                       );
-                      
-                      // --- ĐÃ THÊM: Kiểm tra realtime khi người dùng vừa gõ ---
                       setState(() {
                         final rawAmount = formatted.replaceAll('.', '');
                         final intAmount = int.tryParse(rawAmount) ?? 0;
@@ -250,30 +121,17 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                     },
                   ),
                   
-                  // --- MỚI THÊM: Dòng thông báo lỗi căn giữa giống trang OTP ---
                   if (_amountError != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
-                      child: Text(
-                        _amountError!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFD32F2F), // Màu đỏ lỗi
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      child: Text(_amountError!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFD32F2F), fontSize: 14, fontWeight: FontWeight.w500)),
                     ),
                   
                   const SizedBox(height: 12),
-                  
-                  // Ô Lời nhắn
                   TextField(
                     controller: _noteController,
                     decoration: InputDecoration(
-                      hintText: 'Nhập hoặc chọn bên dưới',
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                      labelText: 'Lời nhắn',
+                      hintText: 'Nhập hoặc chọn bên dưới', hintStyle: const TextStyle(color: Colors.grey, fontSize: 14), labelText: 'Lời nhắn',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
@@ -282,8 +140,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: Wrap(
-                      alignment: WrapAlignment.start,
-                      spacing: 8, runSpacing: 8,
+                      alignment: WrapAlignment.start, spacing: 8, runSpacing: 8,
                       children: [
                         _buildQuickNote('Mình chuyển tiền nhé 💵'),
                         _buildQuickNote('Em cảm ơn ạ! 💰'),
@@ -295,7 +152,6 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
               ),
             ),
             const Spacer(),
-            // Bàn phím số tiền nhanh (Góc dưới)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(color: Colors.white),
@@ -311,17 +167,14 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    width: double.infinity,
-                    height: 50,
+                    width: double.infinity, height: 50,
                     child: ElevatedButton(
-                      onPressed: isButtonEnabled ? _handleTransfer : null,
+                      onPressed: isButtonEnabled ? _goToConfirmScreen : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isButtonEnabled ? Colors.pink : Colors.grey.shade300,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: _isLoading 
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Chuyển tiền', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: const Text('Chuyển tiền', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   )
                 ],
@@ -347,15 +200,13 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
   Widget _buildQuickAmountBtn(String amount) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey.shade100,
-        elevation: 0,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.grey.shade100, elevation: 0, foregroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       onPressed: () {
         setState(() {
           _amountController.text = amount;
-          _amountError = null; // Chọn gợi ý >1000đ thì chắc chắn xóa lỗi
+          _amountError = null;
         });
       },
       child: Text('$amountđ'),

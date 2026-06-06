@@ -24,7 +24,7 @@ const verifyApiKey = async (req, res, next) => {
             return res.status(403).json({ error: 'Tài khoản Merchant đã bị khóa' });
         }
 
-        req.merchant = result.rows[0]; // Gắn thông tin đối tác vào request
+        req.merchant = result.rows[0];
         next();
     } catch (error) {
         console.error('Lỗi xác thực API Key:', error);
