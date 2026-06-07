@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import '../../auth/kyc/sceens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
 import '../../../core/constants/api_config.dart';
-
-// Nhúng các Widget con đã tách
 import '../widgets/set_wallet_code_dialog.dart';
 import '../widgets/wallet_card.dart';
 import '../widgets/services_grid.dart';
+import 'qr_main_screen.dart';
+import '../../profile/screens/profile_screen.dart';
+import '../../history/screens/transaction_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -158,43 +158,54 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, activeLang, child) {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildHeaderSection(activeLang),
-                
-                // Đã thay thế thẻ ví cũ bằng Widget WalletCard
-                WalletCard(
-                  activeLang: activeLang,
-                  isLoading: _isLoadingBalance,
-                  balance: _balance,
+          body: _selectedIndex == 0
+            ? SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildHeaderSection(activeLang),
+                    
+                    // Đã thay thế thẻ ví cũ bằng Widget WalletCard
+                    WalletCard(
+                      activeLang: activeLang,
+                      isLoading: _isLoadingBalance,
+                      balance: _balance,
+                    ),
+                    
+                    _buildFinancialCenterBanner(activeLang),
+                    
+                    // Đã thay thế Grid cũ bằng Widget ServicesGrid
+                    ServicesGrid(
+                      activeLang: activeLang,
+                      isVerified: widget.isVerified,
+                      token: widget.token,
+                      walletCode: _walletCode,
+                      onRequireKyc: _showKycDialog,
+                      onRequireWalletCode: _showSetWalletCodeDialog,
+                      onRefreshBalance: _fetchBalance,
+                    ),
+                    
+                    _buildEventBanner(activeLang),
+                    _buildRecommendations(activeLang),
+                    const SizedBox(height: 80),
+                  ],
                 ),
-                
-                _buildFinancialCenterBanner(activeLang),
-                
-                // Đã thay thế Grid cũ bằng Widget ServicesGrid
-                ServicesGrid(
-                  activeLang: activeLang,
-                  isVerified: widget.isVerified,
-                  token: widget.token,
-                  walletCode: _walletCode,
-                  onRequireKyc: _showKycDialog,
-                  onRequireWalletCode: _showSetWalletCodeDialog,
-                  onRefreshBalance: _fetchBalance,
-                ),
-                
-                _buildEventBanner(activeLang),
-                _buildRecommendations(activeLang),
-                const SizedBox(height: 80),
-              ],
-            ),
-          ),
+              )
+            : _selectedIndex == 1
+                ? Center(child: Text(activeLang == 'VIE' ? 'Trang Ưu đãi (Sắp ra mắt)' : 'Offers (Coming soon)'))
+                : _selectedIndex == 2
+                    ? TransactionHistoryScreen(token: widget.token)
+                    : ProfileScreen(token: widget.token),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               if (!widget.isVerified) {
                 _showKycDialog();
               } else {
-                print("Mở Camera quét QR");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => QrMainScreen(token: widget.token),
+                  ),
+                );
               }
             },
             backgroundColor: Colors.pink,
@@ -219,8 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildBottomNavItem(Icons.home, "MoMo", 0, isActive: true),
-                      _buildBottomNavItem(Icons.local_offer_outlined, activeLang == 'VIE' ? "Ưu đãi" : "Offers", 1),
+                      _buildBottomNavItem(Icons.home, "MoMo", 0, isActive: _selectedIndex == 0),
+                      _buildBottomNavItem(Icons.local_offer_outlined, activeLang == 'VIE' ? "Ưu đãi" : "Offers", 1, isActive: _selectedIndex == 1),
                     ],
                   ),
                   Padding(
@@ -233,8 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildBottomNavItem(Icons.history, activeLang == 'VIE' ? "Lịch sử GD" : "History", 2),
-                      _buildBottomNavItem(Icons.person_outline, activeLang == 'VIE' ? "Tôi" : "Me", 3),
+                      _buildBottomNavItem(Icons.history, activeLang == 'VIE' ? "Lịch sử GD" : "History", 2, isActive: _selectedIndex == 2),
+                      _buildBottomNavItem(Icons.person_outline, activeLang == 'VIE' ? "Tôi" : "Me", 3, isActive: _selectedIndex == 3),
                     ],
                   ),
                 ],
@@ -246,9 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // =========================================================
-  // CÁC HÀM UI CŨ GIỮ NGUYÊN BÊN TRONG FILE NÀY
-  // =========================================================
 
   Widget _buildHeaderSection(String activeLang) {
     return Container(

@@ -9,6 +9,6 @@ router.use(verifyToken);
 
 router.get('/balance', walletController.getBalance);
 router.post('/set-code', walletController.setWalletCode);
-router.get('/check-code/:code', walletController.checkWalletCode);
+router.get('/qr', walletController.getPersonalQR);
 
 module.exports = router;

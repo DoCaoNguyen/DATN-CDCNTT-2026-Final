@@ -40,19 +40,29 @@ const walletService = {
         }
     },
 
-    checkWalletCodeInfo: async (walletCode) => {
-        const cleanCode = walletCode.trim();
-
-        const walletInfo = await walletRepository.checkByWalletCode(cleanCode);
-        
-        if (!walletInfo) {
-            throw new Error('Wallet_Code_Not_Found');
+    getPersonalQR: async (userId, amount, note) => {
+        const user = await walletRepository.getUserInfoForQR(userId);
+        if (!user) {
+            throw new Error('User_Not_Found');
         }
 
+        let qrContent = `viwallet://transfer?phone=${encodeURIComponent(user.phone || '')}&name=${encodeURIComponent(user.full_name || '')}`;
+        if (amount) {
+            qrContent += `&amount=${amount}`;
+        }
+        if (note) {
+            qrContent += `&note=${encodeURIComponent(note)}`;
+        }
+
+        const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=L&data=${encodeURIComponent(qrContent)}`;
+
         return {
-            wallet_code: walletInfo.wallet_code,
-            full_name: walletInfo.full_name,
-            status: walletInfo.status
+            phone: user.phone,
+            full_name: user.full_name,
+            amount: amount ? amount.toString() : null,
+            note: note || null,
+            qr_content: qrContent,
+            qr_image_url: qrImageUrl
         };
     }
 };

@@ -43,19 +43,12 @@ const walletRepository = {
         return result.rows[0]; 
     },
 
-    checkByWalletCode: async (walletCode) => {
-        const query = `
-            SELECT 
-                w.wallet_code, 
-                w.status, 
-                u.full_name 
-            FROM wallets w
-            JOIN users u ON w.user_id = u.id
-            WHERE w.wallet_code = $1
-        `;
-        const result = await pool.query(query, [walletCode]);
-        return result.rows[0]; 
+    getUserInfoForQR: async (userId) => {
+        const query = `SELECT full_name, phone FROM users WHERE id = $1`;
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
     }
+    
 };
 
 module.exports = walletRepository;

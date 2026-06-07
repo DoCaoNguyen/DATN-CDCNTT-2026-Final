@@ -25,8 +25,6 @@ class TransferConfirmScreen extends StatefulWidget {
 }
 
 class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
-  bool _isLoading = false;
-  // Tạo mã tham chiếu ảo ngẫu nhiên cho giống giao diện
   final String _refCode = "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
 
   String _formatAmount(String value) {
@@ -35,26 +33,23 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
     return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
   }
 
-  // HÀM HIỂN THỊ BOTTOM SHEET NHẬP MÃ PIN
   void _showPinBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PinConfirmBottomSheet(
-        onPinEntered: (pin) {
-          Navigator.pop(context); // Đóng Bottom sheet sau khi nhập xong 6 số
-          _handleConfirmTransfer(pin); // Gọi hàm chuyển tiền
+        onPinEntered: (pin) async {
+          return await _handleConfirmTransfer(pin);
         },
       ),
     );
   }
 
-  // HÀM GỌI API CHUYỂN TIỀN
-  Future<void> _handleConfirmTransfer(String pinCode) async {
-    setState(() => _isLoading = true);
-
+  Future<String?> _handleConfirmTransfer(String pinCode) async {
     try {
+      final String cleanAmount = widget.amount.replaceAll(RegExp(r'[^0-9]'), '');
+
       final response = await http.post(
         Uri.parse(ApiConfig.transfer),
         headers: {
@@ -64,25 +59,34 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
         },
         body: jsonEncode({
           'receiver_identifier': widget.receiverPhone,
-          'amount': widget.amount,
+          'amount': cleanAmount, 
           'note': widget.note,
-          'reference_code': _refCode, // Gửi mã tham chiếu
-          // 'pin': pinCode // Trong thực tế Backend sẽ yêu cầu mã PIN này
+          'reference_code': _refCode, 
+          'pin': pinCode
         }),
       );
 
-      setState(() => _isLoading = false);
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Navigator.pop(context); 
         _showSuccessDialog();
+        return null; 
       } else {
         final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['error'] ?? 'Giao dịch thất bại';
-        _showBeautifulErrorDialog(errorMessage);
+        final String errorMessage = errorData['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại sau.';
+        
+        if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
+          return errorMessage; 
+        } else {
+          Navigator.pop(context); 
+          _showBeautifulErrorDialog(errorMessage);
+          return null; 
+        }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showErrorSnackBar("Lỗi kết nối máy chủ");
+      Navigator.pop(context);
+      _showErrorSnackBar("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!");
+      debugPrint("Lỗi Transfer API: $e");
+      return null;
     }
   }
 
@@ -143,7 +147,6 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 onPressed: () {
-                  // Đóng toàn bộ popup và màn hình phụ, quay thẳng về màn hình gốc (Home)
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 child: const Text('Về màn hình chính', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
@@ -184,19 +187,17 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFE4EE), // Màu hồng nhạt gradient
+        backgroundColor: const Color(0xFFFFE4EE),
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
         title: const Text('Thanh toán an toàn', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
-          // Phần nội dung cuộn được
           Expanded(
             child: SingleChildScrollView(
               child: Stack(
                 children: [
-                  // Lớp nền Gradient hồng ảo diệu phía trên
                   Container(
                     height: 100,
                     decoration: const BoxDecoration(
@@ -206,13 +207,10 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                       ),
                     ),
                   ),
-                  
-                  // Các Card nội dung
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        // Card 1: Thông tin giao dịch
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
@@ -236,8 +234,6 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
-                        // Card 2: Nguồn tiền
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
@@ -252,7 +248,6 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              // Dòng Ví MoMo (Đang chọn)
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -290,8 +285,6 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
               ),
             ),
           ),
-          
-          // Phần TỔNG TIỀN và NÚT XÁC NHẬN ghim dưới đáy
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -314,22 +307,19 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                   SizedBox(
                     width: double.infinity, height: 50,
                     child: ElevatedButton(
-                      // SỬA Ở ĐÂY: Bấm nút gọi bảng nhập PIN thay vì chạy API luôn
-                      onPressed: _isLoading ? null : _showPinBottomSheet, 
+                      onPressed: _showPinBottomSheet, 
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pink,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: _isLoading 
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.lock_outline, color: Colors.white, size: 18),
-                                SizedBox(width: 8),
-                                Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                              ],
-                            ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ],
+                      ),
                     ),
                   )
                 ],
@@ -343,10 +333,10 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
 }
 
 // =========================================================
-// WIDGET BOTTOM SHEET NHẬP MÃ PIN CỦA MOMO
+// WIDGET BOTTOM SHEET NHẬP MÃ PIN
 // =========================================================
 class PinConfirmBottomSheet extends StatefulWidget {
-  final Function(String) onPinEntered;
+  final Future<String?> Function(String) onPinEntered;
   const PinConfirmBottomSheet({Key? key, required this.onPinEntered}) : super(key: key);
 
   @override
@@ -356,6 +346,9 @@ class PinConfirmBottomSheet extends StatefulWidget {
 class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
   final TextEditingController pinController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  
+  String? _errorMessage;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -366,11 +359,14 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
 
   Widget _buildPinDots() {
     String pin = pinController.text;
+    bool hasError = _errorMessage != null;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300, width: 1.5),
+        border: Border.all(color: hasError ? Colors.red : Colors.grey.shade300, width: 1.5),
         borderRadius: BorderRadius.circular(30),
+        color: Colors.transparent,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -382,7 +378,9 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
             height: 14,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isFilled ? Colors.grey.shade600 : Colors.grey.shade300,
+              color: isFilled 
+                  ? (hasError ? Colors.red : Colors.grey.shade600) 
+                  : Colors.grey.shade300,
             ),
           );
         }),
@@ -393,7 +391,6 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // Padding viewInsets giúp bảng bị đẩy lên trên bàn phím số
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
@@ -432,11 +429,31 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
                     autofocus: true,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
+                    enabled: !_isLoading,
                     decoration: const InputDecoration(counterText: ""),
-                    onChanged: (val) {
+                    onChanged: (val) async {
+                      if (_errorMessage != null) {
+                        setState(() => _errorMessage = null);
+                      }
                       setState(() {});
+                      
                       if (val.length == 6) {
-                        widget.onPinEntered(val); // Truyền dữ liệu ra ngoài khi gõ xong 6 số
+                        setState(() => _isLoading = true);
+                        
+                        String? error = await widget.onPinEntered(val);
+                        
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                            if (error != null) {
+                              _errorMessage = error;
+                              pinController.clear();
+                              Future.delayed(const Duration(milliseconds: 50), () {
+                                _focusNode.requestFocus();
+                              });
+                            }
+                          });
+                        }
                       }
                     },
                   ),
@@ -451,9 +468,29 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            
+          
+            if (_errorMessage != null && !_isLoading)
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center,
+              )
+            else 
+              const SizedBox(height: 16),
+
+            const SizedBox(height: 16),
+            
+            if (_isLoading)
+              const SizedBox(
+                height: 24, width: 24,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.pink),
+              ),
+              
             const SizedBox(height: 24),
             GestureDetector(
-              onTap: () {}, // Nơi thêm logic Quên mã PIN sau này nếu cần
+              onTap: () {}, 
               child: const Text('Quên mã PIN?', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 12),

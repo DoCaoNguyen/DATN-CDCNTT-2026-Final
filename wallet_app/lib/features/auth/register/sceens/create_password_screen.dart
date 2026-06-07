@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
+import '../../login/sceens/login_phone_screen.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
   final String phoneNumber;
@@ -81,7 +82,13 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           ),
         );
 
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LoginPhoneScreen(initialPhoneNumber: widget.phoneNumber),
+          ),
+          (route) => false,
+        );
         
       } else {
         String errorMsg = responseData['error'] ?? 'Có lỗi xảy ra, vui lòng thử lại';

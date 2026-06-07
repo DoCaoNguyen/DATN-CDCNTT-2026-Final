@@ -3,10 +3,14 @@ const authService = require('./auth.service');
 const authController = {
     sendOtp: async (req, res) => {
         const { email, phone } = req.body;
-        if (!email || !phone) return res.status(400).json({ error: 'Cần cung cấp Email và SĐT' });
+        if (!phone) return res.status(400).json({ error: 'Cần cung cấp Số điện thoại' });
 
         try {
-            await authService.requestOtp(email, phone);
+            if (email) {
+                await authService.requestOtp(email, phone);
+            } else {
+                await authService.requestOtp(phone);
+            }
             res.status(200).json({ message: 'Đã gửi mã OTP qua tin nhắn SMS' });
         } catch (error) {
             if (error.message === 'Email_Phone_Exists') {
@@ -109,6 +113,15 @@ const authController = {
             
             console.error('Lỗi API Login:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi đăng nhập' });
+        }
+    },
+
+    logout: async (req, res) => {
+        try {
+            res.status(200).json({ message: 'Đăng xuất thành công' });
+        } catch (error) {
+            console.error('Lỗi API Logout:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi đăng xuất' });
         }
     }
 };

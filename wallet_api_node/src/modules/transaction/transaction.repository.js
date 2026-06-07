@@ -82,13 +82,72 @@ const transactionRepository = {
         await client.query(query, [walletId, amount.toString(), ledgerId]);
     },
 
-    
     recordTransfer: async (client, senderId, receiverId, amount, note, ledgerId, referenceCode) => {
         const query = `
             INSERT INTO wallet_transfers (sender_wallet_id, receiver_wallet_id, amount, note, transaction_id, status, reference_code)
             VALUES ($1, $2, $3, $4, $5, 'SUCCESS', $6);
         `;
         await client.query(query, [senderId, receiverId, amount.toString(), note, ledgerId, referenceCode]);
+    },
+
+    getWalletForPinCheck: async (userId) => {
+        const query = `
+            SELECT id, wallet_code, pin_failed_attempts, pin_locked_until 
+            FROM wallets WHERE user_id = $1
+        `;
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
+    },
+
+    updatePinAttempts: async (walletId, attempts, lockedUntil = null) => {
+        const query = `
+            UPDATE wallets 
+            SET pin_failed_attempts = $1, pin_locked_until = $2 
+            WHERE id = $3
+        `;
+        await pool.query(query, [attempts, lockedUntil, walletId]);
+    },
+
+    resetPinAttempts: async (walletId) => {
+        const query = `
+            UPDATE wallets 
+            SET pin_failed_attempts = 0, pin_locked_until = NULL 
+            WHERE id = $1
+        `;
+        await pool.query(query, [walletId]);
+    },
+
+    getTransactionHistory: async (walletId, limit = 20, offset = 0) => {
+        const query = `
+            SELECT 
+                le.id AS entry_id,
+                le.transaction_id,
+                lt.transaction_type,
+                le.entry_type,
+                le.amount,
+                le.balance_before,
+                le.balance_after,
+                lt.description,
+                lt.status,
+                le.created_at,
+                wt.note AS transfer_note,
+                u_sender.full_name AS sender_name,
+                u_sender.phone AS sender_phone,
+                u_receiver.full_name AS receiver_name,
+                u_receiver.phone AS receiver_phone
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.transaction_id = lt.id
+            LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
+            LEFT JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
+            LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
+            LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
+            LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
+            WHERE le.wallet_id = $1
+            ORDER BY le.created_at DESC
+            LIMIT $2 OFFSET $3;
+        `;
+        const result = await pool.query(query, [walletId, limit, offset]);
+        return result.rows;
     }
 };
 

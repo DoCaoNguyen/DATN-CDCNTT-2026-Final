@@ -9,6 +9,8 @@ const withIdempotency = require('../../middlewares/idempotency.middleware');
 
 router.post('/create', verifyApiKey, paymentController.createOrder);
 
+// Tạo QR nhận tiền cho người dùng (xác thực bằng JWT)
+router.post('/request', verifyToken, paymentController.requestMoney);
 
 router.post('/process', verifyToken, withIdempotency, paymentController.processPayment);
 

@@ -9,7 +9,9 @@ import '../../register/sceens/otp_verification_screen.dart';
 import 'login_password_screen.dart';
 
 class LoginPhoneScreen extends StatefulWidget {
-  const LoginPhoneScreen({Key? key}) : super(key: key);
+  final String? initialPhoneNumber;
+
+  const LoginPhoneScreen({Key? key, this.initialPhoneNumber}) : super(key: key);
 
   @override
   State<LoginPhoneScreen> createState() => _LoginPhoneScreenState();
@@ -22,6 +24,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialPhoneNumber != null) {
+      _phoneController.text = widget.initialPhoneNumber!;
+    }
     _phoneController.addListener(() {
       if (_hasError) {
         setState(() {

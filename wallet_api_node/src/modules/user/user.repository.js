@@ -13,7 +13,27 @@ const userRepository = {
         
         const result = await pool.query(query, [currentUserId, `%${searchQuery}%`]);
         return result.rows;
+    },
+
+    getUserProfile: async (userId) => {
+        const query = 'SELECT full_name, phone FROM users WHERE id = $1';
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
+    },
+
+    getAllUsers: async () => {
+        const query = 'SELECT id, full_name, phone, email, role, status, created_at FROM users ORDER BY created_at DESC';
+        const result = await pool.query(query);
+        return result.rows;
+    },
+
+    getUserById: async (userId) => {
+        const query = 'SELECT id, full_name, phone, email, role, status, created_at FROM users WHERE id = $1';
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
     }
+
+    
 };
 
 module.exports = userRepository;

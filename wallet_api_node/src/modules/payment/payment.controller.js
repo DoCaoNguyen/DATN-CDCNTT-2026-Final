@@ -49,6 +49,32 @@ const paymentController = {
             console.error('Lỗi xử lý thanh toán QR:', error);
             res.status(500).json({ error: 'Giao dịch thất bại do lỗi hệ thống' });
         }
+    },
+
+    // Endpoint cho user tạo QR "nhận tiền" kèm số tiền tùy chỉnh
+    requestMoney: async (req, res) => {
+        const { amount, description } = req.body;
+
+        if (!amount || Number(amount) <= 0) {
+            return res.status(400).json({ error: 'Số tiền không hợp lệ' });
+        }
+
+        try {
+            const userRepo = require('../user/user.repository');
+            const user = await userRepo.getUserProfile(req.user.userId);
+            if (!user) {
+                return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+            }
+
+            const result = await paymentService.createUserQR(Number(amount), description, user.phone, user.full_name);
+            res.status(201).json({
+                message: 'Tạo QR nhận tiền thành công',
+                data: result
+            });
+        } catch (error) {
+            console.error('Lỗi tạo QR nhận tiền:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi tạo QR' });
+        }
     }
 };
 

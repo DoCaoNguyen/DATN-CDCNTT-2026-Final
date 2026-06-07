@@ -21,9 +21,17 @@ const paymentRepository = {
         return result.rows[0].id;
     },
 
-    
+    // Tạo đơn hàng nhận tiền cho người dùng thường (không cần merchant_id)
+    createUserOrder: async (client, orderCode, amount, description, expiredAt) => {
+        const query = `
+            INSERT INTO payment_orders (order_code, amount, description, status, expired_at)
+            VALUES ($1, $2, $3, 'PENDING', $4)
+            RETURNING id;
+        `;
+        const result = await client.query(query, [orderCode, amount, description, expiredAt]);
+        return result.rows[0].id;
+    },
 
-    
     lockAndGetOrder: async (client, qrToken) => {
         const query = `
             SELECT po.id AS order_id, po.amount, po.status, po.merchant_id, 

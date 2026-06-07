@@ -34,12 +34,43 @@ const transactionService = {
         }
     },
 
-    // --- ĐÃ SỬA: Thêm tham số referenceCode ---
-    transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode) => {
-        const senderWallet = await repo.getWalletByUserId(senderUserId);
+    transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin) => {
+        const senderWallet = await repo.getWalletForPinCheck(senderUserId);
+        
+        if (!senderWallet) {
+            throw new Error('Sender_Wallet_Not_Found');
+        }
+
+        if (senderWallet.pin_locked_until) {
+            const now = new Date();
+            const lockedUntil = new Date(senderWallet.pin_locked_until);
+            if (now < lockedUntil) {
+                throw new Error('Wallet_Locked_PIN');
+            } else {
+                await repo.resetPinAttempts(senderWallet.id);
+                senderWallet.pin_failed_attempts = 0; 
+            }
+        }
+
+        if (pin !== senderWallet.wallet_code) {
+            const newAttempts = (senderWallet.pin_failed_attempts || 0) + 1;
+            
+            if (newAttempts >= 3) {
+                const lockTime = new Date(Date.now() + 30 * 60000);
+                await repo.updatePinAttempts(senderWallet.id, newAttempts, lockTime);
+                throw new Error('Wallet_Locked_PIN');
+            } else {
+                await repo.updatePinAttempts(senderWallet.id, newAttempts, null);
+                throw new Error(`Wrong_PIN_${3 - newAttempts}`);
+            }
+        }
+
+        if (senderWallet.pin_failed_attempts > 0) {
+            await repo.resetPinAttempts(senderWallet.id);
+        }
+
         const receiverWallet = await repo.getWalletByIdentifier(receiverIdentifier);
 
-        if (!senderWallet) throw new Error('Sender_Wallet_Not_Found');
         if (!receiverWallet) throw new Error('Receiver_Wallet_Not_Found');
         if (senderWallet.id === receiverWallet.id) throw new Error('Self_Transfer_Not_Allowed');
 
@@ -72,7 +103,6 @@ const transactionService = {
             await repo.createLedgerEntry(client, ledgerTxId, senderWallet.id, 'DEBIT', amount, senderBalanceBefore, senderBalanceAfter);
             await repo.createLedgerEntry(client, ledgerTxId, receiverWallet.id, 'CREDIT', amount, receiverBalanceBefore, receiverBalanceAfter);
 
-            // --- ĐÃ SỬA: Truyền referenceCode xuống Repository ---
             await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, referenceCode);
 
             await client.query('COMMIT');
@@ -87,6 +117,21 @@ const transactionService = {
         } finally {
             client.release();
         }
+    },
+
+    getTransactionHistory: async (userId, page = 1, limit = 20) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const offset = (page - 1) * limit;
+        const history = await repo.getTransactionHistory(wallet.id, limit, offset);
+
+        return history.map(item => ({
+            ...item,
+            amount: item.amount ? item.amount.toString() : '0',
+            balance_before: item.balance_before ? item.balance_before.toString() : '0',
+            balance_after: item.balance_after ? item.balance_after.toString() : '0'
+        }));
     }
 };
 

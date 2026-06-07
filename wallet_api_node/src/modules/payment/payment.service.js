@@ -24,18 +24,21 @@ const paymentService = {
             
             
             
-            const qrContent = `vipayment://pay?token=${qrToken}`;
+            const qrContent = `vipayment://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=L&data=${encodeURIComponent(qrContent)}`;
 
-            
-            await paymentRepoRepo.createQrCode(client, orderId, qrContent, qrToken, expiredAt);
+            // Lưu thông tin mã QR
+            await paymentRepo.createQrCode(client, orderId, qrContent, qrToken, expiredAt);
 
             await client.query('COMMIT');
 
             return {
                 order_code: orderCode,
                 amount: amount,
+                description: description || null,
                 qr_content: qrContent,
                 qr_token: qrToken,
+                qr_image_url: qrImageUrl,
                 expired_at: expiredAt
             };
         } catch (error) {
@@ -95,8 +98,46 @@ const paymentService = {
 
             return {
                 order_id: order.order_id,
-                amount_paid: order.amount,
-                balance_remaining: balanceAfter
+                amount_paid: order.amount ? order.amount.toString() : '0',
+                balance_remaining: balanceAfter ? balanceAfter.toString() : '0'
+            };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    // Tạo mã QR "nhận tiền" cho người dùng thường (không cần merchant key)
+    createUserQR: async (amount, description, userPhone, userName) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const orderCode = 'REQ' + Date.now() + Math.floor(Math.random() * 1000);
+            const expiredAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+
+            const orderId = await paymentRepo.createUserOrder(
+                client, orderCode, amount, description, expiredAt
+            );
+
+            const qrToken = crypto.randomBytes(32).toString('hex');
+            const qrContent = `vipayment://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}&phone=${encodeURIComponent(userPhone || '')}&name=${encodeURIComponent(userName || '')}`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=L&data=${encodeURIComponent(qrContent)}`;
+
+            await paymentRepo.createQrCode(client, orderId, qrContent, qrToken, expiredAt);
+
+            await client.query('COMMIT');
+
+            return {
+                order_code: orderCode,
+                amount: amount,
+                description: description || null,
+                qr_content: qrContent,
+                qr_token: qrToken,
+                qr_image_url: qrImageUrl,
+                expired_at: expiredAt
             };
         } catch (error) {
             await client.query('ROLLBACK');

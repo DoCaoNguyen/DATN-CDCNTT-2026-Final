@@ -12,5 +12,6 @@ router.use(verifyToken);
 
 router.post('/deposit', withIdempotency, transactionController.deposit);
 router.post('/transfer', withIdempotency, transactionController.transfer);
+router.get('/history', transactionController.getHistory);
 
 module.exports = router;

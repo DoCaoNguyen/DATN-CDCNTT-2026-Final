@@ -39,6 +39,8 @@ dependencies:
   camera: ^0.11.0               # Thêm thư viện luồng Camera tuỳ chỉnh
   google_mlkit_face_detection: ^0.11.0
   google_mlkit_text_recognition: ^0.13.1 # Thêm AI Liveness nhận diện chớp mắt/cười
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.2.0
 
 dev_dependencies:
   flutter_test:

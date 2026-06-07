@@ -58,27 +58,33 @@ const walletController = {
         }
     },
 
-    checkWalletCode: async (req, res) => {
+    getPersonalQR: async (req, res) => {
+        const userId = req.user.userId;
+        const { amount, note } = req.query;
+
         try {
-            const { code } = req.params;
-
-            if (!code) {
-                return res.status(400).json({ error: 'Vui lòng cung cấp mã ví cần kiểm tra' });
+            if (amount) {
+                const parsedAmount = BigInt(amount);
+                if (parsedAmount <= 0n) {
+                    return res.status(400).json({ error: 'Số tiền phải lớn hơn 0' });
+                }
             }
+        } catch (e) {
+            return res.status(400).json({ error: 'Số tiền không hợp lệ' });
+        }
 
-            const walletInfo = await walletService.checkWalletCodeInfo(code);
-            
-            res.status(200).json({ 
-                message: 'Thông tin ví hợp lệ', 
-                data: walletInfo 
+        try {
+            const result = await walletService.getPersonalQR(userId, amount, note);
+            res.status(200).json({
+                message: 'Tạo mã QR thanh toán thành công',
+                data: result
             });
-
         } catch (error) {
-            if (error.message === 'Wallet_Code_Not_Found') {
-                return res.status(404).json({ error: 'Mã ví không tồn tại trong hệ thống' });
+            if (error.message === 'User_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy thông tin người dùng.' });
             }
-            console.error("Lỗi kiểm tra mã ví:", error);
-            res.status(500).json({ error: 'Lỗi hệ thống khi kiểm tra thông tin ví' });
+            console.error('Lỗi sinh mã QR chuyển tiền:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi tạo mã QR thanh toán' });
         }
     }
 };
