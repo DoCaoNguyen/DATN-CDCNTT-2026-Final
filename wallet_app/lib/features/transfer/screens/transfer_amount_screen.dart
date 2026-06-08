@@ -30,6 +30,8 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
 
   String? _amountError;
 
+  final FocusNode _amountFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -40,12 +42,16 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
     if (widget.note != null) {
       _noteController.text = widget.note!;
     }
+    _amountFocusNode.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -156,6 +162,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                 opacity: 0,
                                 child: TextField(
                                   controller: _amountController,
+                                  focusNode: _amountFocusNode,
                                   autofocus: !widget.isFixed,
                                   readOnly: widget.isFixed,
                                   keyboardType: TextInputType.number,
@@ -183,36 +190,52 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                               // Dùng GestureDetector để khi click vào Text thì focus vào TextField ẩn phía dưới
                               GestureDetector(
                                 onTap: () {
-                                  // Khi không fixed thì cho phép chỉnh sửa
-                                  // Không cần làm gì nhiều vì TextField thật vẫn nằm đè ở trên với Opacity=0 hoặc ta focus vào nó
+                                  if (!widget.isFixed) {
+                                    _amountFocusNode.requestFocus();
+                                  }
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      hasAmount ? _amountController.text : '0',
-                                      style: TextStyle(
-                                        fontSize: 40,
-                                        fontWeight: FontWeight.bold,
+                                child: Container(
+                                  padding: const EdgeInsets.only(bottom: 2),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
                                         color: _amountError != null
                                             ? const Color(0xFFD32F2F)
-                                            : (hasAmount ? Colors.black : Colors.grey),
+                                            : (_amountFocusNode.hasFocus ? Colors.pink : Colors.grey.shade300),
+                                        width: 1.5,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'đ',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: _amountError != null
-                                            ? const Color(0xFFD32F2F)
-                                            : (hasAmount ? Colors.black : Colors.grey),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        hasAmount ? _amountController.text : '0',
+                                        style: TextStyle(
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.bold,
+                                          color: _amountError != null
+                                              ? const Color(0xFFD32F2F)
+                                              : (hasAmount ? Colors.black : Colors.grey),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      if (_amountFocusNode.hasFocus)
+                                        const FlashingCursor(),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'đ',
+                                        style: TextStyle(
+                                          fontSize: 38,
+                                          fontWeight: FontWeight.bold,
+                                          color: _amountError != null
+                                              ? const Color(0xFFD32F2F)
+                                              : (hasAmount ? Colors.black : Colors.grey),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -369,6 +392,46 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
         });
       },
       child: Text('${amount}đ'),
+    );
+  }
+}
+
+class FlashingCursor extends StatefulWidget {
+  const FlashingCursor({Key? key}) : super(key: key);
+
+  @override
+  State<FlashingCursor> createState() => _FlashingCursorState();
+}
+
+class _FlashingCursorState extends State<FlashingCursor> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 1.0, end: 0.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        width: 2.0,
+        height: 50.0,
+        color: Colors.pink,
+      ),
     );
   }
 }

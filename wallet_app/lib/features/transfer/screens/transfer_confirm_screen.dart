@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
+import 'transfer_success_screen.dart';
+
 
 class TransferConfirmScreen extends StatefulWidget {
   final String token;
@@ -67,8 +69,27 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        if (!mounted) return null;
         Navigator.pop(context); 
-        _showSuccessDialog();
+        
+        final now = DateTime.now();
+        final formattedTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+
+        if (!mounted) return null;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TransferSuccessScreen(
+              token: widget.token,
+              receiverName: widget.receiverName,
+              receiverPhone: widget.receiverPhone,
+              amount: widget.amount,
+              note: widget.note.isNotEmpty ? widget.note : 'Chuyển tiền',
+              referenceCode: _refCode,
+              paymentTime: formattedTime,
+            ),
+          ),
+        );
         return null; 
       } else {
         final errorData = jsonDecode(response.body);
@@ -77,12 +98,14 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
           return errorMessage; 
         } else {
+          if (!mounted) return null;
           Navigator.pop(context); 
           _showBeautifulErrorDialog(errorMessage);
           return null; 
         }
       }
     } catch (e) {
+      if (!mounted) return null;
       Navigator.pop(context);
       _showErrorSnackBar("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!");
       debugPrint("Lỗi Transfer API: $e");
@@ -124,39 +147,6 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
     );
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-            ),
-            const SizedBox(height: 20),
-            const Text('Chuyển tiền thành công!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity, height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('Về màn hình chính', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));

@@ -4,12 +4,14 @@ class WalletCard extends StatefulWidget {
   final String activeLang;
   final bool isLoading;
   final String balance;
+  final VoidCallback? onToggleVisibility;
 
   const WalletCard({
     Key? key,
     required this.activeLang,
     required this.isLoading,
     required this.balance,
+    this.onToggleVisibility,
   }) : super(key: key);
 
   @override
@@ -49,7 +51,12 @@ class _WalletCardState extends State<WalletCard> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
-                      onTap: () => setState(() => _isBalanceVisible = !_isBalanceVisible),
+                      onTap: () {
+                        setState(() => _isBalanceVisible = !_isBalanceVisible);
+                        if (widget.onToggleVisibility != null) {
+                          widget.onToggleVisibility!();
+                        }
+                      },
                       child: Icon(
                         _isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                         size: 16, color: Colors.grey,

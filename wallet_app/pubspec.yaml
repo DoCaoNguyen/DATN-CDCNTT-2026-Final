@@ -41,6 +41,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.13.1 # Thêm AI Liveness nhận diện chớp mắt/cười
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.2.0
+  socket_io_client: ^3.0.2
 
 dev_dependencies:
   flutter_test:

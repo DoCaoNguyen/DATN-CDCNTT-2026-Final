@@ -1,10 +1,6 @@
 class ApiConfig {
-  // --- BASE URL ---
-  // Dùng 10.0.2.2 cho máy ảo Android
-  // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
   static const String baseUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
 
-  // --- AUTH ENDPOINTS ---
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
   static const String setPassword = '$baseUrl/auth/set-password';
