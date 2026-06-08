@@ -256,3 +256,45 @@ ALTER TABLE "withdrawal_transactions"
 
 -- Thêm cột pin_hash vào bảng users
 ALTER TABLE "users" ADD COLUMN "pin_hash" TEXT NULL;
+
+CREATE TABLE public.notifications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    title character varying(255) NOT NULL,
+    content text NOT NULL,
+    notification_type character varying(50), -- Ví dụ: 'SYSTEM', 'TRANSACTION', 'PROMOTION'
+    reference_id uuid, -- Dùng để liên kết tới id của ledger_transactions hoặc payment_orders
+    status character varying(20) DEFAULT 'UNREAD'::character varying, -- Trạng thái: 'UNREAD', 'READ'
+    read_at timestamp(0) without time zone,
+    created_at timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.notifications OWNER TO postgres;
+
+--
+-- Name: notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+--
+-- Name: fk_notification_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+CREATE TABLE "user_devices" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+    "fcm_token" VARCHAR(255) NOT NULL UNIQUE,
+    "device_name" VARCHAR(100), -- Ví dụ: 'iPhone 15 Pro', 'Samsung S24'
+    "device_type" VARCHAR(20),  -- 'ANDROID', 'IOS', 'WEB'
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX "user_devices_user_id_index" ON "user_devices"("user_id");
+
+
+ALTER TABLE "users" ADD COLUMN "token_version" INTEGER NOT NULL DEFAULT 1;

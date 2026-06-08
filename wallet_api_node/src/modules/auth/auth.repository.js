@@ -17,7 +17,7 @@ const authRepository = {
 
     findByEmailOrPhone: async (identifier) => {
         const query = `
-            SELECT id, email, phone, password_hash, role, status, failed_login_attempts, locked_until, is_kyc_verified 
+            SELECT id, email, phone, password_hash, role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
             FROM users 
             WHERE email = $1 OR phone = $1
         `;
@@ -38,6 +38,17 @@ const authRepository = {
     resetFailedLogin: async (userId) => {
         const query = `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1`;
         await pool.query(query, [userId]);
+    },
+
+    incrementTokenVersion: async (userId) => {
+        const query = `
+            UPDATE users 
+            SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1 
+            RETURNING token_version
+        `;
+        const result = await pool.query(query, [userId]);
+        return result.rows[0].token_version;
     }
 };
 

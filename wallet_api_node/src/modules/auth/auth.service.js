@@ -141,8 +141,11 @@ const authService = {
         }
 
 
+        // Tăng token_version của người dùng để vô hiệu hóa tất cả thiết bị trước đó
+        const newTokenVersion = await authRepository.incrementTokenVersion(user.id);
+
         const accessToken = jwt.sign(
-            { userId: user.id, role: user.role },
+            { userId: user.id, role: user.role, tokenVersion: newTokenVersion },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );

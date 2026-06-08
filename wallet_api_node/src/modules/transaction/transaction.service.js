@@ -3,6 +3,7 @@ const pool = require('../../config/db');
 const repo = require('./transaction.repository');
 const { emitToUser } = require('../../utils/socket');
 const kycService = require('../kyc/kyc.service');
+const notificationService = require('../notification/notification.service');
 
 const transactionService = {
     deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
@@ -73,6 +74,11 @@ const transactionService = {
                 type: 'DEPOSIT',
                 amount: amount.toString(),
                 newBalance: balanceAfter.toString()
+            });
+
+            // Gửi Push Notification biến động số dư
+            notificationService.sendBalanceChangeNotification(userId, amount, 'DEPOSIT', ledgerTxId).catch(err => {
+                console.error('Lỗi gửi push notification nạp tiền:', err);
             });
 
             return { 
@@ -161,6 +167,11 @@ const transactionService = {
                 type: 'WITHDRAW',
                 amount: amount.toString(),
                 newBalance: balanceAfter.toString()
+            });
+
+            // Gửi Push Notification biến động số dư
+            notificationService.sendBalanceChangeNotification(userId, amount, 'WITHDRAWAL', ledgerTxId).catch(err => {
+                console.error('Lỗi gửi push notification rút tiền:', err);
             });
 
             return { 
@@ -263,14 +274,36 @@ const transactionService = {
             });
 
             // Gửi thông báo real-time cho người nhận
-            // Lưu ý: receiverWallet ở đây có thể chỉ chứa info cơ bản, ta cần userId của người nhận
-            // Dựa vào code repo.getWalletByIdentifier, ta giả định nó trả về đủ info bao gồm user_id
             if (receiverWallet.user_id) {
                 emitToUser(receiverWallet.user_id, 'balance_update', {
                     type: 'TRANSFER_RECEIVED',
                     amount: amount.toString(),
                     newBalance: receiverBalanceAfter.toString(),
                     senderName: senderWallet.full_name // Nếu có
+                });
+            }
+
+            // Gửi Push Notification cho người gửi (Biến động giảm)
+            notificationService.sendBalanceChangeNotification(
+                senderUserId, 
+                amount, 
+                'TRANSFER_SEND', 
+                ledgerTxId, 
+                receiverWallet.full_name || receiverIdentifier
+            ).catch(err => {
+                console.error('Lỗi gửi push notification gửi tiền:', err);
+            });
+
+            // Gửi Push Notification cho người nhận (Biến động tăng)
+            if (receiverWallet.user_id) {
+                notificationService.sendBalanceChangeNotification(
+                    receiverWallet.user_id, 
+                    amount, 
+                    'TRANSFER_RECEIVE', 
+                    ledgerTxId, 
+                    senderWallet.full_name || senderWallet.phone
+                ).catch(err => {
+                    console.error('Lỗi gửi push notification nhận tiền:', err);
                 });
             }
 

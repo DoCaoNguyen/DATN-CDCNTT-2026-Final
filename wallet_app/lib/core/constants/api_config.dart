@@ -28,4 +28,5 @@ class ApiConfig {
   static const String linkBank = '$baseUrl/wallet/link-bank';
   static const String deposit = '$baseUrl/transaction/deposit';
   static const String withdraw = '$baseUrl/transaction/withdraw';
+  static const String registerDevice = '$baseUrl/notifications/register-device';
 }

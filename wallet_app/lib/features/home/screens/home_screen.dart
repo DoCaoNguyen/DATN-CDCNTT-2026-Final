@@ -11,6 +11,8 @@ import 'qr_main_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../history/screens/transaction_history_screen.dart';
 import '../../../core/services/socket_service.dart';
+import '../../../core/services/notification_service.dart';
+import '../../../core/services/custom_http_client.dart';
 import '../../bank/screens/bank_link_screen.dart';
 import '../../bank/screens/deposit_withdraw_screen.dart';
 
@@ -39,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingBalance = true;
 
   SocketService? _socketService;
+  final _client = CustomHttpClient();
 
   @override
   void initState() {
@@ -62,6 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _initSocket() {
     if (widget.token.isNotEmpty) {
+      // Đăng ký FCM Token thiết bị lên Backend
+      NotificationService.instance.registerUserToken(widget.token);
+
       _socketService = SocketService(
         token: widget.token,
         onBalanceUpdate: (data) {
@@ -124,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getWalletBalance),
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _handleDepositWithdrawClick() async {
     setState(() => _isLoadingBalance = true);
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getLinkedBanks),
         headers: {
           'Content-Type': 'application/json',

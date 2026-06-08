@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
@@ -80,6 +81,12 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
         
         String userId = userInfo['id'] ?? '';
         bool isVerified = userInfo['is_kyc_verified'] == true;
+
+        // Lưu thông tin đăng nhập tự động
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        await prefs.setString('user_id', userId);
+        await prefs.setBool('is_verified', isVerified);
 
         if (mounted) {
           Navigator.pushAndRemoveUntil(

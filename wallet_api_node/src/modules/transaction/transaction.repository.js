@@ -9,7 +9,7 @@ const transactionRepository = {
 
     getWalletByIdentifier: async (identifier) => {
         const query = `
-            SELECT w.id, u.is_kyc_verified 
+            SELECT w.id, w.user_id, u.is_kyc_verified, u.full_name
             FROM wallets w
             JOIN users u ON w.user_id = u.id
             WHERE u.phone = $1 OR u.email = $1 OR w.wallet_code = $1
@@ -112,7 +112,8 @@ const transactionRepository = {
                 w.pin_failed_attempts, 
                 w.pin_locked_until,
                 u.pin_hash,
-                u.phone
+                u.phone,
+                u.full_name
             FROM wallets w
             JOIN users u ON w.user_id = u.id
             WHERE w.user_id = $1
