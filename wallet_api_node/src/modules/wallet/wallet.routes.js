@@ -10,5 +10,7 @@ router.use(verifyToken);
 router.get('/balance', walletController.getBalance);
 router.post('/set-code', walletController.setWalletCode);
 router.get('/qr', walletController.getPersonalQR);
+router.get('/linked-banks', walletController.getLinkedBanks);
+router.post('/link-bank', walletController.linkBank);
 
 module.exports = router;

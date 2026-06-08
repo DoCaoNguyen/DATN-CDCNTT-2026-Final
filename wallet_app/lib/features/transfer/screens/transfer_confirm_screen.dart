@@ -257,7 +257,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text('Ví MoMo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                         ],
                                       ),
                                     ),

@@ -24,4 +24,8 @@ class ApiConfig {
   static const String getTransactionHistory = '$baseUrl/transaction/history';
   static const String requestMoneyQR = '$baseUrl/payment/request';
   static const String processPayment = '$baseUrl/payment/process';
+  static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
+  static const String linkBank = '$baseUrl/wallet/link-bank';
+  static const String deposit = '$baseUrl/transaction/deposit';
+  static const String withdraw = '$baseUrl/transaction/withdraw';
 }

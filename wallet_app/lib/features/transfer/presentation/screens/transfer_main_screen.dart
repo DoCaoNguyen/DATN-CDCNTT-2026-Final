@@ -208,7 +208,7 @@ class TransferMainScreen extends StatelessWidget {
                         child: const Text('mo\nmo', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
                       ),
                       const SizedBox(width: 8),
-                      const Text('Ví MoMo khác', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const Text('Ví Mio khác', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
                     ],
                   ),
@@ -317,7 +317,7 @@ class TransferMainScreen extends StatelessWidget {
             backgroundColor: avatarColor,
             child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          // Logo MoMo nhỏ đè lên góc phải dưới của Avatar
+          // Logo Mio nhỏ đè lên góc phải dưới của Avatar
           Positioned(
             right: 0,
             bottom: 0,
@@ -388,7 +388,7 @@ class TransferMainScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Ưu đãi khi chuyển tiền trên MoMo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Ưu đãi khi chuyển tiền trên Mio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Icon(Icons.chevron_right, color: Colors.pink),
               ],
             ),
@@ -400,7 +400,7 @@ class TransferMainScreen extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildOfferCard('Chuyển tiền MoMo', 'Hoàn tiền', 'Khi chuyển MoMo', Icons.currency_exchange, Colors.red),
+                _buildOfferCard('Chuyển tiền Mio', 'Hoàn tiền', 'Khi chuyển Mio', Icons.currency_exchange, Colors.red),
                 const SizedBox(width: 12),
                 _buildOfferCard('Chuyển khoản Ngân...', 'Hoàn tiền', 'Chuyển Ngân hàng', Icons.account_balance, Colors.blue),
               ],

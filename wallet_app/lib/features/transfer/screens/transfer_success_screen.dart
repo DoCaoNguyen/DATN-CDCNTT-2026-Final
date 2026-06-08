@@ -126,7 +126,7 @@ class TransferSuccessScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '$receiverName đã nhận tiền qua MoMo',
+                        '$receiverName đã nhận tiền qua Mio',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.black87,

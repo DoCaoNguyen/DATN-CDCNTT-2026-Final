@@ -254,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildQuickSettingItem(Icons.security, 'Quản lý', badge: 'MoMo'),
+          _buildQuickSettingItem(Icons.security, 'Quản lý', badge: 'Mio'),
           _buildQuickSettingItem(Icons.settings_applications_outlined, 'Cài đặt thanh\ntoán'),
           _buildQuickSettingItem(Icons.person_outline, 'Đăng nhập và\nbảo mật'),
           _buildQuickSettingItem(Icons.notifications_none, 'Cài đặt thông\nbáo'),
@@ -324,9 +324,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         childAspectRatio: 1.2,
         children: [
           _buildUtilityItem(Icons.account_balance, 'Trung Tâm Tài Chính', Colors.blue),
-          _buildUtilityItem(Icons.verified, 'Điểm MoMo', AppColors.primaryPink),
+          _buildUtilityItem(Icons.verified, 'Điểm Mio', AppColors.primaryPink),
           _buildUtilityItem(Icons.receipt_long, 'Thanh toán', Colors.teal),
-          _buildUtilityItem(Icons.card_giftcard, 'Nhận Ngay 250K', AppColors.primaryPink, badge: 'MoMo'),
+          _buildUtilityItem(Icons.card_giftcard, 'Nhận Ngay 250K', AppColors.primaryPink, badge: 'Mio'),
           _buildUtilityItem(Icons.attach_money, 'Quản lý chi tiêu', Colors.teal.shade300),
           _buildUtilityItem(Icons.redeem, 'Quà của tôi', Colors.pinkAccent),
         ],
@@ -859,7 +859,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'An toàn tài sản & Bảo mật thông tin của bạn là ưu tiên hàng đầu của MoMo.',
+                      'An toàn tài sản & Bảo mật thông tin của bạn là ưu tiên hàng đầu của Mio.',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.black87,
