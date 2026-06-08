@@ -10,6 +10,8 @@ import '../widgets/services_grid.dart';
 import 'qr_main_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../history/screens/transaction_history_screen.dart';
+import '../../../core/services/socket_service.dart';
+
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -33,6 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _walletCode;
   bool _isLoadingBalance = true;
 
+  SocketService? _socketService;
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +48,71 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _fetchBalance();
+    _initSocket();
   }
+
+  @override
+  void dispose() {
+    _socketService?.disconnect();
+    super.dispose();
+  }
+
+  void _initSocket() {
+    if (widget.token.isNotEmpty) {
+      _socketService = SocketService(
+        token: widget.token,
+        onBalanceUpdate: (data) {
+          if (mounted) {
+            setState(() {
+              _balance = data['newBalance']?.toString() ?? _balance;
+            });
+            _showBalanceUpdateNotification(data);
+          }
+        },
+      );
+      _socketService!.connect();
+    }
+  }
+
+  void _showBalanceUpdateNotification(Map<String, dynamic> data) {
+    final String type = data['type'] ?? '';
+    final String rawAmount = data['amount']?.toString() ?? '0';
+    final String formattedAmount = _formatAmountValue(rawAmount);
+
+    String message = '';
+    if (type == 'DEPOSIT') {
+      message = 'Nạp tiền thành công: +$formattedAmount';
+    } else if (type == 'TRANSFER_SENT') {
+      message = 'Chuyển tiền thành công: -$formattedAmount';
+    } else if (type == 'TRANSFER_RECEIVED') {
+      final String sender = data['senderName'] ?? 'Người gửi';
+      message = 'Nhận tiền từ $sender: +$formattedAmount';
+    } else {
+      message = 'Số dư ví đã thay đổi: $formattedAmount';
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message, style: const TextStyle(fontWeight: FontWeight.bold))),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  String _formatAmountValue(String value) {
+    final number = int.tryParse(value);
+    if (number == null) return "${value}đ";
+    return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+  }
+
 
   Future<void> _fetchBalance() async {
     if (widget.token.isEmpty) {
@@ -159,35 +227,40 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: _selectedIndex == 0
-            ? SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildHeaderSection(activeLang),
-                    
-                    // Đã thay thế thẻ ví cũ bằng Widget WalletCard
-                    WalletCard(
-                      activeLang: activeLang,
-                      isLoading: _isLoadingBalance,
-                      balance: _balance,
-                    ),
-                    
-                    _buildFinancialCenterBanner(activeLang),
-                    
-                    // Đã thay thế Grid cũ bằng Widget ServicesGrid
-                    ServicesGrid(
-                      activeLang: activeLang,
-                      isVerified: widget.isVerified,
-                      token: widget.token,
-                      walletCode: _walletCode,
-                      onRequireKyc: _showKycDialog,
-                      onRequireWalletCode: _showSetWalletCodeDialog,
-                      onRefreshBalance: _fetchBalance,
-                    ),
-                    
-                    _buildEventBanner(activeLang),
-                    _buildRecommendations(activeLang),
-                    const SizedBox(height: 80),
-                  ],
+            ? RefreshIndicator(
+                onRefresh: _fetchBalance,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _buildHeaderSection(activeLang),
+                      
+                      // Đã thay thế thẻ ví cũ bằng Widget WalletCard
+                      WalletCard(
+                        activeLang: activeLang,
+                        isLoading: _isLoadingBalance,
+                        balance: _balance,
+                        onToggleVisibility: _fetchBalance,
+                      ),
+                      
+                      _buildFinancialCenterBanner(activeLang),
+                      
+                      // Đã thay thế Grid cũ bằng Widget ServicesGrid
+                      ServicesGrid(
+                        activeLang: activeLang,
+                        isVerified: widget.isVerified,
+                        token: widget.token,
+                        walletCode: _walletCode,
+                        onRequireKyc: _showKycDialog,
+                        onRequireWalletCode: _showSetWalletCodeDialog,
+                        onRefreshBalance: _fetchBalance,
+                      ),
+                      
+                      _buildEventBanner(activeLang),
+                      _buildRecommendations(activeLang),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
                 ),
               )
             : _selectedIndex == 1

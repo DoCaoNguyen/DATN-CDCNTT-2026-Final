@@ -1,5 +1,6 @@
 const pool = require('../../config/db');
 const repo = require('./transaction.repository');
+const { emitToUser } = require('../../utils/socket');
 
 const transactionService = {
     depositMock: async (userId, amount) => { 
@@ -21,6 +22,13 @@ const transactionService = {
 
             await client.query('COMMIT'); 
             
+            // Gửi thông báo real-time
+            emitToUser(userId, 'balance_update', {
+                type: 'DEPOSIT',
+                amount: amount.toString(),
+                newBalance: balanceAfter.toString()
+            });
+
             return { 
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -107,6 +115,25 @@ const transactionService = {
 
             await client.query('COMMIT');
             
+            // Gửi thông báo real-time cho người gửi
+            emitToUser(senderUserId, 'balance_update', {
+                type: 'TRANSFER_SENT',
+                amount: amount.toString(),
+                newBalance: senderBalanceAfter.toString()
+            });
+
+            // Gửi thông báo real-time cho người nhận
+            // Lưu ý: receiverWallet ở đây có thể chỉ chứa info cơ bản, ta cần userId của người nhận
+            // Dựa vào code repo.getWalletByIdentifier, ta giả định nó trả về đủ info bao gồm user_id
+            if (receiverWallet.user_id) {
+                emitToUser(receiverWallet.user_id, 'balance_update', {
+                    type: 'TRANSFER_RECEIVED',
+                    amount: amount.toString(),
+                    newBalance: receiverBalanceAfter.toString(),
+                    senderName: senderWallet.full_name // Nếu có
+                });
+            }
+
             return { 
                 amount: amount.toString(), 
                 balanceAfter: senderBalanceAfter.toString() 

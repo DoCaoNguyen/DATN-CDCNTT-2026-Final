@@ -4,6 +4,11 @@ class ApiConfig {
   // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
   static const String baseUrl = 'https://orectic-noctilucent-ronan.ngrok-free.dev/api/v1';
 
+  static String get socketUrl {
+    final uri = Uri.parse(baseUrl);
+    return "${uri.scheme}://${uri.host}";
+  }
+
   // --- AUTH ENDPOINTS ---
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
