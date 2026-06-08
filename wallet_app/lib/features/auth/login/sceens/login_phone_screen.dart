@@ -56,7 +56,10 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
 
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: jsonEncode({
           'email': '$phone@wallet.com', 
           'phone': phone
@@ -97,7 +100,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
         Navigator.pop(context);
         isDialogClosed = true;
       }
-      _showErrorSnackBar(lang == 'VIE' ? 'Không thể kết nối đến Server' : 'Cannot connect to Server');
+      _showErrorSnackBar(lang == 'VIE' ? 'Lỗi kết nối: $e' : 'Connection error: $e');
       print('Lỗi gọi API: $e');
     }
   }

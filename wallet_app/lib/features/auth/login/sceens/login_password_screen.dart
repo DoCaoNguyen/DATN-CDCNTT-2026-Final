@@ -57,7 +57,10 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.login), 
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: jsonEncode({
           'identifier': widget.phoneNumber,
           'password': _passwordController.text,

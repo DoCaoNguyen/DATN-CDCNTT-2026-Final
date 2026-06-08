@@ -1,0 +1,49 @@
+const db = require('../../config/db'); // Đường dẫn tới file kết nối DB của bạn
+
+class NotificationRepository {
+    // Lưu hoặc cập nhật FCM Token khi thiết bị đăng ký
+    async upsertDeviceToken(userId, fcmToken, deviceType, deviceName) {
+        const query = `
+      INSERT INTO public.user_devices (user_id, fcm_token, device_type, device_name, is_active, last_active_at)
+      VALUES ($1, $2, $3, $4, true, CURRENT_TIMESTAMP)
+      ON CONFLICT (fcm_token) 
+      DO UPDATE SET 
+        user_id = $1,
+        device_type = $3,
+        device_name = $4,
+        is_active = true,
+        last_active_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+        const values = [userId, fcmToken, deviceType, deviceName];
+        const result = await db.query(query, values);
+        return result.rows[0];
+    }
+
+    // Lấy danh sách token đang hoạt động của một User để chuẩn bị gửi FCM
+    async getActiveTokensByUserId(userId) {
+        const query = `SELECT fcm_token FROM public.user_devices WHERE user_id = $1 AND is_active = true`;
+        const result = await db.query(query, [userId]);
+        return result.rows.map(row => row.fcm_token);
+    }
+
+    // Lưu thông báo vào hộp thư In-app 
+    async createInAppNotification(userId, title, body, type, referenceId) {
+        const query = `
+      INSERT INTO public.notifications (user_id, title, body, notification_type, reference_id)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *;
+    `;
+        const values = [userId, title, body, type, referenceId];
+        const result = await db.query(query, values);
+        return result.rows[0];
+    }
+
+    // Đánh dấu token hết hạn/hủy kích hoạt khi Firebase báo lỗi
+    async deactivateToken(fcmToken) {
+        const query = `UPDATE public.user_devices SET is_active = false WHERE fcm_token = $1`;
+        await db.query(query, [fcmToken]);
+    }
+}
+
+module.exports = new NotificationRepository();
