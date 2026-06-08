@@ -1,0 +1,5 @@
+# Bỏ qua thư mục chứa thư viện (vì nó rất nặng, ai tải code về tự chạy npm install là được)
+node_modules/
+
+# Bỏ qua file chứa biến môi trường và mật khẩu nhạy cảm
+.env
