@@ -264,6 +264,164 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Colors.pink;
   }
 
+  void _showTransactionDetailSheet(dynamic tx) {
+    final String amountRaw = tx['amount']?.toString() ?? '0';
+    final String balanceAfterRaw = tx['balance_after']?.toString() ?? '0';
+    final String createdTime = tx['created_at'] != null ? _formatDate(tx['created_at']) : '';
+    final String entryType = tx['entry_type'] ?? 'DEBIT';
+    final String note = tx['transfer_note'] ?? tx['description'] ?? 'Giao dịch';
+    final String extRef = tx['external_reference']?.toString() ?? tx['transaction_id']?.toString() ?? 'Không có';
+    final bool isCredit = entryType == 'CREDIT';
+
+    String typeLabel = "Giao dịch";
+    if (tx['transaction_type'] == 'DEPOSIT') {
+      typeLabel = "Nạp tiền vào ví";
+    } else if (tx['transaction_type'] == 'WITHDRAW') {
+      typeLabel = "Rút tiền về ngân hàng";
+    } else if (tx['transaction_type'] == 'TRANSFER') {
+      if (isCredit) {
+        typeLabel = "Nhận tiền từ bạn bè";
+      } else {
+        typeLabel = "Chuyển tiền";
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    typeLabel,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    "${isCredit ? '+' : '-'}${_formatCurrency(amountRaw)}",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: isCredit ? Colors.green[700] : Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 8),
+                _buildSheetRow("Trạng thái", "Thành công", isStatus: true),
+                _buildSheetRow("Thời gian", createdTime),
+                _buildSheetRow("Mã giao dịch", extRef, isRef: true),
+                if (tx['transaction_type'] == 'TRANSFER') ...[
+                  if (isCredit)
+                    _buildSheetRow("Người gửi", "${tx['sender_name'] ?? 'Người dùng'} (${tx['sender_phone'] ?? ''})")
+                  else
+                    _buildSheetRow("Người nhận", "${tx['receiver_name'] ?? 'Người dùng'} (${tx['receiver_phone'] ?? ''})"),
+                ],
+                _buildSheetRow("Số dư sau giao dịch", _formatCurrency(balanceAfterRaw)),
+                _buildSheetRow("Nội dung", note),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE91E63),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Đóng",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSheetRow(String label, String value, {bool isStatus = false, bool isRef = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: isStatus
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.check_circle, color: Colors.green, size: 16),
+                        SizedBox(width: 4),
+                        Text(
+                          "Thành công",
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      value,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isRef ? const Color(0xFFE91E63) : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final grouped = _groupTransactionsByMonth(_filteredTransactions);
@@ -580,86 +738,89 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             final String tag = _determineCategoryTag(tx);
                             final bool isCredit = entryType == 'CREDIT';
 
-                            return Container(
-                              color: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // Icon circle
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.grey.shade200),
+                            return InkWell(
+                              onTap: () => _showTransactionDetailSheet(tx),
+                              child: Container(
+                                color: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Icon circle
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.grey.shade200),
+                                      ),
+                                      child: Icon(
+                                        _getTransactionIcon(tx),
+                                        color: _getIconColor(tx),
+                                        size: 20,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      _getTransactionIcon(tx),
-                                      color: _getIconColor(tx),
-                                      size: 20,
+                                    const SizedBox(width: 12),
+                                    // Middle details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            title,
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            createdTime,
+                                            style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          // Category tag
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: _getTagBgColor(tag),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              tag,
+                                              style: TextStyle(
+                                                color: _getTagColor(tag),
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Middle details
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    const SizedBox(width: 8),
+                                    // Right amount and balance after
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          title,
-                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                          "${isCredit ? '+' : '-'}${_formatCurrency(amountRaw)}",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: isCredit ? Colors.green.shade700 : Colors.black87,
+                                          ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          createdTime,
+                                          "Số dư ví: ${_formatCurrency(balanceAfterRaw)}",
                                           style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        // Category tag
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: _getTagBgColor(tag),
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          child: Text(
-                                            tag,
-                                            style: TextStyle(
-                                              color: _getTagColor(tag),
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  // Right amount and balance after
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "${isCredit ? '+' : '-'}${_formatCurrency(amountRaw)}",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: isCredit ? Colors.green.shade700 : Colors.black87,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        "Số dư ví: ${_formatCurrency(balanceAfterRaw)}",
-                                        style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },

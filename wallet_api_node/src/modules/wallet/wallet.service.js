@@ -1,4 +1,6 @@
+const bcrypt = require('bcrypt');
 const walletRepository = require('./wallet.repository');
+const transactionRepo = require('../transaction/transaction.repository');
 
 const walletService = {
     getWalletInfo: async (userId) => {
@@ -13,29 +15,25 @@ const walletService = {
             currency: wallet.currency,
             status: wallet.status,
             available_balance: wallet.available_balance ? wallet.available_balance.toString() : "0",
-            locked_balance: wallet.locked_balance ? wallet.locked_balance.toString() : "0"
+            locked_balance: wallet.locked_balance ? wallet.locked_balance.toString() : "0",
+            is_pin_set: !!wallet.pin_hash
         };
     },
 
-    setWalletCode: async (userId, walletCode) => {
-        
-        const formattedCode = walletCode.trim().toLowerCase();
-
+    setWalletCode: async (userId, pinCode) => {
         try {
+            const saltRounds = 10;
+            const pinHash = await bcrypt.hash(pinCode, saltRounds);
             
-            const result = await walletRepository.updateWalletCode(userId, formattedCode);
+            const result = await walletRepository.updatePinHash(userId, pinHash);
             
             if (!result) {
                 throw new Error('Wallet_Not_Found');
             }
             
-            return result.wallet_code;
+            return pinCode;
 
         } catch (error) {
-            
-            if (error.code === '23505') {
-                throw new Error('Wallet_Code_Exists');
-            }
             throw error; 
         }
     },
@@ -64,6 +62,56 @@ const walletService = {
             qr_content: qrContent,
             qr_image_url: qrImageUrl
         };
+    },
+
+    getLinkedBanks: async (userId) => {
+        const wallet = await walletRepository.findByUserId(userId);
+        if (!wallet) {
+            throw new Error('Wallet_Not_Found');
+        }
+        return await walletRepository.getLinkedBanks(wallet.id);
+    },
+
+    linkBank: async (userId, bankName, bankCode, cardNumber, cardHolderName, pin) => {
+        const wallet = await transactionRepo.getWalletForPinCheck(userId);
+        if (!wallet) {
+            throw new Error('Wallet_Not_Found');
+        }
+
+        if (wallet.pin_locked_until) {
+            const now = new Date();
+            const lockedUntil = new Date(wallet.pin_locked_until);
+            if (now < lockedUntil) {
+                throw new Error('Wallet_Locked_PIN');
+            } else {
+                await transactionRepo.resetPinAttempts(wallet.id);
+                wallet.pin_failed_attempts = 0;
+            }
+        }
+
+        if (!wallet.pin_hash) {
+            throw new Error('PIN_Not_Set');
+        }
+
+        const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+        if (!isPinMatch) {
+            const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
+            
+            if (newAttempts >= 3) {
+                const lockTime = new Date(Date.now() + 30 * 60000);
+                await transactionRepo.updatePinAttempts(wallet.id, newAttempts, lockTime);
+                throw new Error('Wallet_Locked_PIN');
+            } else {
+                await transactionRepo.updatePinAttempts(wallet.id, newAttempts, null);
+                throw new Error(`Wrong_PIN_${3 - newAttempts}`);
+            }
+        }
+
+        if (wallet.pin_failed_attempts > 0) {
+            await transactionRepo.resetPinAttempts(wallet.id);
+        }
+
+        return await walletRepository.linkBank(wallet.id, bankName, bankCode, cardNumber, cardHolderName);
     }
 };
 

@@ -11,6 +11,8 @@ import 'qr_main_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../history/screens/transaction_history_screen.dart';
 import '../../../core/services/socket_service.dart';
+import '../../bank/screens/bank_link_screen.dart';
+import '../../bank/screens/deposit_withdraw_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -33,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _balance = "0";
   String? _walletCode;
+  bool _isPinSet = false;
   bool _isLoadingBalance = true;
 
   SocketService? _socketService;
@@ -136,11 +139,12 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _balance = responseData['data']?['available_balance']?.toString() ?? "0";
             _walletCode = responseData['data']?['wallet_code'];
+            _isPinSet = responseData['data']?['is_pin_set'] ?? false;
             _isLoadingBalance = false;
           });
 
-          // Nếu đã KYC mà chưa có mã ví thì hiện popup bắt tạo
-          if (widget.isVerified && (_walletCode == null || _walletCode!.isEmpty)) {
+          // Nếu đã KYC mà chưa có mã PIN thì hiện popup bắt tạo
+          if (widget.isVerified && !_isPinSet) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _showSetWalletCodeDialog();
             });
@@ -162,9 +166,12 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => SetWalletCodeDialog(
         token: widget.token,
         onSuccess: (newCode) {
-          setState(() => _walletCode = newCode);
+          setState(() {
+            _walletCode = newCode;
+            _isPinSet = true;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tạo mã ví thành công!'), backgroundColor: Colors.green),
+            const SnackBar(content: Text('Tạo mã PIN thành công!'), backgroundColor: Colors.green),
           );
         },
       ),
@@ -219,6 +226,74 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _handleDepositWithdrawClick() async {
+    setState(() => _isLoadingBalance = true);
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      setState(() => _isLoadingBalance = false);
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final List banks = responseData['data'] ?? [];
+        if (banks.isEmpty) {
+          if (!mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BankLinkScreen(token: widget.token),
+            ),
+          );
+        } else {
+          if (!mounted) return;
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DepositWithdrawScreen(token: widget.token),
+            ),
+          );
+          if (result == true) {
+            _fetchBalance();
+          }
+        }
+      } else {
+        _showErrorSnackBar("Không thể kiểm tra thông tin liên kết ngân hàng.");
+      }
+    } catch (e) {
+      setState(() => _isLoadingBalance = false);
+      _showErrorSnackBar("Lỗi kết nối máy chủ khi kiểm tra ngân hàng.");
+      debugPrint("Check linked banks error: $e");
+    }
+  }
+
+  void _showAlreadyLinkedDialog(String bankName, String cardNumber) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Nạp/Rút tiền', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Tài khoản của bạn đã liên kết với:\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đóng', style: TextStyle(color: Colors.pink)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
@@ -250,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         activeLang: activeLang,
                         isVerified: widget.isVerified,
                         token: widget.token,
-                        walletCode: _walletCode,
+                        isPinSet: _isPinSet,
                         onRequireKyc: _showKycDialog,
                         onRequireWalletCode: _showSetWalletCodeDialog,
                         onRefreshBalance: _fetchBalance,
@@ -303,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildBottomNavItem(Icons.home, "MoMo", 0, isActive: _selectedIndex == 0),
+                      _buildBottomNavItem(Icons.home, "Mio", 0, isActive: _selectedIndex == 0),
                       _buildBottomNavItem(Icons.local_offer_outlined, activeLang == 'VIE' ? "Ưu đãi" : "Offers", 1, isActive: _selectedIndex == 1),
                     ],
                   ),
@@ -504,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              activeLang == 'VIE' ? "MoMo đề xuất" : "Recommended",
+              activeLang == 'VIE' ? "Mio đề xuất" : "Recommended",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
@@ -534,7 +609,11 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!widget.isVerified) {
           _showKycDialog();
         } else {
-          print("Đang mở tính năng: $title");
+          if (title == "Nạp/Rút" || title == "Deposit") {
+            _handleDepositWithdrawClick();
+          } else {
+            print("Đang mở tính năng: $title");
+          }
         }
       },
       child: Column(

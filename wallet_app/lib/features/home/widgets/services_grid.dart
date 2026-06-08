@@ -5,7 +5,7 @@ class ServicesGrid extends StatelessWidget {
   final String activeLang;
   final bool isVerified;
   final String token;
-  final String? walletCode;
+  final bool isPinSet;
   final VoidCallback onRequireKyc;
   final VoidCallback onRequireWalletCode;
   final VoidCallback onRefreshBalance;
@@ -15,7 +15,7 @@ class ServicesGrid extends StatelessWidget {
     required this.activeLang,
     required this.isVerified,
     required this.token,
-    required this.walletCode,
+    required this.isPinSet,
     required this.onRequireKyc,
     required this.onRequireWalletCode,
     required this.onRefreshBalance,
@@ -49,7 +49,7 @@ class ServicesGrid extends StatelessWidget {
                 onRequireKyc();
               } else {
                 if (service['name'] == 'Chuyển tiền' || service['name'] == 'Transfer') {
-                  if (walletCode == null || walletCode!.isEmpty) {
+                  if (!isPinSet) {
                     onRequireWalletCode();
                     return;
                   }

@@ -74,12 +74,26 @@ const transactionRepository = {
         await client.query(query, [transactionId, walletId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString()]);
     },
 
-    recordDeposit: async (client, walletId, amount, ledgerId) => {
+    recordDeposit: async (client, walletId, amount, ledgerId, depositMethod = 'LINKED_BANK', externalReference = null) => {
         const query = `
-            INSERT INTO deposit_transactions (wallet_id, amount, deposit_method, status, ledger_transaction_id)
-            VALUES ($1, $2, 'MOCK_BANK', 'SUCCESS', $3);
+            INSERT INTO deposit_transactions (wallet_id, amount, deposit_method, status, ledger_transaction_id, external_reference)
+            VALUES ($1, $2, $3, 'SUCCESS', $4, $5);
         `;
-        await client.query(query, [walletId, amount.toString(), ledgerId]);
+        await client.query(query, [walletId, amount.toString(), depositMethod, ledgerId, externalReference]);
+    },
+
+    recordWithdrawal: async (client, walletId, amount, ledgerId, linkedBankId, externalReference = null) => {
+        const query = `
+            INSERT INTO withdrawal_transactions (wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, external_reference)
+            VALUES ($1, $2, 'LINKED_BANK', 'SUCCESS', $3, $4, $5);
+        `;
+        await client.query(query, [walletId, amount.toString(), ledgerId, linkedBankId, externalReference]);
+    },
+
+    getUserKycFaceImage: async (userId) => {
+        const query = `SELECT face_image FROM user_kyc WHERE user_id = $1 AND kyc_status = 'VERIFIED'`;
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
     },
 
     recordTransfer: async (client, senderId, receiverId, amount, note, ledgerId, referenceCode) => {
@@ -92,8 +106,16 @@ const transactionRepository = {
 
     getWalletForPinCheck: async (userId) => {
         const query = `
-            SELECT id, wallet_code, pin_failed_attempts, pin_locked_until 
-            FROM wallets WHERE user_id = $1
+            SELECT 
+                w.id, 
+                COALESCE(w.wallet_code, u.phone) AS wallet_code, 
+                w.pin_failed_attempts, 
+                w.pin_locked_until,
+                u.pin_hash,
+                u.phone
+            FROM wallets w
+            JOIN users u ON w.user_id = u.id
+            WHERE w.user_id = $1
         `;
         const result = await pool.query(query, [userId]);
         return result.rows[0];
@@ -134,7 +156,8 @@ const transactionRepository = {
                 u_sender.full_name AS sender_name,
                 u_sender.phone AS sender_phone,
                 u_receiver.full_name AS receiver_name,
-                u_receiver.phone AS receiver_phone
+                u_receiver.phone AS receiver_phone,
+                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code) AS external_reference
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.transaction_id = lt.id
             LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
@@ -142,6 +165,8 @@ const transactionRepository = {
             LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
             LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
             LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
+            LEFT JOIN deposit_transactions dt ON lt.id = dt.ledger_transaction_id
+            LEFT JOIN withdrawal_transactions wt_act ON lt.id = wt_act.ledger_transaction_id
             WHERE le.wallet_id = $1
             ORDER BY le.created_at DESC
             LIMIT $2 OFFSET $3;

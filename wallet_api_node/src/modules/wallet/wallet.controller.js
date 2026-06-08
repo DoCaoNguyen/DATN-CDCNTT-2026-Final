@@ -86,6 +86,50 @@ const walletController = {
             console.error('Lỗi sinh mã QR chuyển tiền:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi tạo mã QR thanh toán' });
         }
+    },
+
+    getLinkedBanks: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const result = await walletService.getLinkedBanks(userId);
+            res.status(200).json({
+                message: 'Lấy danh sách ngân hàng liên kết thành công',
+                data: result
+            });
+        } catch (error) {
+            console.error('Lỗi lấy danh sách ngân hàng liên kết:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi lấy danh sách ngân hàng liên kết' });
+        }
+    },
+
+    linkBank: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const { bank_name, bank_code, card_number, card_holder_name, pin } = req.body;
+
+            if (!bank_name || !card_number || !card_holder_name || !pin) {
+                return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin liên kết ngân hàng' });
+            }
+
+            const result = await walletService.linkBank(userId, bank_name, bank_code, card_number, card_holder_name, pin);
+            res.status(200).json({
+                message: 'Liên kết ngân hàng thành công',
+                data: result
+            });
+        } catch (error) {
+            if (error.message.startsWith('Wrong_PIN_')) {
+                const attemptsLeft = error.message.split('_')[2];
+                return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
+            }
+            if (error.message === 'Wallet_Locked_PIN') {
+                return res.status(400).json({ error: 'Tài khoản tạm khóa tính năng liên kết trong 30 phút do nhập sai mã PIN quá 3 lần.' });
+            }
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của bạn' });
+            }
+            console.error('Lỗi liên kết ngân hàng:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi liên kết ngân hàng' });
+        }
     }
 };
 

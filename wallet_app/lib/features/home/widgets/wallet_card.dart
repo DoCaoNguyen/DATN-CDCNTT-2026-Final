@@ -63,7 +63,7 @@ class _WalletCardState extends State<WalletCard> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text(widget.activeLang == 'VIE' ? "Ví MoMo" : "MoMo Wallet", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text(widget.activeLang == 'VIE' ? "Ví Mio" : "Mio Wallet", style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 4),

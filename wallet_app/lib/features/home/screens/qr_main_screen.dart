@@ -846,7 +846,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                       style: TextStyle(color: Colors.grey),
                                     ),
                                     Text(
-                                      'MoMo',
+                                      'Mio',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),

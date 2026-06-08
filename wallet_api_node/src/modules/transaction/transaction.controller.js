@@ -3,7 +3,8 @@ const txService = require('./transaction.service');
 const transactionController = {
     deposit: async (req, res) => {
         const userId = req.user.userId;
-        const { amount } = req.body;
+        const { amount, pin, external_reference } = req.body;
+        const faceImagePath = req.file ? req.file.path : null;
 
         let bigAmount;
         try {
@@ -14,11 +15,74 @@ const transactionController = {
         }
 
         try {
-            const result = await txService.depositMock(userId, bigAmount);
+            const result = await txService.deposit(userId, bigAmount, pin, faceImagePath, external_reference);
             res.status(200).json({ message: 'Nạp tiền thành công', data: result });
         } catch (error) {
+            if (error.message.startsWith('Wrong_PIN_')) {
+                const attemptsLeft = error.message.split('_')[2];
+                return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
+            }
+            
+            const errorMap = {
+                'Wallet_Locked_PIN': 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.',
+                'Wallet_Not_Found': 'Không tìm thấy ví của bạn hoặc bạn chưa thiết lập mã PIN',
+                'PIN_Required': 'Vui lòng cung cấp mã PIN',
+                'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
+                'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
+                'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.'
+              };
+
+            if (errorMap[error.message]) {
+                return res.status(400).json({ error: errorMap[error.message] });
+            }
+
             console.error('Lỗi Nạp tiền:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi nạp tiền' });
+        }
+    },
+
+    withdraw: async (req, res) => {
+        const userId = req.user.userId;
+        const { amount, pin, linked_bank_id, external_reference } = req.body;
+        const faceImagePath = req.file ? req.file.path : null;
+
+        if (!linked_bank_id) {
+            return res.status(400).json({ error: 'Vui lòng chọn ngân hàng rút tiền' });
+        }
+
+        let bigAmount;
+        try {
+            bigAmount = BigInt(amount);
+            if (bigAmount <= 0n) throw new Error();
+        } catch (e) {
+            return res.status(400).json({ error: 'Số tiền không hợp lệ' });
+        }
+
+        try {
+            const result = await txService.withdraw(userId, bigAmount, pin, faceImagePath, linked_bank_id, external_reference);
+            res.status(200).json({ message: 'Rút tiền thành công', data: result });
+        } catch (error) {
+            if (error.message.startsWith('Wrong_PIN_')) {
+                const attemptsLeft = error.message.split('_')[2];
+                return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
+            }
+            
+            const errorMap = {
+                'Wallet_Locked_PIN': 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.',
+                'Wallet_Not_Found': 'Không tìm thấy ví của bạn hoặc bạn chưa thiết lập mã PIN',
+                'PIN_Required': 'Vui lòng cung cấp mã PIN',
+                'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
+                'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
+                'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
+                'Insufficient_Balance': 'Số dư trong ví không đủ để rút số tiền này.'
+            };
+
+            if (errorMap[error.message]) {
+                return res.status(400).json({ error: errorMap[error.message] });
+            }
+
+            console.error('Lỗi Rút tiền:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi rút tiền' });
         }
     },
 

@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ví Điện Tử', // Tên của ứng dụng
+      title: 'Ví Điện Tử Mio', // Tên của ứng dụng
       debugShowCheckedModeBanner: false, // Tắt dải băng "DEBUG" màu đỏ ở góc phải màn hình
       theme: ThemeData(
         // Lấy màu hồng chủ đạo làm màu gốc cho toàn bộ theme

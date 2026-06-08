@@ -1,7 +1,15 @@
 class ApiConfig {
+  // --- BASE URL ---
+  // Dùng 10.0.2.2 cho máy ảo Android
+  // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
   static const String baseUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
-  static const String socketUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev';
 
+  static String get socketUrl {
+    final uri = Uri.parse(baseUrl);
+    return "${uri.scheme}://${uri.host}";
+  }
+
+  // --- AUTH ENDPOINTS ---
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
   static const String setPassword = '$baseUrl/auth/set-password';
@@ -16,4 +24,8 @@ class ApiConfig {
   static const String getTransactionHistory = '$baseUrl/transaction/history';
   static const String requestMoneyQR = '$baseUrl/payment/request';
   static const String processPayment = '$baseUrl/payment/process';
+  static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
+  static const String linkBank = '$baseUrl/wallet/link-bank';
+  static const String deposit = '$baseUrl/transaction/deposit';
+  static const String withdraw = '$baseUrl/transaction/withdraw';
 }
