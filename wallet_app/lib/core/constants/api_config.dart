@@ -1,5 +1,6 @@
 class ApiConfig {
   static const String baseUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
+  static const String socketUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev';
 
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';

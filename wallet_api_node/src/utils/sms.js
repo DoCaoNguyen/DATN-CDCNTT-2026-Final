@@ -7,10 +7,10 @@ const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 const client = twilio(accountSid, authToken);
 
 const formatPhone = (phone) => {
-    let p = String(phone).trim();
-    if (p.startsWith('0')) return '+84' + p.slice(1);
-    if (!p.startsWith('+')) return '+' + p;
-    return p;
+  let p = String(phone).trim();
+  if (p.startsWith('0')) return '+84' + p.slice(1);
+  if (!p.startsWith('+')) return '+' + p;
+  return p;
 };
 
 const sendOTP = async (phoneNumber) => {
