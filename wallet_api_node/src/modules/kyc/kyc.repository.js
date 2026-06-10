@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
 
 const kycRepository = {
     // --- MỚI THÊM: Kiểm tra trùng lặp CCCD ---
@@ -18,15 +19,16 @@ const kycRepository = {
             await client.query('DELETE FROM user_kyc WHERE user_id = $1', [userId]);
 
             // 2. Thêm hồ sơ KYC mới
+            const newId = uuidv7();
             const insertQuery = `
                 INSERT INTO user_kyc (
-                    user_id, id_number, full_name, dob, gender, address, 
+                    id, user_id, id_number, full_name, dob, gender, address, 
                     id_front_image, id_back_image, face_image, kyc_status, face_match_score
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *
             `;
             
             const values = [
-                userId, ocrData.id_number, ocrData.full_name, ocrData.dob, ocrData.gender, ocrData.address,
+                newId, userId, ocrData.id_number, ocrData.full_name, ocrData.dob, ocrData.gender, ocrData.address,
                 idFront, idBack, faceImage, status, matchScore
             ];
 

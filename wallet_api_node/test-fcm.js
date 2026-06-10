@@ -1,4 +1,5 @@
 const pool = require('./src/config/db');
+const { v7: uuidv7 } = require('uuid');
 const notificationService = require('./src/modules/notification/notification.service');
 const notificationRepository = require('./src/modules/notification/notification.repository');
 
@@ -13,11 +14,12 @@ async function runTest() {
         const userResult = await pool.query('SELECT id FROM users LIMIT 1');
         if (userResult.rows.length === 0) {
             console.log('Database chưa có user nào. Tiến hành tạo user ảo để test...');
+            const newId = uuidv7();
             const insertUserResult = await pool.query(`
                 INSERT INTO users (id, password_hash, full_name, email, phone) 
-                VALUES (gen_random_uuid(), 'hash', 'Test FCM User', 'testfcm@example.com', '0987654321')
+                VALUES ($1, 'hash', 'Test FCM User', 'testfcm@example.com', '0987654321')
                 RETURNING id
-            `);
+            `, [newId]);
             testUserId = insertUserResult.rows[0].id;
         } else {
             testUserId = userResult.rows[0].id;

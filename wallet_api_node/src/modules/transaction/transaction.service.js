@@ -189,6 +189,99 @@ const transactionService = {
         }
     },
 
+    bankTransfer: async (userId, amount, pin, faceImagePath, bankCode, bankName, accountNumber, externalReference) => {
+        const wallet = await repo.getWalletForPinCheck(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const extRef = (externalReference && /^\d{12}$/.test(externalReference))
+            ? externalReference
+            : Math.floor(100000000000 + Math.random() * 900000000000).toString();
+
+        // Verify based on amount (50,000,000 VND)
+        if (amount < 50000000n) {
+            if (!pin) throw new Error('PIN_Required');
+            if (wallet.pin_locked_until) {
+                const now = new Date();
+                const lockedUntil = new Date(wallet.pin_locked_until);
+                if (now < lockedUntil) {
+                    throw new Error('Wallet_Locked_PIN');
+                } else {
+                    await repo.resetPinAttempts(wallet.id);
+                    wallet.pin_failed_attempts = 0;
+                }
+            }
+            if (!wallet.pin_hash) throw new Error('Wallet_Not_Found');
+            const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+            if (!isPinMatch) {
+                const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
+                if (newAttempts >= 3) {
+                    const lockTime = new Date(Date.now() + 30 * 60000);
+                    await repo.updatePinAttempts(wallet.id, newAttempts, lockTime);
+                    throw new Error('Wallet_Locked_PIN');
+                } else {
+                    await repo.updatePinAttempts(wallet.id, newAttempts, null);
+                    throw new Error(`Wrong_PIN_${3 - newAttempts}`);
+                }
+            }
+            if (wallet.pin_failed_attempts > 0) {
+                await repo.resetPinAttempts(wallet.id);
+            }
+        } else {
+            if (!faceImagePath) throw new Error('Face_Verification_Required');
+            const kycRecord = await repo.getUserKycFaceImage(userId);
+            if (!kycRecord || !kycRecord.face_image) {
+                throw new Error('No_KYC_Record_Found');
+            }
+            const matchResult = await kycService.verifyFaceMatchFacePlusPlus(kycRecord.face_image, faceImagePath);
+            if (!matchResult.faceFound || !matchResult.isMatch) {
+                throw new Error('Face_Verification_Failed');
+            }
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN'); 
+
+            const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
+            if (balanceBefore < amount) {
+                throw new Error('Insufficient_Balance');
+            }
+            const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
+
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`);
+
+            await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
+
+            await repo.recordBankTransfer(client, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
+
+            await client.query('COMMIT'); 
+            
+            emitToUser(userId, 'balance_update', {
+                type: 'WITHDRAW',
+                amount: amount.toString(),
+                newBalance: balanceAfter.toString()
+            });
+
+            // Gửi Push Notification biến động số dư
+            notificationService.sendBalanceChangeNotification(userId, amount, 'WITHDRAWAL', ledgerTxId).catch(err => {
+                console.error('Lỗi gửi push notification chuyển tiền ngân hàng:', err);
+            });
+
+            return { 
+                id: extRef,
+                external_reference: extRef,
+                amount: amount.toString(), 
+                balanceBefore: balanceBefore.toString(), 
+                balanceAfter: balanceAfter.toString() 
+            };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
     transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin) => {
         const senderWallet = await repo.getWalletForPinCheck(senderUserId);
         
@@ -332,6 +425,24 @@ const transactionService = {
             balance_before: item.balance_before ? item.balance_before.toString() : '0',
             balance_after: item.balance_after ? item.balance_after.toString() : '0'
         }));
+    },
+
+    updateTransactionCategory: async (userId, transactionId, categoryName, isExpenseCounted) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) {
+            throw new Error('Wallet_Not_Found');
+        }
+
+        const isOwner = await repo.checkTransactionOwnership(transactionId, wallet.id);
+        if (!isOwner) {
+            throw new Error('Forbidden_Error');
+        }
+
+        const result = await repo.updateTransactionCategory(transactionId, categoryName, isExpenseCounted);
+        if (!result) {
+            throw new Error('Transaction_Not_Found');
+        }
+        return result;
     }
 };
 

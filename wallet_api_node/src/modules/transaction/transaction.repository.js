@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
 
 const transactionRepository = {
     getWalletByUserId: async (userId) => {
@@ -58,36 +59,53 @@ const transactionRepository = {
     },
 
     createLedgerTransaction: async (client, type, referenceId, description) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO ledger_transactions (transaction_type, reference_id, status, description)
-            VALUES ($1, $2, 'SUCCESS', $3) RETURNING id;
+            INSERT INTO ledger_transactions (id, transaction_type, reference_id, status, description)
+            VALUES ($1, $2, $3, 'SUCCESS', $4) RETURNING id;
         `;
-        const result = await client.query(query, [type, referenceId, description]);
+        const result = await client.query(query, [newId, type, referenceId, description]);
         return result.rows[0].id;
     },
 
     createLedgerEntry: async (client, transactionId, walletId, type, amount, balanceBefore, balanceAfter) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO ledger_entries (transaction_id, wallet_id, entry_type, amount, balance_before, balance_after)
-            VALUES ($1, $2, $3, $4, $5, $6);
+            INSERT INTO ledger_entries (id, transaction_id, wallet_id, entry_type, amount, balance_before, balance_after)
+            VALUES ($1, $2, $3, $4, $5, $6, $7);
         `;
-        await client.query(query, [transactionId, walletId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString()]);
+        await client.query(query, [newId, transactionId, walletId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString()]);
+        return newId;
     },
 
     recordDeposit: async (client, walletId, amount, ledgerId, depositMethod = 'LINKED_BANK', externalReference = null) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO deposit_transactions (wallet_id, amount, deposit_method, status, ledger_transaction_id, external_reference)
-            VALUES ($1, $2, $3, 'SUCCESS', $4, $5);
+            INSERT INTO deposit_transactions (id, wallet_id, amount, deposit_method, status, ledger_transaction_id, external_reference)
+            VALUES ($1, $2, $3, $4, 'SUCCESS', $5, $6);
         `;
-        await client.query(query, [walletId, amount.toString(), depositMethod, ledgerId, externalReference]);
+        await client.query(query, [newId, walletId, amount.toString(), depositMethod, ledgerId, externalReference]);
+        return newId;
     },
 
     recordWithdrawal: async (client, walletId, amount, ledgerId, linkedBankId, externalReference = null) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO withdrawal_transactions (wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, external_reference)
+            INSERT INTO withdrawal_transactions (id, wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, external_reference)
             VALUES ($1, $2, 'LINKED_BANK', 'SUCCESS', $3, $4, $5);
         `;
-        await client.query(query, [walletId, amount.toString(), ledgerId, linkedBankId, externalReference]);
+        await client.query(query, [newId, walletId, amount.toString(), ledgerId, linkedBankId, externalReference]);
+        return newId;
+    },
+
+    recordBankTransfer: async (client, walletId, amount, ledgerId, bankCode, accountNumber, externalReference = null) => {
+        const newId = uuidv7();
+        const query = `
+            INSERT INTO withdrawal_transactions (id, wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, bank_code, account_number, external_reference)
+            VALUES ($1, $2, 'BANK_TRANSFER', 'SUCCESS', $3, NULL, $4, $5, $6);
+        `;
+        await client.query(query, [newId, walletId, amount.toString(), ledgerId, bankCode, accountNumber, externalReference]);
+        return newId;
     },
 
     getUserKycFaceImage: async (userId) => {
@@ -97,11 +115,13 @@ const transactionRepository = {
     },
 
     recordTransfer: async (client, senderId, receiverId, amount, note, ledgerId, referenceCode) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO wallet_transfers (sender_wallet_id, receiver_wallet_id, amount, note, transaction_id, status, reference_code)
-            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', $6);
+            INSERT INTO wallet_transfers (id, sender_wallet_id, receiver_wallet_id, amount, note, transaction_id, status, reference_code)
+            VALUES ($1, $2, $3, $4, $5, $6, 'SUCCESS', $7);
         `;
-        await client.query(query, [senderId, receiverId, amount.toString(), note, ledgerId, referenceCode]);
+        await client.query(query, [newId, senderId, receiverId, amount.toString(), note, ledgerId, referenceCode]);
+        return newId;
     },
 
     getWalletForPinCheck: async (userId) => {
@@ -146,6 +166,8 @@ const transactionRepository = {
                 le.id AS entry_id,
                 le.transaction_id,
                 lt.transaction_type,
+                lt.category_name,
+                lt.is_expense_counted,
                 le.entry_type,
                 le.amount,
                 le.balance_before,
@@ -174,6 +196,27 @@ const transactionRepository = {
         `;
         const result = await pool.query(query, [walletId, limit, offset]);
         return result.rows;
+    },
+
+    checkTransactionOwnership: async (transactionId, walletId) => {
+        const query = `
+            SELECT 1 FROM ledger_entries 
+            WHERE transaction_id = $1 AND wallet_id = $2
+            LIMIT 1;
+        `;
+        const result = await pool.query(query, [transactionId, walletId]);
+        return result.rows.length > 0;
+    },
+
+    updateTransactionCategory: async (transactionId, categoryName, isExpenseCounted) => {
+        const query = `
+            UPDATE ledger_transactions
+            SET category_name = $1, is_expense_counted = $2
+            WHERE id = $3
+            RETURNING *;
+        `;
+        const result = await pool.query(query, [categoryName, isExpenseCounted, transactionId]);
+        return result.rows[0];
     }
 };
 

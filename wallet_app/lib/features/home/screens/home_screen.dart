@@ -15,7 +15,11 @@ import '../../../core/services/notification_service.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../bank/screens/bank_link_screen.dart';
 import '../../bank/screens/deposit_withdraw_screen.dart';
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
+// ignore: depend_on_referenced_packages
+import 'package:local_auth_android/local_auth_android.dart';
+import '../../transfer/screens/transfer_confirm_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -55,6 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _fetchBalance();
     _initSocket();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndSetupBiometric();
+    });
   }
 
   @override
@@ -83,6 +91,142 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _checkAndSetupBiometric() async {
+    const storage = FlutterSecureStorage();
+    final hasSetup = await storage.read(key: "hasSetupBiometric");
+    if (hasSetup == "true") return;
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.fingerprint, color: Colors.pink, size: 28),
+            SizedBox(width: 8),
+            Text(
+              "Thiết lập Vân tay/FaceID",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: const Text(
+          "Bạn có muốn thiết lập đăng nhập bằng Vân tay/FaceID để bảo mật và giao dịch nhanh chóng hơn không?",
+          style: TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Để sau",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pink,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _promptPinForBiometric();
+            },
+            child: const Text(
+              "Đồng ý",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _promptPinForBiometric() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PinConfirmBottomSheet(
+        autoTriggerBiometric: false,
+        onPinEntered: (pin) async {
+          try {
+            final response = await http.post(
+              Uri.parse(ApiConfig.verifyPin),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ${widget.token}',
+                'ngrok-skip-browser-warning': 'true',
+              },
+              body: jsonEncode({'pin': pin}),
+            );
+
+            if (response.statusCode == 200) {
+              Navigator.pop(context); // Close PIN sheet
+              await _authenticateBiometric(pin);
+              return null;
+            } else {
+              final data = jsonDecode(response.body);
+              return data['error'] ?? "Mã PIN không chính xác";
+            }
+          } catch (e) {
+            return "Lỗi kết nối máy chủ";
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _authenticateBiometric(String pinCode) async {
+    final LocalAuthentication auth = LocalAuthentication();
+    try {
+      final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
+      final bool canAuthenticate = canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+
+      if (!canAuthenticate) {
+        _showErrorSnackBar("Thiết bị không hỗ trợ xác thực sinh trắc học.");
+        return;
+      }
+
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Vui lòng xác thực sinh trắc học của bạn',
+        authMessages: const <AuthMessages>[
+          AndroidAuthMessages(
+            signInTitle: 'Thiết lập sinh trắc học',
+            cancelButton: 'Hủy',
+          ),
+        ],
+      );
+
+      if (didAuthenticate) {
+        const storage = FlutterSecureStorage();
+        await storage.write(key: "hasSetupBiometric", value: "true");
+        await storage.write(key: "biometric_pin", value: pinCode);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle_outline, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text("Thiết lập thành công!", style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        _showErrorSnackBar("Xác thực sinh trắc học thất bại.");
+      }
+    } catch (e) {
+      _showErrorSnackBar("Lỗi thiết lập sinh trắc học: $e");
+    }
+  }
+
   void _showBalanceUpdateNotification(Map<String, dynamic> data) {
     final String type = data['type'] ?? '';
     final String rawAmount = data['amount']?.toString() ?? '0';
@@ -106,7 +250,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Icon(Icons.info_outline, color: Colors.white),
             const SizedBox(width: 8),
-            Expanded(child: Text(message, style: const TextStyle(fontWeight: FontWeight.bold))),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
         backgroundColor: Colors.green,
@@ -121,7 +270,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (number == null) return "${value}đ";
     return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
   }
-
 
   Future<void> _fetchBalance() async {
     if (widget.token.isEmpty) {
@@ -143,7 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final responseData = jsonDecode(response.body);
         if (mounted) {
           setState(() {
-            _balance = responseData['data']?['available_balance']?.toString() ?? "0";
+            _balance =
+                responseData['data']?['available_balance']?.toString() ?? "0";
             _walletCode = responseData['data']?['wallet_code'];
             _isPinSet = responseData['data']?['is_pin_set'] ?? false;
             _isLoadingBalance = false;
@@ -177,7 +326,10 @@ class _HomeScreenState extends State<HomeScreen> {
             _isPinSet = true;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tạo mã PIN thành công!'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Tạo mã PIN thành công!'),
+              backgroundColor: Colors.green,
+            ),
           );
         },
       ),
@@ -282,8 +434,13 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Nạp/Rút tiền', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Tài khoản của bạn đã liên kết với:\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)'),
+        title: const Text(
+          'Nạp/Rút tiền',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Tài khoản của bạn đã liên kết với:\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -308,47 +465,53 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: _selectedIndex == 0
-            ? RefreshIndicator(
-                onRefresh: _fetchBalance,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      _buildHeaderSection(activeLang),
-                      
-                      // Đã thay thế thẻ ví cũ bằng Widget WalletCard
-                      WalletCard(
-                        activeLang: activeLang,
-                        isLoading: _isLoadingBalance,
-                        balance: _balance,
-                        onToggleVisibility: _fetchBalance,
-                      ),
-                      
-                      _buildFinancialCenterBanner(activeLang),
-                      
-                      // Đã thay thế Grid cũ bằng Widget ServicesGrid
-                      ServicesGrid(
-                        activeLang: activeLang,
-                        isVerified: widget.isVerified,
-                        token: widget.token,
-                        isPinSet: _isPinSet,
-                        onRequireKyc: _showKycDialog,
-                        onRequireWalletCode: _showSetWalletCodeDialog,
-                        onRefreshBalance: _fetchBalance,
-                      ),
-                      
-                      _buildEventBanner(activeLang),
-                      _buildRecommendations(activeLang),
-                      const SizedBox(height: 80),
-                    ],
+              ? RefreshIndicator(
+                  onRefresh: _fetchBalance,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        _buildHeaderSection(activeLang),
+
+                        // Đã thay thế thẻ ví cũ bằng Widget WalletCard
+                        WalletCard(
+                          activeLang: activeLang,
+                          isLoading: _isLoadingBalance,
+                          balance: _balance,
+                          onToggleVisibility: _fetchBalance,
+                        ),
+
+                        _buildFinancialCenterBanner(activeLang),
+
+                        // Đã thay thế Grid cũ bằng Widget ServicesGrid
+                        ServicesGrid(
+                          activeLang: activeLang,
+                          isVerified: widget.isVerified,
+                          token: widget.token,
+                          isPinSet: _isPinSet,
+                          onRequireKyc: _showKycDialog,
+                          onRequireWalletCode: _showSetWalletCodeDialog,
+                          onRefreshBalance: _fetchBalance,
+                        ),
+
+                        _buildEventBanner(activeLang),
+                        _buildRecommendations(activeLang),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
                   ),
-                ),
-              )
-            : _selectedIndex == 1
-                ? Center(child: Text(activeLang == 'VIE' ? 'Trang Ưu đãi (Sắp ra mắt)' : 'Offers (Coming soon)'))
-                : _selectedIndex == 2
-                    ? TransactionHistoryScreen(token: widget.token)
-                    : ProfileScreen(token: widget.token),
+                )
+              : _selectedIndex == 1
+              ? Center(
+                  child: Text(
+                    activeLang == 'VIE'
+                        ? 'Trang Ưu đãi (Sắp ra mắt)'
+                        : 'Offers (Coming soon)',
+                  ),
+                )
+              : _selectedIndex == 2
+              ? TransactionHistoryScreen(token: widget.token)
+              : ProfileScreen(token: widget.token),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               if (!widget.isVerified) {
@@ -371,36 +534,66 @@ class _HomeScreenState extends State<HomeScreen> {
               size: 28,
             ),
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
           bottomNavigationBar: BottomAppBar(
             shape: const CircularNotchedRectangle(),
             notchMargin: 8.0,
             color: Colors.white,
+            padding: EdgeInsets.zero,
             child: SizedBox(
               height: 60,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBottomNavItem(Icons.home, "Mio", 0, isActive: _selectedIndex == 0),
-                      _buildBottomNavItem(Icons.local_offer_outlined, activeLang == 'VIE' ? "Ưu đãi" : "Offers", 1, isActive: _selectedIndex == 1),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: Text(
-                      activeLang == 'VIE' ? "Quét mọi QR" : "Scan QR",
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  Expanded(
+                    child: _buildBottomNavItem(
+                      Icons.home,
+                      "Mio",
+                      0,
+                      isActive: _selectedIndex == 0,
                     ),
                   ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBottomNavItem(Icons.history, activeLang == 'VIE' ? "Lịch sử GD" : "History", 2, isActive: _selectedIndex == 2),
-                      _buildBottomNavItem(Icons.person_outline, activeLang == 'VIE' ? "Tôi" : "Me", 3, isActive: _selectedIndex == 3),
-                    ],
+                  Expanded(
+                    child: _buildBottomNavItem(
+                      Icons.local_offer_outlined,
+                      activeLang == 'VIE' ? "Ưu đãi" : "Offers",
+                      1,
+                      isActive: _selectedIndex == 1,
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(height: 32),
+                        Text(
+                          activeLang == 'VIE' ? "Quét mọi QR" : "Scan QR",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildBottomNavItem(
+                      Icons.history,
+                      activeLang == 'VIE' ? "Lịch sử GD" : "History",
+                      2,
+                      isActive: _selectedIndex == 2,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildBottomNavItem(
+                      Icons.person_outline,
+                      activeLang == 'VIE' ? "Tôi" : "Me",
+                      3,
+                      isActive: _selectedIndex == 3,
+                    ),
                   ),
                 ],
               ),
@@ -410,7 +603,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
 
   Widget _buildHeaderSection(String activeLang) {
     return Container(
@@ -446,7 +638,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       hintText: activeLang == 'VIE'
                           ? "Tìm bạn bè để chuyển tiền"
                           : "Find friends to transfer",
-                      hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                      hintStyle: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -456,30 +651,64 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 12),
               Stack(
                 children: [
-                  const Icon(Icons.notifications_none, size: 28, color: Colors.black54),
+                  const Icon(
+                    Icons.notifications_none,
+                    size: 28,
+                    color: Colors.black54,
+                  ),
                   Positioned(
                     right: 0,
                     top: 0,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                      child: const Text('1', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text(
+                        '1',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.chat_bubble_outline, size: 28, color: Colors.black54),
+              const Icon(
+                Icons.chat_bubble_outline,
+                size: 28,
+                color: Colors.black54,
+              ),
             ],
           ),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildQuickAction(Icons.account_balance_wallet, Colors.pink, activeLang == 'VIE' ? "Nạp/Rút" : "Deposit"),
-              _buildQuickAction(Icons.qr_code, Colors.pink, activeLang == 'VIE' ? "Nhận tiền" : "Receive"),
-              _buildQuickAction(Icons.qr_code_scanner, Colors.pink, activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay"),
-              _buildQuickAction(Icons.apps, Colors.pink, activeLang == 'VIE' ? "Ví tiện ích" : "Utilities"),
+              _buildQuickAction(
+                Icons.account_balance_wallet,
+                Colors.pink,
+                activeLang == 'VIE' ? "Nạp/Rút" : "Deposit",
+              ),
+              _buildQuickAction(
+                Icons.qr_code,
+                Colors.pink,
+                activeLang == 'VIE' ? "Nhận tiền" : "Receive",
+              ),
+              _buildQuickAction(
+                Icons.qr_code_scanner,
+                Colors.pink,
+                activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay",
+              ),
+              _buildQuickAction(
+                Icons.apps,
+                Colors.pink,
+                activeLang == 'VIE' ? "Ví tiện ích" : "Utilities",
+              ),
             ],
           ),
         ],
@@ -500,11 +729,21 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.shield_outlined, color: Colors.blue.shade700, size: 20),
+              Icon(
+                Icons.shield_outlined,
+                color: Colors.blue.shade700,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
-                activeLang == 'VIE' ? "Trung Tâm Tài Chính của Thống" : "Thong's Financial Center",
-                style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 14),
+                activeLang == 'VIE'
+                    ? "Trung Tâm Tài Chính của Thống"
+                    : "Thong's Financial Center",
+                style: TextStyle(
+                  color: Colors.blue.shade700,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -535,7 +774,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Opacity(opacity: 0.2, child: Container(color: Colors.black)),
+                    child: Opacity(
+                      opacity: 0.2,
+                      child: Container(color: Colors.black),
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -543,13 +785,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          activeLang == 'VIE' ? "Dùng Ví Trả Sau\nHoàn tiền 50%*" : "Use Postpaid Wallet\n50% Cashback*",
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                          activeLang == 'VIE'
+                              ? "Dùng Ví Trả Sau\nHoàn tiền 50%*"
+                              : "Use Postpaid Wallet\n50% Cashback*",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          activeLang == 'VIE' ? "Tối đa 10k mọi giao dịch từ 1-30/6" : "Max 10k for all transactions June 1-30",
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          activeLang == 'VIE'
+                              ? "Tối đa 10k mọi giao dịch từ 1-30/6"
+                              : "Max 10k for all transactions June 1-30",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -558,18 +811,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     bottom: 12,
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
                         activeLang == 'VIE' ? "Khám phá ngay" : "Explore Now",
-                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -596,11 +859,42 @@ class _HomeScreenState extends State<HomeScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildRecommendItem(Icons.campaign, activeLang == 'VIE' ? "Từ 220k" : "From 220k", activeLang == 'VIE' ? "Loa thông\nbáo chuyển ..." : "Payment\nSpeaker", Colors.pink),
-                _buildRecommendItem(Icons.card_giftcard, activeLang == 'VIE' ? "Hoàn 50%" : "50% Back", activeLang == 'VIE' ? "Ví Trả Sau -\nHoàn 50%" : "Postpaid -\n50% Back", Colors.pinkAccent),
-                _buildRecommendItem(Icons.sports_esports, null, activeLang == 'VIE' ? "Mã thẻ Game\nOnline" : "Game\nCards", Colors.blue),
-                _buildRecommendItem(Icons.account_balance_wallet, null, activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag", Colors.orange),
-                _buildRecommendItem(Icons.electric_bolt, null, activeLang == 'VIE' ? "Thanh toán\nđiện" : "Electricity\nBill", Colors.yellow.shade700),
+                _buildRecommendItem(
+                  Icons.campaign,
+                  activeLang == 'VIE' ? "Từ 220k" : "From 220k",
+                  activeLang == 'VIE'
+                      ? "Loa thông\nbáo chuyển ..."
+                      : "Payment\nSpeaker",
+                  Colors.pink,
+                ),
+                _buildRecommendItem(
+                  Icons.card_giftcard,
+                  activeLang == 'VIE' ? "Hoàn 50%" : "50% Back",
+                  activeLang == 'VIE'
+                      ? "Ví Trả Sau -\nHoàn 50%"
+                      : "Postpaid -\n50% Back",
+                  Colors.pinkAccent,
+                ),
+                _buildRecommendItem(
+                  Icons.sports_esports,
+                  null,
+                  activeLang == 'VIE' ? "Mã thẻ Game\nOnline" : "Game\nCards",
+                  Colors.blue,
+                ),
+                _buildRecommendItem(
+                  Icons.account_balance_wallet,
+                  null,
+                  activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag",
+                  Colors.orange,
+                ),
+                _buildRecommendItem(
+                  Icons.electric_bolt,
+                  null,
+                  activeLang == 'VIE'
+                      ? "Thanh toán\nđiện"
+                      : "Electricity\nBill",
+                  Colors.yellow.shade700,
+                ),
               ],
             ),
           ),
@@ -626,17 +920,28 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRecommendItem(IconData icon, String? badge, String title, Color color) {
+  Widget _buildRecommendItem(
+    IconData icon,
+    String? badge,
+    String title,
+    Color color,
+  ) {
     return Container(
       width: 80,
       margin: const EdgeInsets.only(right: 12),
@@ -648,7 +953,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 width: 50,
                 height: 50,
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Icon(icon, color: color, size: 28),
               ),
               if (badge != null)
@@ -657,25 +965,44 @@ class _HomeScreenState extends State<HomeScreen> {
                   left: -5,
                   right: -5,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
                       badge,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBottomNavItem(IconData icon, String label, int index, {bool isActive = false}) {
+  Widget _buildBottomNavItem(
+    IconData icon,
+    String label,
+    int index, {
+    bool isActive = false,
+  }) {
     return MaterialButton(
       minWidth: 40,
       onPressed: () {

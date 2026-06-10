@@ -12,5 +12,6 @@ router.post('/set-code', walletController.setWalletCode);
 router.get('/qr', walletController.getPersonalQR);
 router.get('/linked-banks', walletController.getLinkedBanks);
 router.post('/link-bank', walletController.linkBank);
+router.post('/verify-pin', walletController.verifyPin);
 
 module.exports = router;

@@ -1,4 +1,6 @@
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
+
 const authRepository = {
     checkExists: async (email, phone) => {
         const query = 'SELECT id FROM users WHERE email = $1 OR phone = $2';
@@ -7,11 +9,12 @@ const authRepository = {
     },
 
     create: async (client, email, phone, passwordHash) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO users (email, phone, password_hash) 
-            VALUES ($1, $2, $3) RETURNING id
+            INSERT INTO users (id, email, phone, password_hash) 
+            VALUES ($1, $2, $3, $4) RETURNING id
         `;
-        const result = await client.query(query, [email, phone, passwordHash]);
+        const result = await client.query(query, [newId, email, phone, passwordHash]);
         return result.rows[0].id;
     },
 

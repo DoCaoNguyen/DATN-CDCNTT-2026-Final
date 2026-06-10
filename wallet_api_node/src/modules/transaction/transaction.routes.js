@@ -23,7 +23,9 @@ router.use(verifyToken);
 
 router.post('/deposit', upload.single('face_image'), withIdempotency, transactionController.deposit);
 router.post('/withdraw', upload.single('face_image'), withIdempotency, transactionController.withdraw);
+router.post('/bank-transfer', upload.single('face_image'), withIdempotency, transactionController.bankTransfer);
 router.post('/transfer', withIdempotency, transactionController.transfer);
 router.get('/history', transactionController.getHistory);
+router.put('/:id/category', transactionController.updateCategory);
 
 module.exports = router;

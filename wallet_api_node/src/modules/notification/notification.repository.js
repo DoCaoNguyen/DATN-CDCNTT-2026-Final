@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
 
 const notificationRepository = {
     /**
@@ -24,9 +25,10 @@ const notificationRepository = {
      * @param {string} deviceType - ANDROID, IOS, or WEB
      */
     upsertDeviceToken: async (userId, fcmToken, deviceName, deviceType) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO user_devices (user_id, fcm_token, device_name, device_type, updated_at)
-            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+            INSERT INTO user_devices (id, user_id, fcm_token, device_name, device_type, updated_at)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
             ON CONFLICT (fcm_token) 
             DO UPDATE SET 
                 user_id = EXCLUDED.user_id,
@@ -35,7 +37,7 @@ const notificationRepository = {
                 updated_at = CURRENT_TIMESTAMP
             RETURNING *
         `;
-        const result = await pool.query(query, [userId, fcmToken, deviceName, deviceType]);
+        const result = await pool.query(query, [newId, userId, fcmToken, deviceName, deviceType]);
         return result.rows[0];
     },
 
@@ -56,12 +58,14 @@ const notificationRepository = {
      * Create an in-app notification record
      */
     createNotification: async (userId, title, content, notificationType, referenceId = null) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO notifications (user_id, title, content, notification_type, reference_id, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, 'UNREAD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO notifications (id, user_id, title, content, notification_type, reference_id, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, 'UNREAD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             RETURNING *
         `;
         const result = await pool.query(query, [
+            newId,
             userId, 
             title, 
             content, 

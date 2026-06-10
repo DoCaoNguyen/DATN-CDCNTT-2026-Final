@@ -26,7 +26,9 @@ class ApiConfig {
   static const String processPayment = '$baseUrl/payment/process';
   static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
   static const String linkBank = '$baseUrl/wallet/link-bank';
+  static const String verifyPin = '$baseUrl/wallet/verify-pin';
   static const String deposit = '$baseUrl/transaction/deposit';
   static const String withdraw = '$baseUrl/transaction/withdraw';
+  static const String bankTransfer = '$baseUrl/transaction/bank-transfer';
   static const String registerDevice = '$baseUrl/notifications/register-device';
 }

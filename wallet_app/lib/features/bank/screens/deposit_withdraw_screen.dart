@@ -258,7 +258,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   }
 
   // --- TRANSCTION API CALLS ---
-  Future<void> _executeTransactionWithPIN(String pin) async {
+  Future<String?> _executeTransactionWithPIN(String pin) async {
     setState(() => _isLoading = true);
     try {
       final isDeposit = _activeTab == 0;
@@ -291,7 +291,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         final now = DateTime.now();
         final formattedTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
 
-        if (!mounted) return;
+        if (!mounted) return null;
+        Navigator.pop(context); // Close PIN bottom sheet
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -310,12 +311,25 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
           });
           _fetchMioBalance();
         });
+        return null;
       } else {
         final data = jsonDecode(response.body);
-        _showErrorSnackBar(data['error'] ?? "Giao dịch không thành công.");
+        final String errorMessage = data['error'] ?? "Giao dịch không thành công.";
+        if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
+          return errorMessage;
+        } else {
+          if (!mounted) return null;
+          Navigator.pop(context); // Close PIN bottom sheet
+          _showErrorSnackBar(errorMessage);
+          return null;
+        }
       }
     } catch (e) {
-      _showErrorSnackBar("Lỗi kết nối máy chủ.");
+      if (mounted) {
+        Navigator.pop(context);
+        _showErrorSnackBar("Lỗi kết nối máy chủ.");
+      }
+      return null;
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -393,9 +407,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => PinConfirmBottomSheet(
         onPinEntered: (pin) async {
-          Navigator.pop(context); // Close PIN bottom sheet
-          await _executeTransactionWithPIN(pin);
-          return null;
+          return await _executeTransactionWithPIN(pin);
         },
       ),
     );

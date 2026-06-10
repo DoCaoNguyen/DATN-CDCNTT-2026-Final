@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
+import 'transaction_detail_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final String token;
@@ -197,6 +198,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   // Determine Tag Category based on note content or transaction details
   String _determineCategoryTag(dynamic tx) {
+    if (tx['category_name'] != null && tx['category_name'].toString().isNotEmpty) {
+      return tx['category_name'].toString();
+    }
     final note = (tx['transfer_note'] ?? tx['description'] ?? '').toString().toLowerCase();
     if (tx['transaction_type'] == 'DEPOSIT') {
       return "Nạp tiền";
@@ -214,9 +218,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Color _getTagColor(String tag) {
+    if (tag == "Nạp tiền") return Colors.blue.shade600;
+    if (["Chợ, siêu thị", "Ăn uống", "Di chuyển"].contains(tag)) {
+      return Colors.orange.shade700;
+    }
+    if (["Mua sắm", "Giải trí", "Làm đẹp", "Sức khỏe", "Từ thiện"].contains(tag)) {
+      return Colors.pink.shade600;
+    }
+    if (["Hóa đơn", "Nhà cửa", "Người thân"].contains(tag)) {
+      return Colors.blue.shade600;
+    }
+    if (["Đầu tư", "Học tập"].contains(tag)) {
+      return Colors.teal.shade600;
+    }
     switch (tag) {
-      case "Nạp tiền":
-        return Colors.blue.shade600;
       case "Ăn uống":
         return Colors.orange.shade700;
       case "Giải trí":
@@ -229,9 +244,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Color _getTagBgColor(String tag) {
+    if (tag == "Nạp tiền") return Colors.blue.shade50;
+    if (["Chợ, siêu thị", "Ăn uống", "Di chuyển"].contains(tag)) {
+      return Colors.orange.shade50;
+    }
+    if (["Mua sắm", "Giải trí", "Làm đẹp", "Sức khỏe", "Từ thiện"].contains(tag)) {
+      return Colors.pink.shade50;
+    }
+    if (["Hóa đơn", "Nhà cửa", "Người thân"].contains(tag)) {
+      return Colors.blue.shade50;
+    }
+    if (["Đầu tư", "Học tập"].contains(tag)) {
+      return Colors.teal.shade50;
+    }
     switch (tag) {
-      case "Nạp tiền":
-        return Colors.blue.shade50;
       case "Ăn uống":
         return Colors.orange.shade50;
       case "Giải trí":
@@ -739,7 +765,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             final bool isCredit = entryType == 'CREDIT';
 
                             return InkWell(
-                              onTap: () => _showTransactionDetailSheet(tx),
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TransactionDetailScreen(
+                                      token: widget.token,
+                                      transaction: tx,
+                                    ),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _fetchHistory();
+                                }
+                              },
                               child: Container(
                                 color: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

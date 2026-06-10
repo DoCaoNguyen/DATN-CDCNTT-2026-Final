@@ -1,11 +1,14 @@
 
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
 
 const walletRepository = {
     
     create: async (client, userId) => {
-        const query = `INSERT INTO wallets (user_id) VALUES ($1)`;
-        await client.query(query, [userId]);
+        const newId = uuidv7();
+        const query = `INSERT INTO wallets (id, user_id) VALUES ($1, $2)`;
+        await client.query(query, [newId, userId]);
+        return newId;
     },
 
     findByUserId: async (userId) => {
@@ -75,12 +78,13 @@ const walletRepository = {
     },
 
     linkBank: async (walletId, bankName, bankCode, cardNumber, cardHolderName) => {
+        const newId = uuidv7();
         const query = `
-            INSERT INTO wallet_linked_banks (wallet_id, bank_name, bank_code, card_number, card_holder_name, status)
-            VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
+            INSERT INTO wallet_linked_banks (id, wallet_id, bank_name, bank_code, card_number, card_holder_name, status)
+            VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')
             RETURNING id, bank_name, bank_code, card_number, card_holder_name, status
         `;
-        const result = await pool.query(query, [walletId, bankName, bankCode, cardNumber, cardHolderName]);
+        const result = await pool.query(query, [newId, walletId, bankName, bankCode, cardNumber, cardHolderName]);
         return result.rows[0];
     }
 };
