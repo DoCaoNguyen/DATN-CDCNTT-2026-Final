@@ -19,6 +19,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   bool _isLoading = true;
   String _errorMsg = "";
   final TextEditingController _searchController = TextEditingController();
+  DateTimeRange? _selectedDateRange;
 
   // Statistics calculation variables
   int _totalSpendThisMonth = 0;
@@ -28,7 +29,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     _fetchHistory();
-    _searchController.addListener(_onSearchChanged);
+    _searchController.addListener(_applyFilters);
   }
 
   @override
@@ -68,9 +69,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           if (mounted) {
             setState(() {
               _allTransactions = fetchedList;
-              _filteredTransactions = fetchedList;
               _isLoading = false;
               _calculateMonthlyStats();
+              _applyFilters();
             });
           }
         } else {
@@ -126,30 +127,71 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     });
   }
 
-  void _onSearchChanged() {
+  void _applyFilters() {
     final query = _searchController.text.toLowerCase().trim();
-    if (query.isEmpty) {
-      setState(() {
-        _filteredTransactions = _allTransactions;
-      });
-      return;
-    }
-
     setState(() {
       _filteredTransactions = _allTransactions.where((tx) {
-        final description = (tx['description'] ?? '').toString().toLowerCase();
-        final transferNote = (tx['transfer_note'] ?? '').toString().toLowerCase();
-        final senderName = (tx['sender_name'] ?? '').toString().toLowerCase();
-        final receiverName = (tx['receiver_name'] ?? '').toString().toLowerCase();
-        final amount = (tx['amount'] ?? '').toString();
+        // 1. Text Search Filter
+        bool matchesSearch = true;
+        if (query.isNotEmpty) {
+          final description = (tx['description'] ?? '').toString().toLowerCase();
+          final transferNote = (tx['transfer_note'] ?? '').toString().toLowerCase();
+          final senderName = (tx['sender_name'] ?? '').toString().toLowerCase();
+          final receiverName = (tx['receiver_name'] ?? '').toString().toLowerCase();
+          final amount = (tx['amount'] ?? '').toString();
 
-        return description.contains(query) ||
-            transferNote.contains(query) ||
-            senderName.contains(query) ||
-            receiverName.contains(query) ||
-            amount.contains(query);
+          matchesSearch = description.contains(query) ||
+              transferNote.contains(query) ||
+              senderName.contains(query) ||
+              receiverName.contains(query) ||
+              amount.contains(query);
+        }
+
+        // 2. Date Range Filter
+        bool matchesDate = true;
+        if (_selectedDateRange != null && tx['created_at'] != null) {
+          try {
+            final txDate = DateTime.parse(tx['created_at']).toLocal();
+            // Start of start day to end of end day
+            final start = DateTime(_selectedDateRange!.start.year, _selectedDateRange!.start.month, _selectedDateRange!.start.day);
+            final end = DateTime(_selectedDateRange!.end.year, _selectedDateRange!.end.month, _selectedDateRange!.end.day, 23, 59, 59);
+            matchesDate = txDate.isAfter(start) && txDate.isBefore(end);
+          } catch (_) {
+            matchesDate = false;
+          }
+        }
+
+        return matchesSearch && matchesDate;
       }).toList();
     });
+  }
+
+  Future<void> _selectDateRange() async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: _selectedDateRange,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.pink,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDateRange = picked;
+      });
+      _applyFilters();
+    }
   }
 
   String _formatCurrency(dynamic amountVal) {
@@ -500,13 +542,21 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        shape: BoxShape.circle,
+                    GestureDetector(
+                      onTap: _selectDateRange,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _selectedDateRange != null ? Colors.pink.shade50 : const Color(0xFFF5F5F5),
+                          shape: BoxShape.circle,
+                          border: _selectedDateRange != null ? Border.all(color: Colors.pink.shade200) : null,
+                        ),
+                        child: Icon(
+                          Icons.tune, 
+                          color: _selectedDateRange != null ? Colors.pink : Colors.black54, 
+                          size: 20
+                        ),
                       ),
-                      child: const Icon(Icons.tune, color: Colors.black54, size: 20),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -520,6 +570,29 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   ],
                 ),
               ),
+              if (_selectedDateRange != null)
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+                  child: Row(
+                    children: [
+                      InputChip(
+                        label: Text(
+                          "Từ: ${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - Đến: ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}/${_selectedDateRange!.end.year}",
+                          style: const TextStyle(color: Colors.pink, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        backgroundColor: Colors.pink.shade50,
+                        deleteIconColor: Colors.pink,
+                        onDeleted: () {
+                          setState(() {
+                            _selectedDateRange = null;
+                          });
+                          _applyFilters();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
 
               // Monthly Summary Card
               Container(
