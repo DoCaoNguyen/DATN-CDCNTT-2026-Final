@@ -94,7 +94,19 @@ const paymentService = {
 
             await client.query('COMMIT'); 
 
-            
+            // Gọi Webhook bất đồng bộ gửi kết quả về cho Merchant (chạy nền)
+            if (order.callback_url) {
+                const axios = require('axios');
+                axios.post(order.callback_url, {
+                    order_id: order.order_id,
+                    status: 'success',
+                    amount: order.amount ? order.amount.toString() : '0'
+                }).then(res => {
+                    console.log(`[WEBHOOK_SUCCESS] Webhook gửi thành công tới ${order.callback_url}, Status Code:`, res.status);
+                }).catch(err => {
+                    console.error(`[WEBHOOK_ERROR] Lỗi gửi Webhook tới ${order.callback_url}:`, err.message);
+                });
+            }
 
             return {
                 order_id: order.order_id,

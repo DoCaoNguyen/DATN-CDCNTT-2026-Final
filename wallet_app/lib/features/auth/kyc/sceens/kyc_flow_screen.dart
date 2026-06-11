@@ -12,6 +12,7 @@ import '../widgets/camera_overlay_painter.dart';
 import '../widgets/ocr_confirm_form.dart';
 import '../widgets/camera_action_buttons.dart';
 import '../widgets/kyc_dialogs.dart';
+import '../services/nfc_kyc_service.dart';
 
 class KycFlowScreen extends StatefulWidget {
   final String userId;
@@ -42,10 +43,17 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _expiryDateController = TextEditingController();
 
   bool _isProcessingFrame = false;
   int _livenessTask = 0;
   bool _hasBlinked = false;
+
+  // Biến phục vụ đọc chip NFC
+  bool _isNfcLoading = false;
+  String _nfcStatusMessage = '';
+  String? _nfcErrorMessage;
+  CccdKycResult? _nfcResult;
 
   @override
   void initState() {
@@ -81,6 +89,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
     _dobController.dispose();
     _genderController.dispose();
     _addressController.dispose();
+    _expiryDateController.dispose();
     super.dispose();
   }
 
@@ -139,9 +148,34 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
         return;
       }
 
+      final calculatedExpiry = NfcKycService.calculateExpiryDate(data["dob"]!);
+      if (calculatedExpiry.length == 6) {
+        final yy = int.parse(calculatedExpiry.substring(0, 2));
+        final mm = int.parse(calculatedExpiry.substring(2, 4));
+        final dd = int.parse(calculatedExpiry.substring(4, 6));
+        final year = yy < 50 ? 2000 + yy : 1900 + yy;
+        final expiryDate = DateTime(year, mm, dd);
+        final today = DateTime.now();
+        final todayStart = DateTime(today.year, today.month, today.day);
+        if (expiryDate.isBefore(todayStart)) {
+          setState(() => _isLoading = false);
+          KycDialogs.showError(context, "CCCD của bạn đã hết hạn sử dụng. Vui lòng sử dụng thẻ còn hạn.", _resetFlow);
+          return;
+        }
+      }
+      String formattedExpiry = "";
+      if (calculatedExpiry.length == 6) {
+        final yy = calculatedExpiry.substring(0, 2);
+        final mm = calculatedExpiry.substring(2, 4);
+        final dd = calculatedExpiry.substring(4, 6);
+        final year = int.parse(yy) < 50 ? "20$yy" : "19$yy";
+        formattedExpiry = "$dd/$mm/$year";
+      }
+
       setState(() {
         _idNumberController.text = data["id"]!; _dobController.text = data["dob"]!; _fullNameController.text = data["name"]!;
         _genderController.text = data["gender"]!; _addressController.text = data["address"]!;
+        _expiryDateController.text = formattedExpiry;
         _isLoading = false; _currentStep = 3;
       });
     } catch (e) {
@@ -243,7 +277,22 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
   @override
   Widget build(BuildContext context) {
     if (_currentStep == 3) {
-      return OcrConfirmForm(idNumberController: _idNumberController, fullNameController: _fullNameController, dobController: _dobController, genderController: _genderController, addressController: _addressController, onSubmit: () { setState(() { _currentStep = 4; _isLoading = true; }); Future.delayed(const Duration(milliseconds: 500), () { setState(() => _isLoading = false); _initializeCamera(); }); });
+      return OcrConfirmForm(
+        idNumberController: _idNumberController,
+        fullNameController: _fullNameController,
+        dobController: _dobController,
+        genderController: _genderController,
+        addressController: _addressController,
+        expiryDateController: _expiryDateController,
+        onSubmit: () async {
+          setState(() {
+            _currentStep = 4;
+            _isLoading = true;
+          });
+          await _initializeCamera();
+          setState(() => _isLoading = false);
+        },
+      );
     }
 
     if (_isLoading || !_isCameraInitialized || _cameraController == null) {
@@ -278,5 +327,143 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
         ],
       ),
     );
+  }
+
+  // Giao diện đọc NFC ngay trong luồng KYC
+  Widget _buildNfcReadingView() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Xác thực thẻ chip NFC', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        iconTheme: const IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              _currentStep = 3;
+            });
+          },
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.pink.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.contactless_outlined,
+                size: 80,
+                color: AppColors.primaryPink,
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'Đọc chip NFC trên thẻ CCCD',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _isNfcLoading 
+                  ? _nfcStatusMessage 
+                  : 'Đặt phần mặt sau CCCD (nơi có con chip vàng) áp sát vào mặt lưng điện thoại.',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+            if (_nfcErrorMessage != null) ...[
+              Text(
+                _nfcErrorMessage!,
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (_isNfcLoading)
+              const CircularProgressIndicator(color: AppColors.primaryPink)
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: _startNfcReading,
+                  icon: const Icon(Icons.nfc, color: Colors.white),
+                  label: const Text(
+                    'Bắt đầu đọc NFC',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryPink,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Thực thi kết nối và đọc chip NFC
+  Future<void> _startNfcReading() async {
+    setState(() {
+      _isNfcLoading = true;
+      _nfcStatusMessage = 'Vui lòng áp thẻ CCCD vào lưng điện thoại...';
+      _nfcErrorMessage = null;
+    });
+
+    try {
+      final rawDob = _dobController.text.trim();
+      final rawDoe = _expiryDateController.text.trim();
+      final dobYYMMDD = NfcKycService.formatDobToYYMMDD(rawDob);
+      final doeYYMMDD = NfcKycService.formatDobToYYMMDD(rawDoe);
+
+      final result = await NfcKycService.readCCCDChip(
+        documentNumber: _idNumberController.text.trim(),
+        dobYYMMDD: dobYYMMDD,
+        doeYYMMDD: doeYYMMDD,
+      );
+
+      // Lưu kết quả đọc nfc thành công
+      setState(() {
+        _nfcResult = result;
+        _isNfcLoading = false;
+        _currentStep = 5;
+        _isLoading = true;
+      });
+
+      // Khởi tạo camera để quét mặt ở Bước 5
+      await _initializeCamera();
+      setState(() => _isLoading = false);
+    } catch (e, stackTrace) {
+      debugPrint("LỐI ĐỌC CHIP NFC CHI TIẾT: $e");
+      debugPrint(stackTrace.toString());
+      
+      String userFriendlyError = 'Đọc NFC thất bại. Vui lòng thử lại!';
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('timeout')) {
+        userFriendlyError = 'Thời gian kết nối quá hạn. Vui lòng áp thẻ sát hơn.';
+      } else if (errStr.contains('session') || errStr.contains('bac') || errStr.contains('security')) {
+        userFriendlyError = 'Thông tin BAC không khớp (Số CCCD hoặc Ngày sinh không đúng).';
+      } else if (errStr.contains('not supported')) {
+        userFriendlyError = 'Thiết bị không hỗ trợ đọc NFC.';
+      } else if (errStr.contains('nfc finish') || errStr.contains('disconnected')) {
+        userFriendlyError = 'Thẻ bị ngắt kết nối. Vui lòng giữ yên thẻ khi đọc.';
+      }
+
+      setState(() {
+        _isNfcLoading = false;
+        _nfcErrorMessage = "$userFriendlyError\n(Chi tiết lỗi: $e)";
+      });
+    }
   }
 }

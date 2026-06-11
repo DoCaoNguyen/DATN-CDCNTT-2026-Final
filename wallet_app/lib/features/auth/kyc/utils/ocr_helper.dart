@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class OcrHelper {
-  // Kiểm tra chất lượng ảnh
   static Future<bool> validateIdCardQuality(File imageFile, bool isFront) async {
     try {
       final inputImage = InputImage.fromFile(imageFile);
@@ -11,16 +10,16 @@ class OcrHelper {
       textRecognizer.close();
 
       String text = recognizedText.text.toUpperCase();
-      if (text.trim().isEmpty || recognizedText.blocks.length < 4) return false;
 
       if (isFront) {
+        if (text.trim().isEmpty || recognizedText.blocks.length < 4) return false;
         bool hasTop = text.contains("CỘNG HÒA") || text.contains("VIỆT NAM");
         bool hasTitle = text.contains("CĂN CƯỚC") || text.contains("CÔNG DÂN") || text.contains("CHỨNG MINH");
         bool hasId = RegExp(r'\d{9,12}').hasMatch(text);
         return hasTop && hasTitle && hasId;
       } else {
-        return (text.contains("ĐẶC ĐIỂM") || text.contains("NHẬN DẠNG") || text.contains("CỤC TRƯỞNG")) 
-                && recognizedText.blocks.length >= 2;
+        // Chỉ cần mặt sau chứa "ĐẶC ĐIỂM" là hợp lệ
+        return text.contains("ĐẶC ĐIỂM") || text.contains("DAC DIEM") || text.contains("ĐẶC");
       }
     } catch (e) {
       return false;

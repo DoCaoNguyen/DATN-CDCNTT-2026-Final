@@ -50,6 +50,11 @@ dependencies:
   shared_preferences: ^2.5.5
   local_auth: ^3.0.1
   flutter_secure_storage: ^10.3.1
+  flutter_nfc_kit: ^3.4.2
+  dmrtd:
+    git:
+      url: https://github.com/ZeroPass/dmrtd.git
+      ref: master
 
 dev_dependencies:
   flutter_test:
