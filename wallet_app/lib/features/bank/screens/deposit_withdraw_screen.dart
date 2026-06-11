@@ -11,6 +11,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import 'deposit_withdraw_success_screen.dart';
+import 'bank_link_screen.dart';
 
 class DepositWithdrawScreen extends StatefulWidget {
   final String token;
@@ -825,14 +826,24 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Icon(Icons.add, color: Colors.pink.shade400, size: 18),
-                                const SizedBox(width: 8),
-                                const Expanded(child: Text('Ngân hàng liên kết', style: TextStyle(fontSize: 14, color: Colors.black87))),
-                                const Text('+37', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
-                              ],
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BankLinkScreen(token: widget.token),
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(Icons.add, color: Colors.pink.shade400, size: 18),
+                                  const SizedBox(width: 8),
+                                  const Expanded(child: Text('Ngân hàng liên kết', style: TextStyle(fontSize: 14, color: Colors.black87))),
+                                  const Text('+37', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                  const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                                ],
+                              ),
                             ),
                           ],
                         ),
