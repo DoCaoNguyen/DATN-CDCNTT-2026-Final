@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/api_config.dart';
 import '../../features/auth/login/sceens/login_phone_screen.dart';
 
 class CustomHttpClient extends http.BaseClient {
@@ -33,10 +34,70 @@ class CustomHttpClient extends http.BaseClient {
 
     // 4. Lắng nghe và đánh chặn mã lỗi 401
     if (response.statusCode == 401) {
-      _handleUnauthorized();
+      if (request.url.path.contains('/auth/refresh-token') || request.url.path.contains('/auth/login')) {
+        _handleUnauthorized();
+        return response;
+      }
+
+      final refreshSuccess = await _tryRefreshToken();
+      if (refreshSuccess) {
+        final newPrefs = await SharedPreferences.getInstance();
+        final newToken = newPrefs.getString('auth_token');
+        
+        final newRequest = http.Request(request.method, request.url);
+        newRequest.headers.addAll(request.headers);
+        if (newToken != null && newToken.isNotEmpty) {
+          newRequest.headers['Authorization'] = 'Bearer $newToken';
+        }
+        
+        if (request is http.Request) {
+          newRequest.bodyBytes = request.bodyBytes;
+        } else if (request is http.MultipartRequest) {
+          final multipartReq = http.MultipartRequest(request.method, request.url)
+            ..headers.addAll(newRequest.headers)
+            ..fields.addAll(request.fields)
+            ..files.addAll(request.files);
+          return await _innerClient.send(multipartReq);
+        }
+        
+        return await _innerClient.send(newRequest);
+      } else {
+        _handleUnauthorized();
+      }
     }
 
     return response;
+  }
+
+  static Future<bool> _tryRefreshToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? refreshToken = prefs.getString('refresh_token');
+      if (refreshToken == null || refreshToken.isEmpty) return false;
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.refreshToken),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        String newToken = responseData['access_token'] ?? responseData['data']['access_token'] ?? '';
+        String newRefreshToken = responseData['refresh_token'] ?? responseData['data']['refresh_token'] ?? '';
+        
+        if (newToken.isNotEmpty) {
+          await prefs.setString('auth_token', newToken);
+          if (newRefreshToken.isNotEmpty) {
+            await prefs.setString('refresh_token', newRefreshToken);
+          }
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Xử lý cưỡng bức đăng xuất khi nhận mã lỗi 401
@@ -48,6 +109,7 @@ class CustomHttpClient extends http.BaseClient {
       // 1. Xóa sạch dữ liệu đăng nhập lưu cục bộ
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
+      await prefs.remove('refresh_token');
       await prefs.remove('user_id');
       await prefs.remove('is_verified');
 

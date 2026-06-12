@@ -1,5 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const { sendOTP, verifyOTP } = require('../../utils/sms');
 const authRepository = require('./auth.repository');
@@ -98,7 +100,7 @@ const authService = {
         }
     },
 
-    login: async (identifier, password) => {
+    login: async (identifier, password, ipAddress, userAgent) => {
         const user = await authRepository.findByEmailOrPhone(identifier);
         if (!user) throw new Error('Invalid_Credentials');
 
@@ -147,11 +149,19 @@ const authService = {
         const accessToken = jwt.sign(
             { userId: user.id, role: user.role, tokenVersion: newTokenVersion },
             process.env.JWT_SECRET,
-            { expiresIn: '7d' }
+            { expiresIn: '15m' }
         );
+
+        const refreshTokenStr = crypto.randomBytes(40).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
+        const tokenFamilyId = uuidv7();
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+        
+        await authRepository.saveRefreshToken(user.id, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent);
 
         return {
             access_token: accessToken,
+            refresh_token: refreshTokenStr,
             user_info: {
                 id: user.id,
                 email: user.email,
@@ -159,6 +169,52 @@ const authService = {
                 role: user.role,
                 is_kyc_verified: user.is_kyc_verified
             }
+        };
+    },
+
+    refreshToken: async (oldRefreshToken, ipAddress, userAgent) => {
+        const tokenHash = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
+        const tokenRecord = await authRepository.findRefreshToken(tokenHash);
+
+        if (!tokenRecord) {
+            throw new Error('Invalid_Refresh_Token');
+        }
+
+        if (tokenRecord.revoked_at) {
+            throw new Error('Refresh_Token_Revoked');
+        }
+
+        if (tokenRecord.reused_at) {
+            await authRepository.revokeRefreshTokenFamily(tokenRecord.token_family_id, ipAddress);
+            throw new Error('Refresh_Token_Reused');
+        }
+
+        if (new Date(tokenRecord.expires_at) < new Date()) {
+            throw new Error('Refresh_Token_Expired');
+        }
+
+        const user = await pool.query('SELECT id, role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
+        if (!user || user.status !== 'ACTIVE') {
+            throw new Error('Account_Inactive');
+        }
+
+        await authRepository.markRefreshTokenAsReused(tokenHash);
+
+        const accessToken = jwt.sign(
+            { userId: user.id, role: user.role, tokenVersion: user.token_version },
+            process.env.JWT_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        const newRefreshTokenStr = crypto.randomBytes(40).toString('hex');
+        const newTokenHash = crypto.createHash('sha256').update(newRefreshTokenStr).digest('hex');
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); 
+
+        await authRepository.saveRefreshToken(user.id, newTokenHash, tokenRecord.token_family_id, expiresAt, ipAddress, userAgent);
+
+        return {
+            access_token: accessToken,
+            refresh_token: newRefreshTokenStr
         };
     }
 };

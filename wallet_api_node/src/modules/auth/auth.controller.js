@@ -83,7 +83,9 @@ const authController = {
         }
 
         try {
-            const result = await authService.login(identifier, password);
+            const ipAddress = req.ip || req.connection.remoteAddress;
+            const userAgent = req.headers['user-agent'] || '';
+            const result = await authService.login(identifier, password, ipAddress, userAgent);
             res.status(200).json({
                 message: 'Đăng nhập thành công',
                 data: result
@@ -123,6 +125,32 @@ const authController = {
         } catch (error) {
             console.error('Lỗi API Logout:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi đăng xuất' });
+        }
+    },
+
+    refreshToken: async (req, res) => {
+        const { refresh_token } = req.body;
+        if (!refresh_token) {
+            return res.status(400).json({ error: 'Thiếu Refresh Token' });
+        }
+        
+        try {
+            const ipAddress = req.ip || req.connection.remoteAddress;
+            const userAgent = req.headers['user-agent'] || '';
+            const result = await authService.refreshToken(refresh_token, ipAddress, userAgent);
+            res.status(200).json({
+                message: 'Refresh token thành công',
+                data: result
+            });
+        } catch (error) {
+            if (['Invalid_Refresh_Token', 'Refresh_Token_Expired', 'Refresh_Token_Revoked', 'Refresh_Token_Reused'].includes(error.message)) {
+                return res.status(401).json({ error: 'Phiên làm việc hết hạn. Vui lòng đăng nhập lại.' });
+            }
+            if (error.message === 'Account_Inactive') {
+                return res.status(403).json({ error: 'Tài khoản đã bị khóa hoặc chưa kích hoạt' });
+            }
+            console.error('Lỗi API Refresh Token:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi refresh token' });
         }
     }
 };

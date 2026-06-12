@@ -228,4 +228,31 @@ router.post('/login', authController.login);
  */
 router.post('/logout', verifyToken, authController.logout);
 
+/**
+ * @swagger
+ * /api/v1/auth/refresh-token:
+ *   post:
+ *     summary: Làm mới Access Token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refresh_token
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Refresh token thành công
+ *       400:
+ *         description: Thiếu Refresh Token
+ *       401:
+ *         description: Refresh Token không hợp lệ hoặc hết hạn
+ */
+router.post('/refresh-token', authController.refreshToken);
+
 module.exports = router;

@@ -52,6 +52,35 @@ const authRepository = {
         `;
         const result = await pool.query(query, [userId]);
         return result.rows[0].token_version;
+    },
+
+    saveRefreshToken: async (userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent) => {
+        const id = uuidv7();
+        const query = `
+            INSERT INTO refresh_tokens (id, user_id, token_hash, token_family_id, expires_at, created_by_ip, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `;
+        await pool.query(query, [id, userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent]);
+    },
+
+    findRefreshToken: async (tokenHash) => {
+        const query = `SELECT * FROM refresh_tokens WHERE token_hash = $1`;
+        const result = await pool.query(query, [tokenHash]);
+        return result.rows[0];
+    },
+
+    revokeRefreshTokenFamily: async (tokenFamilyId, ipAddress) => {
+        const query = `
+            UPDATE refresh_tokens 
+            SET revoked_at = CURRENT_TIMESTAMP, revoked_by_ip = $2
+            WHERE token_family_id = $1 AND revoked_at IS NULL
+        `;
+        await pool.query(query, [tokenFamilyId, ipAddress]);
+    },
+    
+    markRefreshTokenAsReused: async (tokenHash) => {
+        const query = `UPDATE refresh_tokens SET reused_at = CURRENT_TIMESTAMP WHERE token_hash = $1`;
+        await pool.query(query, [tokenHash]);
     }
 };
 

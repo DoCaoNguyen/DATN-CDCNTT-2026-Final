@@ -78,6 +78,7 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
         
         // --- BỔ SUNG: Lấy token do Backend trả về ---
         String token = responseData['access_token'] ?? responseData['data']['access_token'] ?? '';
+        String refreshToken = responseData['refresh_token'] ?? responseData['data']['refresh_token'] ?? '';
         
         String userId = userInfo['id'] ?? '';
         bool isVerified = userInfo['is_kyc_verified'] == true;
@@ -85,6 +86,9 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
         // Lưu thông tin đăng nhập tự động
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', token);
+        if (refreshToken.isNotEmpty) {
+          await prefs.setString('refresh_token', refreshToken);
+        }
         await prefs.setString('user_id', userId);
         await prefs.setBool('is_verified', isVerified);
 
