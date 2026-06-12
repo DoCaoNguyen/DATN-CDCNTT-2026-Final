@@ -34,6 +34,7 @@ const authController = {
                 message: 'Xác thực OTP thành công',
                 register_token: token 
             });
+            
         } catch (error) {
     
             if (error.message === 'Account_Locked' || error.message === 'Account_Locked_Now') {

@@ -7,6 +7,7 @@ const http = require('http');
 const cors = require('cors');
 const masterRouter = require('./src/routes');
 const app = express();
+app.set('trust proxy', true);
 const server = http.createServer(app);
 const { initSocket } = require('./src/utils/socket');
 const swaggerUi = require('swagger-ui-express');
