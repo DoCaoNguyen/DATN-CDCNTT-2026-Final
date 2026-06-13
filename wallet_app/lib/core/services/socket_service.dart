@@ -61,14 +61,6 @@ class SocketService {
 
     socket?.on('balance_update', (data) {
       debugPrint('Nhận sự kiện balance_update: $data');
-<<<<<<< HEAD
-      if (data is Map<String, dynamic>) {
-        onBalanceUpdate(data);
-      } else if (data is Map) {
-        onBalanceUpdate(Map<String, dynamic>.from(data));
-      }
-    });
-=======
       if (_onBalanceUpdate != null) {
         if (data is Map<String, dynamic>) {
           _onBalanceUpdate!(data);
@@ -146,15 +138,11 @@ class SocketService {
 
   void _navigateToLogin() {
     AuthInterceptor.navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
   }
 
   void disconnect() {
     socket?.disconnect();
     socket?.dispose();
-<<<<<<< HEAD
-=======
     socket = null;
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
   }
 }

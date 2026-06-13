@@ -7,8 +7,6 @@ import 'features/auth/login/sceens/login_phone_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'core/services/auth_interceptor.dart';
 import 'core/services/socket_service.dart';
-import 'core/services/custom_http_client.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
