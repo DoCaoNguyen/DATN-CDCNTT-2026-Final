@@ -1,4 +1,4 @@
-const pool = require('../../config/db'); 
+const pool = require('../../config/db');
 
 const userRepository = {
     searchUsers: async (searchQuery, currentUserId) => {
@@ -10,7 +10,7 @@ const userRepository = {
               AND (u.phone ILIKE $2 OR u.full_name ILIKE $2 OR u.email ILIKE $2)
             LIMIT 20
         `;
-        
+
         const result = await pool.query(query, [currentUserId, `%${searchQuery}%`]);
         return result.rows;
     },
@@ -33,7 +33,7 @@ const userRepository = {
         return result.rows[0];
     }
 
-    
+
 };
 
 module.exports = userRepository;

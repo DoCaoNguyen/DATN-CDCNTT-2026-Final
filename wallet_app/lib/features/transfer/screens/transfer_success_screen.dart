@@ -516,12 +516,19 @@ class TransferSuccessScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Xem lại ngay →',
-                            style: TextStyle(
-                              color: Colors.red.shade400,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                          GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Tính năng đang được phát triển')),
+                              );
+                            },
+                            child: Text(
+                              'Xem lại ngay →',
+                              style: TextStyle(
+                                color: Colors.red.shade400,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ],

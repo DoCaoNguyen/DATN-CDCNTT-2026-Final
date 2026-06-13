@@ -5,6 +5,8 @@ import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../auth/login/sceens/login_phone_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/socket_service.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -796,6 +798,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _performLogout() async {
+    // Ngắt kết nối Socket
+    SocketService().disconnect();
+
+    // Xoá thông tin đăng nhập tự động
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+      await prefs.remove('user_id');
+      await prefs.remove('is_verified');
+    } catch (e) {
+      print('Lỗi xoá SharedPreferences: $e');
+    }
+
     try {
       await http.post(
         Uri.parse(ApiConfig.logout),

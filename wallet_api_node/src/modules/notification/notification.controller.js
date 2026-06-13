@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const notificationRepo = require('./notification.repository');
 const admin = require('../../config/firebase'); // Gọi file config Firebase của bạn
 
@@ -16,10 +17,36 @@ class NotificationController {
 
             return res.status(200).json({
                 success: true,
+=======
+const notificationRepository = require('./notification.repository');
+
+const notificationController = {
+    /**
+     * Register or update a device token for the authenticated user
+     */
+    registerDeviceToken: async (req, res) => {
+        try {
+            const userId = req.user.userId || req.user.id; // From verifyToken middleware
+            const { fcmToken, deviceName, deviceType } = req.body;
+
+            if (!fcmToken) {
+                return res.status(400).json({ error: 'FCM Token là bắt buộc' });
+            }
+
+            const device = await notificationRepository.upsertDeviceToken(
+                userId,
+                fcmToken,
+                deviceName || null,
+                deviceType || 'ANDROID'
+            );
+
+            return res.status(200).json({
+>>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
                 message: 'Đăng ký thiết bị nhận thông báo thành công',
                 data: device
             });
         } catch (error) {
+<<<<<<< HEAD
             next(error);
         }
     }
@@ -68,3 +95,12 @@ class NotificationController {
 }
 
 module.exports = new NotificationController();
+=======
+            console.error('Lỗi khi đăng ký thiết bị nhận thông báo:', error);
+            return res.status(500).json({ error: 'Lỗi máy chủ nội bộ khi đăng ký thiết bị' });
+        }
+    }
+};
+
+module.exports = notificationController;
+>>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811

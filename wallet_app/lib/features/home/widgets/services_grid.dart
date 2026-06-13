@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../transfer/screens/transfer_main_screen.dart';
+import '../../bank/screens/bank_transfer_list_screen.dart';
 
 class ServicesGrid extends StatelessWidget {
   final String activeLang;
@@ -54,6 +55,13 @@ class ServicesGrid extends StatelessWidget {
                     return;
                   }
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => TransferMainScreen(token: token)));
+                  onRefreshBalance();
+                } else if (service['name'].toString().contains('Ngân hàng') || service['name'].toString().contains('Bank')) {
+                  if (!isPinSet) {
+                    onRequireWalletCode();
+                    return;
+                  }
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => BankTransferListScreen(token: token)));
                   onRefreshBalance();
                 }
               }

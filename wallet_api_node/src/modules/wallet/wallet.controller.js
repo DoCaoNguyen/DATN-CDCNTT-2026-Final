@@ -130,6 +130,39 @@ const walletController = {
             console.error('Lỗi liên kết ngân hàng:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi liên kết ngân hàng' });
         }
+<<<<<<< HEAD
+=======
+    },
+
+    verifyPin: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const { pin } = req.body;
+
+            if (!pin) {
+                return res.status(400).json({ error: 'Vui lòng nhập mã PIN' });
+            }
+
+            await walletService.verifyPin(userId, pin);
+            res.status(200).json({ message: 'Mã PIN chính xác' });
+        } catch (error) {
+            if (error.message.startsWith('Wrong_PIN_')) {
+                const attemptsLeft = error.message.split('_')[2];
+                return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
+            }
+            if (error.message === 'Wallet_Locked_PIN') {
+                return res.status(400).json({ error: 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.' });
+            }
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của bạn' });
+            }
+            if (error.message === 'PIN_Not_Set') {
+                return res.status(400).json({ error: 'Bạn chưa cài đặt mã PIN cho ví' });
+            }
+            console.error('Lỗi kiểm tra mã PIN:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi kiểm tra mã PIN' });
+        }
+>>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     }
 };
 

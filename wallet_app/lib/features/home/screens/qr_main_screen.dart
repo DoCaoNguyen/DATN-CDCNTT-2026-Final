@@ -7,12 +7,15 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
+import '../../transfer/screens/transfer_confirm_screen.dart';
+
 
 
 class QrMainScreen extends StatefulWidget {
   final String token;
+  final int initialTab;
 
-  const QrMainScreen({Key? key, required this.token}) : super(key: key);
+  const QrMainScreen({Key? key, required this.token, this.initialTab = 0}) : super(key: key);
 
   @override
   State<QrMainScreen> createState() => _QrMainScreenState();
@@ -38,6 +41,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialTab; // Cho phép mở thẳng tab mong muốn
     _fetchMyProfile();
   }
 
@@ -317,9 +321,39 @@ class _QrMainScreenState extends State<QrMainScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: isPaying ? null : () async {
-                        setSheetState(() => isPaying = true);
-                        await _processQrPayment(sheetCtx, qrToken, amount);
+                      onPressed: isPaying ? null : () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (pinSheetCtx) => PinConfirmBottomSheet(
+                            onPinEntered: (pin) async {
+                              try {
+                                final verifyResp = await http.post(
+                                  Uri.parse(ApiConfig.verifyPin),
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ${widget.token}',
+                                    'ngrok-skip-browser-warning': 'true',
+                                  },
+                                  body: jsonEncode({'pin': pin}),
+                                );
+                                if (verifyResp.statusCode == 200) {
+                                  if (!mounted) return null;
+                                  Navigator.pop(pinSheetCtx); // Đóng Bottom Sheet nhập PIN
+                                  setSheetState(() => isPaying = true);
+                                  await _processQrPayment(sheetCtx, qrToken, amount);
+                                  return null;
+                                } else {
+                                  final data = jsonDecode(verifyResp.body);
+                                  return data['error'] ?? "Mã PIN không chính xác";
+                                }
+                              } catch (e) {
+                                return "Lỗi kết nối máy chủ";
+                              }
+                            },
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryPink,

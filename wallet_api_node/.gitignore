@@ -4,5 +4,4 @@ node_modules/
 # Bỏ qua file chứa biến môi trường và mật khẩu nhạy cảm
 .env
 
-!package.json
-!package-lock.json
+serviceAccountKey.json

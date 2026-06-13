@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../home/screens/home_screen.dart'; 
+import '../../../../core/services/socket_service.dart'; 
 
 class LoginPasswordScreen extends StatefulWidget {
   final String phoneNumber;
@@ -80,9 +82,22 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
         
         // --- BỔ SUNG: Lấy token do Backend trả về ---
         String token = responseData['access_token'] ?? responseData['data']['access_token'] ?? '';
+        String refreshToken = responseData['refresh_token'] ?? responseData['data']['refresh_token'] ?? '';
         
         String userId = userInfo['id'] ?? '';
         bool isVerified = userInfo['is_kyc_verified'] == true;
+
+        // Lưu thông tin đăng nhập tự động
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        if (refreshToken.isNotEmpty) {
+          await prefs.setString('refresh_token', refreshToken);
+        }
+        await prefs.setString('user_id', userId);
+        await prefs.setBool('is_verified', isVerified);
+
+        // Kết nối Socket.io
+        SocketService().connectSocket(token);
 
         if (mounted) {
           Navigator.pushAndRemoveUntil(

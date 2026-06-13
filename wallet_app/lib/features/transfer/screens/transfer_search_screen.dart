@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
 import 'transfer_amount_screen.dart';
 
+import 'package:flutter_contacts/flutter_contacts.dart';
+
 class TransferSearchScreen extends StatefulWidget {
   final String token;
   const TransferSearchScreen({Key? key, required this.token}) : super(key: key);
@@ -16,8 +18,37 @@ class TransferSearchScreen extends StatefulWidget {
 class _TransferSearchScreenState extends State<TransferSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<dynamic> _searchResults = [];
+  List<Contact> _phoneContacts = [];
   bool _isLoading = false;
+  bool _isLoadingContacts = true;
   Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPhoneContacts();
+  }
+
+  Future<void> _fetchPhoneContacts() async {
+    try {
+      var status = await FlutterContacts.permissions.request(PermissionType.read);
+      if (status == PermissionStatus.granted || status == PermissionStatus.limited) {
+        final contacts = await FlutterContacts.getAll(properties: ContactProperties.all);
+        if (mounted) {
+          setState(() {
+            // Chỉ lấy contact có số điện thoại
+            _phoneContacts = contacts.where((c) => c.phones.isNotEmpty).toList();
+            _isLoadingContacts = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingContacts = false);
+      }
+    } catch (e) {
+      debugPrint("Error fetching contacts: $e");
+      if (mounted) setState(() => _isLoadingContacts = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -120,17 +151,48 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Danh bạ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text('Danh bạ điện thoại', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          // Mô phỏng 1 người trong danh bạ
-          ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.pink.shade100,
-              child: const Text('C', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold)),
+          if (_isLoadingContacts)
+            const Center(child: CircularProgressIndicator(color: Colors.pink))
+          else if (_phoneContacts.isEmpty)
+            const Center(child: Text('Không có liên hệ nào hoặc chưa cấp quyền', style: TextStyle(color: Colors.grey)))
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _phoneContacts.length,
+              separatorBuilder: (context, index) => const Divider(height: 1, indent: 70),
+              itemBuilder: (context, index) {
+                final contact = _phoneContacts[index];
+                final name = contact.displayName;
+                final phone = contact.phones.first.number;
+                
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.pink.shade50,
+                    child: Text(
+                      (name != null && name.isNotEmpty) ? name[0].toUpperCase() : 'C',
+                      style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(name ?? 'Chưa có tên', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(phone, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TransferAmountScreen(
+                          token: widget.token,
+                          receiverPhone: phone,
+                          receiverName: name ?? 'Chưa có tên',
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-            title: const Text('Cha', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: const Text('0982314632', style: TextStyle(color: Colors.grey, fontSize: 13)),
-          )
         ],
       ),
     );
