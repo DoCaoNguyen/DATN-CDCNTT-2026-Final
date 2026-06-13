@@ -8,6 +8,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../home/screens/home_screen.dart'; 
+<<<<<<< HEAD
+=======
+import '../../../../core/services/socket_service.dart'; 
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
 
 class LoginPasswordScreen extends StatefulWidget {
   final String phoneNumber;
@@ -92,6 +96,12 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
         await prefs.setString('user_id', userId);
         await prefs.setBool('is_verified', isVerified);
 
+<<<<<<< HEAD
+=======
+        // Kết nối Socket.io
+        SocketService().connectSocket(token);
+
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,

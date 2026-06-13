@@ -908,6 +908,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         if (!widget.isVerified) {
           _showKycDialog();
+<<<<<<< HEAD
           return;
         }
         if (title == "Nạp/Rút" || title == "Deposit") {
@@ -937,6 +938,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Tính năng đang được phát triển')),
           );
+=======
+        } else {
+          if (title == "Nạp/Rút" || title == "Deposit") {
+            _handleDepositWithdrawClick();
+          } else {
+            print("Đang mở tính năng: $title");
+          }
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         }
       },
       child: Column(

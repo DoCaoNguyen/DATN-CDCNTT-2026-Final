@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -5,6 +6,12 @@ import '../../../core/constants/api_config.dart';
 import 'transfer_search_screen.dart'; 
 
 class TransferMainScreen extends StatefulWidget {
+=======
+import 'package:flutter/material.dart';
+import 'transfer_search_screen.dart'; 
+
+class TransferMainScreen extends StatelessWidget {
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
   final String token; 
   final String? initialPhone; 
   final String? initialName; 
@@ -17,6 +24,7 @@ class TransferMainScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
+<<<<<<< HEAD
   State<TransferMainScreen> createState() => _TransferMainScreenState();
 }
 
@@ -76,6 +84,8 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
   }
 
   @override
+=======
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F9), 
@@ -188,7 +198,11 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                           onTap: () {
                             Navigator.push(
                               context, 
+<<<<<<< HEAD
                               MaterialPageRoute(builder: (_) => TransferSearchScreen(token: widget.token))
+=======
+                              MaterialPageRoute(builder: (_) => TransferSearchScreen(token: token))
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                             );
                           },
                           child: Container(
@@ -417,6 +431,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: Text('Tài khoản ngân hàng của tôi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 8),
+<<<<<<< HEAD
           
           if (_isLoading)
             const Padding(
@@ -465,6 +480,21 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                 subtitle: Text('${bank['bank_name']} - $hiddenCard', style: const TextStyle(fontSize: 12, color: Colors.grey)),
               );
             }).toList(),
+=======
+          ListTile(
+            leading: Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Icon(Icons.star, color: Colors.blue.shade800, size: 20),
+            ),
+            title: const Text('PHAN VAN THONG', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            subtitle: const Text('MBBank - *******437', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          ),
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         ],
       ),
     );

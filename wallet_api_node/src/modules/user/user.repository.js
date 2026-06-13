@@ -16,12 +16,16 @@ const userRepository = {
     },
 
     getUserProfile: async (userId) => {
+<<<<<<< HEAD
         const query = `
             SELECT u.full_name, u.phone, k.id_number
             FROM users u
             LEFT JOIN user_kyc k ON u.id = k.user_id
             WHERE u.id = $1
         `;
+=======
+        const query = 'SELECT full_name, phone FROM users WHERE id = $1';
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         const result = await pool.query(query, [userId]);
         return result.rows[0];
     },

@@ -73,6 +73,10 @@ const transactionService = {
             emitToUser(userId, 'balance_update', {
                 type: 'DEPOSIT',
                 amount: amount.toString(),
+<<<<<<< HEAD
+=======
+                balance: balanceAfter.toString(),
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 newBalance: balanceAfter.toString()
             });
 
@@ -166,6 +170,10 @@ const transactionService = {
             emitToUser(userId, 'balance_update', {
                 type: 'WITHDRAW',
                 amount: amount.toString(),
+<<<<<<< HEAD
+=======
+                balance: balanceAfter.toString(),
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 newBalance: balanceAfter.toString()
             });
 
@@ -259,6 +267,10 @@ const transactionService = {
             emitToUser(userId, 'balance_update', {
                 type: 'WITHDRAW',
                 amount: amount.toString(),
+<<<<<<< HEAD
+=======
+                balance: balanceAfter.toString(),
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 newBalance: balanceAfter.toString()
             });
 
@@ -363,6 +375,10 @@ const transactionService = {
             emitToUser(senderUserId, 'balance_update', {
                 type: 'TRANSFER_SENT',
                 amount: amount.toString(),
+<<<<<<< HEAD
+=======
+                balance: senderBalanceAfter.toString(),
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 newBalance: senderBalanceAfter.toString()
             });
 
@@ -371,6 +387,10 @@ const transactionService = {
                 emitToUser(receiverWallet.user_id, 'balance_update', {
                     type: 'TRANSFER_RECEIVED',
                     amount: amount.toString(),
+<<<<<<< HEAD
+=======
+                    balance: receiverBalanceAfter.toString(),
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                     newBalance: receiverBalanceAfter.toString(),
                     senderName: senderWallet.full_name // Nếu có
                 });

@@ -2,7 +2,11 @@ class ApiConfig {
   // --- BASE URL ---
   // Dùng 10.0.2.2 cho máy ảo Android
   // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
+<<<<<<< HEAD
   static const String baseUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
+=======
+  static const String baseUrl = 'https://orectic-noctilucent-ronan.ngrok-free.dev/api/v1';
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
 
   static String get socketUrl {
     final uri = Uri.parse(baseUrl);

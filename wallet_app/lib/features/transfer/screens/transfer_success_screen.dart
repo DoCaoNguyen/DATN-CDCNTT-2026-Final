@@ -393,6 +393,31 @@ class TransferSuccessScreen extends StatelessWidget {
                           Expanded(
                             child: SizedBox(
                               height: 44,
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  // Mock action trò chuyện
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFE91E63), width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Trò chuyện',
+                                  style: TextStyle(
+                                    color: Color(0xFFE91E63),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 44,
                               child: ElevatedButton(
                                 onPressed: () {
                                   // Quay lại màn hình TransferAmountScreen

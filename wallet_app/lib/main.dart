@@ -5,6 +5,8 @@ import 'core/services/notification_service.dart';
 import 'core/constants/app_colors.dart';
 import 'features/auth/login/sceens/login_phone_screen.dart';
 import 'features/home/screens/home_screen.dart';
+import 'core/services/auth_interceptor.dart';
+import 'core/services/socket_service.dart';
 import 'core/services/custom_http_client.dart';
 
 void main() async {
@@ -37,6 +39,11 @@ void main() async {
     token = prefs.getString('auth_token');
     userId = prefs.getString('user_id');
     isVerified = prefs.getBool('is_verified') ?? false;
+
+    // Kết nối Socket.io nếu đã đăng nhập trước đó
+    if (token != null && token.isNotEmpty) {
+      SocketService().connectSocket(token);
+    }
   } catch (e) {
     debugPrint("Lỗi khởi tạo hệ thống: $e");
   }
@@ -66,7 +73,7 @@ class MyApp extends StatelessWidget {
     final bool isLoggedIn = token != null && token!.isNotEmpty && userId != null && userId!.isNotEmpty;
 
     return MaterialApp(
-      navigatorKey: CustomHttpClient.navigatorKey,
+      navigatorKey: AuthInterceptor.navigatorKey,
       title: 'Ví Điện Tử Mio',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -74,6 +81,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.background, 
       ),
+      routes: {
+        '/login': (context) => const LoginPhoneScreen(),
+      },
       home: isLoggedIn 
           ? HomeScreen(
               userId: userId!,

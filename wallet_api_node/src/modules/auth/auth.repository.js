@@ -54,13 +54,21 @@ const authRepository = {
         return result.rows[0].token_version;
     },
 
+<<<<<<< HEAD
     saveRefreshToken: async (userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent) => {
+=======
+    saveRefreshToken: async (client, userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent) => {
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         const id = uuidv7();
         const query = `
             INSERT INTO refresh_tokens (id, user_id, token_hash, token_family_id, expires_at, created_by_ip, user_agent)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
         `;
+<<<<<<< HEAD
         await pool.query(query, [id, userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent]);
+=======
+        await client.query(query, [id, userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent]);
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     },
 
     findRefreshToken: async (tokenHash) => {
@@ -69,18 +77,60 @@ const authRepository = {
         return result.rows[0];
     },
 
+<<<<<<< HEAD
     revokeRefreshTokenFamily: async (tokenFamilyId, ipAddress) => {
+=======
+    findRefreshTokenForUpdate: async (client, tokenHash) => {
+        const query = `
+            SELECT * FROM refresh_tokens 
+            WHERE token_hash = $1 
+            FOR UPDATE
+        `;
+        const result = await client.query(query, [tokenHash]);
+        return result.rows[0];
+    },
+
+    revokeRefreshTokenFamily: async (client, tokenFamilyId, ipAddress) => {
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         const query = `
             UPDATE refresh_tokens 
             SET revoked_at = CURRENT_TIMESTAMP, revoked_by_ip = $2
             WHERE token_family_id = $1 AND revoked_at IS NULL
         `;
+<<<<<<< HEAD
         await pool.query(query, [tokenFamilyId, ipAddress]);
     },
     
     markRefreshTokenAsReused: async (tokenHash) => {
         const query = `UPDATE refresh_tokens SET reused_at = CURRENT_TIMESTAMP WHERE token_hash = $1`;
         await pool.query(query, [tokenHash]);
+=======
+        await client.query(query, [tokenFamilyId, ipAddress]);
+    },
+    
+    markRefreshTokenAsReused: async (client, tokenHash) => {
+        const query = `UPDATE refresh_tokens SET reused_at = CURRENT_TIMESTAMP WHERE token_hash = $1`;
+        await client.query(query, [tokenHash]);
+    },
+
+    revokeAllUserRefreshTokens: async (client, userId) => {
+        const query = `
+            UPDATE refresh_tokens
+            SET revoked_at = CURRENT_TIMESTAMP
+            WHERE user_id = $1 AND revoked_at IS NULL
+        `;
+        await client.query(query, [userId]);
+    },
+
+    revokeOne: async (tokenHash) => {
+        const query = `
+            UPDATE refresh_tokens
+            SET revoked_at = CURRENT_TIMESTAMP
+            WHERE token_hash = $1 AND revoked_at IS NULL
+        `;
+        const result = await pool.query(query, [tokenHash]);
+        return result.rowCount > 0;
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     }
 };
 

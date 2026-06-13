@@ -120,11 +120,21 @@ const authController = {
     },
 
     logout: async (req, res) => {
+<<<<<<< HEAD
         const { refresh_token, fcmToken } = req.body;
         
         try {
             const ipAddress = req.ip || req.connection.remoteAddress;
             await authService.logout(refresh_token, ipAddress, fcmToken);
+=======
+        const { refresh_token } = req.body;
+        if (!refresh_token) {
+            return res.status(400).json({ error: 'Cần cung cấp Refresh Token để đăng xuất' });
+        }
+
+        try {
+            await authService.logout(refresh_token);
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
             res.status(200).json({ message: 'Đăng xuất thành công' });
         } catch (error) {
             console.error('Lỗi API Logout:', error);
@@ -147,7 +157,14 @@ const authController = {
                 data: result
             });
         } catch (error) {
+<<<<<<< HEAD
             if (['Invalid_Refresh_Token', 'Refresh_Token_Expired', 'Refresh_Token_Revoked', 'Refresh_Token_Reused'].includes(error.message)) {
+=======
+            if (error.message === 'Refresh_Token_Reused') {
+                return res.status(403).json({ error: 'Phiên đăng nhập bị xâm phạm. Vui lòng đăng nhập lại.' });
+            }
+            if (['Invalid_Refresh_Token', 'Refresh_Token_Expired', 'Refresh_Token_Revoked'].includes(error.message)) {
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 return res.status(401).json({ error: 'Phiên làm việc hết hạn. Vui lòng đăng nhập lại.' });
             }
             if (error.message === 'Account_Inactive') {

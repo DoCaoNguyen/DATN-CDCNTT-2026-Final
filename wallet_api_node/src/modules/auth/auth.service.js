@@ -7,7 +7,10 @@ const { sendOTP, verifyOTP } = require('../../utils/sms');
 const authRepository = require('./auth.repository');
 const walletRepository = require('../wallet/wallet.repository');
 const otpRepository = require('../system/otp.repository');
+<<<<<<< HEAD
 const notificationRepository = require('../notification/notification.repository');
+=======
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
 
 const authService = {
     // Sửa lại để phòng trường hợp user chỉ truyền phone vào hàm (như trong controller họ đang sửa)
@@ -55,7 +58,11 @@ const authService = {
 
         if (!twilioResult.valid) {
             const newAttempts = record.failed_attempts + 1;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
             if (newAttempts >= 5) {
                 await otpRepository.lockAccount(phone, newAttempts, 30);
                 throw new Error('Account_Locked_Now');
@@ -63,7 +70,11 @@ const authService = {
                 await otpRepository.updateAttempts(phone, newAttempts);
                 const err = new Error('OTP_Invalid');
                 err.remainingAttempts = 5 - newAttempts;
+<<<<<<< HEAD
                 throw err;
+=======
+                throw err; 
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
             }
         }
 
@@ -156,9 +167,39 @@ const authService = {
         const refreshTokenStr = crypto.randomBytes(40).toString('hex');
         const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
         const tokenFamilyId = uuidv7();
+<<<<<<< HEAD
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
         await authRepository.saveRefreshToken(user.id, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent);
+=======
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày theo yêu cầu
+        
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Thu hồi toàn bộ Refresh Token cũ của user này
+            await authRepository.revokeAllUserRefreshTokens(client, user.id);
+            
+            // Lưu Refresh Token mới
+            await authRepository.saveRefreshToken(client, user.id, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent);
+            
+            await client.query('COMMIT');
+            
+            // Ép buộc đăng xuất thiết bị cũ thông qua socket.io
+            try {
+                const { emitToUser } = require('../../utils/socket');
+                emitToUser(user.id, 'force_logout', { reason: 'logged_in_elsewhere' });
+            } catch (socketErr) {
+                console.error('Lỗi khi gửi sự kiện kick-out qua socket:', socketErr);
+            }
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
 
         return {
             access_token: accessToken,
@@ -173,6 +214,7 @@ const authService = {
         };
     },
 
+<<<<<<< HEAD
     logout: async (refreshToken, ipAddress, fcmToken) => {
         if (refreshToken) {
             const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
@@ -234,6 +276,76 @@ const authService = {
             access_token: accessToken,
             refresh_token: newRefreshTokenStr
         };
+=======
+    refreshToken: async (oldRefreshToken, ipAddress, userAgent) => {
+        const client = await pool.connect();
+        let isCommitted = false;
+
+        try {
+            await client.query('BEGIN');
+
+            const tokenHash = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
+            const tokenRecord = await authRepository.findRefreshTokenForUpdate(client, tokenHash);
+
+            if (!tokenRecord) {
+                throw new Error('Invalid_Refresh_Token');
+            }
+
+            if (tokenRecord.revoked_at) {
+                throw new Error('Refresh_Token_Revoked');
+            }
+
+            if (tokenRecord.reused_at) {
+                await authRepository.revokeRefreshTokenFamily(client, tokenRecord.token_family_id, ipAddress);
+                await client.query('COMMIT');
+                isCommitted = true;
+                throw new Error('Refresh_Token_Reused');
+            }
+
+            if (new Date(tokenRecord.expires_at) < new Date()) {
+                throw new Error('Refresh_Token_Expired');
+            }
+
+            const user = await client.query('SELECT id, role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
+            if (!user || user.status !== 'ACTIVE') {
+                throw new Error('Account_Inactive');
+            }
+
+            await authRepository.markRefreshTokenAsReused(client, tokenHash);
+
+            const accessToken = jwt.sign(
+                { userId: user.id, role: user.role, tokenVersion: user.token_version },
+                process.env.JWT_SECRET,
+                { expiresIn: '15m' }
+            );
+
+            const newRefreshTokenStr = crypto.randomBytes(40).toString('hex');
+            const newTokenHash = crypto.createHash('sha256').update(newRefreshTokenStr).digest('hex');
+            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày theo yêu cầu
+
+            await authRepository.saveRefreshToken(client, user.id, newTokenHash, tokenRecord.token_family_id, expiresAt, ipAddress, userAgent);
+
+            await client.query('COMMIT');
+            isCommitted = true;
+
+            return {
+                access_token: accessToken,
+                refresh_token: newRefreshTokenStr
+            };
+        } catch (error) {
+            if (!isCommitted) {
+                await client.query('ROLLBACK');
+            }
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    logout: async (rawRefreshToken) => {
+        const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+        return await authRepository.revokeOne(tokenHash);
+>>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     }
 };
 
