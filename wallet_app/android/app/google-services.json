@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "727424923764",
+    "project_id": "wallet-app-loyalty",
+    "storage_bucket": "wallet-app-loyalty.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727424923764:android:eb4fbe4135efcf70d0b921",
+        "android_client_info": {
+          "package_name": "com.example.wallet_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvEj2SohLRzMSI3au6-E2RSrAy6QXxaeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
