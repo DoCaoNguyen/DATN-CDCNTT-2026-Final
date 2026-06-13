@@ -26,7 +26,7 @@ class BankDetailInputScreen extends StatefulWidget {
 class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
   final TextEditingController _accountNumberController = TextEditingController();
   String _cardHolderName = "PHAN VAN THONG";
-  final String _cccd = "080205015346"; // Mock/prefilled CCCD
+  String _cccd = "080205015346"; // Mock/prefilled CCCD
   bool _isLoading = false;
   bool _hasAttemptedSubmit = false;
 
@@ -57,11 +57,15 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String? name = data['data']?['full_name'];
-        if (name != null && name.isNotEmpty) {
-          setState(() {
+        final String? idNumber = data['data']?['id_number'];
+        setState(() {
+          if (name != null && name.isNotEmpty) {
             _cardHolderName = name.toUpperCase();
-          });
-        }
+          }
+          if (idNumber != null && idNumber.isNotEmpty) {
+            _cccd = idNumber;
+          }
+        });
       }
     } catch (e) {
       debugPrint("Error fetching profile name: $e");

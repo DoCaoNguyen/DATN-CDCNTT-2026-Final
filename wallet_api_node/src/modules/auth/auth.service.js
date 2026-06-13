@@ -7,6 +7,7 @@ const { sendOTP, verifyOTP } = require('../../utils/sms');
 const authRepository = require('./auth.repository');
 const walletRepository = require('../wallet/wallet.repository');
 const otpRepository = require('../system/otp.repository');
+const notificationRepository = require('../notification/notification.repository');
 
 const authService = {
     // Sửa lại để phòng trường hợp user chỉ truyền phone vào hàm (như trong controller họ đang sửa)
@@ -54,7 +55,7 @@ const authService = {
 
         if (!twilioResult.valid) {
             const newAttempts = record.failed_attempts + 1;
-            
+
             if (newAttempts >= 5) {
                 await otpRepository.lockAccount(phone, newAttempts, 30);
                 throw new Error('Account_Locked_Now');
@@ -62,7 +63,7 @@ const authService = {
                 await otpRepository.updateAttempts(phone, newAttempts);
                 const err = new Error('OTP_Invalid');
                 err.remainingAttempts = 5 - newAttempts;
-                throw err; 
+                throw err;
             }
         }
 
@@ -156,7 +157,7 @@ const authService = {
         const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
         const tokenFamilyId = uuidv7();
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-        
+
         await authRepository.saveRefreshToken(user.id, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent);
 
         return {
@@ -170,6 +171,23 @@ const authService = {
                 is_kyc_verified: user.is_kyc_verified
             }
         };
+    },
+
+    logout: async (refreshToken, ipAddress, fcmToken) => {
+        if (refreshToken) {
+            const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+            const tokenRecord = await authRepository.findRefreshToken(tokenHash);
+
+            if (tokenRecord) {
+                await authRepository.revokeRefreshTokenFamily(tokenRecord.token_family_id, ipAddress);
+            }
+        }
+
+        if (fcmToken) {
+            await notificationRepository.deleteDeviceToken(fcmToken);
+        }
+
+        return true;
     },
 
     refreshToken: async (oldRefreshToken, ipAddress, userAgent) => {
@@ -208,7 +226,7 @@ const authService = {
 
         const newRefreshTokenStr = crypto.randomBytes(40).toString('hex');
         const newTokenHash = crypto.createHash('sha256').update(newRefreshTokenStr).digest('hex');
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); 
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
         await authRepository.saveRefreshToken(user.id, newTokenHash, tokenRecord.token_family_id, expiresAt, ipAddress, userAgent);
 

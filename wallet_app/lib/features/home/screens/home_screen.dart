@@ -908,12 +908,35 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         if (!widget.isVerified) {
           _showKycDialog();
-        } else {
-          if (title == "Nạp/Rút" || title == "Deposit") {
-            _handleDepositWithdrawClick();
-          } else {
-            print("Đang mở tính năng: $title");
+          return;
+        }
+        if (title == "Nạp/Rút" || title == "Deposit") {
+          if (!_isPinSet) {
+            _showSetWalletCodeDialog();
+            return;
           }
+          _handleDepositWithdrawClick();
+        } else if (title == "Nhận tiền" || title == "Receive") {
+          // Mở thẳng tab QR Nhận tiền
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QrMainScreen(token: widget.token, initialTab: 1),
+            ),
+          );
+        } else if (title == "QR Thanh toán" || title == "QR Pay") {
+          // Mở thẳng tab Quét mã QR
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QrMainScreen(token: widget.token, initialTab: 0),
+            ),
+          );
+        } else {
+          // Các tiện ích khác
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tính năng đang được phát triển')),
+          );
         }
       },
       child: Column(

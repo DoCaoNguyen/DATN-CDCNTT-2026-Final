@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../../core/constants/api_config.dart';
 import 'transfer_search_screen.dart'; 
 
-class TransferMainScreen extends StatelessWidget {
+class TransferMainScreen extends StatefulWidget {
   final String token; 
   final String? initialPhone; 
   final String? initialName; 
@@ -12,6 +15,65 @@ class TransferMainScreen extends StatelessWidget {
     this.initialPhone, 
     this.initialName,  
   }) : super(key: key);
+
+  @override
+  State<TransferMainScreen> createState() => _TransferMainScreenState();
+}
+
+class _TransferMainScreenState extends State<TransferMainScreen> {
+  String _fullName = 'Đang tải...';
+  List<dynamic> _linkedBanks = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      // 1. Fetch Profile
+      final profileRes = await http.get(
+        Uri.parse(ApiConfig.getMyProfile),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (profileRes.statusCode == 200) {
+        final data = jsonDecode(profileRes.body);
+        if (mounted) {
+          setState(() {
+            _fullName = data['data']?['full_name'] ?? 'Chưa cập nhật tên';
+          });
+        }
+      }
+
+      // 2. Fetch Linked Banks
+      final banksRes = await http.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (banksRes.statusCode == 200) {
+        final data = jsonDecode(banksRes.body);
+        if (mounted) {
+          setState(() {
+            _linkedBanks = data['data'] ?? [];
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint("Lỗi fetch dữ liệu transfer_main_screen: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +188,7 @@ class TransferMainScreen extends StatelessWidget {
                           onTap: () {
                             Navigator.push(
                               context, 
-                              MaterialPageRoute(builder: (_) => TransferSearchScreen(token: token))
+                              MaterialPageRoute(builder: (_) => TransferSearchScreen(token: widget.token))
                             );
                           },
                           child: Container(
@@ -355,19 +417,54 @@ class TransferMainScreen extends StatelessWidget {
             child: Text('Tài khoản ngân hàng của tôi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 8),
-          ListTile(
-            leading: Container(
-              height: 40,
-              width: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300),
+          
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: CircularProgressIndicator(color: Colors.pink, strokeWidth: 2)),
+            )
+          else if (_linkedBanks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.shade100,
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: const Icon(Icons.account_balance, color: Colors.grey, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Chưa có thẻ/tài khoản nào được liên kết', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ],
               ),
-              child: Icon(Icons.star, color: Colors.blue.shade800, size: 20),
-            ),
-            title: const Text('PHAN VAN THONG', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: const Text('MBBank - *******437', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ),
+            )
+          else
+            ..._linkedBanks.map((bank) {
+              String cardNum = bank['card_number'] ?? '';
+              String hiddenCard = cardNum.length > 4 
+                  ? '*******${cardNum.substring(cardNum.length - 4)}'
+                  : cardNum;
+
+              return ListTile(
+                leading: Container(
+                  height: 40,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.blue.shade50,
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Icon(Icons.account_balance, color: Colors.blue.shade800, size: 20),
+                ),
+                title: Text(_fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: Text('${bank['bank_name']} - $hiddenCard', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              );
+            }).toList(),
         ],
       ),
     );

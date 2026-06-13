@@ -120,7 +120,11 @@ const authController = {
     },
 
     logout: async (req, res) => {
+        const { refresh_token, fcmToken } = req.body;
+        
         try {
+            const ipAddress = req.ip || req.connection.remoteAddress;
+            await authService.logout(refresh_token, ipAddress, fcmToken);
             res.status(200).json({ message: 'Đăng xuất thành công' });
         } catch (error) {
             console.error('Lỗi API Logout:', error);

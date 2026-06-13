@@ -55,6 +55,7 @@ dependencies:
     git:
       url: https://github.com/ZeroPass/dmrtd.git
       ref: master
+  flutter_contacts: ^2.2.1
 
 dev_dependencies:
   flutter_test:

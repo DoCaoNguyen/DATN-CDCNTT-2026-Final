@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -13,8 +14,9 @@ import '../../transfer/screens/transfer_confirm_screen.dart';
 
 class QrMainScreen extends StatefulWidget {
   final String token;
+  final int initialTab;
 
-  const QrMainScreen({Key? key, required this.token}) : super(key: key);
+  const QrMainScreen({Key? key, required this.token, this.initialTab = 0}) : super(key: key);
 
   @override
   State<QrMainScreen> createState() => _QrMainScreenState();
@@ -40,6 +42,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialTab; // Cho phép mở thẳng tab mong muốn
     _fetchMyProfile();
   }
 
@@ -920,7 +923,13 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                     ),
                                     TextButton.icon(
                                       onPressed: () {
-                                        /* Logic Copy SĐT */
+                                        Clipboard.setData(ClipboardData(text: _phone));
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Đã sao chép số tài khoản!'),
+                                            duration: Duration(seconds: 2),
+                                          ),
+                                        );
                                       },
                                       icon: const Icon(
                                         Icons.copy,

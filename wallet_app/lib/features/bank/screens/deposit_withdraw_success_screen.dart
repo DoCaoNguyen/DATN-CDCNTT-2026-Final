@@ -138,18 +138,18 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Quản lý chi tiêu
-              _buildSpendingManagementCard(),
+              _buildSpendingManagementCard(context),
               
               if (!isDeposit) ...[
                 const SizedBox(height: 16),
-                _buildSecurityAlertCard(),
+                _buildSecurityAlertCard(context),
                 const SizedBox(height: 20),
                 const Text(
                   'Có thể bạn quan tâm',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
-                _buildPromotionBanner(),
+                _buildPromotionBanner(context),
               ],
               const SizedBox(height: 24),
             ],
@@ -274,7 +274,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildSpendingManagementCard() {
+  Widget _buildSpendingManagementCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -315,7 +315,11 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tính năng đang được phát triển')),
+              );
+            },
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFFE91E63), width: 1),
               shape: RoundedRectangleBorder(
@@ -333,7 +337,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSecurityAlertCard() {
+  Widget _buildSecurityAlertCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -370,7 +374,11 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tính năng đang được phát triển')),
+              );
+            },
             child: const Text(
               'Xem ngay',
               style: TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold),
@@ -381,7 +389,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPromotionBanner() {
+  Widget _buildPromotionBanner(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -425,7 +433,11 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tính năng đang được phát triển')),
+                  );
+                },
                 child: const Text('Trả sau ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             ),
