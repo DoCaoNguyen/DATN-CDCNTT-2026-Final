@@ -1,4 +1,4 @@
-const pool = require('../../config/db'); 
+const pool = require('../../config/db');
 
 const userRepository = {
     searchUsers: async (searchQuery, currentUserId) => {
@@ -10,22 +10,13 @@ const userRepository = {
               AND (u.phone ILIKE $2 OR u.full_name ILIKE $2 OR u.email ILIKE $2)
             LIMIT 20
         `;
-        
+
         const result = await pool.query(query, [currentUserId, `%${searchQuery}%`]);
         return result.rows;
     },
 
     getUserProfile: async (userId) => {
-<<<<<<< HEAD
-        const query = `
-            SELECT u.full_name, u.phone, k.id_number
-            FROM users u
-            LEFT JOIN user_kyc k ON u.id = k.user_id
-            WHERE u.id = $1
-        `;
-=======
         const query = 'SELECT full_name, phone FROM users WHERE id = $1';
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         const result = await pool.query(query, [userId]);
         return result.rows[0];
     },
@@ -42,7 +33,7 @@ const userRepository = {
         return result.rows[0];
     }
 
-    
+
 };
 
 module.exports = userRepository;

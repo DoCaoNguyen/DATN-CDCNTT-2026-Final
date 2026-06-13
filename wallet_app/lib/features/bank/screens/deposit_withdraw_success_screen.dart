@@ -138,30 +138,18 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Quản lý chi tiêu
-<<<<<<< HEAD
-              _buildSpendingManagementCard(context),
-              
-              if (!isDeposit) ...[
-                const SizedBox(height: 16),
-                _buildSecurityAlertCard(context),
-=======
               _buildSpendingManagementCard(),
               
               if (!isDeposit) ...[
                 const SizedBox(height: 16),
                 _buildSecurityAlertCard(),
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 const SizedBox(height: 20),
                 const Text(
                   'Có thể bạn quan tâm',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
-<<<<<<< HEAD
-                _buildPromotionBanner(context),
-=======
                 _buildPromotionBanner(),
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
               ],
               const SizedBox(height: 24),
             ],
@@ -286,11 +274,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     }
   }
 
-<<<<<<< HEAD
-  Widget _buildSpendingManagementCard(BuildContext context) {
-=======
   Widget _buildSpendingManagementCard() {
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -331,15 +315,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton(
-<<<<<<< HEAD
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tính năng đang được phát triển')),
-              );
-            },
-=======
             onPressed: () {},
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFFE91E63), width: 1),
               shape: RoundedRectangleBorder(
@@ -357,11 +333,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildSecurityAlertCard(BuildContext context) {
-=======
   Widget _buildSecurityAlertCard() {
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -398,15 +370,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           TextButton(
-<<<<<<< HEAD
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tính năng đang được phát triển')),
-              );
-            },
-=======
             onPressed: () {},
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
             child: const Text(
               'Xem ngay',
               style: TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold),
@@ -417,11 +381,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildPromotionBanner(BuildContext context) {
-=======
   Widget _buildPromotionBanner() {
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -465,15 +425,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-<<<<<<< HEAD
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tính năng đang được phát triển')),
-                  );
-                },
-=======
                 onPressed: () {},
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
                 child: const Text('Trả sau ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             ),

@@ -35,10 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   http: ^1.6.0
-<<<<<<< HEAD
-=======
   dio: ^5.7.0
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
   image_picker: ^1.2.2
   camera: ^0.11.0               # Thêm thư viện luồng Camera tuỳ chỉnh
   google_mlkit_face_detection: ^0.11.0
@@ -59,10 +56,7 @@ dependencies:
     git:
       url: https://github.com/ZeroPass/dmrtd.git
       ref: master
-<<<<<<< HEAD
   flutter_contacts: ^2.2.1
-=======
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
 
 dev_dependencies:
   flutter_test:

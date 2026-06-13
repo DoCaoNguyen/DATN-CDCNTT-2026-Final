@@ -1,20 +1,4 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-<<<<<<< HEAD
-import 'package:flutter/foundation.dart';
-import '../constants/api_config.dart';
-
-class SocketService {
-  IO.Socket? socket;
-  final String token;
-  final Function(Map<String, dynamic>) onBalanceUpdate;
-
-  SocketService({required this.token, required this.onBalanceUpdate});
-
-  void connect() {
-    final String url = ApiConfig.socketUrl;
-    debugPrint("Kết nối đến Socket Server: $url");
-
-=======
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,7 +38,6 @@ class SocketService {
 
     disconnect();
 
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     socket = IO.io(
       url,
       IO.OptionBuilder()

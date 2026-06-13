@@ -26,11 +26,7 @@ class BankDetailInputScreen extends StatefulWidget {
 class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
   final TextEditingController _accountNumberController = TextEditingController();
   String _cardHolderName = "PHAN VAN THONG";
-<<<<<<< HEAD
-  String _cccd = "080205015346"; // Mock/prefilled CCCD
-=======
   final String _cccd = "080205015346"; // Mock/prefilled CCCD
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
   bool _isLoading = false;
   bool _hasAttemptedSubmit = false;
 

@@ -14,7 +14,7 @@ const initSocket = (server) => {
     // Middleware xác thực socket bằng JWT
     io.use((socket, next) => {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
-        
+
         if (!token) {
             return next(new Error('Authentication error: No token provided'));
         }
@@ -29,11 +29,7 @@ const initSocket = (server) => {
     });
 
     io.on('connection', (socket) => {
-<<<<<<< HEAD
-        const userId = socket.user.id;
-=======
         const userId = socket.user.userId || socket.user.id;
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
         console.log(`User connected: ${userId} (Socket ID: ${socket.id})`);
 
         // Mỗi user tham gia vào một room riêng dựa trên userId

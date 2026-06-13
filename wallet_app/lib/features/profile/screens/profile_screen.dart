@@ -6,10 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../auth/login/sceens/login_phone_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-<<<<<<< HEAD
-=======
 import '../../../../core/services/socket_service.dart';
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
 
 
 class ProfileScreen extends StatefulWidget {
@@ -801,12 +798,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _performLogout() async {
-<<<<<<< HEAD
-=======
     // Ngắt kết nối Socket
     SocketService().disconnect();
 
->>>>>>> 9e6669f23a76d7a41d49e8c727841cf452072473
     // Xoá thông tin đăng nhập tự động
     try {
       final prefs = await SharedPreferences.getInstance();
