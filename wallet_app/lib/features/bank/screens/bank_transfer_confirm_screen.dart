@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart'; // For PinConfirmBottomSheet
@@ -20,6 +22,7 @@ class BankTransferConfirmScreen extends StatefulWidget {
   final String amount;
   final String note;
   final String senderName;
+  final String? cardHolderName;
 
   const BankTransferConfirmScreen({
     Key? key,
@@ -30,6 +33,7 @@ class BankTransferConfirmScreen extends StatefulWidget {
     required this.amount,
     required this.note,
     required this.senderName,
+    this.cardHolderName,
   }) : super(key: key);
 
   @override
@@ -37,6 +41,7 @@ class BankTransferConfirmScreen extends StatefulWidget {
 }
 
 class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
+  final _client = CustomHttpClient();
   final String _refCode = "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
   bool _isLoading = false;
   String _mioBalance = "0đ";
@@ -72,12 +77,8 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
 
   Future<void> _fetchMioBalance() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getWalletBalance),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -97,6 +98,15 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
     final number = int.tryParse(value);
     if (number == null) return "0đ";
     return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+  }
+
+  String getNickname(String name) {
+    if (name.isEmpty) return 'ThoongCT';
+    final parts = name.trim().split(' ');
+    final last = parts.last;
+    if (last.isEmpty) return 'ThoongCT';
+    String cap = last[0].toUpperCase() + last.substring(1).toLowerCase();
+    return '${cap}CT';
   }
 
   int get _parsedAmount {
@@ -245,12 +255,10 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
 
   Future<String?> _executeTransactionWithPIN(String pin) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.bankTransfer),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'amount': widget.amount,
@@ -281,6 +289,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               note: widget.note,
               referenceCode: _refCode,
               paymentTime: formattedTime,
+              cardHolderName: widget.cardHolderName,
             ),
           ),
         );
@@ -311,7 +320,15 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
     setState(() => _isLoading = true);
     try {
       var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.bankTransfer));
-      request.headers['Authorization'] = 'Bearer ${widget.token}';
+      
+      // Auto token will be added by CustomHttpClient interceptor if we use it, but for MultipartRequest we should just pass it to _client.send
+      final prefs = await SharedPreferences.getInstance();
+      final String? authToken = prefs.getString('auth_token');
+      if (authToken != null && authToken.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $authToken';
+      }
+      request.headers['ngrok-skip-browser-warning'] = 'true';
+
       request.fields['amount'] = widget.amount;
       request.fields['bank_code'] = widget.bankCode;
       request.fields['bank_name'] = widget.bankName;
@@ -322,7 +339,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         await http.MultipartFile.fromPath('face_image', selfieFile.path),
       );
 
-      var responseStream = await request.send();
+      var responseStream = await _client.send(request);
       var response = await http.Response.fromStream(responseStream);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -342,6 +359,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               note: widget.note,
               referenceCode: _refCode,
               paymentTime: formattedTime,
+              cardHolderName: widget.cardHolderName,
             ),
           ),
         );
@@ -526,29 +544,49 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                                     Row(
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(color: Colors.pink.shade50, shape: BoxShape.circle),
+                                          height: 40,
+                                          width: 40,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.grey.shade200),
+                                            color: Colors.white,
+                                          ),
+                                          alignment: Alignment.center,
                                           child: Text(
                                             widget.bankCode,
                                             style: const TextStyle(
-                                              color: Colors.pink,
-                                              fontSize: 10,
+                                              color: Color(0xFF0F3B99),
                                               fontWeight: FontWeight.bold,
+                                              fontSize: 12,
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          widget.senderName,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                (widget.cardHolderName ?? 'PHAN VAN THONG').toUpperCase(),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "${widget.bankName} - ${widget.accountNumber}",
+                                                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 16),
-                                    _buildDetailRow('Số tiền', _formatAmount(widget.amount), isBlue: true),
-                                    _buildDetailRow('Tên gợi nhớ', 'ThoongCT'),
+                                    const Divider(height: 1),
+                                    const SizedBox(height: 12),
+                                    _buildDetailRow('Số tiền', _formatAmount(widget.amount)),
+                                    _buildDetailRow('Tên gợi nhớ', getNickname(widget.cardHolderName ?? 'PHAN VAN THONG')),
                                     _buildDetailRow('Tin nhắn', widget.note),
-                                    _buildDetailRow('Phí giao dịch', 'Miễn phí', isBlue: true),
+                                    _buildDetailRow('Phí giao dịch', 'Miễn phí'),
                                   ],
                                 ),
                               ),
@@ -579,7 +617,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                                           Container(
                                             padding: const EdgeInsets.all(4),
                                             decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                                            child: const Text('mo\nmo', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
+                                            child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold, height: 1)),
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(

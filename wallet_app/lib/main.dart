@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/notification_service.dart';
 import 'core/constants/app_colors.dart';
 import 'features/auth/login/sceens/login_phone_screen.dart';
 import 'features/home/screens/home_screen.dart';
-import 'core/services/auth_interceptor.dart';
+import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
+import 'core/services/network_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  NetworkService().initialize();
+
   String? token;
   String? userId;
   bool isVerified = false;
@@ -26,10 +29,10 @@ void main() async {
         storageBucket: "wallet-app-loyalty.firebasestorage.app",
       ),
     );
-    
+
     // Khởi tạo dịch vụ thông báo
     await NotificationService.instance.initialize();
-    
+
     // Xin quyền hiển thị thông báo
     await NotificationService.instance.requestPermissions();
 
@@ -47,11 +50,7 @@ void main() async {
     debugPrint("Lỗi khởi tạo hệ thống: $e");
   }
 
-  runApp(MyApp(
-    token: token,
-    userId: userId,
-    isVerified: isVerified,
-  ));
+  runApp(MyApp(token: token, userId: userId, isVerified: isVerified));
 }
 
 class MyApp extends StatelessWidget {
@@ -59,36 +58,30 @@ class MyApp extends StatelessWidget {
   final String? userId;
   final bool isVerified;
 
-  const MyApp({
-    super.key,
-    this.token,
-    this.userId,
-    required this.isVerified,
-  });
+  const MyApp({super.key, this.token, this.userId, required this.isVerified});
 
   @override
   Widget build(BuildContext context) {
     // Kiểm tra xem người dùng đã đăng nhập chưa
-    final bool isLoggedIn = token != null && token!.isNotEmpty && userId != null && userId!.isNotEmpty;
+    final bool isLoggedIn =
+        token != null &&
+        token!.isNotEmpty &&
+        userId != null &&
+        userId!.isNotEmpty;
 
     return MaterialApp(
-      navigatorKey: AuthInterceptor.navigatorKey,
+      navigatorKey: CustomHttpClient.navigatorKey,
       title: 'Ví Điện Tử Mio',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryPink),
         useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.background, 
+        scaffoldBackgroundColor: AppColors.background,
+        textTheme: GoogleFonts.interTextTheme(),
       ),
-      routes: {
-        '/login': (context) => const LoginPhoneScreen(),
-      },
-      home: isLoggedIn 
-          ? HomeScreen(
-              userId: userId!,
-              isVerified: isVerified,
-              token: token!,
-            )
+      routes: {'/login': (context) => const LoginPhoneScreen()},
+      home: isLoggedIn
+          ? HomeScreen(userId: userId!, isVerified: isVerified, token: token!)
           : const LoginPhoneScreen(),
     );
   }

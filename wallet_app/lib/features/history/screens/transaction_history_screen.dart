@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transaction_detail_screen.dart';
+import 'expense_management_screen.dart';
+import 'transaction_history_filter_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final String token;
@@ -14,28 +17,69 @@ class TransactionHistoryScreen extends StatefulWidget {
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+  final _client = CustomHttpClient();
   List<dynamic> _allTransactions = [];
   List<dynamic> _filteredTransactions = [];
   bool _isLoading = true;
   String _errorMsg = "";
   final TextEditingController _searchController = TextEditingController();
-  DateTimeRange? _selectedDateRange;
+  
+  // Pagination
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isFetchingMore = false;
 
   // Statistics calculation variables
-  int _totalSpendThisMonth = 0;
-  int _totalReceiveThisMonth = 0;
+  int _totalExpenseThisMonth = 0;
+  int _totalExpenseLastMonth = 0;
+  
+  TransactionFilterConfig _currentFilter = TransactionFilterConfig();
 
   @override
   void initState() {
     super.initState();
+    _fetchStats();
     _fetchHistory();
     _searchController.addListener(_applyFilters);
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        _fetchMore();
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  bool _hasActiveFilter() {
+    return _currentFilter.time != "Tất cả" ||
+        _currentFilter.account != "Tất cả" ||
+        _currentFilter.service != null;
+  }
+
+  Future<void> _fetchStats() async {
+    if (widget.token.isEmpty) return;
+    try {
+      final response = await _client.get(Uri.parse(ApiConfig.getTransactionStats));
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        if (resData['success'] == true && resData['data'] != null) {
+          if (mounted) {
+            setState(() {
+              _totalExpenseThisMonth = int.tryParse(resData['data']['totalSpendThisMonth']?.toString() ?? '0') ?? 0;
+              _totalExpenseLastMonth = int.tryParse(resData['data']['totalSpendLastMonth']?.toString() ?? '0') ?? 0;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print("Lỗi lấy thống kê: $e");
+    }
   }
 
   Future<void> _fetchHistory() async {
@@ -51,15 +95,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       setState(() {
         _isLoading = true;
         _errorMsg = "";
+        _currentPage = 1;
+        _hasMore = true;
       });
 
-      final response = await http.get(
-        Uri.parse(ApiConfig.getTransactionHistory),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
+      final response = await _client.get(
+        Uri.parse("${ApiConfig.getTransactionHistory}?page=1&limit=20"),
       );
 
       if (response.statusCode == 200) {
@@ -69,8 +110,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           if (mounted) {
             setState(() {
               _allTransactions = fetchedList;
+              if (fetchedList.length < 20) {
+                _hasMore = false;
+              }
               _isLoading = false;
-              _calculateMonthlyStats();
               _applyFilters();
             });
           }
@@ -97,34 +140,50 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     }
   }
 
-  void _calculateMonthlyStats() {
-    final now = DateTime.now();
-    int totalDebit = 0;
-    int totalCredit = 0;
-
-    for (var tx in _allTransactions) {
-      if (tx['created_at'] != null) {
-        try {
-          final txDate = DateTime.parse(tx['created_at']);
-          // Check if transaction is in the current month and year
-          if (txDate.month == now.month && txDate.year == now.year) {
-            final int amt = int.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
-            if (tx['entry_type'] == 'DEBIT') {
-              totalDebit += amt;
-            } else if (tx['entry_type'] == 'CREDIT') {
-              totalCredit += amt;
-            }
-          }
-        } catch (e) {
-          // Ignore parse errors
-        }
-      }
-    }
-
+  Future<void> _fetchMore() async {
+    if (_isFetchingMore || !_hasMore || _isLoading) return;
+    
     setState(() {
-      _totalSpendThisMonth = totalDebit;
-      _totalReceiveThisMonth = totalCredit;
+      _isFetchingMore = true;
     });
+
+    try {
+      final nextPage = _currentPage + 1;
+      final response = await _client.get(
+        Uri.parse("${ApiConfig.getTransactionHistory}?page=$nextPage&limit=20"),
+      );
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        if (resData['success'] == true && resData['data'] != null) {
+          final List<dynamic> fetchedList = resData['data'];
+          if (mounted) {
+            setState(() {
+              _currentPage = nextPage;
+              _allTransactions.addAll(fetchedList);
+              if (fetchedList.length < 20) {
+                _hasMore = false;
+              }
+              _isFetchingMore = false;
+              _applyFilters();
+            });
+          }
+        } else {
+          setState(() {
+            _isFetchingMore = false;
+          });
+        }
+      } else {
+        setState(() {
+          _isFetchingMore = false;
+        });
+      }
+    } catch (e) {
+      print("Lỗi tải thêm: $e");
+      setState(() {
+        _isFetchingMore = false;
+      });
+    }
   }
 
   void _applyFilters() {
@@ -147,48 +206,82 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               amount.contains(query);
         }
 
-        // 2. Date Range Filter
-        bool matchesDate = true;
-        if (_selectedDateRange != null && tx['created_at'] != null) {
+        // 2. Time Filter
+        bool matchesTime = true;
+        if (_currentFilter.time != "Tất cả" && tx['created_at'] != null) {
           try {
             final txDate = DateTime.parse(tx['created_at']).toLocal();
-            // Start of start day to end of end day
-            final start = DateTime(_selectedDateRange!.start.year, _selectedDateRange!.start.month, _selectedDateRange!.start.day);
-            final end = DateTime(_selectedDateRange!.end.year, _selectedDateRange!.end.month, _selectedDateRange!.end.day, 23, 59, 59);
-            matchesDate = txDate.isAfter(start) && txDate.isBefore(end);
-          } catch (_) {
-            matchesDate = false;
+            // "Tháng 6/2026"
+            final timeStr = _currentFilter.time.replaceAll("Tháng ", "");
+            final parts = timeStr.split("/");
+            if (parts.length == 2) {
+              final month = int.parse(parts[0]);
+              final year = int.parse(parts[1]);
+              matchesTime = txDate.month == month && txDate.year == year;
+            }
+          } catch (_) {}
+        }
+
+        // 3. Account Filter
+        bool matchesAccount = true;
+        if (_currentFilter.account != "Tất cả") {
+          final desc = (tx['description'] ?? '').toString().toLowerCase();
+          final note = (tx['transfer_note'] ?? '').toString().toLowerCase();
+          final isBank = desc.contains('ngân hàng') || desc.contains('bank') || note.contains('ngân hàng') || note.contains('bank');
+          
+          if (_currentFilter.account == "Tài khoản ngân hàng") {
+            matchesAccount = isBank;
+          } else if (_currentFilter.account == "Ví Mio") {
+            matchesAccount = !isBank;
           }
         }
 
-        return matchesSearch && matchesDate;
+        // 4. Service Filter
+        bool matchesService = true;
+        if (_currentFilter.service != null) {
+          final category = _determineCategoryTag(tx);
+          // Special case mapping for filter options
+          if (_currentFilter.service == "Nhận tiền") {
+            matchesService = tx['entry_type'] == 'CREDIT';
+          } else if (_currentFilter.service == "Rút tiền") {
+            matchesService = tx['transaction_type'] == 'WITHDRAW';
+          } else if (_currentFilter.service == "Chuyển tiền") {
+            matchesService = tx['transaction_type'] == 'TRANSFER' && tx['entry_type'] == 'DEBIT';
+          } else if (_currentFilter.service == "Nạp tiền") {
+            matchesService = tx['transaction_type'] == 'DEPOSIT';
+          } else if (_currentFilter.service == "Chi tiêu sinh hoạt") {
+            matchesService = ["Ăn uống", "Chợ, siêu thị", "Di chuyển", "Mua sắm"].contains(category);
+          } else if (_currentFilter.service == "Hóa đơn & Tiện ích") {
+            matchesService = ["Hóa đơn", "Nhà cửa", "Học tập"].contains(category);
+          } else if (_currentFilter.service == "Giải trí & Mua sắm") {
+            matchesService = ["Giải trí", "Làm đẹp", "Mua sắm"].contains(category);
+          } else if (_currentFilter.service == "Chi phí phát sinh") {
+            matchesService = ["Sức khỏe", "Từ thiện", "Người thân"].contains(category);
+          } else if (_currentFilter.service == "Khác") {
+            matchesService = category == "Khác";
+          } else {
+            matchesService = category == _currentFilter.service;
+          }
+        }
+
+        return matchesSearch && matchesTime && matchesAccount && matchesService;
       }).toList();
     });
   }
 
-  Future<void> _selectDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
-      context: context,
-      initialDateRange: _selectedDateRange,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.pink,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+  Future<void> _openFilterScreen() async {
+    final result = await Navigator.push<TransactionFilterConfig>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransactionHistoryFilterScreen(
+          initialConfig: _currentFilter,
+        ),
+      ),
     );
 
-    if (picked != null) {
+    if (result != null) {
       setState(() {
-        _selectedDateRange = picked;
+        _currentFilter = result;
       });
       _applyFilters();
     }
@@ -238,7 +331,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return groups;
   }
 
-  // Determine Tag Category based on note content or transaction details
   String _determineCategoryTag(dynamic tx) {
     if (tx['category_name'] != null && tx['category_name'].toString().isNotEmpty) {
       return tx['category_name'].toString();
@@ -315,7 +407,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     if (tx['transaction_type'] == 'DEPOSIT') {
       return Icons.account_balance_wallet_outlined;
     }
-    // Check entry_type for Debit vs Credit
     if (tx['entry_type'] == 'CREDIT') {
       return Icons.call_received_outlined;
     }
@@ -493,32 +584,56 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final grouped = _groupTransactionsByMonth(_filteredTransactions);
-    // Sort month keys in descending order (assuming transactions are already chronologically sorted)
     final sortedMonthKeys = grouped.keys.toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F5F9),
       appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFFE4EE), Color(0xFFFFE4EE)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
         title: const Text(
           "Lịch sử giao dịch",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchHistory,
+      body: Container(
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFE4EE),
+              Color(0xFFFFF0F5),
+              Color(0xFFF5F5F9),
+            ],
+          ),
+        ),
+        child: RefreshIndicator(
+        onRefresh: () async {
+          _fetchStats();
+          await _fetchHistory();
+        },
         color: Colors.pink,
         child: SingleChildScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search Bar Area
               Container(
-                color: Colors.white,
+                color: Colors.transparent,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
@@ -529,32 +644,42 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           color: const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(22),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.search, color: Colors.grey),
-                            hintText: "Tìm kiếm giao dịch",
-                            hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 11),
-                          ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.search, color: Colors.grey, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                style: const TextStyle(fontSize: 14),
+                                decoration: const InputDecoration(
+                                  hintText: "Tìm kiếm giao dịch",
+                                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: _selectDateRange,
+                      onTap: _openFilterScreen,
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: _selectedDateRange != null ? Colors.pink.shade50 : const Color(0xFFF5F5F5),
+                          color: _hasActiveFilter() ? Colors.pink.shade50 : const Color(0xFFF5F5F5),
                           shape: BoxShape.circle,
-                          border: _selectedDateRange != null ? Border.all(color: Colors.pink.shade200) : null,
+                          border: _hasActiveFilter() ? Border.all(color: Colors.pink.shade200) : null,
                         ),
                         child: Icon(
-                          Icons.tune, 
-                          color: _selectedDateRange != null ? Colors.pink : Colors.black54, 
-                          size: 20
+                          Icons.tune,
+                          color: _hasActiveFilter() ? Colors.pink : Colors.grey.shade600,
+                          size: 20,
                         ),
                       ),
                     ),
@@ -570,30 +695,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   ],
                 ),
               ),
-              if (_selectedDateRange != null)
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-                  child: Row(
-                    children: [
-                      InputChip(
-                        label: Text(
-                          "Từ: ${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - Đến: ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}/${_selectedDateRange!.end.year}",
-                          style: const TextStyle(color: Colors.pink, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        backgroundColor: Colors.pink.shade50,
-                        deleteIconColor: Colors.pink,
-                        onDeleted: () {
-                          setState(() {
-                            _selectedDateRange = null;
-                          });
-                          _applyFilters();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
               // Monthly Summary Card
               Container(
                 margin: const EdgeInsets.all(16),
@@ -631,32 +732,44 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         children: [
                           // Spend Box
                           Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Colors.grey.shade200),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Tổng chi", style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _formatCurrency(_totalSpendThisMonth),
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
-                                    ],
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ExpenseManagementScreen(
+                                      token: widget.token,
+                                    ),
                                   ),
-                                ],
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.grey.shade200),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text("Tổng chi", style: TextStyle(color: Colors.grey, fontSize: 11)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            _formatCurrency(_totalExpenseThisMonth),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -678,26 +791,37 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      // Render a dynamic look alike value
+                                      // Render difference with last month
                                       Expanded(
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              _totalSpendThisMonth > 0 ? Icons.arrow_downward : Icons.trending_flat,
-                                              color: Colors.green,
-                                              size: 14,
-                                            ),
-                                            const SizedBox(width: 2),
-                                            Expanded(
-                                              child: Text(
-                                                _totalSpendThisMonth > 0
-                                                    ? _formatCurrency((_totalSpendThisMonth * 0.05).round())
-                                                    : "0đ",
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.green),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
+                                        child: Builder(
+                                          builder: (context) {
+                                            int diff = _totalExpenseThisMonth - _totalExpenseLastMonth;
+                                            bool isMore = diff > 0;
+                                            bool isLess = diff < 0;
+                                            return Row(
+                                              children: [
+                                                if (diff != 0)
+                                                  Icon(
+                                                    isMore ? Icons.arrow_upward : Icons.arrow_downward,
+                                                    color: isMore ? Colors.red : Colors.green,
+                                                    size: 14,
+                                                  ),
+                                                if (diff != 0)
+                                                  const SizedBox(width: 2),
+                                                Expanded(
+                                                  child: Text(
+                                                    diff == 0 ? "Bằng tháng trước" : _formatCurrency(diff.abs()),
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold, 
+                                                      fontSize: 14, 
+                                                      color: diff == 0 ? Colors.grey : (isMore ? Colors.red : Colors.green)
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          }
                                         ),
                                       ),
                                       const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
@@ -941,10 +1065,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     );
                   },
                 ),
+
+              if (_isFetchingMore)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.pink),
+                  ),
+                ),
+                
               const SizedBox(height: 30),
             ],
           ),
         ),
+      ),
       ),
     );
   }

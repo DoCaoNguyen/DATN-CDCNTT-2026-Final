@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../../../core/constants/api_config.dart';
@@ -22,6 +23,7 @@ class DepositWithdrawScreen extends StatefulWidget {
 }
 
 class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
+  final _client = CustomHttpClient();
   int _activeTab = 0; // 0 = Nạp tiền, 1 = Rút tiền
   bool _isLoading = false;
   bool _isConfirming = false; // "Thanh toán an toàn" step
@@ -65,12 +67,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
 
   Future<void> _fetchMioBalance() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getWalletBalance),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -89,12 +87,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   Future<void> _fetchLinkedBanks() async {
     setState(() => _isLoading = true);
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getLinkedBanks),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -276,12 +270,10 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         body['linked_bank_id'] = _selectedBank!['id'];
       }
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode(body),
       );
@@ -445,6 +437,99 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
     }
   }
 
+  void _showBankSelectionBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setBottomSheetState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Chọn tài khoản liên kết',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_linkedBanks.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Text('Chưa có ngân hàng liên kết'),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _linkedBanks.length,
+                        itemBuilder: (context, index) {
+                          final bank = _linkedBanks[index];
+                          final isSelected = _selectedBank != null && _selectedBank!['id'] == bank['id'];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: isSelected ? Colors.pink : Colors.grey.shade300,
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              color: isSelected ? Colors.pink.shade50.withOpacity(0.1) : Colors.white,
+                            ),
+                            child: ListTile(
+                              leading: const Icon(Icons.account_balance, color: Colors.pink),
+                              title: Text(
+                                bank['bank_name'] ?? 'Ngân hàng',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(bank['card_number'] ?? ''),
+                              trailing: Icon(
+                                isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                color: isSelected ? Colors.pink : Colors.grey,
+                              ),
+                              onTap: () {
+                                setBottomSheetState(() {
+                                  _selectedBank = bank;
+                                });
+                                setState(() {
+                                  _selectedBank = bank;
+                                });
+                                Navigator.pop(context);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
   // --- UI WIDGET BUILDERS ---
   Widget _buildHomeOrConfirmScreen() {
     if (_isConfirming) {
@@ -487,7 +572,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                           'Nạp tiền',
                           style: TextStyle(
                             color: _activeTab == 0 ? Colors.pink : Colors.grey,
-                            fontWeight: _activeTab == 0 ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: _activeTab == 0 ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -517,7 +602,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                           'Rút tiền',
                           style: TextStyle(
                             color: _activeTab == 1 ? Colors.pink : Colors.grey,
-                            fontWeight: _activeTab == 1 ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: _activeTab == 1 ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -538,7 +623,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                 // Source / Target bank card
                 Text(
                   isDeposit ? 'Nạp tiền vào' : 'Rút tiền từ',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -556,13 +641,13 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                              child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, height: 1)),
+                              child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500, height: 1)),
                             ),
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                const Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                                 Text(_mioBalance, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                               ],
                             ),
@@ -588,8 +673,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Túi Thần Tài', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                    Text('Đến 4%/năm', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    Text('Túi Thần Tài', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                    Text('Đến 4%/năm', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.w500)),
                                   ],
                                 ),
                               ),
@@ -621,7 +706,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                         controller: _amountController,
                         onChanged: _onAmountChanged,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                         decoration: const InputDecoration(
                           hintText: '0đ',
                           border: InputBorder.none,
@@ -658,14 +743,14 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Chuyển tiền ngân hàng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              const Text('Chuyển tiền ngân hàng', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                               Text('Miễn phí chuyển tiền với Túi và Quỹ', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                             ],
                           ),
                         ),
                         TextButton(
                           onPressed: () {},
-                          child: const Text('Thử ngay', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold)),
+                          child: const Text('Thử ngay', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.w600)),
                         )
                       ],
                     ),
@@ -694,7 +779,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                               style: TextStyle(color: Colors.pink.shade900, fontSize: 13, height: 1.4),
                             ),
                             const SizedBox(height: 4),
-                            const Text('Tìm hiểu thêm >', style: TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
+                            const Text('Tìm hiểu thêm >', style: TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -729,7 +814,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                 },
                 child: Text(
                   isDeposit ? 'Nạp tiền' : 'Rút tiền',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -743,6 +828,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
     final isDeposit = _activeTab == 0;
     final bankName = _selectedBank != null ? _selectedBank!['bank_name'] : "MBBank";
     final cardNo = _selectedBank != null ? _selectedBank!['card_number'] : "";
+    final bankNameDetails = _selectedBank != null ? "$bankName - $cardNo" : "Chưa chọn ngân hàng";
     final formattedVal = _amountController.text;
 
     return Column(
@@ -777,12 +863,12 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   isDeposit ? 'Nạp tiền vào ví Mio' : 'Rút tiền về ngân hàng',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 16),
-                            _buildDetailRow(isDeposit ? 'Nguồn tiền' : 'Rút về NH liên kết', bankName, isBlue: true),
+                            _buildDetailRow(isDeposit ? 'Nguồn tiền' : 'Rút về NH liên kết', bankNameDetails, isBlue: true),
                             _buildDetailRow('Số tiền', formattedVal, isBlue: true),
                             if (!isDeposit) _buildDetailRow('Phí giao dịch', 'Miễn phí'),
                           ],
@@ -798,31 +884,35 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                           children: [
                             Text(
                               isDeposit ? 'Nạp từ tài khoản/thẻ' : 'Rút về tài khoản/thẻ',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                             ),
                             const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.pink, width: 1.5),
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.pink.shade50.withOpacity(0.3)
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.account_balance, color: Colors.pink, size: 24),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(bankName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                        const Text('Miễn phí', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                      ],
+                            InkWell(
+                              onTap: _showBankSelectionBottomSheet,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.pink, width: 1.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.pink.shade50.withOpacity(0.3)
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.account_balance, color: Colors.pink, size: 24),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(bankNameDetails, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                          const Text('Miễn phí', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const Icon(Icons.radio_button_checked, color: Colors.pink),
-                                ],
+                                    const Icon(Icons.keyboard_arrow_down, color: Colors.pink),
+                                  ],
+                                ),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -870,7 +960,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Tổng tiền', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                    Text(formattedVal, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    Text(formattedVal, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -887,7 +977,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                       children: [
                         Icon(Icons.lock_outline, color: Colors.white, size: 18),
                         SizedBox(width: 8),
-                        Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                       ],
                     ),
                   ),
@@ -910,7 +1000,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
           Text(
             value, 
             style: TextStyle(
-              fontWeight: FontWeight.bold, 
+              fontWeight: FontWeight.w500, 
               fontSize: 14,
               color: isBlue ? Colors.blue.shade700 : Colors.black87
             )

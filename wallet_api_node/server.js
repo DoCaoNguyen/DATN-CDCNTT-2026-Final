@@ -12,6 +12,8 @@ const server = http.createServer(app);
 const { initSocket } = require('./src/utils/socket');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
+require('./src/cron/token_cleanup.cron');
+require('./src/cron/loyaltySyncRetry.cron');
 
 initSocket(server);
 

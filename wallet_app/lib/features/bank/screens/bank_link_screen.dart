@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart'; // To reuse PinConfirmBottomSheet
 import 'bank_list_screen.dart';
@@ -18,6 +18,7 @@ class BankLinkScreen extends StatefulWidget {
 }
 
 class _BankLinkScreenState extends State<BankLinkScreen> {
+  final _client = CustomHttpClient();
   bool _isLoading = false;
 
   void _showErrorSnackBar(String message) {
@@ -29,13 +30,8 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
   // Calls API to fetch current wallet_code to use as the card/account number for quick-linking
   Future<String?> _fetchWalletCode() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getWalletBalance),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -111,12 +107,8 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
       // Let's call /users/me to get the user's name
       String cardHolderName = "PHAN VAN THONG";
       try {
-        final profileRes = await http.get(
+        final profileRes = await _client.get(
           Uri.parse(ApiConfig.getMyProfile),
-          headers: {
-            'Authorization': 'Bearer ${widget.token}',
-            'ngrok-skip-browser-warning': 'true',
-          },
         );
         if (profileRes.statusCode == 200) {
           final profileData = jsonDecode(profileRes.body);
@@ -126,12 +118,10 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
         debugPrint("Error fetching profile: $e");
       }
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.linkBank),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'bank_name': bankName,

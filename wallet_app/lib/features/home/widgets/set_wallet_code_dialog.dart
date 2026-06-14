@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 
 class SetWalletCodeDialog extends StatefulWidget {
@@ -16,6 +16,7 @@ class SetWalletCodeDialog extends StatefulWidget {
 class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
   final TextEditingController codeController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final _client = CustomHttpClient();
   
   bool isSubmitting = false;
   String? errorText;
@@ -36,12 +37,10 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
     });
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.setWalletCode),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({'wallet_code': codeController.text.trim()}),
       );

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_success_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -31,6 +31,7 @@ class TransferConfirmScreen extends StatefulWidget {
 }
 
 class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
+  final _client = CustomHttpClient();
   final String _refCode = "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
 
   String _formatAmount(String value) {
@@ -56,12 +57,10 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
     try {
       final String cleanAmount = widget.amount.replaceAll(RegExp(r'[^0-9]'), '');
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.transfer),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'receiver_identifier': widget.receiverPhone,
@@ -254,7 +253,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(4),
                                       decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                                      child: const Text('mo\nmo', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
+                                      child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold, height: 1)),
                                     ),
                                     const SizedBox(width: 12),
                                     const Expanded(

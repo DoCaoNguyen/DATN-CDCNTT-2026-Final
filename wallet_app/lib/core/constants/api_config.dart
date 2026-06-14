@@ -6,7 +6,8 @@ class ApiConfig {
 
   static String get socketUrl {
     final uri = Uri.parse(baseUrl);
-    return "${uri.scheme}://${uri.host}";
+    final portStr = uri.hasPort ? ":${uri.port}" : "";
+    return "${uri.scheme}://${uri.host}$portStr";
   }
 
   // --- AUTH ENDPOINTS ---
@@ -23,6 +24,10 @@ class ApiConfig {
   static const String setWalletCode = '$baseUrl/wallet/set-code';
   static const String getMyProfile = '$baseUrl/users/me';
   static const String getTransactionHistory = '$baseUrl/transaction/history';
+  static const String getTransactionStats = '$baseUrl/transaction/stats';
+  static const String getTransactionsByMonth = '$baseUrl/transaction/month';
+  static const String getChatList = '$baseUrl/transaction/chat-list';
+  static String getChatHistory(String phone) => '$baseUrl/transaction/chat/$phone';
   static const String requestMoneyQR = '$baseUrl/payment/request';
   static const String processPayment = '$baseUrl/payment/process';
   static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
@@ -32,4 +37,8 @@ class ApiConfig {
   static const String withdraw = '$baseUrl/transaction/withdraw';
   static const String bankTransfer = '$baseUrl/transaction/bank-transfer';
   static const String registerDevice = '$baseUrl/notifications/register-device';
+  static const String getNotifications = '$baseUrl/notifications';
+  static const String getUnreadNotificationCount = '$baseUrl/notifications/unread-count';
+  static const String markNotificationRead = '$baseUrl/notifications/read';
+  static const String markAllNotificationsRead = '$baseUrl/notifications/read-all';
 }

@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'transfer_search_screen.dart'; 
+import 'package:http/http.dart' as http;
+import '../../../../core/constants/api_config.dart';
+import '../../screens/transfer_search_screen.dart'; 
+import '../../../bank/screens/bank_transfer_input_screen.dart';
 
-class TransferMainScreen extends StatelessWidget {
+class TransferMainScreen extends StatefulWidget {
   final String token; 
   final String? initialPhone; 
   final String? initialName; 
@@ -12,6 +16,50 @@ class TransferMainScreen extends StatelessWidget {
     this.initialPhone, 
     this.initialName,  
   }) : super(key: key);
+
+  @override
+  State<TransferMainScreen> createState() => _TransferMainScreenState();
+}
+
+class _TransferMainScreenState extends State<TransferMainScreen> {
+  List<dynamic> _linkedBanks = [];
+  bool _isLoadingBanks = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLinkedBanks();
+  }
+
+  Future<void> _fetchLinkedBanks() async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _linkedBanks = data['data'] ?? [];
+            _isLoadingBanks = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoadingBanks = false);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching linked banks: $e");
+      if (mounted) {
+        setState(() => _isLoadingBanks = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,18 +168,17 @@ class TransferMainScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       const Icon(Icons.search, color: Colors.grey, size: 20),
                       const SizedBox(width: 8),
-                      // --- ĐÃ SỬA: Bọc GestureDetector để chuyển qua trang tìm kiếm ---
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context, 
-                              MaterialPageRoute(builder: (_) => TransferSearchScreen(token: token))
+                              MaterialPageRoute(builder: (_) => TransferSearchScreen(token: widget.token))
                             );
                           },
                           child: Container(
                             height: double.infinity,
-                            color: Colors.transparent, // Phải có màu trong suốt để bắt sự kiện tap
+                            color: Colors.transparent, 
                             alignment: Alignment.centerLeft,
                             child: const Text(
                               'Nhập SĐT/STK tại đây',
@@ -205,7 +252,7 @@ class TransferMainScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                        child: const Text('mo\nmo', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
+                        child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold, height: 1)),
                       ),
                       const SizedBox(width: 8),
                       const Text('Ví Mio khác', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -317,7 +364,6 @@ class TransferMainScreen extends StatelessWidget {
             backgroundColor: avatarColor,
             child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          // Logo Mio nhỏ đè lên góc phải dưới của Avatar
           Positioned(
             right: 0,
             bottom: 0,
@@ -327,7 +373,7 @@ class TransferMainScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                child: const Text('mo\nmo', style: TextStyle(color: Colors.white, fontSize: 4, fontWeight: FontWeight.bold, height: 1)),
+                child: const Text('mio', style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
               ),
             ),
           )
@@ -337,6 +383,14 @@ class TransferMainScreen extends StatelessWidget {
       trailing: const Icon(Icons.history, color: Colors.grey),
       onTap: () {},
     );
+  }
+
+  String _maskCardNumber(String? number) {
+    if (number == null || number.isEmpty) return '';
+    if (number.length > 4) {
+      return '******${number.substring(number.length - 4)}';
+    }
+    return '******$number';
   }
 
   // ==========================================
@@ -355,19 +409,65 @@ class TransferMainScreen extends StatelessWidget {
             child: Text('Tài khoản ngân hàng của tôi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 8),
-          ListTile(
-            leading: Container(
-              height: 40,
-              width: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300),
+          if (_isLoadingBanks)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: CircularProgressIndicator(color: Colors.pink),
               ),
-              child: Icon(Icons.star, color: Colors.blue.shade800, size: 20),
+            )
+          else if (_linkedBanks.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'Chưa liên kết tài khoản ngân hàng nào.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+            )
+          else
+            ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _linkedBanks.length,
+              itemBuilder: (context, index) {
+                final bank = _linkedBanks[index];
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BankTransferInputScreen(
+                          token: widget.token,
+                          bankName: bank['bank_name'] ?? 'Ngân hàng',
+                          bankCode: bank['bank_code'] ?? 'BANK',
+                          prefilledAccountNumber: bank['card_number'] ?? bank['account_number'],
+                          cardHolderName: bank['card_holder_name'] ?? bank['account_holder_name'],
+                        ),
+                      ),
+                    );
+                  },
+                  leading: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFE8F2FC),
+                    ),
+                    child: const Icon(Icons.account_balance, color: Color(0xFF0F75BD), size: 22),
+                  ),
+                  title: Text(
+                    bank['card_holder_name'] ?? bank['account_holder_name'] ?? 'Tài khoản liên kết', 
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                  ),
+                  subtitle: Text(
+                    "${bank['bank_name'] ?? 'Ngân hàng'} - ${_maskCardNumber(bank['card_number'] ?? bank['account_number'])}", 
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                );
+              },
             ),
-            title: const Text('PHAN VAN THONG', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: const Text('MBBank - *******437', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ),
         ],
       ),
     );

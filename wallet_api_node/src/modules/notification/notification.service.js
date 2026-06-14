@@ -59,9 +59,11 @@ const notificationService = {
         // For Android, priority: 'high' is used.
         const fcmPayload = {
             tokens: activeTokens,
-            data: {
+            notification: {
                 title: title,
                 body: body,
+            },
+            data: {
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
                 type: 'BALANCE_CHANGE',
                 amount: String(amount),
@@ -72,15 +74,17 @@ const notificationService = {
             android: {
                 priority: 'high',
                 ttl: 24 * 60 * 60 * 1000, // 24 hours time-to-live
+                notification: {
+                    channelId: 'wallet_balance_channel_id',
+                    sound: 'default'
+                }
             },
             apns: {
                 headers: {
-                    'apns-priority': '10', // Instant delivery
-                    'apns-push-type': 'background' // Ensure OS wakes the app up
+                    'apns-priority': '10'
                 },
                 payload: {
                     aps: {
-                        contentAvailable: true, // Wake up iOS app in background
                         sound: 'default',
                         badge: 1
                     }
@@ -139,6 +143,99 @@ const notificationService = {
                 error: error.message,
                 notification: notificationRecord
             };
+        }
+    },
+
+    /**
+     * Send chat message notification
+     */
+    sendChatMessageNotification: async (receiverUserId, senderName, messageContent, referenceId = null) => {
+        const title = senderName ? `Tin nhắn mới từ ${senderName}` : 'Tin nhắn mới';
+        const body = messageContent.length > 50 ? messageContent.substring(0, 50) + '...' : messageContent;
+
+        const activeTokens = await notificationRepository.getActiveTokensByUserId(receiverUserId);
+
+        const notificationRecord = await notificationRepository.createNotification(
+            receiverUserId,
+            title,
+            body,
+            'CHAT',
+            referenceId
+        );
+
+        if (!activeTokens || activeTokens.length === 0) {
+            return { success: true, sentDevices: 0, notification: notificationRecord };
+        }
+
+        const fcmPayload = {
+            tokens: activeTokens,
+            notification: {
+                title: title,
+                body: body,
+            },
+            data: {
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                type: 'CHAT_MESSAGE',
+                referenceId: referenceId ? String(referenceId) : '',
+                timestamp: String(Date.now()),
+            },
+            android: {
+                priority: 'high',
+                ttl: 24 * 60 * 60 * 1000,
+                notification: {
+                    channelId: 'wallet_balance_channel_id',
+                    sound: 'default'
+                }
+            },
+            apns: {
+                headers: {
+                    'apns-priority': '10'
+                },
+                payload: {
+                    aps: {
+                        sound: 'default',
+                        badge: 1
+                    }
+                }
+            }
+        };
+
+        try {
+            const response = await admin.messaging().sendEachForMulticast(fcmPayload);
+            const tokensToDelete = [];
+
+            response.responses.forEach((res, index) => {
+                if (!res.success) {
+                    const token = activeTokens[index];
+                    const error = res.error;
+                    const invalidTokenErrors = [
+                        'messaging/invalid-argument',
+                        'messaging/invalid-registration-token',
+                        'messaging/registration-token-not-registered',
+                    ];
+                    if (invalidTokenErrors.includes(error.code) || 
+                        error.message.includes('registration-token-not-registered') ||
+                        error.message.includes('invalid-registration-token')) {
+                        tokensToDelete.push(token);
+                    }
+                }
+            });
+
+            if (tokensToDelete.length > 0) {
+                await Promise.all(tokensToDelete.map(token => 
+                    notificationRepository.deleteDeviceToken(token)
+                ));
+            }
+
+            return {
+                success: true,
+                sentDevices: response.successCount,
+                failedDevices: response.failureCount,
+                notification: notificationRecord
+            };
+        } catch (error) {
+            console.error('Error sending chat push notification:', error);
+            return { success: false, error: error.message };
         }
     }
 };

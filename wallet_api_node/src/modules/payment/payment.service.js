@@ -88,13 +88,22 @@ const paymentService = {
             );
 
             
-            await paymentRepo.createPaymentTransaction(
+            const paymentTxId = await paymentRepo.createPaymentTransaction(
                 client, order.order_id, wallet.id, order.amount, ledgerTxId
             );
 
             await client.query('COMMIT'); 
 
-            // Gọi Webhook bất đồng bộ gửi kết quả về cho Merchant (chạy nền)
+            // ==========================================
+            // 🚀 BẮT ĐẦU BACKGROUND JOBS SAU KHI ĐÃ COMMIT
+            // ==========================================
+
+            // 1. Tích điểm Loyalty ngầm (Không await)
+            const LoyaltyIntegrationService = require('./LoyaltyIntegrationService');
+            LoyaltyIntegrationService.syncPointsAfterPayment(userId, paymentTxId, order.amount)
+                .catch(err => console.error('[LOYALTY_BACKGROUND_JOB_ERROR]', err.message));
+
+            // 2. Webhook gọi về cho Merchant (chạy nền)
             if (order.callback_url) {
                 const axios = require('axios');
                 axios.post(order.callback_url, {

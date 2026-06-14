@@ -3,7 +3,12 @@ const { v7: uuidv7 } = require('uuid');
 
 const transactionRepository = {
     getWalletByUserId: async (userId) => {
-        const query = `SELECT id FROM wallets WHERE user_id = $1`;
+        const query = `
+            SELECT w.id, w.user_id, u.is_kyc_verified, u.full_name, u.phone
+            FROM wallets w
+            JOIN users u ON w.user_id = u.id
+            WHERE w.user_id = $1
+        `;
         const result = await pool.query(query, [userId]);
         return result.rows[0];
     },
@@ -92,7 +97,7 @@ const transactionRepository = {
         const newId = uuidv7();
         const query = `
             INSERT INTO withdrawal_transactions (id, wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, external_reference)
-            VALUES ($1, $2, 'LINKED_BANK', 'SUCCESS', $3, $4, $5);
+            VALUES ($1, $2, $3, 'LINKED_BANK', 'SUCCESS', $4, $5, $6);
         `;
         await client.query(query, [newId, walletId, amount.toString(), ledgerId, linkedBankId, externalReference]);
         return newId;
@@ -102,7 +107,7 @@ const transactionRepository = {
         const newId = uuidv7();
         const query = `
             INSERT INTO withdrawal_transactions (id, wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, bank_code, account_number, external_reference)
-            VALUES ($1, $2, 'BANK_TRANSFER', 'SUCCESS', $3, NULL, $4, $5, $6);
+            VALUES ($1, $2, $3, 'BANK_TRANSFER', 'SUCCESS', $4, NULL, $5, $6, $7);
         `;
         await client.query(query, [newId, walletId, amount.toString(), ledgerId, bankCode, accountNumber, externalReference]);
         return newId;
@@ -216,6 +221,165 @@ const transactionRepository = {
             RETURNING *;
         `;
         const result = await pool.query(query, [categoryName, isExpenseCounted, transactionId]);
+        return result.rows[0];
+    },
+
+    getMonthlyStats: async (walletId) => {
+        const query = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN le.entry_type = 'DEBIT' AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE) THEN le.amount ELSE 0 END), 0) AS total_spend_this_month,
+                COALESCE(SUM(CASE WHEN le.entry_type = 'CREDIT' AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE) THEN le.amount ELSE 0 END), 0) AS total_receive_this_month,
+                COALESCE(SUM(CASE WHEN le.entry_type = 'DEBIT' AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL '1 month') AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE - INTERVAL '1 month') THEN le.amount ELSE 0 END), 0) AS total_spend_last_month
+            FROM ledger_entries le
+            WHERE le.wallet_id = $1;
+        `;
+        const result = await pool.query(query, [walletId]);
+        return result.rows[0];
+    },
+
+    getTransactionsByMonth: async (walletId, month, year) => {
+        const query = `
+            SELECT 
+                le.id AS entry_id,
+                le.transaction_id,
+                lt.transaction_type,
+                lt.category_name,
+                lt.is_expense_counted,
+                le.entry_type,
+                le.amount,
+                le.balance_before,
+                le.balance_after,
+                lt.description,
+                lt.status,
+                le.created_at,
+                wt.note AS transfer_note,
+                u_sender.full_name AS sender_name,
+                u_sender.phone AS sender_phone,
+                u_receiver.full_name AS receiver_name,
+                u_receiver.phone AS receiver_phone,
+                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code) AS external_reference
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.transaction_id = lt.id
+            LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
+            LEFT JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
+            LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
+            LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
+            LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
+            LEFT JOIN deposit_transactions dt ON lt.id = dt.ledger_transaction_id
+            LEFT JOIN withdrawal_transactions wt_act ON lt.id = wt_act.ledger_transaction_id
+            WHERE le.wallet_id = $1 
+              AND EXTRACT(MONTH FROM le.created_at) = $2 
+              AND EXTRACT(YEAR FROM le.created_at) = $3
+            ORDER BY le.created_at DESC;
+        `;
+        const result = await pool.query(query, [walletId, month, year]);
+        return result.rows;
+    },
+
+    getChatList: async (walletId) => {
+        const query = `
+            WITH CTE AS (
+                SELECT 
+                    wt.id,
+                    wt.amount,
+                    lt.created_at,
+                    CASE WHEN wt.sender_wallet_id = $1 THEN wt.receiver_wallet_id ELSE wt.sender_wallet_id END as counterparty_wallet_id,
+                    CASE WHEN wt.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
+                    wt.note,
+                    'TRANSACTION' as message_type
+                FROM wallet_transfers wt
+                JOIN ledger_transactions lt ON wt.transaction_id = lt.id
+                WHERE wt.sender_wallet_id = $1 OR wt.receiver_wallet_id = $1
+                
+                UNION ALL
+                
+                SELECT 
+                    cm.id,
+                    0 as amount,
+                    cm.created_at,
+                    CASE WHEN cm.sender_wallet_id = $1 THEN cm.receiver_wallet_id ELSE cm.sender_wallet_id END as counterparty_wallet_id,
+                    CASE WHEN cm.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
+                    cm.content as note,
+                    cm.message_type
+                FROM chat_messages cm
+                WHERE cm.sender_wallet_id = $1 OR cm.receiver_wallet_id = $1
+            )
+            SELECT 
+                c.counterparty_wallet_id,
+                u.full_name as counterparty_name,
+                u.phone as counterparty_phone,
+                MAX(c.created_at) as latest_transaction_date
+            FROM CTE c
+            JOIN wallets w ON c.counterparty_wallet_id = w.id
+            JOIN users u ON w.user_id = u.id
+            GROUP BY c.counterparty_wallet_id, u.full_name, u.phone
+            ORDER BY latest_transaction_date DESC;
+        `;
+        const result = await pool.query(query, [walletId]);
+        return result.rows;
+    },
+
+    getChatHistory: async (walletId, counterpartyPhone, limit = 20, offset = 0) => {
+        const query = `
+            WITH AllMessages AS (
+                SELECT 
+                    wt.id as transfer_id,
+                    wt.amount, 
+                    wt.note, 
+                    lt.created_at,
+                    CASE WHEN wt.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
+                    u_counterparty.full_name as counterparty_name,
+                    u_counterparty.phone as counterparty_phone,
+                    'TRANSACTION' as message_type
+                FROM wallet_transfers wt
+                JOIN ledger_transactions lt ON wt.transaction_id = lt.id
+                JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
+                JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
+                JOIN users u_sender ON w_sender.user_id = u_sender.id
+                JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
+                JOIN users u_counterparty ON (CASE WHEN wt.sender_wallet_id = $1 THEN w_receiver.user_id ELSE w_sender.user_id END) = u_counterparty.id
+                WHERE 
+                    (wt.sender_wallet_id = $1 AND u_receiver.phone = $2)
+                    OR 
+                    (wt.receiver_wallet_id = $1 AND u_sender.phone = $2)
+                
+                UNION ALL
+                
+                SELECT 
+                    cm.id as transfer_id,
+                    0 as amount,
+                    cm.content as note,
+                    cm.created_at,
+                    CASE WHEN cm.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
+                    u_counterparty.full_name as counterparty_name,
+                    u_counterparty.phone as counterparty_phone,
+                    cm.message_type
+                FROM chat_messages cm
+                JOIN wallets w_sender ON cm.sender_wallet_id = w_sender.id
+                JOIN wallets w_receiver ON cm.receiver_wallet_id = w_receiver.id
+                JOIN users u_sender ON w_sender.user_id = u_sender.id
+                JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
+                JOIN users u_counterparty ON (CASE WHEN cm.sender_wallet_id = $1 THEN w_receiver.user_id ELSE w_sender.user_id END) = u_counterparty.id
+                WHERE 
+                    (cm.sender_wallet_id = $1 AND u_receiver.phone = $2)
+                    OR 
+                    (cm.receiver_wallet_id = $1 AND u_sender.phone = $2)
+            )
+            SELECT * FROM AllMessages
+            ORDER BY created_at DESC
+            LIMIT $3 OFFSET $4;
+        `;
+        const result = await pool.query(query, [walletId, counterpartyPhone, limit, offset]);
+        return result.rows;
+    },
+    saveChatMessage: async (senderWalletId, receiverWalletId, content) => {
+        const newId = uuidv7();
+        const query = `
+            INSERT INTO chat_messages (id, sender_wallet_id, receiver_wallet_id, content)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *;
+        `;
+        const result = await pool.query(query, [newId, senderWalletId, receiverWalletId, content]);
         return result.rows[0];
     }
 };

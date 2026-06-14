@@ -68,6 +68,31 @@ router.get('/search', userController.search);
 
 /**
  * @swagger
+ * /api/v1/users/check-contacts:
+ *   post:
+ *     summary: So khớp danh bạ điện thoại với người dùng hệ thống
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phones:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Trả về danh sách user khớp
+ */
+router.post('/check-contacts', userController.checkContacts);
+
+/**
+ * @swagger
  * /api/v1/users/me:
  *   get:
  *     summary: Lấy thông tin cá nhân của người dùng đang đăng nhập
@@ -86,6 +111,9 @@ router.get('/search', userController.search);
  *                   type: object
  */
 router.get('/me', userController.getProfile);
+
+router.post('/email/request-otp', userController.requestEmailOtp);
+router.post('/email/verify-otp', userController.verifyEmailOtp);
 
 /**
  * @swagger

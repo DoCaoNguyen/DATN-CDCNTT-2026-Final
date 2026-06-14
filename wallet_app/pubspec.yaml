@@ -42,12 +42,13 @@ dependencies:
   google_mlkit_text_recognition: ^0.13.1 # Thêm AI Liveness nhận diện chớp mắt/cười
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.2.0
-  socket_io_client: ^3.0.2
+  socket_io_client: ^3.1.6
   url_launcher: ^6.3.2
   firebase_core: ^4.10.0
   firebase_messaging: ^16.3.0
   flutter_local_notifications: ^20.1.0
   permission_handler: ^12.0.3
+  flutter_contacts: ^1.1.9
   shared_preferences: ^2.5.5
   local_auth: ^3.0.1
   flutter_secure_storage: ^10.3.1
@@ -56,7 +57,8 @@ dependencies:
     git:
       url: https://github.com/ZeroPass/dmrtd.git
       ref: master
-
+  google_fonts: ^8.1.0
+  connectivity_plus: ^7.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -448,6 +448,55 @@ const transactionService = {
             throw new Error('Transaction_Not_Found');
         }
         return result;
+    },
+
+    getMonthlyStats: async (userId) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+        
+        const stats = await repo.getMonthlyStats(wallet.id);
+        return {
+            totalSpendThisMonth: stats.total_spend_this_month ? stats.total_spend_this_month.toString() : '0',
+            totalReceiveThisMonth: stats.total_receive_this_month ? stats.total_receive_this_month.toString() : '0',
+            totalSpendLastMonth: stats.total_spend_last_month ? stats.total_spend_last_month.toString() : '0',
+        };
+    },
+
+    getTransactionsByMonth: async (userId, month, year) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const transactions = await repo.getTransactionsByMonth(wallet.id, month, year);
+        return transactions.map(item => ({
+            ...item,
+            amount: item.amount ? item.amount.toString() : '0',
+            balance_before: item.balance_before ? item.balance_before.toString() : '0',
+            balance_after: item.balance_after ? item.balance_after.toString() : '0'
+        }));
+    },
+
+    getChatList: async (userId) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const chats = await repo.getChatList(wallet.id);
+        return chats.map(item => ({
+            ...item,
+            latest_transaction_date: item.latest_transaction_date ? new Date(item.latest_transaction_date).toISOString() : null
+        }));
+    },
+
+    getChatHistory: async (userId, counterpartyPhone, page = 1, limit = 20) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const offset = (page - 1) * limit;
+        const history = await repo.getChatHistory(wallet.id, counterpartyPhone, limit, offset);
+        return history.map(item => ({
+            ...item,
+            amount: item.amount ? item.amount.toString() : '0',
+            created_at: item.created_at ? new Date(item.created_at).toISOString() : null
+        }));
     }
 };
 
