@@ -6,8 +6,18 @@ const walletRepository = {
     
     create: async (client, userId) => {
         const newId = uuidv7();
-        const query = `INSERT INTO wallets (id, user_id) VALUES ($1, $2)`;
-        await client.query(query, [newId, userId]);
+        const walletNo = `WAL${Date.now().toString().slice(-9)}`;
+        const query = `
+            INSERT INTO wallets (id, user_id, wallet_no, wallet_code)
+            VALUES ($1, $2, $3, $4)
+        `;
+        await client.query(query, [newId, userId, walletNo, walletNo]);
+        await client.query(
+            `INSERT INTO wallet_balances (wallet_id, available_balance, locked_balance)
+             VALUES ($1, 0, 0)
+             ON CONFLICT (wallet_id) DO NOTHING`,
+            [newId]
+        );
         return newId;
     },
 

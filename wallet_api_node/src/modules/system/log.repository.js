@@ -1,13 +1,19 @@
 const pool = require('../../config/db');
 
 const logRepository = {
-    
-    writeSystemLog: async (serviceName, logLevel, message, metadata) => {
+    writeSystemLog: async (moduleName, logLevel, message, metadata) => {
         const query = `
-            INSERT INTO system_logs (service_name, log_level, message, metadata)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO system_logs (trace_id, level, module, event, message, context)
+            VALUES ($1, $2, $3, $4, $5, $6)
         `;
-        await pool.query(query, [serviceName, logLevel, message, JSON.stringify(metadata)]);
+        await pool.query(query, [
+            `trace-system-${Date.now()}`,
+            logLevel,
+            moduleName,
+            'api.request',
+            message,
+            metadata ? JSON.stringify(metadata) : null
+        ]);
     }
 };
 
