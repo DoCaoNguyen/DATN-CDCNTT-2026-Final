@@ -1,14 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const notificationController = require('./notification.controller');
-<<<<<<< HEAD
-const authMiddleware = require('../../middlewares/auth.middleware'); // Kéo middleware check login của bạn vào
-
-// Endpoint để app mobile đăng ký FCM Token lên hệ thống
-router.post('/register-device', authMiddleware, notificationController.registerDevice);
-
-module.exports = router;
-=======
 const verifyToken = require('../../middlewares/auth.middleware');
 
 /**
@@ -46,4 +38,3 @@ const verifyToken = require('../../middlewares/auth.middleware');
 router.post('/register-device', verifyToken, notificationController.registerDeviceToken);
 
 module.exports = router;
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811

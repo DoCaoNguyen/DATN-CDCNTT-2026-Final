@@ -998,8 +998,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
-<<<<<<< HEAD
-=======
   timezone:
     dependency: transitive
     description:
@@ -1016,7 +1014,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.3"
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
   typed_data:
     dependency: transitive
     description:
@@ -1025,8 +1022,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
-<<<<<<< HEAD
-=======
   universal_platform:
     dependency: transitive
     description:
@@ -1035,7 +1030,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
   url_launcher:
     dependency: "direct main"
     description:
@@ -1100,8 +1094,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.5"
-<<<<<<< HEAD
-=======
   uuid:
     dependency: transitive
     description:
@@ -1110,7 +1102,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.3"
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
   vector_math:
     dependency: transitive
     description:

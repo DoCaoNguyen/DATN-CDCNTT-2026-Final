@@ -5,7 +5,7 @@ const transactionRepo = require('../transaction/transaction.repository');
 const walletService = {
     getWalletInfo: async (userId) => {
         const wallet = await walletRepository.getBalanceByUserId(userId);
-        
+
         if (!wallet) {
             throw new Error('Wallet_Not_Found');
         }
@@ -24,17 +24,17 @@ const walletService = {
         try {
             const saltRounds = 10;
             const pinHash = await bcrypt.hash(pinCode, saltRounds);
-            
+
             const result = await walletRepository.updatePinHash(userId, pinHash);
-            
+
             if (!result) {
                 throw new Error('Wallet_Not_Found');
             }
-            
+
             return pinCode;
 
         } catch (error) {
-            throw error; 
+            throw error;
         }
     },
 
@@ -96,7 +96,7 @@ const walletService = {
         const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
         if (!isPinMatch) {
             const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-            
+
             if (newAttempts >= 3) {
                 const lockTime = new Date(Date.now() + 30 * 60000);
                 await transactionRepo.updatePinAttempts(wallet.id, newAttempts, lockTime);
@@ -112,8 +112,6 @@ const walletService = {
         }
 
         return await walletRepository.linkBank(wallet.id, bankName, bankCode, cardNumber, cardHolderName);
-<<<<<<< HEAD
-=======
     },
 
     verifyPin: async (userId, pin) => {
@@ -140,7 +138,7 @@ const walletService = {
         const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
         if (!isPinMatch) {
             const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-            
+
             if (newAttempts >= 3) {
                 const lockTime = new Date(Date.now() + 30 * 60000);
                 await transactionRepo.updatePinAttempts(wallet.id, newAttempts, lockTime);
@@ -156,7 +154,6 @@ const walletService = {
         }
 
         return true;
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     }
 };
 

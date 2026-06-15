@@ -22,7 +22,7 @@ const transactionController = {
                 const attemptsLeft = error.message.split('_')[2];
                 return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
             }
-            
+
             const errorMap = {
                 'Wallet_Locked_PIN': 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn hoặc bạn chưa thiết lập mã PIN',
@@ -30,7 +30,7 @@ const transactionController = {
                 'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
                 'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
                 'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.'
-              };
+            };
 
             if (errorMap[error.message]) {
                 return res.status(400).json({ error: errorMap[error.message] });
@@ -66,7 +66,7 @@ const transactionController = {
                 const attemptsLeft = error.message.split('_')[2];
                 return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
             }
-            
+
             const errorMap = {
                 'Wallet_Locked_PIN': 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn hoặc bạn chưa thiết lập mã PIN',
@@ -86,8 +86,6 @@ const transactionController = {
         }
     },
 
-<<<<<<< HEAD
-=======
     bankTransfer: async (req, res) => {
         const userId = req.user.userId;
         const { amount, pin, bank_code, bank_name, account_number, external_reference } = req.body;
@@ -107,13 +105,13 @@ const transactionController = {
 
         try {
             const result = await txService.bankTransfer(
-                userId, 
-                bigAmount, 
-                pin, 
-                faceImagePath, 
-                bank_code, 
-                bank_name || bank_code, 
-                account_number, 
+                userId,
+                bigAmount,
+                pin,
+                faceImagePath,
+                bank_code,
+                bank_name || bank_code,
+                account_number,
                 external_reference
             );
             res.status(200).json({ message: 'Chuyển tiền ngân hàng thành công', data: result });
@@ -122,7 +120,7 @@ const transactionController = {
                 const attemptsLeft = error.message.split('_')[2];
                 return res.status(400).json({ error: `Mã PIN không chính xác, bạn còn ${attemptsLeft} lần thử.` });
             }
-            
+
             const errorMap = {
                 'Wallet_Locked_PIN': 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn hoặc bạn chưa thiết lập mã PIN',
@@ -142,10 +140,9 @@ const transactionController = {
         }
     },
 
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     transfer: async (req, res) => {
         const senderId = req.user.userId;
-        
+
         const { receiver_identifier, amount, note, reference_code, pin } = req.body;
 
         if (!receiver_identifier || !amount || !pin) {
@@ -177,11 +174,11 @@ const transactionController = {
                 'Insufficient_Balance': 'Số dư trong ví không đủ',
                 'Receiver_Not_KYC': 'Người nhận chưa xác thực danh tính (KYC). Giao dịch bị từ chối!'
             };
-            
+
             if (errorMap[error.message]) {
                 return res.status(400).json({ error: errorMap[error.message] });
             }
-            
+
             console.error('Lỗi Chuyển tiền:', error);
             res.status(500).json({ error: 'Giao dịch chuyển tiền thất bại' });
         }
@@ -217,8 +214,8 @@ const transactionController = {
         try {
             const result = await txService.updateTransactionCategory(
                 userId,
-                transactionId, 
-                category_name, 
+                transactionId,
+                category_name,
                 is_expense_counted !== undefined ? is_expense_counted : true
             );
             res.status(200).json({

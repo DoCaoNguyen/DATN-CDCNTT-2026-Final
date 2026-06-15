@@ -3,7 +3,7 @@ const pool = require('../../config/db');
 const { v7: uuidv7 } = require('uuid');
 
 const walletRepository = {
-    
+
     create: async (client, userId) => {
         const newId = uuidv7();
         const query = `INSERT INTO wallets (id, user_id) VALUES ($1, $2)`;
@@ -12,7 +12,7 @@ const walletRepository = {
     },
 
     findByUserId: async (userId) => {
-        
+
         const query = `SELECT id FROM wallets WHERE user_id = $1`;
         const result = await pool.query(query, [userId]);
         return result.rows[0];
@@ -33,7 +33,7 @@ const walletRepository = {
             LEFT JOIN users u ON w.user_id = u.id
             WHERE w.user_id = $1
         `;
-        
+
         const result = await pool.query(query, [userId]);
         return result.rows[0];
     },
@@ -57,7 +57,7 @@ const walletRepository = {
             RETURNING wallet_code;
         `;
         const result = await pool.query(query, [walletCode, userId]);
-        return result.rows[0]; 
+        return result.rows[0];
     },
 
     getUserInfoForQR: async (userId) => {
@@ -78,14 +78,6 @@ const walletRepository = {
     },
 
     linkBank: async (walletId, bankName, bankCode, cardNumber, cardHolderName) => {
-<<<<<<< HEAD
-        const query = `
-            INSERT INTO wallet_linked_banks (wallet_id, bank_name, bank_code, card_number, card_holder_name, status)
-            VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
-            RETURNING id, bank_name, bank_code, card_number, card_holder_name, status
-        `;
-        const result = await pool.query(query, [walletId, bankName, bankCode, cardNumber, cardHolderName]);
-=======
         const newId = uuidv7();
         const query = `
             INSERT INTO wallet_linked_banks (id, wallet_id, bank_name, bank_code, card_number, card_holder_name, status)
@@ -93,7 +85,6 @@ const walletRepository = {
             RETURNING id, bank_name, bank_code, card_number, card_holder_name, status
         `;
         const result = await pool.query(query, [newId, walletId, bankName, bankCode, cardNumber, cardHolderName]);
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         return result.rows[0];
     }
 };

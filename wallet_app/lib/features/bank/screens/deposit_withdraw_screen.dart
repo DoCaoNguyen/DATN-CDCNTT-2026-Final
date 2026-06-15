@@ -11,10 +11,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import 'deposit_withdraw_success_screen.dart';
-<<<<<<< HEAD
-=======
 import 'bank_link_screen.dart';
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
 
 class DepositWithdrawScreen extends StatefulWidget {
   final String token;
@@ -262,11 +259,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   }
 
   // --- TRANSCTION API CALLS ---
-<<<<<<< HEAD
-  Future<void> _executeTransactionWithPIN(String pin) async {
-=======
   Future<String?> _executeTransactionWithPIN(String pin) async {
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     setState(() => _isLoading = true);
     try {
       final isDeposit = _activeTab == 0;
@@ -299,12 +292,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         final now = DateTime.now();
         final formattedTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
 
-<<<<<<< HEAD
-        if (!mounted) return;
-=======
         if (!mounted) return null;
         Navigator.pop(context); // Close PIN bottom sheet
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -323,14 +312,6 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
           });
           _fetchMioBalance();
         });
-<<<<<<< HEAD
-      } else {
-        final data = jsonDecode(response.body);
-        _showErrorSnackBar(data['error'] ?? "Giao dịch không thành công.");
-      }
-    } catch (e) {
-      _showErrorSnackBar("Lỗi kết nối máy chủ.");
-=======
         return null;
       } else {
         final data = jsonDecode(response.body);
@@ -350,7 +331,6 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         _showErrorSnackBar("Lỗi kết nối máy chủ.");
       }
       return null;
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -428,13 +408,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => PinConfirmBottomSheet(
         onPinEntered: (pin) async {
-<<<<<<< HEAD
-          Navigator.pop(context); // Close PIN bottom sheet
-          await _executeTransactionWithPIN(pin);
-          return null;
-=======
           return await _executeTransactionWithPIN(pin);
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         },
       ),
     );
@@ -852,16 +826,6 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-<<<<<<< HEAD
-                            Row(
-                              children: [
-                                Icon(Icons.add, color: Colors.pink.shade400, size: 18),
-                                const SizedBox(width: 8),
-                                const Expanded(child: Text('Ngân hàng liên kết', style: TextStyle(fontSize: 14, color: Colors.black87))),
-                                const Text('+37', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
-                              ],
-=======
                             InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -880,7 +844,6 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                                   const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
                                 ],
                               ),
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
                             ),
                           ],
                         ),

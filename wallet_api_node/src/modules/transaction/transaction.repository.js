@@ -33,7 +33,7 @@ const transactionRepository = {
             FOR UPDATE;
         `;
         const result = await client.query(query, [walletId]);
-        return BigInt(result.rows[0].available_balance); 
+        return BigInt(result.rows[0].available_balance);
     },
 
     addBalance: async (client, walletId, amount) => {
@@ -79,21 +79,6 @@ const transactionRepository = {
     },
 
     recordDeposit: async (client, walletId, amount, ledgerId, depositMethod = 'LINKED_BANK', externalReference = null) => {
-<<<<<<< HEAD
-        const query = `
-            INSERT INTO deposit_transactions (wallet_id, amount, deposit_method, status, ledger_transaction_id, external_reference)
-            VALUES ($1, $2, $3, 'SUCCESS', $4, $5);
-        `;
-        await client.query(query, [walletId, amount.toString(), depositMethod, ledgerId, externalReference]);
-    },
-
-    recordWithdrawal: async (client, walletId, amount, ledgerId, linkedBankId, externalReference = null) => {
-        const query = `
-            INSERT INTO withdrawal_transactions (wallet_id, amount, withdrawal_method, status, ledger_transaction_id, linked_bank_id, external_reference)
-            VALUES ($1, $2, 'LINKED_BANK', 'SUCCESS', $3, $4, $5);
-        `;
-        await client.query(query, [walletId, amount.toString(), ledgerId, linkedBankId, externalReference]);
-=======
         const newId = uuidv7();
         const query = `
             INSERT INTO deposit_transactions (id, wallet_id, amount, deposit_method, status, ledger_transaction_id, external_reference)
@@ -121,7 +106,6 @@ const transactionRepository = {
         `;
         await client.query(query, [newId, walletId, amount.toString(), ledgerId, bankCode, accountNumber, externalReference]);
         return newId;
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     },
 
     getUserKycFaceImage: async (userId) => {
@@ -148,12 +132,8 @@ const transactionRepository = {
                 w.pin_failed_attempts, 
                 w.pin_locked_until,
                 u.pin_hash,
-<<<<<<< HEAD
-                u.phone
-=======
                 u.phone,
                 u.full_name
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
             FROM wallets w
             JOIN users u ON w.user_id = u.id
             WHERE w.user_id = $1

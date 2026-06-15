@@ -3,16 +3,10 @@ const pool = require('../../config/db');
 const repo = require('./transaction.repository');
 const { emitToUser } = require('../../utils/socket');
 const kycService = require('../kyc/kyc.service');
-<<<<<<< HEAD
-
-const transactionService = {
-    deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
-=======
 const notificationService = require('../notification/notification.service');
 
 const transactionService = {
     deposit: async (userId, amount, pin, faceImagePath, externalReference) => {
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
@@ -73,15 +67,9 @@ const transactionService = {
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
             await repo.recordDeposit(client, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
-<<<<<<< HEAD
-
-            await client.query('COMMIT'); 
-            
-=======
 
             await client.query('COMMIT');
 
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
             emitToUser(userId, 'balance_update', {
                 type: 'DEPOSIT',
                 amount: amount.toString(),
@@ -89,14 +77,6 @@ const transactionService = {
                 newBalance: balanceAfter.toString()
             });
 
-<<<<<<< HEAD
-            return { 
-                id: extRef,
-                external_reference: extRef,
-                amount: amount.toString(), 
-                balanceBefore: balanceBefore.toString(), 
-                balanceAfter: balanceAfter.toString() 
-=======
             // Gửi Push Notification biến động số dư
             notificationService.sendBalanceChangeNotification(userId, amount, 'DEPOSIT', ledgerTxId).catch(err => {
                 console.error('Lỗi gửi push notification nạp tiền:', err);
@@ -108,7 +88,6 @@ const transactionService = {
                 amount: amount.toString(),
                 balanceBefore: balanceBefore.toString(),
                 balanceAfter: balanceAfter.toString()
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -118,11 +97,7 @@ const transactionService = {
         }
     },
 
-<<<<<<< HEAD
-    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => { 
-=======
     withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => {
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
@@ -173,11 +148,7 @@ const transactionService = {
 
         const client = await pool.connect();
         try {
-<<<<<<< HEAD
-            await client.query('BEGIN'); 
-=======
             await client.query('BEGIN');
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
 
             const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
             if (balanceBefore < amount) {
@@ -191,22 +162,6 @@ const transactionService = {
 
             await repo.recordWithdrawal(client, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
 
-<<<<<<< HEAD
-            await client.query('COMMIT'); 
-            
-            emitToUser(userId, 'balance_update', {
-                type: 'WITHDRAW',
-                amount: amount.toString(),
-                newBalance: balanceAfter.toString()
-            });
-
-            return { 
-                id: extRef,
-                external_reference: extRef,
-                amount: amount.toString(), 
-                balanceBefore: balanceBefore.toString(), 
-                balanceAfter: balanceAfter.toString() 
-=======
             await client.query('COMMIT');
 
             emitToUser(userId, 'balance_update', {
@@ -321,7 +276,6 @@ const transactionService = {
                 amount: amount.toString(),
                 balanceBefore: balanceBefore.toString(),
                 balanceAfter: balanceAfter.toString()
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
             };
         } catch (error) {
             await client.query('ROLLBACK');

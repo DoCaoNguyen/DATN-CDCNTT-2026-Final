@@ -4,13 +4,13 @@ const pool = require('../../config/db');
 const walletController = {
     getBalance: async (req, res) => {
         try {
-            const userId = req.user.userId; 
-            
+            const userId = req.user.userId;
+
             const result = await walletService.getWalletInfo(userId);
-            
-            res.status(200).json({ 
-                message: 'Lấy thông tin số dư thành công', 
-                data: result 
+
+            res.status(200).json({
+                message: 'Lấy thông tin số dư thành công',
+                data: result
             });
         } catch (error) {
             if (error.message === 'Wallet_Not_Found') {
@@ -35,14 +35,14 @@ const walletController = {
         if (!isValidFormat) {
             return res.status(400).json({ error: 'Mã ví không hợp lệ (Bắt buộc phải là 6 chữ số).' });
         }
-        
+
         try {
-    
+
             const newWalletCode = await walletService.setWalletCode(userId, cleanCode);
-            
-            res.status(200).json({ 
-                message: 'Tạo mã ví thành công', 
-                wallet_code: newWalletCode 
+
+            res.status(200).json({
+                message: 'Tạo mã ví thành công',
+                wallet_code: newWalletCode
             });
 
         } catch (error) {
@@ -52,7 +52,7 @@ const walletController = {
             if (error.message === 'Wallet_Code_Exists') {
                 return res.status(400).json({ error: 'Mã ví này đã có người sử dụng. Vui lòng chọn mã khác.' });
             }
-            
+
             console.error('Lỗi set wallet code:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi tạo mã ví' });
         }
@@ -130,8 +130,6 @@ const walletController = {
             console.error('Lỗi liên kết ngân hàng:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi liên kết ngân hàng' });
         }
-<<<<<<< HEAD
-=======
     },
 
     verifyPin: async (req, res) => {
@@ -162,7 +160,6 @@ const walletController = {
             console.error('Lỗi kiểm tra mã PIN:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi kiểm tra mã PIN' });
         }
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
     }
 };
 

@@ -838,67 +838,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             final bool isCredit = entryType == 'CREDIT';
 
                             return InkWell(
-<<<<<<< HEAD
-                              onTap: () => _showTransactionDetailSheet(tx),
-                              child: Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // Icon circle
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.grey.shade200),
-                                      ),
-                                      child: Icon(
-                                        _getTransactionIcon(tx),
-                                        color: _getIconColor(tx),
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // Middle details
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            title,
-                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            createdTime,
-                                            style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          // Category tag
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: _getTagBgColor(tag),
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: Text(
-                                              tag,
-                                              style: TextStyle(
-                                                color: _getTagColor(tag),
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-=======
                               onTap: () async {
                                 final result = await Navigator.push(
                                   context,
@@ -971,7 +910,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                         ],
                                       ),
                                     ),
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
                                     const SizedBox(width: 8),
                                     // Right amount and balance after
                                     Column(

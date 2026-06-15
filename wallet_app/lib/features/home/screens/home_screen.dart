@@ -11,11 +11,6 @@ import 'qr_main_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../history/screens/transaction_history_screen.dart';
 import '../../../core/services/socket_service.dart';
-<<<<<<< HEAD
-import '../../bank/screens/bank_link_screen.dart';
-import '../../bank/screens/deposit_withdraw_screen.dart';
-
-=======
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../bank/screens/bank_link_screen.dart';
@@ -25,7 +20,6 @@ import 'package:local_auth/local_auth.dart';
 // ignore: depend_on_referenced_packages
 import 'package:local_auth_android/local_auth_android.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -332,14 +326,10 @@ class _HomeScreenState extends State<HomeScreen> {
             _isPinSet = true;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-<<<<<<< HEAD
-            const SnackBar(content: Text('Tạo mã PIN thành công!'), backgroundColor: Colors.green),
-=======
             const SnackBar(
               content: Text('Tạo mã PIN thành công!'),
               backgroundColor: Colors.green,
             ),
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
           );
         },
       ),
@@ -397,11 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _handleDepositWithdrawClick() async {
     setState(() => _isLoadingBalance = true);
     try {
-<<<<<<< HEAD
-      final response = await http.get(
-=======
       final response = await _client.get(
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         Uri.parse(ApiConfig.getLinkedBanks),
         headers: {
           'Content-Type': 'application/json',
@@ -448,10 +434,6 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-<<<<<<< HEAD
-        title: const Text('Nạp/Rút tiền', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Tài khoản của bạn đã liên kết với:\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)'),
-=======
         title: const Text(
           'Nạp/Rút tiền',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -459,7 +441,6 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Text(
           'Tài khoản của bạn đã liên kết với:\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)',
         ),
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -484,41 +465,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: _selectedIndex == 0
-<<<<<<< HEAD
-            ? RefreshIndicator(
-                onRefresh: _fetchBalance,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      _buildHeaderSection(activeLang),
-                      
-                      // Đã thay thế thẻ ví cũ bằng Widget WalletCard
-                      WalletCard(
-                        activeLang: activeLang,
-                        isLoading: _isLoadingBalance,
-                        balance: _balance,
-                        onToggleVisibility: _fetchBalance,
-                      ),
-                      
-                      _buildFinancialCenterBanner(activeLang),
-                      
-                      // Đã thay thế Grid cũ bằng Widget ServicesGrid
-                      ServicesGrid(
-                        activeLang: activeLang,
-                        isVerified: widget.isVerified,
-                        token: widget.token,
-                        isPinSet: _isPinSet,
-                        onRequireKyc: _showKycDialog,
-                        onRequireWalletCode: _showSetWalletCodeDialog,
-                        onRefreshBalance: _fetchBalance,
-                      ),
-                      
-                      _buildEventBanner(activeLang),
-                      _buildRecommendations(activeLang),
-                      const SizedBox(height: 80),
-                    ],
-=======
               ? RefreshIndicator(
                   onRefresh: _fetchBalance,
                   child: SingleChildScrollView(
@@ -553,7 +499,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 80),
                       ],
                     ),
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
                   ),
                 )
               : _selectedIndex == 1
@@ -601,27 +546,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
-<<<<<<< HEAD
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBottomNavItem(Icons.home, "Mio", 0, isActive: _selectedIndex == 0),
-                      _buildBottomNavItem(Icons.local_offer_outlined, activeLang == 'VIE' ? "Ưu đãi" : "Offers", 1, isActive: _selectedIndex == 1),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: Text(
-                      activeLang == 'VIE' ? "Quét mọi QR" : "Scan QR",
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-=======
                   Expanded(
                     child: _buildBottomNavItem(
                       Icons.home,
                       "Mio",
                       0,
                       isActive: _selectedIndex == 0,
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
                     ),
                   ),
                   Expanded(
@@ -1003,18 +933,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         } else {
-<<<<<<< HEAD
           if (title == "Nạp/Rút" || title == "Deposit") {
             _handleDepositWithdrawClick();
           } else {
             print("Đang mở tính năng: $title");
           }
-=======
-          // Các tiện ích khác
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tính năng đang được phát triển')),
-          );
->>>>>>> 17911097008a4a5c28a2a340113d4c6297ed2811
         }
       },
       child: Column(
