@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateJwt, requireAdmin } = require('../../middlewares/auth.middleware');
+const { authenticateJwt, requireAdmin, requirePermission } = require('../../middlewares/auth.middleware');
+const adminController = require('./admin.controller');
 const notImplemented = require('../../utils/notImplemented');
 
 /**
@@ -20,6 +21,29 @@ router.use(authenticateJwt, requireAdmin);
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, PENDING_VERIFY, LOCKED, BLOCKED, INACTIVE]
+ *       - in: query
+ *         name: user_type
+ *         schema:
+ *           type: string
+ *           enum: [USER, MERCHANT_USER, ADMIN, SUPER_ADMIN, SUPPORT_STAFF]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Danh sach user
@@ -28,6 +52,25 @@ router.use(authenticateJwt, requireAdmin);
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [full_name, password]
+ *             properties:
+ *               full_name:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 example: Password@123
  *     responses:
  *       201:
  *         description: User created
@@ -57,15 +100,62 @@ router.use(authenticateJwt, requireAdmin);
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               full_name:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               is_kyc_verified:
+ *                 type: boolean
  *     responses:
  *       200:
  *         description: User updated
+ * /api/v1/admin/users/{id}/wallet:
+ *   get:
+ *     summary: Admin xem vi cua user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User wallet
  * /api/v1/admin/users/{id}/actions/lock:
  *   post:
  *     summary: Admin khoa user
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
  *     responses:
  *       200:
  *         description: User locked
@@ -75,6 +165,21 @@ router.use(authenticateJwt, requireAdmin);
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
  *     responses:
  *       200:
  *         description: User unlocked
@@ -88,12 +193,13 @@ router.use(authenticateJwt, requireAdmin);
  *       200:
  *         description: Password reset
  */
-router.get('/users', notImplemented('GET /admin/users'));
-router.post('/users', notImplemented('POST /admin/users'));
-router.get('/users/:id', notImplemented('GET /admin/users/{id}'));
-router.patch('/users/:id', notImplemented('PATCH /admin/users/{id}'));
-router.post('/users/:id/actions/lock', notImplemented('POST /admin/users/{id}/actions/lock'));
-router.post('/users/:id/actions/unlock', notImplemented('POST /admin/users/{id}/actions/unlock'));
+router.get('/users', requirePermission('admin.users.manage'), adminController.listUsers);
+router.post('/users', requirePermission('admin.users.manage'), adminController.createUser);
+router.get('/users/:id', requirePermission('admin.users.manage'), adminController.getUserDetail);
+router.patch('/users/:id', requirePermission('admin.users.manage'), adminController.updateUser);
+router.get('/users/:id/wallet', requirePermission('admin.users.manage', 'wallets.read'), adminController.getUserWallet);
+router.post('/users/:id/actions/lock', requirePermission('admin.users.manage'), adminController.lockUser);
+router.post('/users/:id/actions/unlock', requirePermission('admin.users.manage'), adminController.unlockUser);
 router.post('/users/:id/actions/reset-password', notImplemented('POST /admin/users/{id}/actions/reset-password'));
 
 /**
@@ -156,61 +262,121 @@ router.get('/permissions', notImplemented('GET /admin/permissions'));
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, LOCKED, CLOSED]
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Wallets
- * /api/v1/admin/wallets/{id}:
+ * /api/v1/admin/wallets/{wallet_id}:
  *   get:
  *     summary: Admin xem chi tiet vi
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: wallet_id
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Wallet detail
- * /api/v1/admin/wallets/{id}/summary:
+ * /api/v1/admin/wallets/{wallet_id}/summary:
  *   get:
  *     summary: Admin xem tong quan vi
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: wallet_id
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Wallet summary
- * /api/v1/admin/wallets/{id}/ledger:
+ * /api/v1/admin/wallets/{wallet_id}/ledger:
  *   get:
  *     summary: Admin xem ledger cua vi
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: wallet_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Wallet ledger
- * /api/v1/admin/wallets/{id}/actions/lock:
+ * /api/v1/admin/wallets/{wallet_id}/actions/lock:
  *   post:
  *     summary: Admin khoa vi
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: wallet_id
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Wallet locked
- * /api/v1/admin/wallets/{id}/actions/unlock:
+ * /api/v1/admin/wallets/{wallet_id}/actions/unlock:
  *   post:
  *     summary: Admin mo khoa vi
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: wallet_id
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Wallet unlocked
  */
-router.get('/wallets', notImplemented('GET /admin/wallets'));
-router.get('/wallets/:id', notImplemented('GET /admin/wallets/{id}'));
-router.get('/wallets/:id/summary', notImplemented('GET /admin/wallets/{id}/summary'));
-router.get('/wallets/:id/ledger', notImplemented('GET /admin/wallets/{id}/ledger'));
-router.post('/wallets/:id/actions/lock', notImplemented('POST /admin/wallets/{id}/actions/lock'));
-router.post('/wallets/:id/actions/unlock', notImplemented('POST /admin/wallets/{id}/actions/unlock'));
+router.get('/wallets', requirePermission('wallets.read'), adminController.listWallets);
+router.get('/wallets/:wallet_id', requirePermission('wallets.read'), adminController.getWalletDetail);
+router.get('/wallets/:wallet_id/summary', requirePermission('wallets.read'), adminController.getWalletSummary);
+router.get('/wallets/:wallet_id/ledger', requirePermission('wallets.read'), adminController.getWalletLedger);
+router.post('/wallets/:wallet_id/actions/lock', notImplemented('POST /admin/wallets/{wallet_id}/actions/lock'));
+router.post('/wallets/:wallet_id/actions/unlock', notImplemented('POST /admin/wallets/{wallet_id}/actions/unlock'));
 
 /**
  * @swagger

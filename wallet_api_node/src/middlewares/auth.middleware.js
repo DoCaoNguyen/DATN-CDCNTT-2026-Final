@@ -49,6 +49,10 @@ const authenticateJwt = async (req, res, next) => {
             return forbidden(res, 'Tài khoản đã bị khóa hoặc chưa kích hoạt');
         }
 
+        if (decoded.tokenVersion && Number(decoded.tokenVersion) !== Number(user.token_version)) {
+            return unauthorized(res, 'TOKEN_REVOKED', 'Token da bi thu hoi');
+        }
+
         const roles = Array.isArray(decoded.roles)
             ? decoded.roles
             : [decoded.role || user.user_type].filter(Boolean);
