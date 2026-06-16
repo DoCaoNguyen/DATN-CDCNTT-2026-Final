@@ -31,11 +31,14 @@ const walletRepository = {
     getBalanceByUserId: async (userId) => {
         const query = `
             SELECT 
+                w.id AS wallet_id,
+                w.wallet_no,
                 COALESCE(w.wallet_code, u.phone) AS wallet_code, 
                 w.currency, 
                 w.status, 
                 wb.available_balance, 
                 wb.locked_balance,
+                wb.updated_at,
                 u.phone,
                 u.pin_hash
             FROM wallets w

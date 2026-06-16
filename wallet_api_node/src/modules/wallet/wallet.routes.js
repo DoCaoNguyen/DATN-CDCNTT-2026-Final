@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const walletController = require('./wallet.controller');
 const verifyToken = require('../../middlewares/auth.middleware');
+const notImplemented = require('../../utils/notImplemented');
 
 /**
  * @swagger
@@ -11,6 +12,88 @@ const verifyToken = require('../../middlewares/auth.middleware');
  */
 
 router.use(verifyToken);
+
+/**
+ * @swagger
+ * /api/v1/wallets/me:
+ *   get:
+ *     summary: Xem thong tin vi cua user hien tai
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lay thong tin vi hien tai thanh cong
+ *       401:
+ *         description: Thieu token hoac token khong hop le
+ *       404:
+ *         description: Khong tim thay vi
+ */
+router.get('/me', walletController.getMyWallet);
+
+/**
+ * @swagger
+ * /api/v1/wallets/me/balance:
+ *   get:
+ *     summary: Xem so du vi cua user hien tai
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lay so du vi hien tai thanh cong
+ *       401:
+ *         description: Thieu token hoac token khong hop le
+ *       404:
+ *         description: Khong tim thay vi
+ */
+router.get('/me/balance', walletController.getMyWalletBalance);
+
+/**
+ * @swagger
+ * /api/v1/wallets/me/summary:
+ *   get:
+ *     summary: Tong quan vi cua user hien tai va kha nang thuc hien giao dich
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lay tong quan vi hien tai thanh cong
+ *       401:
+ *         description: Thieu token hoac token khong hop le
+ *       404:
+ *         description: Khong tim thay vi
+ */
+router.get('/me/summary', walletController.getMyWalletSummary);
+
+/**
+ * @swagger
+ * /api/v1/wallets/me/history:
+ *   get:
+ *     summary: User xem lich su bien dong so du vi
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lich su bien dong so du
+ */
+router.get('/me/history', notImplemented('GET /wallets/me/history'));
+
+/**
+ * @swagger
+ * /api/v1/wallets/me/ledger:
+ *   get:
+ *     summary: User xem ledger entries cua vi hien tai
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Ledger cua vi hien tai
+ */
+router.get('/me/ledger', notImplemented('GET /wallets/me/ledger'));
 
 /**
  * @swagger

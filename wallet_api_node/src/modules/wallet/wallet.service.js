@@ -11,12 +11,31 @@ const walletService = {
         }
 
         return {
+            wallet_id: wallet.wallet_id,
+            wallet_no: wallet.wallet_no,
             wallet_code: wallet.wallet_code,
             currency: wallet.currency,
             status: wallet.status,
             available_balance: wallet.available_balance ? wallet.available_balance.toString() : "0",
             locked_balance: wallet.locked_balance ? wallet.locked_balance.toString() : "0",
+            total_balance: (
+                BigInt(wallet.available_balance || 0) + BigInt(wallet.locked_balance || 0)
+            ).toString(),
+            updated_at: wallet.updated_at || null,
             is_pin_set: !!wallet.pin_hash
+        };
+    },
+
+    getWalletSummary: async (userId) => {
+        const wallet = await walletService.getWalletInfo(userId);
+
+        return {
+            wallet,
+            capabilities: {
+                can_topup: wallet.status === 'ACTIVE',
+                can_transfer: wallet.status === 'ACTIVE',
+                can_payment: wallet.status === 'ACTIVE'
+            }
         };
     },
 

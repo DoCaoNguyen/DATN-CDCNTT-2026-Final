@@ -1,7 +1,72 @@
 const walletService = require('./wallet.service');
 const pool = require('../../config/db');
 
+function success(res, data, message = 'OK', status = 200) {
+    return res.status(status).json({
+        success: true,
+        code: 'OK',
+        message,
+        data
+    });
+}
+
+function error(res, status, code, message) {
+    return res.status(status).json({
+        success: false,
+        code,
+        error: message
+    });
+}
+
 const walletController = {
+    getMyWallet: async (req, res) => {
+        try {
+            const result = await walletService.getWalletInfo(req.user.userId);
+            return success(res, result, 'Lấy thông tin ví hiện tại thành công');
+        } catch (err) {
+            if (err.message === 'Wallet_Not_Found') {
+                return error(res, 404, 'WALLET_NOT_FOUND', 'Không tìm thấy ví của người dùng hiện tại');
+            }
+            console.error('Lỗi lấy thông tin ví hiện tại:', err);
+            return error(res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống khi lấy thông tin ví');
+        }
+    },
+
+    getMyWalletBalance: async (req, res) => {
+        try {
+            const wallet = await walletService.getWalletInfo(req.user.userId);
+            return success(res, {
+                wallet_id: wallet.wallet_id,
+                wallet_no: wallet.wallet_no,
+                currency: wallet.currency,
+                status: wallet.status,
+                available_balance: wallet.available_balance,
+                locked_balance: wallet.locked_balance,
+                total_balance: wallet.total_balance,
+                updated_at: wallet.updated_at
+            }, 'Lấy số dư ví hiện tại thành công');
+        } catch (err) {
+            if (err.message === 'Wallet_Not_Found') {
+                return error(res, 404, 'WALLET_NOT_FOUND', 'Không tìm thấy ví của người dùng hiện tại');
+            }
+            console.error('Lỗi lấy số dư ví hiện tại:', err);
+            return error(res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống khi lấy số dư ví');
+        }
+    },
+
+    getMyWalletSummary: async (req, res) => {
+        try {
+            const result = await walletService.getWalletSummary(req.user.userId);
+            return success(res, result, 'Lấy tổng quan ví hiện tại thành công');
+        } catch (err) {
+            if (err.message === 'Wallet_Not_Found') {
+                return error(res, 404, 'WALLET_NOT_FOUND', 'Không tìm thấy ví của người dùng hiện tại');
+            }
+            console.error('Lỗi lấy tổng quan ví hiện tại:', err);
+            return error(res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống khi lấy tổng quan ví');
+        }
+    },
+
     getBalance: async (req, res) => {
         try {
             const userId = req.user.userId; 

@@ -21,17 +21,43 @@ const userRepository = {
         return result.rows[0];
     },
 
-    getAllUsers: async () => {
-        const query = 'SELECT id, full_name, phone, email, role, status, created_at FROM users ORDER BY created_at DESC';
-        const result = await pool.query(query);
-        return result.rows;
-    },
+getAllUsers: async () => {
+    const query = `
+        SELECT 
+            id,
+            user_type,
+            full_name,
+            username,
+            phone,
+            email,
+            status,
+            is_kyc_verified,
+            created_at
+        FROM users
+        ORDER BY created_at DESC
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+},
 
-    getUserById: async (userId) => {
-        const query = 'SELECT id, full_name, phone, email, role, status, created_at FROM users WHERE id = $1';
-        const result = await pool.query(query, [userId]);
-        return result.rows[0];
-    }
+getUserById: async (userId) => {
+    const query = `
+        SELECT 
+            id,
+            user_type,
+            full_name,
+            username,
+            phone,
+            email,
+            status,
+            is_kyc_verified,
+            created_at
+        FROM users
+        WHERE id = $1
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows[0];
+}
 
     
 };
