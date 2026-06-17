@@ -122,7 +122,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.arrow_back, size: 20, color: Colors.black87),
+                  child: const Icon(Icons.arrow_back_rounded, size: 20, color: Colors.black87),
                 ),
               ),
               const SizedBox(width: 12),
@@ -139,11 +139,11 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.support_agent, size: 18),
+                    Icon(Icons.support_agent_rounded, size: 18),
                     SizedBox(width: 4),
                     Text('|', style: TextStyle(color: Colors.grey)),
                     SizedBox(width: 4),
-                    Icon(Icons.home_outlined, size: 18),
+                    Icon(Icons.home_rounded, size: 18),
                   ],
                 ),
               ),
@@ -166,7 +166,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                   child: Row(
                     children: [
                       const SizedBox(width: 12),
-                      const Icon(Icons.search, color: Colors.grey, size: 20),
+                      const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: GestureDetector(
@@ -198,7 +198,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                         child: Center(
                           child: Row(
                             children: [
-                              Icon(Icons.paste, size: 14, color: Colors.pink.shade700),
+                              Icon(Icons.paste_rounded, size: 14, color: Colors.pink.shade700),
                               const SizedBox(width: 4),
                               Text('Dán', style: TextStyle(color: Colors.pink.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
                             ],
@@ -215,7 +215,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                 height: 44,
                 width: 44,
                 decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.contact_phone_outlined, color: Colors.black87),
+                child: const Icon(Icons.contact_phone_rounded, color: Colors.black87),
               ),
             ],
           ),
@@ -256,7 +256,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                       ),
                       const SizedBox(width: 8),
                       const Text('Ví Mio khác', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                      const Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -272,10 +272,10 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.account_balance, color: Colors.blue, size: 18),
+                      Icon(Icons.account_balance_rounded, color: Colors.blue, size: 18),
                       SizedBox(width: 8),
                       Text('Ngân hàng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                      Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -289,11 +289,11 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                _buildBankItem(Icons.star, Colors.blue.shade800, 'MBBank'),
-                _buildBankItem(Icons.shield, Colors.green, 'Vietcombank'),
-                _buildBankItem(Icons.change_history, Colors.red, 'Techcombank'),
-                _buildBankItem(Icons.account_balance_wallet, Colors.teal, 'BIDV'),
-                _buildBankItem(Icons.person, Colors.blue.shade900, 'Vietinbank'),
+                _buildBankItem(Icons.star_rounded, Colors.blue.shade800, 'MBBank'),
+                _buildBankItem(Icons.shield_rounded, Colors.green, 'Vietcombank'),
+                _buildBankItem(Icons.change_history_rounded, Colors.red, 'Techcombank'),
+                _buildBankItem(Icons.account_balance_wallet_rounded, Colors.teal, 'BIDV'),
+                _buildBankItem(Icons.person_rounded, Colors.blue.shade900, 'Vietinbank'),
               ],
             ),
           )
@@ -380,7 +380,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         ],
       ),
       title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-      trailing: const Icon(Icons.history, color: Colors.grey),
+      trailing: const Icon(Icons.history_rounded, color: Colors.grey),
       onTap: () {},
     );
   }
@@ -455,7 +455,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                       shape: BoxShape.circle,
                       color: Color(0xFFE8F2FC),
                     ),
-                    child: const Icon(Icons.account_balance, color: Color(0xFF0F75BD), size: 22),
+                    child: const Icon(Icons.account_balance_rounded, color: Color(0xFF0F75BD), size: 22),
                   ),
                   title: Text(
                     bank['card_holder_name'] ?? bank['account_holder_name'] ?? 'Tài khoản liên kết', 
@@ -489,7 +489,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Ưu đãi khi chuyển tiền trên Mio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Icon(Icons.chevron_right, color: Colors.pink),
+                Icon(Icons.chevron_right_rounded, color: Colors.pink),
               ],
             ),
           ),
@@ -500,9 +500,9 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildOfferCard('Chuyển tiền Mio', 'Hoàn tiền', 'Khi chuyển Mio', Icons.currency_exchange, Colors.red),
+                _buildOfferCard('Chuyển tiền Mio', 'Hoàn tiền', 'Khi chuyển Mio', Icons.currency_exchange_rounded, Colors.red),
                 const SizedBox(width: 12),
-                _buildOfferCard('Chuyển khoản Ngân...', 'Hoàn tiền', 'Chuyển Ngân hàng', Icons.account_balance, Colors.blue),
+                _buildOfferCard('Chuyển khoản Ngân...', 'Hoàn tiền', 'Chuyển Ngân hàng', Icons.account_balance_rounded, Colors.blue),
               ],
             ),
           )
@@ -562,9 +562,9 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildOtherServiceItem(Icons.card_giftcard, Colors.pink, 'Gửi thiệp'),
-              _buildOtherServiceItem(Icons.receipt_long, Colors.pinkAccent, 'Chia tiền'),
-              _buildOtherServiceItem(Icons.notifications_active_outlined, Colors.purple, 'Nhắc trả tiền'),
+              _buildOtherServiceItem(Icons.card_giftcard_rounded, Colors.pink, 'Gửi thiệp'),
+              _buildOtherServiceItem(Icons.receipt_long_rounded, Colors.pinkAccent, 'Chia tiền'),
+              _buildOtherServiceItem(Icons.notifications_active_rounded, Colors.purple, 'Nhắc trả tiền'),
             ],
           )
         ],
@@ -604,9 +604,9 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildBottomNavItem(Icons.currency_exchange, 'Chuyển tiền', isActive: true),
-            _buildBottomNavItem(Icons.chat_bubble_outline, 'Chuyển qua Chat'),
-            _buildBottomNavItem(Icons.person_outline, 'Tôi'),
+            _buildBottomNavItem(Icons.currency_exchange_rounded, 'Chuyển tiền', isActive: true),
+            _buildBottomNavItem(Icons.chat_bubble_outline_rounded, 'Chuyển qua Chat'),
+            _buildBottomNavItem(Icons.person_outline_rounded, 'Tôi'),
           ],
         ),
       ),

@@ -143,7 +143,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close, size: 24, color: Colors.black54),
+                        child: const Icon(Icons.close_rounded, size: 24, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -158,7 +158,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chevron_left, size: 20),
+                          icon: const Icon(Icons.chevron_left_rounded, size: 20),
                           onPressed: () {
                             setModalState(() {
                               tempYear--;
@@ -170,7 +170,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right, size: 20),
+                          icon: const Icon(Icons.chevron_right_rounded, size: 20),
                           onPressed: () {
                             setModalState(() {
                               tempYear++;
@@ -311,17 +311,17 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
   IconData _getCategoryIcon(String cat) {
     switch (cat) {
       case "Ăn uống":
-        return Icons.restaurant_menu;
+        return Icons.restaurant_menu_rounded;
       case "Giải trí":
-        return Icons.movie_creation_outlined;
+        return Icons.movie_creation_rounded;
       case "Chợ, siêu thị":
-        return Icons.shopping_basket_outlined;
+        return Icons.shopping_basket_rounded;
       case "Hóa đơn":
-        return Icons.receipt_long;
+        return Icons.receipt_long_rounded;
       case "Nạp tiền":
-        return Icons.account_balance_wallet;
+        return Icons.account_balance_wallet_rounded;
       default:
-        return Icons.help_outline;
+        return Icons.help_outline_rounded;
     }
   }
 
@@ -359,7 +359,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -368,15 +368,15 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.star_border, color: Colors.black87),
+            icon: const Icon(Icons.star_border_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
@@ -420,13 +420,13 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                       children: [
                         InkWell(
                           onTap: () => _changeMonth(-1),
-                          child: const Icon(Icons.chevron_left, color: Colors.black54),
+                          child: const Icon(Icons.chevron_left_rounded, color: Colors.black54),
                         ),
                         GestureDetector(
                           onTap: _showMonthPickerBottomSheet,
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 16, color: Colors.black54),
+                              const Icon(Icons.calendar_today_rounded, size: 16, color: Colors.black54),
                               const SizedBox(width: 8),
                               Text(
                                 _getMonthLabel(),
@@ -437,7 +437,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                         ),
                         InkWell(
                           onTap: () => _changeMonth(1),
-                          child: const Icon(Icons.chevron_right, color: Colors.black54),
+                          child: const Icon(Icons.chevron_right_rounded, color: Colors.black54),
                         ),
                       ],
                     ),
@@ -451,7 +451,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.bar_chart, color: Colors.grey),
+                          child: const Icon(Icons.bar_chart_rounded, color: Colors.grey),
                         ),
                         const SizedBox(width: 12),
                         Column(
@@ -487,7 +487,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.visibility_outlined, size: 16, color: Colors.black54),
+                                const Icon(Icons.visibility_rounded, size: 16, color: Colors.black54),
                                 const SizedBox(width: 4),
                                 const Text("Tổng chi", style: TextStyle(color: Colors.black54, fontSize: 13)),
                               ],
@@ -508,7 +508,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                           child: Row(
                             children: const [
                               Text("Phân tích ", style: TextStyle(fontSize: 12, color: Colors.black87)),
-                              Icon(Icons.chevron_right, size: 14, color: Colors.black54),
+                              Icon(Icons.chevron_right_rounded, size: 14, color: Colors.black54),
                             ],
                           ),
                         ),
@@ -572,7 +572,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                                 if (diff != 0 || lastAmt == 0) // showing difference like the image
                                   Row(
                                     children: [
-                                      Icon(isMore ? Icons.arrow_upward : Icons.arrow_downward, color: isMore ? Colors.red : Colors.green, size: 10),
+                                      Icon(isMore ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, color: isMore ? Colors.red : Colors.green, size: 10),
                                       Text(
                                         _formatCurrency(diff.abs()),
                                         style: TextStyle(color: isMore ? Colors.red : Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
@@ -582,7 +582,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                               ],
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.chevron_right, color: Colors.black26, size: 20),
+                            const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
                           ],
                         ),
                       ),

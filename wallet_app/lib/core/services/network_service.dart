@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'custom_http_client.dart';
+import '../utils/snackbar_utils.dart';
 
 class NetworkService {
   static final NetworkService _instance = NetworkService._internal();
@@ -66,13 +67,7 @@ class NetworkService {
     }
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã khôi phục kết nối internet.'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    SnackbarUtils.showSuccess(context, 'Đã khôi phục kết nối internet.');
   }
 
   void _showNoInternetDialog() {
@@ -152,7 +147,7 @@ class NetworkService {
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.wifi_off, color: Colors.white, size: 20),
+            Icon(Icons.wifi_off_rounded, color: Colors.white, size: 20),
             SizedBox(width: 8),
             Text('Mất kết nối internet'),
           ],

@@ -142,13 +142,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle),
-                    child: const Icon(Icons.qr_code_scanner, size: 20),
+                    child: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle),
-                    child: const Icon(Icons.home_outlined, size: 20),
+                    child: const Icon(Icons.home_rounded, size: 20),
                   ),
                 ],
               )
@@ -165,7 +165,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm',
                 hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-                prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
+                prefixIcon: Icon(Icons.search_rounded, color: Colors.grey, size: 20),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 10),
               ),
@@ -236,11 +236,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     MaterialPageRoute(builder: (_) => TransferMainScreen(token: widget.token)),
                   );
                 },
-                child: _buildBottomNavItem(Icons.currency_exchange, 'Chuyển tiền', isActive: false),
+                child: _buildBottomNavItem(Icons.currency_exchange_rounded, 'Chuyển tiền', isActive: false),
               ),
             ),
             Expanded(
-              child: _buildBottomNavItem(Icons.chat_bubble, 'Chuyển qua Chat', isActive: true),
+              child: _buildBottomNavItem(Icons.chat_bubble_rounded, 'Chuyển qua Chat', isActive: true),
             ),
           ],
         ),

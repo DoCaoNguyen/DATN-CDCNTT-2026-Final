@@ -45,15 +45,15 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
   final List<String> _accountOptions = ["Tất cả", "Ví Mio", "Tài khoản ngân hàng"];
   
   final List<Map<String, dynamic>> _serviceOptions = [
-    {"label": "Nhận tiền", "icon": Icons.arrow_downward, "color": Colors.green},
-    {"label": "Rút tiền", "icon": Icons.outbox, "color": Colors.teal},
-    {"label": "Chuyển tiền", "icon": Icons.swap_horiz, "color": Colors.red},
-    {"label": "Nạp tiền", "icon": Icons.account_balance_wallet, "color": Colors.blue},
-    {"label": "Chi tiêu sinh hoạt", "icon": Icons.shopping_basket, "color": Colors.orange},
-    {"label": "Hóa đơn & Tiện ích", "icon": Icons.receipt_long, "color": Colors.green},
-    {"label": "Giải trí & Mua sắm", "icon": Icons.movie, "color": Colors.pinkAccent},
-    {"label": "Chi phí phát sinh", "icon": Icons.warning_amber, "color": Colors.redAccent},
-    {"label": "Khác", "icon": Icons.more_horiz, "color": Colors.grey.shade600},
+    {"label": "Nhận tiền", "icon": Icons.arrow_downward_rounded, "color": Colors.green},
+    {"label": "Rút tiền", "icon": Icons.outbox_rounded, "color": Colors.teal},
+    {"label": "Chuyển tiền", "icon": Icons.swap_horiz_rounded, "color": Colors.red},
+    {"label": "Nạp tiền", "icon": Icons.account_balance_wallet_rounded, "color": Colors.blue},
+    {"label": "Chi tiêu sinh hoạt", "icon": Icons.shopping_basket_rounded, "color": Colors.orange},
+    {"label": "Hóa đơn & Tiện ích", "icon": Icons.receipt_long_rounded, "color": Colors.green},
+    {"label": "Giải trí & Mua sắm", "icon": Icons.movie_rounded, "color": Colors.pinkAccent},
+    {"label": "Chi phí phát sinh", "icon": Icons.warning_amber_rounded, "color": Colors.redAccent},
+    {"label": "Khác", "icon": Icons.more_horiz_rounded, "color": Colors.grey.shade600},
   ];
 
   List<String> _getMonths() {
@@ -140,7 +140,7 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                   style: const TextStyle(color: Colors.pink, fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 Icon(
-                  _showAllMonths ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _showAllMonths ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
                   color: Colors.pink,
                   size: 16,
                 )
@@ -281,7 +281,7 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -290,11 +290,11 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],

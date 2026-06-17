@@ -155,7 +155,7 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
         backgroundColor: const Color(0xFFFFF0F5),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: Container(
@@ -178,7 +178,7 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
               hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
               // Canh chỉnh Icon tìm kiếm
               prefixIcon: const Icon(
-                Icons.search,
+                Icons.search_rounded,
                 color: Colors.grey,
                 size: 20,
               ),
@@ -188,7 +188,7 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
               ),
               // Canh chỉnh Icon xóa (X)
               suffixIcon: IconButton(
-                icon: const Icon(Icons.cancel, color: Colors.grey, size: 16),
+                icon: const Icon(Icons.cancel_rounded, color: Colors.grey, size: 16),
                 onPressed: () {
                   _searchController.clear();
                   _onSearchChanged('');

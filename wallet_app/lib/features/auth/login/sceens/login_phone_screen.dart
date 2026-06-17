@@ -212,7 +212,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                       color: Colors.pink.shade50, 
                       child: const Center(
                         child: Icon(
-                          Icons.security, 
+                          Icons.security_rounded, 
                           size: 60,
                           color: AppColors.primaryPink,
                         ),
@@ -314,7 +314,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                     ),
                     padding: const EdgeInsets.all(4),
                     child: const Icon(
-                      Icons.close,
+                      Icons.close_rounded,
                       color: Colors.white,
                       size: 16,
                     ),
@@ -422,7 +422,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                                    const Icon(Icons.error_outline_rounded, color: Colors.red, size: 16),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
@@ -482,7 +482,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                           radius: 24,
                                           backgroundColor: Colors.white,
                                           child: Icon(
-                                            Icons.support_agent,
+                                            Icons.support_agent_rounded,
                                             color: AppColors.primaryPink,
                                             size: 28,
                                           ),

@@ -131,7 +131,7 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, color: Colors.black87),
+                  child: const Icon(Icons.close_rounded, color: Colors.black87),
                 ),
               ],
             ),

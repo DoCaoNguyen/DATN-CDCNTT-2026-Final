@@ -145,7 +145,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -155,7 +155,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
           ),
         ],
@@ -299,7 +299,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info_outline, color: Colors.blueAccent, size: 20),
+                            const Icon(Icons.info_outline_rounded, color: Colors.blueAccent, size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -320,7 +320,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.security, color: Colors.pink.shade400, size: 16),
+                          Icon(Icons.security_rounded, color: Colors.pink.shade400, size: 16),
                           const SizedBox(width: 6),
                           const Text(
                             'Mọi thông tin của bạn đều được bảo mật theo tiêu chuẩn quốc tế PCI DSS.',

@@ -308,7 +308,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
         children: [
           SizedBox(width: size.width, height: size.height, child: _isPreviewing && _tempImage != null ? Image.file(_tempImage!, fit: BoxFit.cover) : CameraPreview(_cameraController!)),
           CustomPaint(size: size, painter: CameraOverlayPainter(isSelfie: isSelfieStep)),
-          SafeArea(child: Align(alignment: Alignment.topLeft, child: IconButton(icon: const Icon(Icons.arrow_back_ios, color: Colors.white), onPressed: () => Navigator.pop(context)))),
+          SafeArea(child: Align(alignment: Alignment.topLeft, child: IconButton(icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)))),
           Positioned(
             top: 100, width: size.width,
             child: Column(
@@ -339,7 +339,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
         elevation: 0.5,
         iconTheme: const IconThemeData(color: Colors.black),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
             setState(() {
               _currentStep = 3;
@@ -360,7 +360,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.contactless_outlined,
+                Icons.contactless_rounded,
                 size: 80,
                 color: AppColors.primaryPink,
               ),
@@ -395,7 +395,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
                 height: 48,
                 child: ElevatedButton.icon(
                   onPressed: _startNfcReading,
-                  icon: const Icon(Icons.nfc, color: Colors.white),
+                  icon: const Icon(Icons.nfc_rounded, color: Colors.white),
                   label: const Text(
                     'Bắt đầu đọc NFC',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),

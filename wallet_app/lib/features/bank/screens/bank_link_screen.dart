@@ -165,7 +165,7 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -193,7 +193,7 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
                           color: Colors.pink.shade50,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.face_retouching_natural, color: Colors.pink, size: 28),
+                        child: const Icon(Icons.face_retouching_natural_rounded, color: Colors.pink, size: 28),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -223,7 +223,6 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
                     bankName: 'Techcombank',
                     bankCode: 'TCB',
                     color: const Color(0xFFE53935),
-                    logoIcon: Icons.change_history,
                     schemeUrl: 'techcombank://',
                   ),
                   const SizedBox(height: 14),
@@ -233,7 +232,6 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
                     bankName: 'Vietcombank',
                     bankCode: 'VCB',
                     color: const Color(0xFF43A047),
-                    logoIcon: Icons.shield,
                     schemeUrl: 'vietcombankmobile://',
                   ),
                   const SizedBox(height: 24),
@@ -279,7 +277,7 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
                               color: Colors.white,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.credit_card, color: Colors.pink, size: 22),
+                            child: const Icon(Icons.credit_card_rounded, color: Colors.pink, size: 22),
                           ),
                           const SizedBox(width: 14),
                           const Expanded(
@@ -317,7 +315,7 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
                             ],
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.chevron_right, color: Colors.pink, size: 20),
+                          const Icon(Icons.chevron_right_rounded, color: Colors.pink, size: 20),
                         ],
                       ),
                     ),
@@ -358,7 +356,6 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
     required String bankName,
     required String bankCode,
     required Color color,
-    required IconData logoIcon,
     required String schemeUrl,
   }) {
     return Container(
@@ -383,12 +380,16 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
+              image: DecorationImage(
+                image: NetworkImage('https://api.vietqr.io/img/$bankCode.png'),
+                fit: BoxFit.contain,
+              ),
             ),
-            child: Icon(logoIcon, color: color, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(

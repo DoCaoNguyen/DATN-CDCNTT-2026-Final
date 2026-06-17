@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import '../../../core/services/custom_http_client.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
+import 'package:flutter/services.dart';
 
 
 
@@ -290,7 +292,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                   color: Colors.pink.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.qr_code_scanner, color: AppColors.primaryPink, size: 36),
+                child: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primaryPink, size: 36),
               ),
               const SizedBox(height: 16),
 
@@ -471,7 +473,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-                child: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 48),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -531,12 +533,12 @@ class _QrMainScreenState extends State<QrMainScreen> {
           child: Row(
             children: [
               _buildBottomTabItem(
-                icon: Icons.qr_code_scanner,
+                icon: Icons.qr_code_scanner_rounded,
                 title: 'Quét mã QR',
                 index: 0,
               ),
               _buildBottomTabItem(
-                icon: Icons.qr_code_2,
+                icon: Icons.qr_code_2_rounded,
                 title: 'QR Nhận tiền',
                 index: 1,
               ),
@@ -586,8 +588,13 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // TAB 1: GIAO DIỆN QUÉT MÃ QR (MOBILE SCANNER)
   // ==========================================
   Widget _buildScannerTab() {
-    return Stack(
-      children: [
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light, // White icons for dark camera screen
+      ),
+      child: Stack(
+        children: [
         MobileScanner(controller: _scannerController, onDetect: _onDetectQR),
 
         // Tạo lớp mờ đen đục lỗ ở giữa
@@ -641,7 +648,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
@@ -664,8 +671,8 @@ class _QrMainScreenState extends State<QrMainScreen> {
                         builder: (context, state, child) {
                           return Icon(
                             state.torchState == TorchState.on
-                                ? Icons.flash_on
-                                : Icons.flash_off,
+                                ? Icons.flash_on_rounded
+                                : Icons.flash_off_rounded,
                             color: Colors.white,
                           );
                         },
@@ -674,11 +681,24 @@ class _QrMainScreenState extends State<QrMainScreen> {
                     ),
                     IconButton(
                       icon: const Icon(
-                        Icons.photo_library_outlined,
+                        Icons.photo_library_rounded,
                         color: Colors.white,
                       ),
-                      onPressed: () {
-                        /* Logic chọn ảnh QR từ thư viện */
+                      onPressed: () async {
+                        try {
+                          final picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            final BarcodeCapture? capture = await _scannerController.analyzeImage(image.path);
+                            if (capture != null && capture.barcodes.isNotEmpty) {
+                              _onDetectQR(capture);
+                            } else {
+                              if (mounted) _showErrorDialog('Không tìm thấy mã QR trong ảnh.');
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) _showErrorDialog('Lỗi khi đọc ảnh.');
+                        }
                       },
                     ),
                   ],
@@ -699,6 +719,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -716,7 +737,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black),
+                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 8),
@@ -859,7 +880,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                             _customQrContent = null;
                                             _customDescription = '';
                                           }),
-                                          child: const Icon(Icons.close, size: 16, color: Colors.pink),
+                                          child: const Icon(Icons.close_rounded, size: 16, color: Colors.pink),
                                         ),
                                       ],
                                     ),
@@ -960,7 +981,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                         /* Logic Copy SĐT */
                                       },
                                       icon: const Icon(
-                                        Icons.copy,
+                                        Icons.copy_rounded,
                                         size: 16,
                                         color: Colors.pink,
                                       ),
@@ -1046,7 +1067,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                           style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, size: 22),
+                          icon: const Icon(Icons.close_rounded, size: 22),
                           onPressed: () => Navigator.pop(sheetCtx),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -1078,7 +1099,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                       amountController.clear();
                                       setSheetState(() => sheetAmountError = null);
                                     },
-                                    child: const Icon(Icons.cancel, size: 18, color: Colors.grey),
+                                    child: const Icon(Icons.cancel_rounded, size: 18, color: Colors.grey),
                                   )
                                 : null,
                             errorText: sheetAmountError,

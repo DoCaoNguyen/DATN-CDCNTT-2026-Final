@@ -24,7 +24,7 @@ class KycDialogs {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 60),
+            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 60),
             const SizedBox(height: 16),
             const Text('Xác thực thất bại', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -46,7 +46,7 @@ class KycDialogs {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            const Icon(Icons.check_circle_rounded, color: Colors.green, size: 60),
             const SizedBox(height: 16),
             const Text('Xác thực thành công', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

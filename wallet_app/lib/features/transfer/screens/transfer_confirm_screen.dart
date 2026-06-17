@@ -182,7 +182,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFE4EE),
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.black), onPressed: () => Navigator.pop(context)),
         title: const Text('Thanh toán an toàn', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
       body: Column(
@@ -212,7 +212,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.history_toggle_off, color: Colors.red.shade400, size: 20),
+                                  Icon(Icons.history_toggle_off_rounded, color: Colors.red.shade400, size: 20),
                                   const SizedBox(width: 8),
                                   const Text('Chuyển tiền', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                 ],
@@ -237,7 +237,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                                 children: [
                                   Text('Trả ngay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   SizedBox(width: 4),
-                                  Icon(Icons.visibility_outlined, size: 16, color: Colors.grey),
+                                  Icon(Icons.visibility_rounded, size: 16, color: Colors.grey),
                                 ],
                               ),
                               const SizedBox(height: 12),
@@ -264,7 +264,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                                         ],
                                       ),
                                     ),
-                                    const Icon(Icons.radio_button_checked, color: Colors.pink),
+                                    const Icon(Icons.radio_button_checked_rounded, color: Colors.pink),
                                   ],
                                 ),
                               )
@@ -308,7 +308,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                          Icon(Icons.lock_outline_rounded, color: Colors.white, size: 18),
                           SizedBox(width: 8),
                           Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
@@ -587,7 +587,7 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, color: Colors.black87),
+                  child: const Icon(Icons.close_rounded, color: Colors.black87),
                 ),
               ],
             ),
@@ -605,7 +605,7 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.fingerprint,
+                        Icons.fingerprint_rounded,
                         color: Colors.pink,
                         size: 64,
                       ),
@@ -711,7 +711,7 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
                         });
                         _authenticateWithBiometrics();
                       },
-                      icon: const Icon(Icons.fingerprint, color: Colors.pink, size: 20),
+                      icon: const Icon(Icons.fingerprint_rounded, color: Colors.pink, size: 20),
                       label: const Text(
                         "Xác thực bằng Vân tay/FaceID",
                         style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 14),

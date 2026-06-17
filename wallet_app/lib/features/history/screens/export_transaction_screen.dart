@@ -210,11 +210,11 @@ class _ExportTransactionScreenState extends State<ExportTransactionScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined),
+            icon: const Icon(Icons.headset_mic_rounded),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined),
+            icon: const Icon(Icons.home_rounded),
             onPressed: () {
               Navigator.popUntil(context, (route) => route.isFirst);
             },
@@ -470,7 +470,7 @@ class _CustomDateRangePickerSheetState extends State<_CustomDateRangePickerSheet
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: Colors.black54),
+                  icon: const Icon(Icons.close_rounded, color: Colors.black54),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -553,7 +553,7 @@ class _CustomDateRangePickerSheetState extends State<_CustomDateRangePickerSheet
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left),
+                  icon: const Icon(Icons.chevron_left_rounded),
                   onPressed: () {
                     setState(() {
                       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
@@ -565,7 +565,7 @@ class _CustomDateRangePickerSheetState extends State<_CustomDateRangePickerSheet
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right),
+                  icon: const Icon(Icons.chevron_right_rounded),
                   onPressed: _currentMonth.year > now.year || (_currentMonth.year == now.year && _currentMonth.month >= now.month)
                       ? null
                       : () {

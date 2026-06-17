@@ -407,12 +407,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   IconData _getTransactionIcon(dynamic tx) {
     if (tx['transaction_type'] == 'DEPOSIT') {
-      return Icons.account_balance_wallet_outlined;
+      return Icons.account_balance_wallet_rounded;
     }
     if (tx['entry_type'] == 'CREDIT') {
-      return Icons.call_received_outlined;
+      return Icons.call_received_rounded;
     }
-    return Icons.send_outlined;
+    return Icons.send_rounded;
   }
 
   Color _getIconColor(dynamic tx) {
@@ -555,7 +555,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.check_circle, color: Colors.green, size: 16),
+                        Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
                         SizedBox(width: 4),
                         Text(
                           "Thành công",
@@ -613,13 +613,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: Colors.black54),
+                  icon: const Icon(Icons.close_rounded, color: Colors.black54),
                   onPressed: () => Navigator.pop(ctx),
                 ),
               ],
             ),
             ListTile(
-              leading: const Icon(Icons.visibility_off_outlined, color: Colors.black87),
+              leading: const Icon(Icons.visibility_off_rounded, color: Colors.black87),
               title: const Text('Ẩn số dư', style: TextStyle(fontSize: 15)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -628,9 +628,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
             const Divider(height: 1, indent: 56),
             ListTile(
-              leading: const Icon(Icons.download_outlined, color: Colors.black87),
+              leading: const Icon(Icons.download_rounded, color: Colors.black87),
               title: const Text('Tải dữ liệu giao dịch', style: TextStyle(fontSize: 15)),
-              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
               onTap: () {
                 Navigator.pop(ctx);
                 Navigator.push(
@@ -641,9 +641,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
             const Divider(height: 1, indent: 56),
             ListTile(
-              leading: const Icon(Icons.support_agent_outlined, color: Colors.black87),
+              leading: const Icon(Icons.support_agent_rounded, color: Colors.black87),
               title: const Text('Chat với Trợ thủ AI - Mo247', style: TextStyle(fontSize: 15)),
-              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
               onTap: () {
                 Navigator.pop(ctx);
                 // Future implementation
@@ -722,7 +722,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: [
-                            const Icon(Icons.search, color: Colors.grey, size: 20),
+                            const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
@@ -752,7 +752,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           border: _hasActiveFilter() ? Border.all(color: Colors.pink.shade200) : null,
                         ),
                         child: Icon(
-                          Icons.tune,
+                          Icons.tune_rounded,
                           color: _hasActiveFilter() ? Colors.pink : Colors.grey.shade600,
                           size: 20,
                         ),
@@ -767,7 +767,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           color: Color(0xFFF5F5F5),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.grid_view_outlined, color: Colors.black54, size: 20),
+                        child: const Icon(Icons.grid_view_rounded, color: Colors.black54, size: 20),
                       ),
                     ),
                   ],
@@ -799,7 +799,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             "Tổng quan tháng ${DateTime.now().month}",
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
                           ),
-                          const Icon(Icons.chevron_right, color: Colors.pink, size: 20),
+                          const Icon(Icons.chevron_right_rounded, color: Colors.pink, size: 20),
                         ],
                       ),
                     ),
@@ -843,7 +843,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                                        const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 16),
                                       ],
                                     ),
                                   ],
@@ -880,7 +880,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                               children: [
                                                 if (diff != 0)
                                                   Icon(
-                                                    isMore ? Icons.arrow_upward : Icons.arrow_downward,
+                                                    isMore ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
                                                     color: isMore ? Colors.red : Colors.green,
                                                     size: 14,
                                                   ),
@@ -902,7 +902,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                           }
                                         ),
                                       ),
-                                      const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                                      const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 16),
                                     ],
                                   ),
                                 ],

@@ -224,7 +224,7 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
                       border: Border.all(color: Colors.grey.shade300, width: 1.5), 
                     ),
                     child: const Icon(
-                      Icons.arrow_back, 
+                      Icons.arrow_back_rounded, 
                       color: AppColors.textDark, 
                       size: 20
                     ),
@@ -334,7 +334,7 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                                     suffixIcon: IconButton(
                                       icon: Icon(
-                                        _obscureText ? Icons.visibility_off : Icons.visibility,
+                                        _obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                                         color: AppColors.textLight,
                                       ),
                                       onPressed: () {
@@ -395,7 +395,7 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
                               const CircleAvatar(
                                 radius: 24,
                                 backgroundColor: Colors.white,
-                                child: Icon(Icons.support_agent, color: AppColors.primaryPink, size: 28),
+                                child: Icon(Icons.support_agent_rounded, color: AppColors.primaryPink, size: 28),
                               ),
                               const SizedBox(height: 4),
                               Container(

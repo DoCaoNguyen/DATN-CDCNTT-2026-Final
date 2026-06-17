@@ -21,6 +21,7 @@ import 'package:local_auth/local_auth.dart';
 // ignore: depend_on_referenced_packages
 import 'package:local_auth_android/local_auth_android.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
+import '../../../core/utils/snackbar_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -108,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.fingerprint, color: Colors.pink, size: 28),
+            Icon(Icons.fingerprint_rounded, color: Colors.pink, size: 28),
             SizedBox(width: 8),
             Text(
               "Thiết lập Vân tay/FaceID",
@@ -207,18 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
         await storage.write(key: "biometric_pin", value: pinCode);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle_outline, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text("Thiết lập thành công!", style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackbarUtils.showSuccess(context, "Thiết lập thành công!");
         }
       } else {
         _showErrorSnackBar("Xác thực sinh trắc học thất bại.");
@@ -245,25 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
       message = 'Số dư ví đã thay đổi: $formattedAmount';
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.info_outline, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    SnackbarUtils.showSuccess(context, message);
   }
 
   String _formatAmountValue(String value) {
@@ -350,12 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _walletCode = newCode;
             _isPinSet = true;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tạo mã PIN thành công!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackbarUtils.showSuccess(context, 'Tạo mã PIN thành công!');
         },
       ),
     );
@@ -555,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
             elevation: 2,
             shape: const CircleBorder(),
             child: const Icon(
-              Icons.qr_code_scanner,
+              Icons.qr_code_scanner_rounded,
               color: Colors.white,
               size: 28,
             ),
@@ -574,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: <Widget>[
                   Expanded(
                     child: _buildBottomNavItem(
-                      Icons.home,
+                      Icons.home_rounded,
                       "Mio",
                       0,
                       isActive: _selectedIndex == 0,
@@ -582,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Expanded(
                     child: _buildBottomNavItem(
-                      Icons.local_offer_outlined,
+                      Icons.local_offer_rounded,
                       activeLang == 'VIE' ? "Ưu đãi" : "Offers",
                       1,
                       isActive: _selectedIndex == 1,
@@ -607,7 +574,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Expanded(
                     child: _buildBottomNavItem(
-                      Icons.history,
+                      Icons.history_rounded,
                       activeLang == 'VIE' ? "Lịch sử GD" : "History",
                       2,
                       isActive: _selectedIndex == 2,
@@ -615,7 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Expanded(
                     child: _buildBottomNavItem(
-                      Icons.person_outline,
+                      Icons.person_outline_rounded,
                       activeLang == 'VIE' ? "Tôi" : "Me",
                       3,
                       isActive: _selectedIndex == 3,
@@ -659,8 +626,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   child: TextField(
+                    textAlignVertical: TextAlignVertical.center,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      isDense: true,
+                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
                       hintText: activeLang == 'VIE'
                           ? "Tìm bạn bè để chuyển tiền"
                           : "Find friends to transfer",
@@ -669,7 +638,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Colors.grey,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
                 ),
@@ -686,28 +655,39 @@ class _HomeScreenState extends State<HomeScreen> {
                   _fetchUnreadCount(); // Refresh count when coming back
                 },
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const Icon(
-                      Icons.notifications_none,
-                      size: 34,
-                      color: Colors.black54,
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.06),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
+                        color: Colors.black87,
+                      ),
                     ),
                     if (_unreadCount > 0)
                       Positioned(
-                        right: 0,
-                        top: 0,
+                        right: -2,
+                        top: -2,
                         child: Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
                           ),
                           child: Text(
                             _unreadCount > 99 ? '99+' : _unreadCount.toString(),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
+                              fontSize: 9,
                               fontWeight: FontWeight.bold,
+                              height: 1,
                             ),
                           ),
                         ),
@@ -715,11 +695,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              const Icon(
-                Icons.chat_bubble_outline,
-                size: 28,
-                color: Colors.black54,
+              const SizedBox(width: 10),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.06),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 20,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
@@ -730,22 +718,22 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildQuickAction(
-                  Icons.account_balance_wallet,
+                  Icons.account_balance_wallet_rounded,
                   Colors.pink,
                   activeLang == 'VIE' ? "Nạp/Rút" : "Deposit",
                 ),
                 _buildQuickAction(
-                  Icons.qr_code,
+                  Icons.qr_code_rounded,
                   Colors.pink,
                   activeLang == 'VIE' ? "Nhận tiền" : "Receive",
                 ),
                 _buildQuickAction(
-                  Icons.qr_code_scanner,
+                  Icons.qr_code_scanner_rounded,
                   Colors.pink,
                   activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay",
                 ),
                 _buildQuickAction(
-                  Icons.apps,
+                  Icons.apps_rounded,
                   Colors.pink,
                   activeLang == 'VIE' ? "Ví tiện ích" : "Utilities",
                 ),
@@ -771,7 +759,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               Icon(
-                Icons.shield_outlined,
+                Icons.shield_rounded,
                 color: Colors.blue.shade700,
                 size: 20,
               ),
@@ -788,7 +776,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          Icon(Icons.chevron_right, color: Colors.blue.shade700, size: 20),
+          Icon(Icons.chevron_right_rounded, color: Colors.blue.shade700, size: 20),
         ],
       ),
     );
@@ -901,7 +889,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _buildRecommendItem(
-                  Icons.campaign,
+                  Icons.campaign_rounded,
                   activeLang == 'VIE' ? "Từ 220k" : "From 220k",
                   activeLang == 'VIE'
                       ? "Loa thông\nbáo chuyển ..."
@@ -909,7 +897,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Colors.pink,
                 ),
                 _buildRecommendItem(
-                  Icons.card_giftcard,
+                  Icons.card_giftcard_rounded,
                   activeLang == 'VIE' ? "Hoàn 50%" : "50% Back",
                   activeLang == 'VIE'
                       ? "Ví Trả Sau -\nHoàn 50%"
@@ -917,19 +905,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   Colors.pinkAccent,
                 ),
                 _buildRecommendItem(
-                  Icons.sports_esports,
+                  Icons.sports_esports_rounded,
                   null,
                   activeLang == 'VIE' ? "Mã thẻ Game\nOnline" : "Game\nCards",
                   Colors.blue,
                 ),
                 _buildRecommendItem(
-                  Icons.account_balance_wallet,
+                  Icons.account_balance_wallet_rounded,
                   null,
                   activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag",
                   Colors.orange,
                 ),
                 _buildRecommendItem(
-                  Icons.electric_bolt,
+                  Icons.electric_bolt_rounded,
                   null,
                   activeLang == 'VIE'
                       ? "Thanh toán\nđiện"

@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../login/sceens/login_phone_screen.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   final String phoneNumber;
@@ -75,12 +76,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập.');
 
         Navigator.pushAndRemoveUntil(
           context,
@@ -131,7 +127,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.grey.shade300, width: 1.5),
                     ),
-                    child: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
+                    child: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark, size: 20),
                   ),
                 ),
               ),
@@ -321,7 +317,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                               const CircleAvatar(
                                 radius: 24,
                                 backgroundColor: Colors.white,
-                                child: Icon(Icons.support_agent, color: AppColors.primaryPink, size: 28),
+                                child: Icon(Icons.support_agent_rounded, color: AppColors.primaryPink, size: 28),
                               ),
                               const SizedBox(height: 4),
                               Container(

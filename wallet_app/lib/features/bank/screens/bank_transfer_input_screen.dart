@@ -278,7 +278,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
         backgroundColor: const Color(0xFFFFE4EE),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -287,7 +287,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () async {
               final Uri phoneUri = Uri(scheme: 'tel', path: '1900545415');
               if (await canLaunchUrl(phoneUri)) {
@@ -296,7 +296,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
@@ -374,7 +374,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right, color: Colors.white),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.white),
                       ],
                     ),
                   ),
@@ -389,7 +389,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.verified_user, color: Colors.green, size: 16),
+                        const Icon(Icons.verified_user_rounded, color: Colors.green, size: 16),
                         const SizedBox(width: 6),
                         const Text(
                           'Người nhận chưa ghi nhận rủi ro',
@@ -443,7 +443,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.contact_phone_outlined, color: Colors.pink),
+                                icon: const Icon(Icons.contact_phone_rounded, color: Colors.pink),
                                 onPressed: _openContacts,
                                 constraints: const BoxConstraints(),
                                 padding: EdgeInsets.zero,
@@ -459,7 +459,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 14),
+                            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 14),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -535,7 +535,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 14),
+                          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 14),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -599,7 +599,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
-                        Icon(Icons.auto_awesome, color: Colors.purple.shade300, size: 20),
+                        Icon(Icons.auto_awesome_rounded, color: Colors.purple.shade300, size: 20),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
@@ -607,7 +607,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.deepPurple),
                           ),
                         ),
-                        const Icon(Icons.chevron_right, color: Colors.deepPurple, size: 18),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.deepPurple, size: 18),
                       ],
                     ),
                   ),

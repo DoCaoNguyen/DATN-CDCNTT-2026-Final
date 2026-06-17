@@ -58,7 +58,7 @@ class _WalletCardState extends State<WalletCard> {
                         }
                       },
                       child: Icon(
-                        _isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        _isBalanceVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
                         size: 16, color: Colors.grey,
                       ),
                     ),

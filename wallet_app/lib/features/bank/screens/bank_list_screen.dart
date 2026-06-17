@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'bank_detail_input_screen.dart';
 
 class BankListScreen extends StatefulWidget {
@@ -13,50 +14,82 @@ class BankListScreen extends StatefulWidget {
 class _BankListScreenState extends State<BankListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  Set<String> _installedBankCodes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInstalledBanks();
+  }
+
+  Future<void> _checkInstalledBanks() async {
+    final Map<String, String> schemes = {
+      'VCB': 'vietcombankmobile://',
+      'TCB': 'techcombank://',
+      'MB': 'mbbank://',
+      'BIDV': 'bidvsmartbanking://',
+      'ABB': 'abbank://',
+    };
+
+    Set<String> installed = {};
+    for (var entry in schemes.entries) {
+      try {
+        if (await canLaunchUrl(Uri.parse(entry.value))) {
+          installed.add(entry.key);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _installedBankCodes = installed;
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> _popularBanks = [
-    {'name': 'Vietcombank', 'code': 'VCB', 'color': Colors.green, 'icon': Icons.shield},
-    {'name': 'BIDV', 'code': 'BIDV', 'color': Colors.blue.shade800, 'icon': Icons.account_balance},
-    {'name': 'VietinBank', 'code': 'CTG', 'color': Colors.blue.shade900, 'icon': Icons.person},
-    {'name': 'Techcombank', 'code': 'TCB', 'color': Colors.red, 'icon': Icons.change_history},
-    {'name': 'Agribank', 'code': 'AGR', 'color': Colors.red.shade800, 'icon': Icons.agriculture},
-    {'name': 'SACOMBANK', 'code': 'STB', 'color': Colors.blue.shade700, 'icon': Icons.star},
-    {'name': 'ACB', 'code': 'ACB', 'color': Colors.blue, 'icon': Icons.business},
-    {'name': 'Thẻ quốc tế', 'code': 'VISA', 'color': Colors.orange, 'icon': Icons.credit_card},
+    {'name': 'Vietcombank', 'code': 'VCB', 'color': Colors.green, 'icon': Icons.shield_rounded},
+    {'name': 'BIDV', 'code': 'BIDV', 'color': Colors.blue.shade800, 'icon': Icons.account_balance_rounded},
+    {'name': 'VietinBank', 'code': 'ICB', 'color': Colors.blue.shade900, 'icon': Icons.person_rounded},
+    {'name': 'Techcombank', 'code': 'TCB', 'color': Colors.red, 'icon': Icons.change_history_rounded},
+    {'name': 'Agribank', 'code': 'VBA', 'color': Colors.red.shade800, 'icon': Icons.agriculture_rounded},
+    {'name': 'SACOMBANK', 'code': 'STB', 'color': Colors.blue.shade700, 'icon': Icons.star_rounded},
+    {'name': 'ACB', 'code': 'ACB', 'color': Colors.blue, 'icon': Icons.business_rounded},
+    {'name': 'Thẻ quốc tế', 'code': 'VISA', 'color': Colors.orange, 'icon': Icons.credit_card_rounded},
   ];
 
   final List<Map<String, String>> _allBanks = [
     {'name': 'ABBank', 'code': 'ABB'},
     {'name': 'ACB', 'code': 'ACB'},
-    {'name': 'Agribank', 'code': 'AGR'},
+    {'name': 'Agribank', 'code': 'VBA'},
     {'name': 'Bắc Á Bank', 'code': 'BAB'},
     {'name': 'Bảo Việt Bank', 'code': 'BVB'},
     {'name': 'BIDV', 'code': 'BIDV'},
-    {'name': 'BVBank', 'code': 'BVBANK'},
+    {'name': 'BVBank', 'code': 'VCCB'},
     {'name': 'Eximbank', 'code': 'EIB'},
     {'name': 'GPBank', 'code': 'GPB'},
     {'name': 'HDBank', 'code': 'HDB'},
     {'name': 'LienVietPostBank', 'code': 'LPB'},
-    {'name': 'MBBank', 'code': 'MBB'},
+    {'name': 'MBBank', 'code': 'MB'},
     {'name': 'MSB', 'code': 'MSB'},
     {'name': 'Nam A Bank', 'code': 'NAB'},
     {'name': 'NCB', 'code': 'NCB'},
     {'name': 'OCB', 'code': 'OCB'},
-    {'name': 'OceanBank', 'code': 'OJB'},
     {'name': 'PG Bank', 'code': 'PGB'},
-    {'name': 'PVcomBank', 'code': 'PVB'},
+    {'name': 'PVcomBank', 'code': 'PVCB'},
     {'name': 'Sacombank', 'code': 'STB'},
-    {'name': 'Saigonbank', 'code': 'SGB'},
+    {'name': 'Saigonbank', 'code': 'SGICB'},
     {'name': 'SCB', 'code': 'SCB'},
     {'name': 'SHB', 'code': 'SHB'},
-    {'name': 'Shinhan Bank', 'code': 'SHINHAN'},
+    {'name': 'Shinhan Bank', 'code': 'SHBVN'},
     {'name': 'Techcombank', 'code': 'TCB'},
     {'name': 'TPBank', 'code': 'TPB'},
     {'name': 'VIB', 'code': 'VIB'},
     {'name': 'VietABank', 'code': 'VAB'},
-    {'name': 'VietBank', 'code': 'VIBANK'},
+    {'name': 'VietBank', 'code': 'VIETBANK'},
     {'name': 'Vietcombank', 'code': 'VCB'},
-    {'name': 'VietinBank', 'code': 'CTG'},
+    {'name': 'VietinBank', 'code': 'ICB'},
     {'name': 'VPBank', 'code': 'VPB'},
   ];
 
@@ -87,12 +120,26 @@ class _BankListScreenState extends State<BankListScreen> {
       final code = bank['code'].toString().toLowerCase();
       return name.contains(_searchQuery) || code.contains(_searchQuery);
     }).toList();
+    filteredPopular.sort((a, b) {
+      bool aInst = _installedBankCodes.contains(a['code']);
+      bool bInst = _installedBankCodes.contains(b['code']);
+      if (aInst && !bInst) return -1;
+      if (!aInst && bInst) return 1;
+      return 0;
+    });
 
     final filteredAll = _allBanks.where((bank) {
       final name = bank['name']!.toLowerCase();
       final code = bank['code']!.toLowerCase();
       return name.contains(_searchQuery) || code.contains(_searchQuery);
     }).toList();
+    filteredAll.sort((a, b) {
+      bool aInst = _installedBankCodes.contains(a['code']);
+      bool bInst = _installedBankCodes.contains(b['code']);
+      if (aInst && !bInst) return -1;
+      if (!aInst && bInst) return 1;
+      return 0;
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5FA),
@@ -100,7 +147,7 @@ class _BankListScreenState extends State<BankListScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -110,7 +157,7 @@ class _BankListScreenState extends State<BankListScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
           ),
         ],
@@ -137,7 +184,7 @@ class _BankListScreenState extends State<BankListScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Tìm kiếm ngân hàng',
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
+                  prefixIcon: Icon(Icons.search_rounded, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -190,14 +237,21 @@ class _BankListScreenState extends State<BankListScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: bank['color'].withOpacity(0.1),
-                                      shape: BoxShape.circle,
+                                  ClipOval(
+                                    child: Image.network(
+                                      'https://api.vietqr.io/img/${bank['code']}.png',
+                                      width: 36,
+                                      height: 36,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: 36,
+                                          height: 36,
+                                          color: Colors.grey.shade200,
+                                          child: const Icon(Icons.account_balance_rounded, size: 18, color: Colors.grey),
+                                        );
+                                      },
                                     ),
-                                    child: Icon(bank['icon'], color: bank['color'], size: 18),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
@@ -250,7 +304,7 @@ class _BankListScreenState extends State<BankListScreen> {
                             color: Colors.blue.shade50,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.account_balance, color: Colors.blue, size: 20),
+                          child: const Icon(Icons.account_balance_rounded, color: Colors.blue, size: 20),
                         ),
                         title: const Text(
                           'Mở tài khoản ngân hàng',
@@ -260,7 +314,7 @@ class _BankListScreenState extends State<BankListScreen> {
                           'Miễn phí - An toàn bảo mật',
                           style: TextStyle(color: Colors.grey, fontSize: 11),
                         ),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
                         onTap: () {},
                       ),
                     ),
@@ -281,28 +335,39 @@ class _BankListScreenState extends State<BankListScreen> {
                         final bank = filteredAll[index];
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          leading: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: Colors.pink.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              bank['name']!.substring(0, minOf(2, bank['name']!.length)).toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.pink,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              'https://api.vietqr.io/img/${bank['code']}.png',
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.pink.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    bank['name']!.substring(0, minOf(2, bank['name']!.length)).toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.pink,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           title: Text(
                             bank['name']!,
                             style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                           ),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+                          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
                           onTap: () => _onBankSelected(bank['name']!, bank['code']!),
                         );
                       },

@@ -128,7 +128,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       backgroundColor: const Color(0xFFFFE4EE),
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
         onPressed: () => Navigator.pop(context),
       ),
       title: Row(
@@ -153,8 +153,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       ),
       actions: [
         IconButton(icon: const Icon(Icons.grid_view_rounded, color: Colors.black87), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.phone_in_talk_outlined, color: Colors.black87), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.home_outlined, color: Colors.black87), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.black87), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.home_rounded, color: Colors.black87), onPressed: () {}),
       ],
     );
   }
@@ -178,7 +178,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.person_add_alt_1, color: Colors.white, size: 14),
+                Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 14),
                 SizedBox(width: 4),
                 Text('Kết bạn', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
@@ -257,7 +257,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(isReceived ? Icons.arrow_downward : Icons.arrow_upward, color: isReceived ? Colors.green : Colors.grey, size: 14),
+                              Icon(isReceived ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: isReceived ? Colors.green : Colors.grey, size: 14),
                               const SizedBox(width: 4),
                               Text(isReceived ? 'Đã nhận' : 'Đã chuyển', style: TextStyle(color: isReceived ? Colors.green : Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
                             ],
@@ -293,7 +293,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.history, color: Colors.grey.shade600),
+          Icon(Icons.history_rounded, color: Colors.grey.shade600),
           const SizedBox(width: 8),
           Expanded(
             child: Container(
@@ -317,7 +317,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       ),
                     ),
                   ),
-                  Icon(Icons.emoji_emotions_outlined, color: Colors.grey.shade600, size: 20),
+                  Icon(Icons.emoji_emotions_rounded, color: Colors.grey.shade600, size: 20),
                 ],
               ),
             ),
@@ -331,10 +331,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   _chatController.clear();
                 }
               },
-              child: const Icon(Icons.send, color: Colors.pink),
+              child: const Icon(Icons.send_rounded, color: Colors.pink),
             )
           else
-            Icon(Icons.image_outlined, color: Colors.grey.shade600),
+            Icon(Icons.image_rounded, color: Colors.grey.shade600),
         ],
       ),
     );
@@ -362,11 +362,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   ),
                 ).then((_) => _fetchChatHistory()); // Cập nhật lại list sau khi chuyển tiền
               },
-              child: _buildActionBtn(Icons.currency_exchange, 'Chuyển tiền', Colors.red),
+              child: _buildActionBtn(Icons.currency_exchange_rounded, 'Chuyển tiền', Colors.red),
             ),
-            _buildActionBtn(Icons.chat_bubble_outline, 'Nhắc trả tiền', Colors.pink),
-            _buildActionBtn(Icons.card_giftcard, 'Gửi thiệp', Colors.pinkAccent),
-            _buildActionBtn(Icons.money, 'Giật lì xì', Colors.redAccent),
+            _buildActionBtn(Icons.chat_bubble_outline_rounded, 'Nhắc trả tiền', Colors.pink),
+            _buildActionBtn(Icons.card_giftcard_rounded, 'Gửi thiệp', Colors.pinkAccent),
+            _buildActionBtn(Icons.money_rounded, 'Giật lì xì', Colors.redAccent),
           ],
         ),
       ),

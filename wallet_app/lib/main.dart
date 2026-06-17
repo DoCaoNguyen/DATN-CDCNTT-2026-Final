@@ -10,8 +10,14 @@ import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
 import 'core/services/network_service.dart';
 
+import 'package:flutter/services.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent, // transparent status bar
+    statusBarIconBrightness: Brightness.dark, // dark text for status bar
+  ));
   NetworkService().initialize();
 
   String? token;

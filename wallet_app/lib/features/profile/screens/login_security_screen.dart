@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'dart:math' as math;
+import 'change_pin_screen.dart';
 
 class LoginSecurityScreen extends StatefulWidget {
   final String token;
@@ -30,7 +31,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
         backgroundColor: const Color(0xFFFFF0F5),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -43,15 +44,15 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.star_border, color: Colors.black87),
+            icon: const Icon(Icons.star_border_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
@@ -138,7 +139,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           ),
           const SizedBox(height: 8),
           // Chevron down
-          const Icon(Icons.keyboard_arrow_down, color: Colors.black38, size: 24),
+          const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black38, size: 24),
         ],
       ),
     );
@@ -155,7 +156,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           child: Padding(
             padding: EdgeInsets.only(right: 0, bottom: 0),
             child: Icon(
-              Icons.check_circle,
+              Icons.check_circle_rounded,
               color: Colors.green,
               size: 20,
             ),
@@ -186,7 +187,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
               color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.shield, color: Colors.red, size: 20),
+            child: const Icon(Icons.shield_rounded, color: Colors.red, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -242,7 +243,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
         children: [
           // Sinh trắc học
           _buildSwitchItem(
-            icon: Icons.fingerprint,
+            icon: Icons.fingerprint_rounded,
             iconColor: Colors.deepPurple,
             title: 'Sinh trắc học',
             value: _biometricEnabled,
@@ -253,23 +254,28 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Mã PIN 6 số
           _buildNavigationItem(
-            icon: Icons.more_horiz,
+            icon: Icons.more_horiz_rounded,
             iconColor: Colors.black87,
             title: 'Mã PIN 6 số',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChangePinScreen()),
+              );
+            },
           ),
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Quét mã độc
           _buildNavigationItem(
-            icon: Icons.qr_code_scanner,
+            icon: Icons.qr_code_scanner_rounded,
             iconColor: Colors.teal,
             title: 'Quét mã độc',
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
               ],
             ),
             onTap: () {},
@@ -277,7 +283,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Smart OTP
           _buildNavigationItem(
-            icon: Icons.phonelink_lock_outlined,
+            icon: Icons.phonelink_lock_rounded,
             iconColor: Colors.blue,
             title: 'Smart OTP',
             trailing: Row(
@@ -305,7 +311,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Tra cứu lừa đảo
           _buildNavigationItem(
-            icon: Icons.policy_outlined,
+            icon: Icons.policy_rounded,
             iconColor: Colors.orange,
             title: 'Tra cứu lừa đảo',
             onTap: () {},
@@ -330,7 +336,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down, color: Colors.orange, size: 20),
+                    Icon(Icons.keyboard_arrow_down_rounded, color: Colors.orange, size: 20),
                   ],
                 ),
               ),
@@ -338,14 +344,14 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           if (_showMoreSecurity) ...[
             const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
             _buildNavigationItem(
-              icon: Icons.devices,
+              icon: Icons.devices_rounded,
               iconColor: Colors.indigo,
               title: 'Quản lý thiết bị',
               onTap: () {},
             ),
             const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
             _buildNavigationItem(
-              icon: Icons.history,
+              icon: Icons.history_rounded,
               iconColor: Colors.grey,
               title: 'Lịch sử đăng nhập',
               onTap: () {},
@@ -368,7 +374,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_up, color: Colors.orange, size: 20),
+                    Icon(Icons.keyboard_arrow_up_rounded, color: Colors.orange, size: 20),
                   ],
                 ),
               ),
@@ -391,7 +397,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
         children: [
           // Cập nhật Số điện thoại
           _buildNavigationItem(
-            icon: Icons.phone,
+            icon: Icons.phone_rounded,
             iconColor: Colors.green,
             title: 'Cập nhật Số điện thoại',
             onTap: () {},
@@ -399,7 +405,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Đăng nhập nhanh
           _buildSwitchItem(
-            icon: Icons.flash_on,
+            icon: Icons.flash_on_rounded,
             iconColor: Colors.amber.shade700,
             title: 'Đăng nhập nhanh',
             value: _quickLoginEnabled,
@@ -410,7 +416,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Tự động khoá ứng dụng
           _buildDropdownItem(
-            icon: Icons.lock_outline,
+            icon: Icons.lock_outline_rounded,
             iconColor: Colors.blueGrey,
             title: 'Tự động khoá ứng dụng',
             value: _autoLockOption,
@@ -422,7 +428,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Quản lý dữ liệu cá nhân
           _buildNavigationItem(
-            icon: Icons.verified_user_outlined,
+            icon: Icons.verified_user_rounded,
             iconColor: Colors.teal,
             title: 'Quản lý dữ liệu cá nhân',
             onTap: () {},
@@ -430,7 +436,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Hạn mức Ví
           _buildNavigationItem(
-            icon: Icons.account_balance_wallet_outlined,
+            icon: Icons.account_balance_wallet_rounded,
             iconColor: Colors.purple,
             title: 'Hạn mức Ví',
             onTap: () {},
@@ -501,7 +507,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           color: Colors.black87,
         ),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
       onTap: onTap,
     );
   }
@@ -542,7 +548,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           child: DropdownButton<String>(
             value: value,
             isDense: true,
-            icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
             style: const TextStyle(fontSize: 13, color: Colors.black87),
             items: options.map((opt) {
               return DropdownMenuItem(

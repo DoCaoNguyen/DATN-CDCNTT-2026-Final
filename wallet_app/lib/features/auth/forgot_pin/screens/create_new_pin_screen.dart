@@ -6,6 +6,7 @@ import '../../../../core/constants/api_config.dart';
 import '../../../../core/services/custom_http_client.dart';
 import '../../login/sceens/login_phone_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class CreateNewPinScreen extends StatefulWidget {
   const CreateNewPinScreen({Key? key}) : super(key: key);
@@ -61,12 +62,7 @@ class _CreateNewPinScreenState extends State<CreateNewPinScreen> {
       });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đặt lại mã PIN thành công! Vui lòng đăng nhập lại.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Đặt lại mã PIN thành công! Vui lòng đăng nhập lại.');
         
         // Log out user
         const storage = FlutterSecureStorage();
@@ -103,7 +99,7 @@ class _CreateNewPinScreenState extends State<CreateNewPinScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(

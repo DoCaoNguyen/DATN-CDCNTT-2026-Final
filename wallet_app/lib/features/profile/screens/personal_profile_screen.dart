@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/services/custom_http_client.dart';
+import '../../../core/utils/snackbar_utils.dart';
 
 class PersonalProfileScreen extends StatefulWidget {
   final String token;
@@ -53,7 +54,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         backgroundColor: const Color(0xFFFFF0F5),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -62,11 +63,11 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
@@ -133,7 +134,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  Icons.camera_alt_outlined,
+                                  Icons.camera_alt_rounded,
                                   color: Colors.white,
                                   size: 12,
                                 ),
@@ -159,7 +160,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   const Icon(
-                                    Icons.check_circle,
+                                    Icons.check_circle_rounded,
                                     color: Colors.green,
                                     size: 18,
                                   ),
@@ -177,7 +178,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   const Icon(
-                                    Icons.info_outline,
+                                    Icons.info_outline_rounded,
                                     color: Colors.black38,
                                     size: 14,
                                   ),
@@ -197,7 +198,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Row(
                         children: const [
-                          Icon(Icons.lock_outline, size: 18, color: Colors.black54),
+                          Icon(Icons.lock_outline_rounded, size: 18, color: Colors.black54),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -209,7 +210,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                               ),
                             ),
                           ),
-                          Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+                          Icon(Icons.chevron_right_rounded, size: 18, color: Colors.black38),
                         ],
                       ),
                     ),
@@ -259,7 +260,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildCompletenessRow(
-                    icon: Icons.assignment_outlined,
+                    icon: Icons.assignment_rounded,
                     iconColor: Colors.red.shade300,
                     text: "Đã xác thực sinh trắc học",
                     isDone: true,
@@ -272,7 +273,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       }
                     },
                     child: _buildCompletenessRow(
-                      icon: Icons.mail_outline,
+                      icon: Icons.mail_outline_rounded,
                       iconColor: Colors.green.shade300,
                       text: "Xác thực gmail để bảo vệ tài khoản",
                       isDone: _currentEmail != null && _currentEmail!.isNotEmpty,
@@ -328,7 +329,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.inbox_outlined,
+                      Icons.inbox_rounded,
                       size: 44,
                       color: Colors.black26,
                     ),
@@ -408,13 +409,13 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         ),
         if (isDone)
           const Icon(
-            Icons.check_circle,
+            Icons.check_circle_rounded,
             color: Colors.pink,
             size: 20,
           )
         else
           Icon(
-            Icons.chevron_right,
+            Icons.chevron_right_rounded,
             color: Colors.grey.shade400,
             size: 20,
           ),
@@ -475,7 +476,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                     decoration: InputDecoration(
                       labelText: "Email",
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      prefixIcon: const Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_rounded),
                     ),
                   ),
                 ],
@@ -606,9 +607,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                               setState(() {
                                 _currentEmail = email;
                               });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Xác thực Email thành công!"), backgroundColor: Colors.green),
-                              );
+                              SnackbarUtils.showSuccess(context, "Xác thực Email thành công!");
                             } else {
                               final error = jsonDecode(response.body)['error'] ?? "Mã OTP không hợp lệ";
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));

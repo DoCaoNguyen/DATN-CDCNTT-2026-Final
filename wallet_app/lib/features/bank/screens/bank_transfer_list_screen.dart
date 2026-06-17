@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'bank_transfer_input_screen.dart';
 
 class BankTransferListScreen extends StatefulWidget {
@@ -12,54 +13,86 @@ class BankTransferListScreen extends StatefulWidget {
 class _BankTransferListScreenState extends State<BankTransferListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  Set<String> _installedBankCodes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInstalledBanks();
+  }
+
+  Future<void> _checkInstalledBanks() async {
+    final Map<String, String> schemes = {
+      'VCB': 'vietcombankmobile://',
+      'TCB': 'techcombank://',
+      'MB': 'mbbank://',
+      'BIDV': 'bidvsmartbanking://',
+      'ABB': 'abbank://',
+    };
+
+    Set<String> installed = {};
+    for (var entry in schemes.entries) {
+      try {
+        if (await canLaunchUrl(Uri.parse(entry.value))) {
+          installed.add(entry.key);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _installedBankCodes = installed;
+      });
+    }
+  }
 
   // Popular banks list matching Screen 1 details
   final List<Map<String, dynamic>> _popularBanks = [
     {'name': 'Vietcombank', 'code': 'VCB', 'color': const Color(0xFF1B5E20), 'iconText': 'VCB', 'logoBg': Colors.green.shade50},
-    {'name': 'MBBank', 'code': 'MBB', 'color': const Color(0xFF0D47A1), 'iconText': 'MB', 'logoBg': Colors.blue.shade50},
+    {'name': 'MBBank', 'code': 'MB', 'color': const Color(0xFF0D47A1), 'iconText': 'MB', 'logoBg': Colors.blue.shade50},
     {'name': 'BIDV', 'code': 'BIDV', 'color': const Color(0xFF01579B), 'iconText': 'BIDV', 'logoBg': Colors.lightBlue.shade50},
     {'name': 'Techcombank', 'code': 'TCB', 'color': const Color(0xFFB71C1C), 'iconText': 'TCB', 'logoBg': Colors.red.shade50},
-    {'name': 'VietinBank', 'code': 'CTG', 'color': const Color(0xFF006064), 'iconText': 'CTG', 'logoBg': Colors.cyan.shade50},
+    {'name': 'VietinBank', 'code': 'ICB', 'color': const Color(0xFF006064), 'iconText': 'CTG', 'logoBg': Colors.cyan.shade50},
     {'name': 'ACB', 'code': 'ACB', 'color': const Color(0xFF0D47A1), 'iconText': 'ACB', 'logoBg': Colors.blue.shade100},
     {'name': 'VPBank', 'code': 'VPB', 'color': const Color(0xFF2E7D32), 'iconText': 'VPB', 'logoBg': Colors.green.shade100},
     {'name': 'SACOMBANK', 'code': 'STB', 'color': const Color(0xFF1565C0), 'iconText': 'STB', 'logoBg': Colors.indigo.shade50},
     {'name': 'OCB', 'code': 'OCB', 'color': const Color(0xFFE65100), 'iconText': 'OCB', 'logoBg': Colors.orange.shade50},
     {'name': 'TPBank', 'code': 'TPB', 'color': const Color(0xFF4A148C), 'iconText': 'TPB', 'logoBg': Colors.purple.shade50},
-    {'name': 'Agribank', 'code': 'AGR', 'color': const Color(0xFF8D6E63), 'iconText': 'AGR', 'logoBg': Colors.brown.shade50},
+    {'name': 'Agribank', 'code': 'VBA', 'color': const Color(0xFF8D6E63), 'iconText': 'AGR', 'logoBg': Colors.brown.shade50},
   ];
 
   final List<Map<String, String>> _allBanks = [
     {'name': 'ABBank', 'code': 'ABB'},
     {'name': 'ACB', 'code': 'ACB'},
-    {'name': 'Agribank', 'code': 'AGR'},
+    {'name': 'Agribank', 'code': 'VBA'},
     {'name': 'Bắc Á Bank', 'code': 'BAB'},
     {'name': 'Bảo Việt Bank', 'code': 'BVB'},
     {'name': 'BIDV', 'code': 'BIDV'},
-    {'name': 'BVBank', 'code': 'BVBANK'},
+    {'name': 'BVBank', 'code': 'VCCB'},
     {'name': 'Eximbank', 'code': 'EIB'},
     {'name': 'GPBank', 'code': 'GPB'},
     {'name': 'HDBank', 'code': 'HDB'},
     {'name': 'LienVietPostBank', 'code': 'LPB'},
-    {'name': 'MBBank', 'code': 'MBB'},
+    {'name': 'MBBank', 'code': 'MB'},
     {'name': 'MSB', 'code': 'MSB'},
     {'name': 'Nam A Bank', 'code': 'NAB'},
     {'name': 'NCB', 'code': 'NCB'},
     {'name': 'OCB', 'code': 'OCB'},
-    {'name': 'OceanBank', 'code': 'OJB'},
     {'name': 'PG Bank', 'code': 'PGB'},
-    {'name': 'PVcomBank', 'code': 'PVB'},
+    {'name': 'PVcomBank', 'code': 'PVCB'},
     {'name': 'Sacombank', 'code': 'STB'},
-    {'name': 'Saigonbank', 'code': 'SGB'},
+    {'name': 'Saigonbank', 'code': 'SGICB'},
     {'name': 'SCB', 'code': 'SCB'},
     {'name': 'SHB', 'code': 'SHB'},
-    {'name': 'Shinhan Bank', 'code': 'SHINHAN'},
+    {'name': 'Shinhan Bank', 'code': 'SHBVN'},
     {'name': 'Techcombank', 'code': 'TCB'},
     {'name': 'TPBank', 'code': 'TPB'},
     {'name': 'VIB', 'code': 'VIB'},
     {'name': 'VietABank', 'code': 'VAB'},
-    {'name': 'VietBank', 'code': 'VIBANK'},
+    {'name': 'VietBank', 'code': 'VIETBANK'},
     {'name': 'Vietcombank', 'code': 'VCB'},
-    {'name': 'VietinBank', 'code': 'CTG'},
+    {'name': 'VietinBank', 'code': 'ICB'},
     {'name': 'VPBank', 'code': 'VPB'},
   ];
 
@@ -89,12 +122,26 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
       final code = b['code'].toString().toLowerCase();
       return name.contains(_searchQuery.toLowerCase()) || code.contains(_searchQuery.toLowerCase());
     }).toList();
+    filteredPopular.sort((a, b) {
+      bool aInst = _installedBankCodes.contains(a['code']);
+      bool bInst = _installedBankCodes.contains(b['code']);
+      if (aInst && !bInst) return -1;
+      if (!aInst && bInst) return 1;
+      return 0;
+    });
 
     final filteredAll = _allBanks.where((b) {
       final name = b['name']!.toLowerCase();
       final code = b['code']!.toLowerCase();
       return name.contains(_searchQuery.toLowerCase()) || code.contains(_searchQuery.toLowerCase());
     }).toList();
+    filteredAll.sort((a, b) {
+      bool aInst = _installedBankCodes.contains(a['code']);
+      bool bInst = _installedBankCodes.contains(b['code']);
+      if (aInst && !bInst) return -1;
+      if (!aInst && bInst) return 1;
+      return 0;
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FB),
@@ -102,7 +149,7 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
         backgroundColor: const Color(0xFFFFECEF),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -111,15 +158,15 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.star_border, color: Colors.black87),
+            icon: const Icon(Icons.star_border_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
@@ -149,7 +196,7 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                       decoration: const InputDecoration(
                         hintText: 'Tìm ngân hàng, tài khoản người nhận',
                         hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey),
+                        prefixIcon: Icon(Icons.search_rounded, color: Colors.grey),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 14),
                       ),
@@ -165,7 +212,7 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
-                  icon: const Icon(Icons.content_copy, size: 14),
+                  icon: const Icon(Icons.content_copy_rounded, size: 14),
                   label: const Text('Dán', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
                 const SizedBox(width: 8),
@@ -177,7 +224,7 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.qr_code_scanner, color: Colors.pink, size: 20),
+                    icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.pink, size: 20),
                     onPressed: () {},
                   ),
                 ),
@@ -224,21 +271,31 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(
-                                    width: 38,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                      color: bank['logoBg'],
-                                      shape: BoxShape.circle,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      bank['iconText'],
-                                      style: TextStyle(
-                                        color: bank['color'],
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  ClipOval(
+                                    child: Image.network(
+                                      'https://api.vietqr.io/img/${bank['code']}.png',
+                                      width: 38,
+                                      height: 38,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: 38,
+                                          height: 38,
+                                          decoration: BoxDecoration(
+                                            color: bank['logoBg'],
+                                            shape: BoxShape.circle,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            bank['iconText'],
+                                            style: TextStyle(
+                                              color: bank['color'],
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -269,11 +326,11 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     child: Row(
                       children: [
-                        _buildTabButton('Gần đây', Icons.history, true),
+                        _buildTabButton('Gần đây', Icons.history_rounded, true),
                         const SizedBox(width: 8),
-                        _buildTabButton('Đã lưu', Icons.bookmark_border, false),
+                        _buildTabButton('Đã lưu', Icons.bookmark_border_rounded, false),
                         const SizedBox(width: 8),
-                        _buildTabButton('Mẫu chuyển tiền', Icons.description_outlined, false),
+                        _buildTabButton('Mẫu chuyển tiền', Icons.description_rounded, false),
                       ],
                     ),
                   ),
@@ -292,7 +349,7 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                             color: Colors.pink.shade50,
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Icon(Icons.wallet, size: 40, color: Colors.pink.shade300),
+                          child: Icon(Icons.wallet_rounded, size: 40, color: Colors.pink.shade300),
                         ),
                         const SizedBox(height: 16),
                         const Text(
@@ -327,9 +384,25 @@ class _BankTransferListScreenState extends State<BankTransferListScreen> {
                         final b = filteredAll[idx];
                         return ListTile(
                           tileColor: Colors.white,
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              'https://api.vietqr.io/img/${b['code']}.png',
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                width: 36,
+                                height: 36,
+                                color: Colors.pink.shade50,
+                                alignment: Alignment.center,
+                                child: const Icon(Icons.account_balance_rounded, size: 18, color: Colors.pink),
+                              ),
+                            ),
+                          ),
                           title: Text(b['name']!, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                           subtitle: Text(b['code']!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          trailing: const Icon(Icons.chevron_right, size: 18),
+                          trailing: const Icon(Icons.chevron_right_rounded, size: 18),
                           onTap: () => _selectBank(b['name']!, b['code']!),
                         );
                       },

@@ -457,7 +457,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
                   onPressed: () async {
                     setState(() {
                       _isScanningFace = false;
@@ -509,7 +509,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         backgroundColor: const Color(0xFFFFE4EE),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Thanh toán an toàn', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
@@ -601,7 +601,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                                       children: [
                                         Text('Trả ngay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                         SizedBox(width: 4),
-                                        Icon(Icons.visibility_outlined, size: 16, color: Colors.grey),
+                                        Icon(Icons.visibility_rounded, size: 16, color: Colors.grey),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
@@ -629,7 +629,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                                               ],
                                             ),
                                           ),
-                                          const Icon(Icons.radio_button_checked, color: Colors.pink),
+                                          const Icon(Icons.radio_button_checked_rounded, color: Colors.pink),
                                         ],
                                       ),
                                     )
@@ -673,7 +673,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                                Icon(Icons.lock_outline_rounded, color: Colors.white, size: 18),
                                   SizedBox(width: 8),
                                   Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                               ],

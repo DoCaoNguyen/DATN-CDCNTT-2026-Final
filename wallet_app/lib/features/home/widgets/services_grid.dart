@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../transfer/screens/transfer_main_screen.dart';
 import '../../bank/screens/bank_transfer_list_screen.dart';
+import '../../split_bill/screens/split_bill_management_screen.dart';
 
 class ServicesGrid extends StatelessWidget {
   final String activeLang;
@@ -25,11 +26,9 @@ class ServicesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> services = [
-      {'icon': Icons.swap_horiz, 'name': activeLang == 'VIE' ? 'Chuyển tiền' : 'Transfer', 'color': Colors.red},
-      {'icon': Icons.account_balance, 'name': activeLang == 'VIE' ? 'Chuyển tiền\nNgân hàng' : 'Bank\nTransfer', 'color': Colors.blue},
-      {'icon': Icons.receipt_long, 'name': activeLang == 'VIE' ? 'Thanh toán\nhóa đơn' : 'Pay\nBills', 'color': Colors.teal},
-      {'icon': Icons.phone_android, 'name': activeLang == 'VIE' ? 'Nạp tiền\nđiện thoại' : 'Top-up', 'color': Colors.blueAccent},
-      // ... Thêm các dịch vụ khác của bạn vào đây
+      {'icon': Icons.send_rounded, 'name': activeLang == 'VIE' ? 'Chuyển tiền' : 'Transfer', 'color': Colors.pink},
+      {'icon': Icons.account_balance_rounded, 'name': activeLang == 'VIE' ? 'Ngân hàng' : 'Bank', 'color': Colors.blueAccent},
+      {'icon': Icons.pie_chart_rounded, 'name': activeLang == 'VIE' ? 'Chia tiền' : 'Split Bill', 'color': Colors.orange},
     ];
 
     return Container(
@@ -63,18 +62,35 @@ class ServicesGrid extends StatelessWidget {
                   }
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => BankTransferListScreen(token: token)));
                   onRefreshBalance();
+                } else if (service['name'].toString().contains('Chia tiền') || service['name'].toString().contains('Split Bill')) {
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => SplitBillManagementScreen(token: token, me: const {})));
                 }
               }
             },
             child: Column(
               children: [
                 Container(
-                  width: 48, height: 48,
-                  decoration: BoxDecoration(color: service['color'].withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                  width: 54, height: 54,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [service['color'].withOpacity(0.2), service['color'].withOpacity(0.05)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: service['color'].withOpacity(0.3), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: service['color'].withOpacity(0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  ),
                   child: Icon(service['icon'], color: service['color'], size: 28),
                 ),
-                const SizedBox(height: 8),
-                Text(service['name'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.black87)),
+                const SizedBox(height: 10),
+                Text(service['name'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black87)),
               ],
             ),
           );

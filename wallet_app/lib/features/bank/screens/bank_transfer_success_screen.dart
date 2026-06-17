@@ -46,7 +46,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
@@ -79,7 +79,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
                         color: Colors.green,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check, color: Colors.white, size: 48),
+                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 48),
                     ),
                     const SizedBox(height: 16),
                     
@@ -107,7 +107,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
                           // Success row
                           Row(
                             children: [
-                              const Icon(Icons.info_outline, color: Colors.blue, size: 18),
+                              const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 18),
                               const SizedBox(width: 8),
                               const Text(
                                 'Thành công.',

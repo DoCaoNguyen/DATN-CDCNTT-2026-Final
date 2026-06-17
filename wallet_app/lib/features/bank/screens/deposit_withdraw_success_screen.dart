@@ -43,7 +43,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.home, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () {
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
@@ -89,7 +89,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.check_circle,
+                        Icons.check_circle_rounded,
                         color: Color(0xFF4CAF50),
                         size: 54,
                       ),
@@ -192,7 +192,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Color(0xFFE91E63), size: 16),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFFE91E63), size: 16),
             ],
           ),
         ],
@@ -293,14 +293,14 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.receipt_long, color: Colors.teal, size: 20),
+              const Icon(Icons.receipt_long_rounded, color: Colors.teal, size: 20),
               const SizedBox(width: 8),
               const Text(
                 'Quản lý chi tiêu',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               const Spacer(),
-              Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 20),
             ],
           ),
           const SizedBox(height: 12),
@@ -350,7 +350,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.crisis_alert, color: Colors.pink, size: 24),
+          const Icon(Icons.crisis_alert_rounded, color: Colors.pink, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

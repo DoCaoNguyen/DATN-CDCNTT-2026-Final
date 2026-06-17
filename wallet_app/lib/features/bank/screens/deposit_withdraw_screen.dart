@@ -467,7 +467,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close_rounded),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -499,14 +499,14 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                               color: isSelected ? Colors.pink.shade50.withOpacity(0.1) : Colors.white,
                             ),
                             child: ListTile(
-                              leading: const Icon(Icons.account_balance, color: Colors.pink),
+                              leading: const Icon(Icons.account_balance_rounded, color: Colors.pink),
                               title: Text(
                                 bank['bank_name'] ?? 'Ngân hàng',
                                 style: const TextStyle(fontWeight: FontWeight.w600),
                               ),
                               subtitle: Text(bank['card_number'] ?? ''),
                               trailing: Icon(
-                                isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
                                 color: isSelected ? Colors.pink : Colors.grey,
                               ),
                               onTap: () {
@@ -568,7 +568,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.input, color: _activeTab == 0 ? Colors.pink : Colors.grey, size: 18),
+                        Icon(Icons.input_rounded, color: _activeTab == 0 ? Colors.pink : Colors.grey, size: 18),
                         const SizedBox(width: 6),
                         Text(
                           'Nạp tiền',
@@ -598,7 +598,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.output, color: _activeTab == 1 ? Colors.pink : Colors.grey, size: 18),
+                        Icon(Icons.output_rounded, color: _activeTab == 1 ? Colors.pink : Colors.grey, size: 18),
                         const SizedBox(width: 6),
                         Text(
                           'Rút tiền',
@@ -669,7 +669,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.monetization_on, color: Colors.orange, size: 28),
+                              Icon(Icons.monetization_on_rounded, color: Colors.orange, size: 28),
                               SizedBox(width: 8),
                               Expanded(
                                 child: Column(
@@ -739,7 +739,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
-                        const Icon(Icons.account_balance, color: Colors.blue),
+                        const Icon(Icons.account_balance_rounded, color: Colors.blue),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -770,7 +770,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified_user, color: Colors.pink, size: 36),
+                      const Icon(Icons.verified_user_rounded, color: Colors.pink, size: 36),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -861,7 +861,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.payment, color: Colors.pink.shade400, size: 20),
+                                Icon(Icons.payment_rounded, color: Colors.pink.shade400, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
                                   isDeposit ? 'Nạp tiền vào ví Mio' : 'Rút tiền về ngân hàng',
@@ -901,7 +901,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.account_balance, color: Colors.pink, size: 24),
+                                    const Icon(Icons.account_balance_rounded, color: Colors.pink, size: 24),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
@@ -912,7 +912,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                                         ],
                                       ),
                                     ),
-                                    const Icon(Icons.keyboard_arrow_down, color: Colors.pink),
+                                    const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.pink),
                                   ],
                                 ),
                               ),
@@ -929,11 +929,11 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                               },
                               child: Row(
                                 children: [
-                                  Icon(Icons.add, color: Colors.pink.shade400, size: 18),
+                                  Icon(Icons.add_rounded, color: Colors.pink.shade400, size: 18),
                                   const SizedBox(width: 8),
                                   const Expanded(child: Text('Ngân hàng liên kết', style: TextStyle(fontSize: 14, color: Colors.black87))),
                                   const Text('+37', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                  const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                                  const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 16),
                                 ],
                               ),
                             ),
@@ -977,7 +977,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                        Icon(Icons.lock_outline_rounded, color: Colors.white, size: 18),
                         SizedBox(width: 8),
                         Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                       ],
@@ -1037,7 +1037,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
                   onPressed: () async {
                     setState(() {
                       _isScanningFace = false;
@@ -1089,7 +1089,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         backgroundColor: _isConfirming ? const Color(0xFFFFE4EE) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () {
             if (_isConfirming) {
               setState(() => _isConfirming = false);
@@ -1104,11 +1104,11 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            icon: const Icon(Icons.home_rounded, color: Colors.black87),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],

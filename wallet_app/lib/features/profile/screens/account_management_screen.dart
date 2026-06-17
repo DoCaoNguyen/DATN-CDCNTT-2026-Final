@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import 'package:intl/intl.dart';
+import '../../bank/screens/bank_link_screen.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   final String token;
@@ -95,7 +96,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : Text(_formatCurrency(_balance), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
-                  const Icon(Icons.visibility, size: 20, color: Colors.black54),
+                  const Icon(Icons.visibility_rounded, size: 20, color: Colors.black54),
                 ],
               )
             ],
@@ -112,7 +113,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(color: AppColors.primaryPink, borderRadius: BorderRadius.circular(4)),
-                  child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 20),
+                  child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(child: Text('Ví điện tử', style: TextStyle(fontSize: 15))),
@@ -126,8 +127,13 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => BankLinkScreen(token: widget.token)),
+                );
+              },
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
               label: const Text('Thêm mới tài khoản/thẻ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryPink,
@@ -159,7 +165,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           child: Column(
             children: [
               _buildUtilityItem(
-                icon: Icons.sort,
+                icon: Icons.sort_rounded,
                 iconColor: Colors.orange,
                 title: 'Thứ tự thanh toán',
                 subtitle: 'Sắp xếp và cấu hình nguồn tiền',
@@ -167,7 +173,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               ),
               const Divider(height: 1, indent: 50),
               _buildUtilityItem(
-                icon: Icons.video_library_outlined,
+                icon: Icons.video_library_rounded,
                 iconColor: AppColors.primaryPink,
                 title: 'Thông tin hạn mức',
                 subtitle: 'Quản lý hạn mức giao dịch và nạp rút',
@@ -177,7 +183,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               ),
               const Divider(height: 1, indent: 50),
               _buildUtilityItem(
-                icon: Icons.receipt_long,
+                icon: Icons.receipt_long_rounded,
                 iconColor: Colors.pinkAccent,
                 title: 'Dịch vụ liên kết & Hóa đơn định kỳ',
                 subtitle: 'Quản lý dịch vụ liên kết và hóa đơn định kỳ',
@@ -195,7 +201,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       leading: Icon(icon, color: iconColor, size: 28),
       title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
       onTap: onTap,
     );
   }

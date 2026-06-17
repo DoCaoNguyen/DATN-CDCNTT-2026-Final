@@ -185,7 +185,7 @@ class _ForgotPasswordFaceAuthScreenState extends State<ForgotPasswordFaceAuthScr
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
                   onPressed: () async {
                     setState(() {
                       _isScanningFace = false;
@@ -237,7 +237,7 @@ class _ForgotPasswordFaceAuthScreenState extends State<ForgotPasswordFaceAuthScr
         backgroundColor: const Color(0xFFFFE4EE),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -283,7 +283,7 @@ class _ForgotPasswordFaceAuthScreenState extends State<ForgotPasswordFaceAuthScr
                                   border: Border.all(color: AppColors.primaryPink, width: 4),
                                 ),
                                 child: const Center(
-                                  child: Icon(Icons.face, size: 60, color: Colors.amber),
+                                  child: Icon(Icons.face_rounded, size: 60, color: Colors.amber),
                                 ),
                               ),
                               Container(
@@ -292,7 +292,7 @@ class _ForgotPasswordFaceAuthScreenState extends State<ForgotPasswordFaceAuthScr
                                   color: Colors.green,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.check, color: Colors.white, size: 16),
+                                child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
                               )
                             ],
                           ),
@@ -356,7 +356,7 @@ class _ForgotPasswordFaceAuthScreenState extends State<ForgotPasswordFaceAuthScr
   Widget _buildCheckItem(String text) {
     return Row(
       children: [
-        const Icon(Icons.check, color: Colors.green, size: 20),
+        const Icon(Icons.check_rounded, color: Colors.green, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Text(

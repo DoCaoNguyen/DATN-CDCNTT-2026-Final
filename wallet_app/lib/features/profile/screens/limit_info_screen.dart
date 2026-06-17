@@ -123,7 +123,7 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.black54),
+                        Icon(Icons.info_outline_rounded, size: 16, color: Colors.black54),
                         SizedBox(width: 4),
                         Text('Dịch vụ thường', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       ],
@@ -177,7 +177,7 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: Colors.pink.shade50, borderRadius: BorderRadius.circular(8)),
-                child: const Icon(Icons.account_balance_wallet, color: AppColors.primaryPink, size: 28),
+                child: const Icon(Icons.account_balance_wallet_rounded, color: AppColors.primaryPink, size: 28),
               ),
               const SizedBox(width: 12),
               const Expanded(

@@ -116,7 +116,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
         foregroundColor: Colors.black,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
             if (_currentStep > 1) {
               setState(() {
@@ -308,7 +308,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.contactless_outlined,
+              Icons.contactless_rounded,
               size: 90,
               color: Colors.pink,
             ),
@@ -343,7 +343,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: _startNfcReading,
-                icon: const Icon(Icons.nfc, color: Colors.white),
+                icon: const Icon(Icons.nfc_rounded, color: Colors.white),
                 label: const Text(
                   'Bắt đầu đọc NFC',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -372,7 +372,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-            child: const Icon(Icons.verified, color: Colors.green, size: 48),
+            child: const Icon(Icons.verified_rounded, color: Colors.green, size: 48),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -406,7 +406,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 36),
+                          const Icon(Icons.broken_image_rounded, color: Colors.grey, size: 36),
                           const SizedBox(height: 8),
                           Text(
                             'Lỗi nén JP2\n(Cần giải mã)',
@@ -494,7 +494,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 64),
+          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 64),
           const SizedBox(height: 16),
           const Text(
             'Lỗi xảy ra',

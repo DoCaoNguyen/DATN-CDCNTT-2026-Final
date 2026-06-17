@@ -100,7 +100,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
         backgroundColor: const Color(0xFFFFF0F5),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(

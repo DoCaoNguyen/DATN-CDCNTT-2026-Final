@@ -127,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.palette_outlined, size: 16, color: Colors.black87),
+                    Icon(Icons.palette_rounded, size: 16, color: Colors.black87),
                     SizedBox(width: 4),
                     Text('Đổi ảnh nền', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
                   ],
@@ -156,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
                 ),
               ),
             ],
@@ -225,10 +225,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.qr_code, size: 18, color: Colors.grey),
+                    Icon(Icons.qr_code_rounded, size: 18, color: Colors.grey),
                     SizedBox(width: 4),
                     Text('Trang cá nhân', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
                   ],
                 ),
               ),
@@ -248,10 +248,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.card_giftcard, size: 18, color: AppColors.primaryPink),
+                  Icon(Icons.card_giftcard_rounded, size: 18, color: AppColors.primaryPink),
                   SizedBox(width: 4),
                   Text('Nhận Ngay 250K', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                  Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
                 ],
               ),
             ),
@@ -273,7 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildQuickSettingItem(
-            Icons.security, 
+            Icons.security_rounded, 
             'Quản lý\ntài khoản', 
             badge: 'Mio',
             onTap: () {
@@ -287,9 +287,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          _buildQuickSettingItem(Icons.settings_applications_outlined, 'Cài đặt thanh\ntoán'),
+          _buildQuickSettingItem(Icons.settings_applications_rounded, 'Cài đặt thanh\ntoán'),
           _buildQuickSettingItem(
-            Icons.person_outline,
+            Icons.person_outline_rounded,
             'Đăng nhập và\nbảo mật',
             onTap: () {
               Navigator.push(
@@ -303,7 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          _buildQuickSettingItem(Icons.notifications_none, 'Cài đặt thông\nbáo'),
+          _buildQuickSettingItem(Icons.notifications_none_rounded, 'Cài đặt thông\nbáo'),
         ],
       ),
     );
@@ -373,12 +373,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisCount: 3,
         childAspectRatio: 1.2,
         children: [
-          _buildUtilityItem(Icons.account_balance, 'Trung Tâm Tài Chính', Colors.blue),
-          _buildUtilityItem(Icons.verified, 'Điểm Mio', AppColors.primaryPink),
-          _buildUtilityItem(Icons.receipt_long, 'Thanh toán', Colors.teal),
-          _buildUtilityItem(Icons.card_giftcard, 'Nhận Ngay 250K', AppColors.primaryPink, badge: 'Mio'),
-          _buildUtilityItem(Icons.attach_money, 'Quản lý chi tiêu', Colors.teal.shade300),
-          _buildUtilityItem(Icons.redeem, 'Quà của tôi', Colors.pinkAccent),
+          _buildUtilityItem(Icons.account_balance_rounded, 'Trung Tâm Tài Chính', Colors.blue),
+          _buildUtilityItem(Icons.verified_rounded, 'Điểm Mio', AppColors.primaryPink),
+          _buildUtilityItem(Icons.receipt_long_rounded, 'Thanh toán', Colors.teal),
+          _buildUtilityItem(Icons.card_giftcard_rounded, 'Nhận Ngay 250K', AppColors.primaryPink, badge: 'Mio'),
+          _buildUtilityItem(Icons.attach_money_rounded, 'Quản lý chi tiêu', Colors.teal.shade300),
+          _buildUtilityItem(Icons.redeem_rounded, 'Quà của tôi', Colors.pinkAccent),
         ],
       ),
     );
@@ -436,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.shield_outlined, color: AppColors.primaryPink, size: 24),
+                  const Icon(Icons.shield_rounded, color: AppColors.primaryPink, size: 24),
                   const SizedBox(width: 8),
                   const Text(
                     'Bí kíp nhận diện lừa đảo',
@@ -444,7 +444,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
             ],
           ),
           const SizedBox(height: 4),
@@ -495,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.white.withOpacity(0.5),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
               ),
-              child: const Center(child: Icon(Icons.security, size: 40, color: Colors.black26)),
+              child: const Center(child: Icon(Icons.security_rounded, size: 40, color: Colors.black26)),
             ),
           ),
           Container(
@@ -531,12 +531,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.favorite_border, color: AppColors.primaryPink),
+                  const Icon(Icons.favorite_border_rounded, color: AppColors.primaryPink),
                   const SizedBox(width: 8),
                   const Text('Máy tính cho em', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
             ],
           ),
           const SizedBox(height: 12),
@@ -549,7 +549,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.computer, color: Colors.black26),
+                child: const Icon(Icons.computer_rounded, color: Colors.black26),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -577,25 +577,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _buildMoreSettingsItem(
-            icon: Icons.help_outline,
+            icon: Icons.help_outline_rounded,
             title: 'Trung tâm trợ giúp',
             onTap: () {},
           ),
           const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
-            icon: Icons.notifications_none,
+            icon: Icons.notifications_none_rounded,
             title: 'Cài đặt thông báo',
             onTap: () {},
           ),
           const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
-            icon: Icons.mail_outline,
+            icon: Icons.mail_outline_rounded,
             title: 'Chia sẻ góp ý',
             onTap: () {},
           ),
           const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
-            icon: Icons.phone_android_outlined,
+            icon: Icons.phone_android_rounded,
             title: 'Thông tin chung',
             onTap: () {},
           ),
@@ -630,7 +630,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: Colors.black87,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
       onTap: onTap,
     );
   }
@@ -643,7 +643,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: Colors.grey.shade100,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.translate, size: 20, color: Colors.black54),
+        child: const Icon(Icons.translate_rounded, size: 20, color: Colors.black54),
       ),
       title: const Text(
         'Ngôn ngữ',
@@ -906,7 +906,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.shield_outlined,
+                  Icons.shield_rounded,
                   color: AppColors.primaryPink,
                   size: 24,
                 ),
@@ -962,7 +962,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.lock, color: Colors.white, size: 8),
+                              Icon(Icons.lock_rounded, color: Colors.white, size: 8),
                               SizedBox(width: 2),
                               Text(
                                 'SECURE',

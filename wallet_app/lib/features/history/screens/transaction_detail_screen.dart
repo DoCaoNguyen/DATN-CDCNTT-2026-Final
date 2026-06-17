@@ -6,6 +6,7 @@ import '../../../core/constants/api_config.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
 import '../../bank/screens/bank_transfer_input_screen.dart';
 import '../../bank/screens/deposit_withdraw_screen.dart';
+import '../../split_bill/screens/split_bill_select_people_screen.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final String token;
@@ -487,6 +488,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       btnText = "Nạp thêm";
     } else if (txType == 'WITHDRAW') {
       btnText = "Rút thêm";
+    } else if (txType == 'PAYMENT') {
+      btnText = "Chia tiền";
     }
 
     final String displayAmount = "${isCredit ? '+' : '-'}${_formatCurrency(amountRaw)}";
@@ -887,6 +890,19 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             builder: (_) => DepositWithdrawScreen(
                               token: widget.token,
                               initialTab: 1,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (txType == 'PAYMENT') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SplitBillSelectPeopleScreen(
+                              token: widget.token,
+                              transactionData: _tx,
                             ),
                           ),
                         );

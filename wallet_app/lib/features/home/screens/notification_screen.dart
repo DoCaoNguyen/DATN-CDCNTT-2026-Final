@@ -4,6 +4,7 @@ import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/app_colors.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/snackbar_utils.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String token;
@@ -87,9 +88,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             notif['status'] = 'READ';
           }
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã đánh dấu tất cả là đã đọc'), backgroundColor: Colors.green),
-        );
+        SnackbarUtils.showSuccess(context, 'Đã đánh dấu tất cả là đã đọc');
       }
     } catch (e) {
       debugPrint('Mark all as read error: $e');
@@ -116,17 +115,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
   IconData _getIconForType(String? type) {
     switch (type) {
       case 'TRANSACTION':
-        return Icons.swap_horiz;
+        return Icons.swap_horiz_rounded;
       case 'SYSTEM':
-        return Icons.info_outline;
+        return Icons.info_outline_rounded;
       case 'PROMOTION':
-        return Icons.card_giftcard;
+        return Icons.card_giftcard_rounded;
       case 'SECURITY':
-        return Icons.security;
+        return Icons.security_rounded;
       case 'CHAT':
-        return Icons.chat_bubble_outline;
+        return Icons.chat_bubble_outline_rounded;
       default:
-        return Icons.notifications_none;
+        return Icons.notifications_none_rounded;
     }
   }
 
@@ -185,7 +184,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.notifications_off_outlined, size: 80, color: Colors.grey[400]),
+                            Icon(Icons.notifications_off_rounded, size: 80, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
                               'Chưa có thông báo nào',

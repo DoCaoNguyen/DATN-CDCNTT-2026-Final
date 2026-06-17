@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
 import 'create_new_password_screen.dart'; 
+import '../../../../core/utils/snackbar_utils.dart';
 
 class ForgotPasswordOtpScreen extends StatefulWidget {
   final String phone;
@@ -198,9 +199,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
       if (response.statusCode == 200) {
         startTimer(); // Khởi động lại đồng hồ 54 giây
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã gửi lại mã OTP mới qua SMS'), backgroundColor: Colors.green),
-        );
+        SnackbarUtils.showSuccess(context, 'Đã gửi lại mã OTP mới qua SMS');
       } else if (response.statusCode == 403) {
         // Nếu vừa bấm gửi mà bị báo 403 (tức là đang trong 1 phút khóa) -> Cập nhật UI khóa luôn
         _startLockCountdown(); 
@@ -315,7 +314,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.grey.shade300, width: 1.5), 
                       ),
-                      child: const Icon(Icons.arrow_back, color: AppColors.textDark, size: 20),
+                      child: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark, size: 20),
                     ),
                   ),
                 ),
@@ -475,7 +474,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.sync, size: 16, color: _start == 0 && _lockCountdown == 0 ? AppColors.primaryPink : AppColors.textLight),
+                                      Icon(Icons.sync_rounded, size: 16, color: _start == 0 && _lockCountdown == 0 ? AppColors.primaryPink : AppColors.textLight),
                                       const SizedBox(width: 8),
                                       Text(
                                         _start > 0 
@@ -503,7 +502,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                               children: [
                                 const CircleAvatar(
                                   radius: 24, backgroundColor: Colors.white,
-                                  child: Icon(Icons.support_agent, color: AppColors.primaryPink, size: 28),
+                                  child: Icon(Icons.support_agent_rounded, color: AppColors.primaryPink, size: 28),
                                 ),
                                 const SizedBox(height: 4),
                                 Container(
