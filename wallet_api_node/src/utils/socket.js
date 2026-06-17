@@ -35,6 +35,57 @@ const initSocket = (server) => {
         // Mỗi user tham gia vào một room riêng dựa trên userId
         socket.join(`user_${userId}`);
 
+        socket.on('send_message', async (data) => {
+            try {
+                const transactionRepository = require('../modules/transaction/transaction.repository');
+                const senderWallet = await transactionRepository.getWalletByUserId(userId);
+                const receiverWallet = await transactionRepository.getWalletByIdentifier(data.receiverPhone);
+
+                if (!senderWallet || !receiverWallet) {
+                    return socket.emit('error', { message: 'Không tìm thấy người dùng hợp lệ' });
+                }
+
+                const msg = await transactionRepository.saveChatMessage(senderWallet.id, receiverWallet.id, data.content);
+                
+                // Format msg để đồng nhất với API
+                const formattedMsg = {
+                    id: msg.id,
+                    amount: "0",
+                    note: msg.content,
+                    created_at: msg.created_at.toISOString(),
+                    message_type: 'TEXT'
+                };
+
+                // Gửi cho người nhận qua socket (Realtime)
+                io.to(`user_${receiverWallet.user_id}`).emit('receive_message', {
+                    ...formattedMsg,
+                    direction: 'RECEIVE',
+                    counterparty_name: senderWallet.full_name || 'Người lạ',
+                    counterparty_phone: senderWallet.phone || ''
+                });
+
+                // Gửi Push Notification (FCM) cho người nhận
+                const notificationService = require('../modules/notification/notification.service');
+                notificationService.sendChatMessageNotification(
+                    receiverWallet.user_id,
+                    senderWallet.full_name,
+                    data.content,
+                    msg.id
+                ).catch(err => console.error("Lỗi gửi push notification chat:", err));
+
+                // Gửi lại cho người gửi (để xác nhận đã lưu thành công)
+                socket.emit('receive_message', {
+                    ...formattedMsg,
+                    direction: 'SEND',
+                    counterparty_name: receiverWallet.full_name,
+                    counterparty_phone: data.receiverPhone
+                });
+
+            } catch (error) {
+                console.error("Socket send_message error:", error);
+            }
+        });
+
         socket.on('disconnect', () => {
             console.log(`User disconnected: ${userId}`);
         });

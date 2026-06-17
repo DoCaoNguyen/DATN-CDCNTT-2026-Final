@@ -233,6 +233,87 @@ const transactionController = {
             console.error('Lỗi cập nhật danh mục giao dịch:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi cập nhật danh mục' });
         }
+    },
+
+    getStats: async (req, res) => {
+        const userId = req.user.userId;
+        try {
+            const stats = await txService.getMonthlyStats(userId);
+            res.status(200).json({
+                success: true,
+                data: stats
+            });
+        } catch (error) {
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của người dùng' });
+            }
+            console.error('Lỗi lấy thống kê giao dịch:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi lấy thống kê' });
+        }
+    },
+
+    getByMonth: async (req, res) => {
+        const userId = req.user.userId;
+        const month = parseInt(req.query.month);
+        const year = parseInt(req.query.year);
+
+        if (!month || !year) {
+            return res.status(400).json({ error: 'Vui lòng cung cấp month và year' });
+        }
+
+        try {
+            const transactions = await txService.getTransactionsByMonth(userId, month, year);
+            res.status(200).json({
+                success: true,
+                data: transactions
+            });
+        } catch (error) {
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của người dùng' });
+            }
+            console.error('Lỗi lấy giao dịch theo tháng:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi lấy giao dịch theo tháng' });
+        }
+    },
+
+    getChatList: async (req, res) => {
+        const userId = req.user.userId;
+        try {
+            const chats = await txService.getChatList(userId);
+            res.status(200).json({
+                success: true,
+                data: chats
+            });
+        } catch (error) {
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của người dùng' });
+            }
+            console.error('Lỗi lấy danh sách chat:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi lấy danh sách chat' });
+        }
+    },
+
+    getChatHistory: async (req, res) => {
+        const userId = req.user.userId;
+        const phone = req.params.phone;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+
+        try {
+            const history = await txService.getChatHistory(userId, phone, page, limit);
+            res.status(200).json({
+                success: true,
+                page,
+                limit,
+                data: history
+            });
+        } catch (error) {
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của người dùng' });
+            }
+            console.error('Lỗi lấy chi tiết chat:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi lấy chi tiết chat' });
+        }
     }
 };
 

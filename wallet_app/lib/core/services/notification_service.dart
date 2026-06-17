@@ -4,9 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
+import 'custom_http_client.dart';
 
 /// Top-level background message handler.
 /// BẮT BUỘC phải là top-level function (nằm ngoài class) và được đánh dấu với `@pragma('vm:entry-point')`
@@ -36,8 +37,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   
   debugPrint("Background Isolate nhận được tin nhắn FCM: ${message.messageId}");
   
-  // Hiển thị thông báo cục bộ từ payload
-  await NotificationService.instance.showLocalNotification(message);
+  // Nếu gói tin FCM ĐÃ CÓ sẵn payload `notification` (title, body), 
+  // hệ điều hành (Android/iOS) đã TỰ ĐỘNG hiển thị thông báo trên khay hệ thống.
+  // Do đó, ta KHÔNG gọi `showLocalNotification` để tránh bị hiển thị thông báo kép (duplicate).
+  if (message.notification == null) {
+    // Chỉ tự tạo Local Notification nếu đây là Data-only message.
+    await NotificationService.instance.showLocalNotification(message);
+  }
 }
 
 class NotificationService {
@@ -50,8 +56,6 @@ class NotificationService {
   
   // Lưu trữ token hiện tại của thiết bị
   String? _fcmToken;
-  // Lưu token xác thực của người dùng hiện tại để gửi lên server
-  String? _userAuthToken;
 
   /// Khởi tạo Firebase Messaging và Flutter Local Notifications
   Future<void> initialize() async {
@@ -86,7 +90,9 @@ class NotificationService {
     // 3. Đăng ký listener xử lý thông báo khi ứng dụng đang mở (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint("Foreground nhận được tin nhắn FCM: ${message.notification?.title}");
-      showLocalNotification(message);
+      if (message.notification == null || Platform.isAndroid) {
+        showLocalNotification(message);
+      }
     });
 
     // Cấu hình hiển thị thông báo trực tiếp khi đang mở app (chỉ dành riêng cho iOS)
@@ -141,23 +147,30 @@ class NotificationService {
 
   /// Cập nhật Token xác thực của người dùng và đồng bộ FCM Token lên Backend
   Future<void> registerUserToken(String userToken) async {
-    _userAuthToken = userToken;
     await _sendTokenToServer();
   }
 
-  /// Gửi FCM Token lên server Node.js
+  /// Gửi FCM Token lên server Node.js (dùng CustomHttpClient để tự động refresh token khi cần)
   Future<void> _sendTokenToServer() async {
-    if (_userAuthToken == null || _fcmToken == null) {
-      debugPrint("Không thể gửi Token lên server: Thiếu AuthToken hoặc FCMToken.");
+    if (_fcmToken == null) {
+      debugPrint("Không thể gửi Token lên server: Thiếu FCMToken.");
+      return;
+    }
+
+    // Kiểm tra có auth token không
+    final prefs = await SharedPreferences.getInstance();
+    final String? authToken = prefs.getString('auth_token');
+    if (authToken == null || authToken.isEmpty) {
+      debugPrint("Không thể gửi Token lên server: Thiếu AuthToken.");
       return;
     }
 
     try {
-      final response = await http.post(
+      final client = CustomHttpClient();
+      final response = await client.post(
         Uri.parse(ApiConfig.registerDevice),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_userAuthToken',
         },
         body: jsonEncode({
           'fcmToken': _fcmToken,

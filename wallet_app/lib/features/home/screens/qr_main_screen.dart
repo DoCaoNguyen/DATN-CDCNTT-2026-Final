@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/constants/api_config.dart';
@@ -22,6 +24,7 @@ class QrMainScreen extends StatefulWidget {
 }
 
 class _QrMainScreenState extends State<QrMainScreen> {
+  final _client = CustomHttpClient();
   int _currentIndex = 0; // 0: Tab Quét mã QR, 1: Tab QR Nhận tiền
 
   bool _isLoading = true;
@@ -37,16 +40,56 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // Scanner Controller điều khiển bật/tắt flash, quét mã
   final MobileScannerController _scannerController = MobileScannerController();
   bool _isScannerActive = true;
+  
+  StreamSubscription<RemoteMessage>? _fcmSubscription;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialTab; // Cho phép mở thẳng tab mong muốn
     _fetchMyProfile();
+    _listenToLoyaltyPoints();
+  }
+
+  void _listenToLoyaltyPoints() {
+    _fcmSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.data['type'] == 'LOYALTY_POINTS') {
+        final earnedPoints = message.data['earned_points'] ?? '0';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Text('🎁', style: TextStyle(fontSize: 28)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Bạn vừa tích lũy thành công +$earnedPoints điểm!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.primaryPink,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              duration: const Duration(seconds: 4),
+              elevation: 6,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _fcmSubscription?.cancel();
     _scannerController.dispose();
     super.dispose();
   }
@@ -54,12 +97,8 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // Gọi API lấy thông tin Profile (Họ tên, SĐT) để vẽ mã QR
   Future<void> _fetchMyProfile() async {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.getMyProfile), // API này bạn đã tạo ở Backend
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getMyProfile),
       );
 
       if (response.statusCode == 200) {
@@ -329,12 +368,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
                           builder: (pinSheetCtx) => PinConfirmBottomSheet(
                             onPinEntered: (pin) async {
                               try {
-                                final verifyResp = await http.post(
+                                final verifyResp = await _client.post(
                                   Uri.parse(ApiConfig.verifyPin),
                                   headers: {
                                     'Content-Type': 'application/json',
-                                    'Authorization': 'Bearer ${widget.token}',
-                                    'ngrok-skip-browser-warning': 'true',
                                   },
                                   body: jsonEncode({'pin': pin}),
                                 );
@@ -390,13 +427,11 @@ class _QrMainScreenState extends State<QrMainScreen> {
     final idempotencyKey = '${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(999999)}';
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.processPayment),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
           'idempotency-key': idempotencyKey,
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({'qr_token': qrToken}),
       );
@@ -726,13 +761,13 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      'mo\nmo',
+                                      'mio',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Colors.pink.shade700,
                                         fontWeight: FontWeight.bold,
                                         height: 1,
-                                        fontSize: 16,
+                                        fontSize: 18,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -1208,12 +1243,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
     setState(() => _isGeneratingQR = true);
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.requestMoneyQR),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({'amount': amount, 'description': description}),
       );

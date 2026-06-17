@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+
 import '../../auth/kyc/sceens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
 import '../../../core/constants/api_config.dart';
@@ -8,6 +8,7 @@ import '../widgets/set_wallet_code_dialog.dart';
 import '../widgets/wallet_card.dart';
 import '../widgets/services_grid.dart';
 import 'qr_main_screen.dart';
+import 'notification_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../history/screens/transaction_history_screen.dart';
 import '../../../core/services/socket_service.dart';
@@ -41,8 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _balance = "0";
   String? _walletCode;
+  String _userName = "Bạn";
   bool _isPinSet = false;
   bool _isLoadingBalance = true;
+  int _unreadCount = 0;
 
   SocketService? _socketService;
   final _client = CustomHttpClient();
@@ -58,6 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _fetchBalance();
+    _fetchUserProfile();
+    _fetchUnreadCount();
     _initSocket();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -153,12 +158,10 @@ class _HomeScreenState extends State<HomeScreen> {
         autoTriggerBiometric: false,
         onPinEntered: (pin) async {
           try {
-            final response = await http.post(
+            final response = await _client.post(
               Uri.parse(ApiConfig.verifyPin),
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ${widget.token}',
-                'ngrok-skip-browser-warning': 'true',
               },
               body: jsonEncode({'pin': pin}),
             );
@@ -314,6 +317,56 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _fetchUserProfile() async {
+    if (widget.token.isEmpty) return;
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getMyProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            final fullName = data['data']?['full_name'] ?? "Bạn";
+            final names = fullName.toString().trim().split(' ');
+            _userName = names.isNotEmpty ? names.last : "Bạn";
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Fetch profile error: $e");
+    }
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    if (widget.token.isEmpty) return;
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getUnreadNotificationCount),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && mounted) {
+          setState(() {
+            _unreadCount = data['unreadCount'] ?? 0;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Fetch unread count error: $e");
+    }
+  }
+
   void _showSetWalletCodeDialog() {
     showDialog(
       context: context,
@@ -463,6 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
       valueListenable: AppState.currentLanguage,
       builder: (context, activeLang, child) {
         return Scaffold(
+          resizeToAvoidBottomInset: false,
           backgroundColor: const Color(0xFFF5F5F5),
           body: _selectedIndex == 0
               ? RefreshIndicator(
@@ -649,33 +703,45 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Stack(
-                children: [
-                  const Icon(
-                    Icons.notifications_none,
-                    size: 28,
-                    color: Colors.black54,
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text(
-                        '1',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationScreen(token: widget.token),
+                    ),
+                  );
+                  _fetchUnreadCount(); // Refresh count when coming back
+                },
+                child: Stack(
+                  children: [
+                    const Icon(
+                      Icons.notifications_none,
+                      size: 34,
+                      color: Colors.black54,
+                    ),
+                    if (_unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            _unreadCount > 9 ? '9+' : _unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(width: 12),
               const Icon(
@@ -686,30 +752,33 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildQuickAction(
-                Icons.account_balance_wallet,
-                Colors.pink,
-                activeLang == 'VIE' ? "Nạp/Rút" : "Deposit",
-              ),
-              _buildQuickAction(
-                Icons.qr_code,
-                Colors.pink,
-                activeLang == 'VIE' ? "Nhận tiền" : "Receive",
-              ),
-              _buildQuickAction(
-                Icons.qr_code_scanner,
-                Colors.pink,
-                activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay",
-              ),
-              _buildQuickAction(
-                Icons.apps,
-                Colors.pink,
-                activeLang == 'VIE' ? "Ví tiện ích" : "Utilities",
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildQuickAction(
+                  Icons.account_balance_wallet,
+                  Colors.pink,
+                  activeLang == 'VIE' ? "Nạp/Rút" : "Deposit",
+                ),
+                _buildQuickAction(
+                  Icons.qr_code,
+                  Colors.pink,
+                  activeLang == 'VIE' ? "Nhận tiền" : "Receive",
+                ),
+                _buildQuickAction(
+                  Icons.qr_code_scanner,
+                  Colors.pink,
+                  activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay",
+                ),
+                _buildQuickAction(
+                  Icons.apps,
+                  Colors.pink,
+                  activeLang == 'VIE' ? "Ví tiện ích" : "Utilities",
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -737,8 +806,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               Text(
                 activeLang == 'VIE'
-                    ? "Trung Tâm Tài Chính của Thống"
-                    : "Thong's Financial Center",
+                    ? "Trung Tâm Tài Chính của $_userName"
+                    : "$_userName's Financial Center",
                 style: TextStyle(
                   color: Colors.blue.shade700,
                   fontWeight: FontWeight.bold,

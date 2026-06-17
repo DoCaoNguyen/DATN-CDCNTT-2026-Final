@@ -73,6 +73,60 @@ const notificationRepository = {
             referenceId
         ]);
         return result.rows[0];
+    },
+
+    /**
+     * Lấy danh sách thông báo của người dùng
+     */
+    getNotificationsByUserId: async (userId, limit = 50, offset = 0) => {
+        const query = `
+            SELECT id, user_id, title, content, notification_type, reference_id, status, created_at
+            FROM notifications
+            WHERE user_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+        `;
+        const result = await pool.query(query, [userId, limit, offset]);
+        return result.rows;
+    },
+
+    /**
+     * Lấy số lượng thông báo chưa đọc
+     */
+    getUnreadCount: async (userId) => {
+        const query = `
+            SELECT COUNT(*) 
+            FROM notifications
+            WHERE user_id = $1 AND status = 'UNREAD'
+        `;
+        const result = await pool.query(query, [userId]);
+        return parseInt(result.rows[0].count, 10);
+    },
+
+    /**
+     * Đánh dấu 1 hoặc nhiều thông báo đã đọc
+     */
+    markAsRead: async (userId, notificationIds) => {
+        const query = `
+            UPDATE notifications
+            SET status = 'READ', updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $1 AND id = ANY($2::uuid[])
+        `;
+        const result = await pool.query(query, [userId, notificationIds]);
+        return result.rowCount;
+    },
+
+    /**
+     * Đánh dấu tất cả thông báo đã đọc
+     */
+    markAllAsRead: async (userId) => {
+        const query = `
+            UPDATE notifications
+            SET status = 'READ', updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $1 AND status = 'UNREAD'
+        `;
+        const result = await pool.query(query, [userId]);
+        return result.rowCount;
     }
 };
 

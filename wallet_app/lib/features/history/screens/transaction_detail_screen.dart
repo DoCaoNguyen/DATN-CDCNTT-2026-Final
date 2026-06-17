@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
+import '../../bank/screens/bank_transfer_input_screen.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final String token;
@@ -628,7 +629,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               ),
                               _buildDetailRow(
                                 "Tài khoản/thẻ",
-                                child: const Text("Ví MoMo", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
+                                child: const Text("Ví Mio", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
                               ),
                               _buildDetailRow(
                                 "Tổng",
@@ -708,7 +709,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       child: Column(
                         children: [
                           _buildDetailRow(
-                            isCredit ? "Tên người gửi" : "Tên Ví MoMo",
+                            isCredit ? "Tên người gửi" : "Tên Ví Mio",
                             child: Text(
                               isCredit ? senderName : receiverName,
                               style: const TextStyle(
@@ -796,6 +797,35 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   height: 48,
                   child: ElevatedButton(
                     onPressed: () {
+                      final String entryType = _tx['entry_type'] ?? 'DEBIT';
+                      final String txType = _tx['transaction_type'] ?? 'TRANSFER';
+                      final bool isCredit = entryType == 'CREDIT';
+                      final String noteStr = _tx['transfer_note'] ?? _tx['description'] ?? '';
+
+                      if (txType == 'WITHDRAW' && noteStr.contains('Chuyển tiền đến tài khoản')) {
+                        String accNum = "";
+                        String bName = "Ngân hàng";
+                        RegExp exp = RegExp(r'tài khoản (\d+) - (.+)');
+                        Match? match = exp.firstMatch(noteStr);
+                        if (match != null) {
+                          accNum = match.group(1) ?? "";
+                          bName = match.group(2) ?? "Ngân hàng";
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BankTransferInputScreen(
+                              token: widget.token,
+                              bankName: bName,
+                              bankCode: "OTHER",
+                              prefilledAccountNumber: accNum,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
                       final targetName = isCredit ? senderName : receiverName;
                       final targetPhone = isCredit ? senderPhone : receiverPhone;
                       

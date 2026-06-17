@@ -20,7 +20,7 @@ const authRepository = {
 
     findByEmailOrPhone: async (identifier) => {
         const query = `
-            SELECT id, email, phone, password_hash, role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
+            SELECT id, email, phone, password_hash, user_type AS role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
             FROM users 
             WHERE email = $1 OR phone = $1
         `;

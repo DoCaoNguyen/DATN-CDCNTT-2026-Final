@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+
+import 'package:url_launcher/url_launcher.dart';
 import 'bank_transfer_confirm_screen.dart';
 
 class BankTransferInputScreen extends StatefulWidget {
@@ -9,6 +12,7 @@ class BankTransferInputScreen extends StatefulWidget {
   final String bankName;
   final String bankCode;
   final String? prefilledAccountNumber;
+  final String? cardHolderName;
 
   const BankTransferInputScreen({
     Key? key,
@@ -16,6 +20,7 @@ class BankTransferInputScreen extends StatefulWidget {
     required this.bankName,
     required this.bankCode,
     this.prefilledAccountNumber,
+    this.cardHolderName,
   }) : super(key: key);
 
   @override
@@ -23,6 +28,7 @@ class BankTransferInputScreen extends StatefulWidget {
 }
 
 class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
+  final _client = CustomHttpClient();
   final TextEditingController _accountController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
@@ -38,6 +44,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
     if (widget.prefilledAccountNumber != null) {
       _accountController.text = widget.prefilledAccountNumber!;
     }
+    _noteController.text = "${widget.cardHolderName ?? 'PHAN VAN THONG'} chuyen tien qua Mio";
     _fetchSenderProfile();
     _fetchMioBalance();
   }
@@ -52,12 +59,8 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
 
   Future<void> _fetchMioBalance() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getWalletBalance),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -77,12 +80,8 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
   Future<void> _fetchSenderProfile() async {
     setState(() => _isLoadingProfile = true);
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getMyProfile),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -90,23 +89,11 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
         if (mounted) {
           setState(() {
             _senderName = name.toUpperCase();
-            // Default note
-            _noteController.text = "$_senderName chuyen tien qua MoMo";
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _noteController.text = "PHAN VAN THONG chuyen tien qua MoMo";
           });
         }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _noteController.text = "PHAN VAN THONG chuyen tien qua MoMo";
-        });
-      }
+      debugPrint("Error fetching sender profile: $e");
     } finally {
       if (mounted) setState(() => _isLoadingProfile = false);
     }
@@ -116,6 +103,64 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
     final number = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
     if (number == null) return "";
     return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+  }
+
+  String _convertNumberToVietnameseWords(int number) {
+    if (number == 0) return '';
+    final units = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+    final tens = ['', 'mười', 'hai mươi', 'ba mươi', 'bốn mươi', 'năm mươi', 'sáu mươi', 'bảy mươi', 'tám mươi', 'chín mươi'];
+    
+    String convertGroup(int n) {
+      int h = n ~/ 100;
+      int t = (n % 100) ~/ 10;
+      int u = n % 10;
+      String res = '';
+      if (h > 0) {
+        res += '${units[h]} trăm ';
+      }
+      if (t > 0) {
+        if (t == 1) {
+          res += 'mười ';
+        } else {
+          res += '${units[t]} mươi ';
+        }
+      } else if (h > 0 && u > 0) {
+        res += 'lẻ ';
+      }
+      if (u > 0) {
+        if (u == 1 && t > 1) {
+          res += 'mốt ';
+        } else if (u == 5 && t > 0) {
+          res += 'lăm ';
+        } else {
+          res += '${units[u]} ';
+        }
+      }
+      return res.trim();
+    }
+
+    final groups = <String>[];
+    final scales = ['', 'nghìn', 'triệu', 'tỷ'];
+    int temp = number;
+    int scaleIdx = 0;
+    while (temp > 0) {
+      int g = temp % 1000;
+      if (g > 0) {
+        String gStr = convertGroup(g);
+        if (scaleIdx > 0) {
+          gStr += ' ${scales[scaleIdx]}';
+        }
+        groups.insert(0, gStr);
+      }
+      temp = temp ~/ 1000;
+      scaleIdx++;
+    }
+    
+    String result = groups.join(' ').trim();
+    if (result.isNotEmpty) {
+      result = result[0].toUpperCase() + result.substring(1) + ' đồng';
+    }
+    return result;
   }
 
   void _onAmountChanged(String val) {
@@ -162,9 +207,18 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
     return null;
   }
 
+  String getNickname(String name) {
+    if (name.isEmpty) return 'ThoongCT';
+    final parts = name.trim().split(' ');
+    final last = parts.last;
+    if (last.isEmpty) return 'ThoongCT';
+    String cap = last[0].toUpperCase() + last.substring(1).toLowerCase();
+    return '${cap}CT';
+  }
+
   bool get _isValid {
     final text = _accountController.text.trim();
-    final isAccountValid = text.length >= 10 && text.length <= 16;
+    final isAccountValid = widget.prefilledAccountNumber != null || (text.length >= 8 && text.length <= 19);
     return isAccountValid && _parsedAmount >= 1000 && _parsedAmount <= _rawBalanceInt;
   }
 
@@ -182,17 +236,46 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
           amount: _parsedAmount.toString(),
           note: _noteController.text.trim(),
           senderName: _senderName,
+          cardHolderName: widget.cardHolderName,
         ),
       ),
     );
   }
 
+  Future<void> _openContacts() async {
+    final status = await FlutterContacts.permissions.request(PermissionType.read);
+    if (status == PermissionStatus.granted || status == PermissionStatus.limited) {
+      try {
+        final Contact? contact = await FlutterContacts.native.showPicker(properties: {ContactProperty.phone});
+        if (contact != null && contact.phones.isNotEmpty) {
+          String phone = contact.phones.first.number;
+          phone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+          
+          setState(() {
+            _accountController.text = phone;
+          });
+        }
+      } catch (e) {
+        debugPrint("Error picking contact: $e");
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng cấp quyền truy cập danh bạ để sử dụng tính năng này')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayName = widget.cardHolderName ?? 'PHAN VAN THONG';
+    final displayNickname = getNickname(displayName);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+      backgroundColor: const Color(0xFFF5F5F9),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFFE4EE),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
@@ -205,7 +288,12 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
-            onPressed: () {},
+            onPressed: () async {
+              final Uri phoneUri = Uri(scheme: 'tel', path: '1900545415');
+              if (await canLaunchUrl(phoneUri)) {
+                await launchUrl(phoneUri);
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.home_outlined, color: Colors.black87),
@@ -213,36 +301,43 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFE4EE),
+              Color(0xFFFFF0F5),
+              Color(0xFFF5F5F9),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Bank information banner (Header in Screen 2)
+                  // Bank information banner (Mockup Blue Card)
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF006D44),
+                      color: const Color(0xFF0F3B99),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     child: Row(
                       children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: Colors.white,
                           child: Text(
                             widget.bankCode,
                             style: const TextStyle(
-                              color: Color(0xFF006D44),
+                              color: Color(0xFF0F3B99),
                               fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              fontSize: 14,
                             ),
                           ),
                         ),
@@ -252,19 +347,28 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.bankName,
+                                displayNickname,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Ngân hàng TMCP Ngoại thương Việt Nam',
-                                style: TextStyle(
+                              const SizedBox(height: 2),
+                              Text(
+                                displayName.toUpperCase(),
+                                style: const TextStyle(
                                   color: Colors.white70,
-                                  fontSize: 11,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${widget.prefilledAccountNumber ?? _accountController.text} - ${widget.bankName}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
                                 ),
                               ),
                             ],
@@ -274,75 +378,109 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Card/Account Number Input
+                  
+                  // Green Shield Check Banner
                   Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.pink.shade100, width: 1),
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
+                        const Icon(Icons.verified_user, color: Colors.green, size: 16),
+                        const SizedBox(width: 6),
                         const Text(
-                          'Số thẻ/tài khoản *',
-                          style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
+                          'Người nhận chưa ghi nhận rủi ro',
+                          style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _accountController,
-                                keyboardType: TextInputType.number,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                  isDense: true,
-                                ),
-                                onChanged: (_) => setState(() {}),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.contact_phone_outlined, color: Colors.pink),
-                              onPressed: () {},
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                            )
-                          ],
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Bảo mật bởi AI',
+                            style: TextStyle(color: Colors.purple, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  if (_accountError != null) ...[
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Row(
+
+                  // Card/Account Number Input (Only if not prefilled)
+                  if (widget.prefilledAccountNumber == null) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.pink.shade100, width: 1),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 14),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              _accountError!,
-                              style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
-                            ),
+                          const Text(
+                            'Số thẻ/tài khoản *',
+                            style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _accountController,
+                                  keyboardType: TextInputType.number,
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    isDense: true,
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.contact_phone_outlined, color: Colors.pink),
+                                onPressed: _openContacts,
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
+                              )
+                            ],
                           ),
                         ],
                       ),
                     ),
+                    if (_accountError != null) ...[
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red, size: 14),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                _accountError!,
+                                style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
                   ],
-                  const SizedBox(height: 16),
 
+                  // Số tiền chuyển
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -350,19 +488,44 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                           'Số tiền chuyển *',
                           style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
                         ),
-                        TextField(
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.pink),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                            suffixText: 'đ',
-                            suffixStyle: TextStyle(color: Colors.grey.shade400, fontSize: 16),
-                          ),
-                          onChanged: _onAmountChanged,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _amountController,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                  isDense: true,
+                                ),
+                                onChanged: _onAmountChanged,
+                              ),
+                            ),
+                            Container(
+                              height: 24,
+                              width: 24,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey.shade100,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'đ',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
                         ),
+                        if (_amountController.text.isNotEmpty && _parsedAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            _convertNumberToVietnameseWords(_parsedAmount),
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontStyle: FontStyle.italic),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -457,7 +620,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                       text: const TextSpan(
                         style: TextStyle(color: Colors.grey, fontSize: 11, height: 1.4),
                         children: [
-                          TextSpan(text: 'Dịch vụ thu hộ chi hộ do MoMo hỗ trợ các Ngân hàng đối tác cung cấp. '),
+                          TextSpan(text: 'Dịch vụ thu hộ chi hộ do Mio hỗ trợ các Ngân hàng đối tác cung cấp. '),
                           TextSpan(
                             text: 'Xem hạn mức và phí',
                             style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
@@ -500,6 +663,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
           )
         ],
       ),
-    );
+    ),
+  );
   }
 }

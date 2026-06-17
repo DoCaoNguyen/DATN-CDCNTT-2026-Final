@@ -154,6 +154,20 @@ const walletService = {
         }
 
         return true;
+    },
+
+    unlinkBank: async (userId, linkedBankId) => {
+        const wallet = await walletRepository.findByUserId(userId);
+        if (!wallet) {
+            throw new Error('Wallet_Not_Found');
+        }
+
+        const result = await walletRepository.unlinkBank(wallet.id, linkedBankId);
+        if (!result) {
+            throw new Error('Bank_Not_Found_Or_Already_Unlinked');
+        }
+
+        return true;
     }
 };
 

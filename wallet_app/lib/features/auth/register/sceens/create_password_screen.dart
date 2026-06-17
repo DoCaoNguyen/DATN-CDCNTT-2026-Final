@@ -208,6 +208,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                       style: const TextStyle(
                                         color: AppColors.primaryPink,
                                         fontStyle: FontStyle.italic,
+                                        fontSize: 34,
+                                        fontFamily: 'cursive',
                                       ),
                                     ),
                                     TextSpan(

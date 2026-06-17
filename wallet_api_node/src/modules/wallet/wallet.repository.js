@@ -86,6 +86,17 @@ const walletRepository = {
         `;
         const result = await pool.query(query, [newId, walletId, bankName, bankCode, cardNumber, cardHolderName]);
         return result.rows[0];
+    },
+
+    unlinkBank: async (walletId, linkedBankId) => {
+        const query = `
+            UPDATE wallet_linked_banks
+            SET status = 'INACTIVE', updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1 AND wallet_id = $2 AND status = 'ACTIVE'
+            RETURNING id;
+        `;
+        const result = await pool.query(query, [linkedBankId, walletId]);
+        return result.rows[0];
     }
 };
 

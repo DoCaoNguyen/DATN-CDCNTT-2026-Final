@@ -225,7 +225,7 @@ const authService = {
                 throw new Error('Refresh_Token_Expired');
             }
 
-            const user = await client.query('SELECT id, role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
+            const user = await client.query('SELECT id, user_type AS role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
             if (!user || user.status !== 'ACTIVE') {
                 throw new Error('Account_Inactive');
             }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart'; // To reuse PinConfirmBottomSheet
 import 'bank_link_success_screen.dart';
@@ -24,9 +24,10 @@ class BankDetailInputScreen extends StatefulWidget {
 }
 
 class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
+  final _client = CustomHttpClient();
   final TextEditingController _accountNumberController = TextEditingController();
   String _cardHolderName = "PHAN VAN THONG";
-  String _cccd = "080205015346"; // Mock/prefilled CCCD
+  String _cccd = "Đang tải..."; // Initially loading
   bool _isLoading = false;
   bool _hasAttemptedSubmit = false;
 
@@ -47,23 +48,21 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
 
   Future<void> _fetchUserProfile() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getMyProfile),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String? name = data['data']?['full_name'];
-        final String? idNumber = data['data']?['id_number'];
+        final String? idNumber = data['data']?['id_number'] ?? data['data']?['identity_number'];
         setState(() {
           if (name != null && name.isNotEmpty) {
             _cardHolderName = name.toUpperCase();
           }
           if (idNumber != null && idNumber.isNotEmpty) {
             _cccd = idNumber;
+          } else {
+            _cccd = "Chưa cập nhật CCCD";
           }
         });
       }
@@ -96,12 +95,10 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
 
   Future<String?> _executeLinkBank(String pin) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(ApiConfig.linkBank),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'bank_name': widget.bankName,

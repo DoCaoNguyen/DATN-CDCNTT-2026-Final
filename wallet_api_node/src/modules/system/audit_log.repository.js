@@ -6,11 +6,12 @@ const auditLogRepository = {
      */
     writeAuditLog: (actorId, action, entityType, entityId, oldData, newData, ipAddress) => {
         const query = `
-            INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, old_data, new_data, ip_address)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO audit_logs (actor_type, actor_id, action, entity_type, entity_id, old_data, new_data, ip_address)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `;
         // Thực hiện bất đồng bộ (không await) để không làm chậm luồng API chính
         pool.query(query, [
+            actorId ? 'USER' : 'SYSTEM',
             actorId || null,
             action,
             entityType || null,

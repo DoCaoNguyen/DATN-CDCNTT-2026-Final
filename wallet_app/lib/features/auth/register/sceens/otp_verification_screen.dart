@@ -356,7 +356,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   children: [
                                     TextSpan(
                                       text: activeLang == 'VIE' ? 'Xác thực OTP ' : 'OTP Verification ',
-                                      style: const TextStyle(color: AppColors.primaryPink, fontStyle: FontStyle.italic),
+                                      style: const TextStyle(
+                                        color: AppColors.primaryPink,
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 34,
+                                        fontFamily: 'cursive',
+                                      ),
                                     ),
                                     TextSpan(
                                       text: activeLang == 'VIE' ? 'của bạn' : 'for you',

@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../auth/login/sceens/login_phone_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/socket_service.dart';
-
+import 'personal_profile_screen.dart';
+import 'login_security_screen.dart';
+import '../../bank/screens/linked_banks_management_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -19,9 +21,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final _client = CustomHttpClient();
   bool _isLoading = true;
   String _fullName = '';
   String _phone = '';
+  String? _email;
 
   @override
   void initState() {
@@ -31,13 +35,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfile() async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(ApiConfig.getMyProfile),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
 
       if (response.statusCode == 200) {
@@ -46,6 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _fullName = jsonResp['data']['full_name'] ?? 'Người dùng';
             _phone = jsonResp['data']['phone'] ?? '';
+            _email = jsonResp['data']['email'];
             _isLoading = false;
           });
         }
@@ -198,23 +198,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
-                ]
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.qr_code, size: 18, color: Colors.grey),
-                  SizedBox(width: 4),
-                  Text('Trang cá nhân', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-                ],
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PersonalProfileScreen(
+                      token: widget.token,
+                      fullName: _fullName,
+                      phone: _phone,
+                      email: _email,
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                  ]
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.qr_code, size: 18, color: Colors.grey),
+                    SizedBox(width: 4),
+                    Text('Trang cá nhân', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
           ),
@@ -258,46 +273,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _buildQuickSettingItem(Icons.security, 'Quản lý', badge: 'Mio'),
           _buildQuickSettingItem(Icons.settings_applications_outlined, 'Cài đặt thanh\ntoán'),
-          _buildQuickSettingItem(Icons.person_outline, 'Đăng nhập và\nbảo mật'),
+          _buildQuickSettingItem(
+            Icons.person_outline,
+            'Đăng nhập và\nbảo mật',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginSecurityScreen(
+                    token: widget.token,
+                    phone: _phone,
+                  ),
+                ),
+              );
+            },
+          ),
           _buildQuickSettingItem(Icons.notifications_none, 'Cài đặt thông\nbáo'),
         ],
       ),
     );
   }
 
-  Widget _buildQuickSettingItem(IconData icon, String title, {String? badge}) {
+  Widget _buildQuickSettingItem(IconData icon, String title, {String? badge, VoidCallback? onTap}) {
     return Expanded(
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(icon, size: 30, color: Colors.black54),
-              if (badge != null)
-                Positioned(
-                  bottom: -5,
-                  right: -10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryPink,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      badge,
-                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, size: 30, color: Colors.black54),
+                if (badge != null)
+                  Positioned(
+                    bottom: -5,
+                    right: -10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPink,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        badge,
+                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, color: Colors.black87),
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, color: Colors.black87),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -528,6 +561,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
+          _buildMoreSettingsItem(
+            icon: Icons.credit_card,
+            title: 'Tài khoản/Thẻ',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LinkedBanksManagementScreen(token: widget.token),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
             icon: Icons.help_outline,
             title: 'Trung tâm trợ giúp',
@@ -812,13 +858,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      await http.post(
+      await _client.post(
         Uri.parse(ApiConfig.logout),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
       );
     } catch (e) {
       print('Lỗi gọi API logout: $e');

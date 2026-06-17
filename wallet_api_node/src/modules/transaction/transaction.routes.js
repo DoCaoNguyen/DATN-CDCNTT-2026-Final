@@ -274,6 +274,79 @@ router.get('/history', transactionController.getHistory);
 
 /**
  * @swagger
+ * /api/v1/transaction/stats:
+ *   get:
+ *     summary: Lấy thống kê giao dịch theo tháng
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Thống kê chi tiêu
+ */
+router.get('/stats', transactionController.getStats);
+
+/**
+ * @swagger
+ * /api/v1/transaction/month:
+ *   get:
+ *     summary: Lấy tất cả giao dịch trong một tháng cụ thể
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: year
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Danh sách giao dịch
+ */
+router.get('/month', transactionController.getByMonth);
+
+/**
+ * @swagger
+ * /api/v1/transaction/chat-list:
+ *   get:
+ *     summary: Lấy danh sách các cuộc trò chuyện (Lịch sử giao dịch nhóm theo người)
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách chat
+ */
+router.get('/chat-list', transactionController.getChatList);
+
+/**
+ * @swagger
+ * /api/v1/transaction/chat/{phone}:
+ *   get:
+ *     summary: Lấy chi tiết lịch sử giao dịch giữa 2 người (Dạng Chat)
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: phone
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lịch sử giao dịch
+ */
+router.get('/chat/:phone', transactionController.getChatHistory);
+
+/**
+ * @swagger
  * /api/v1/transaction/{id}/category:
  *   put:
  *     summary: Cập nhật danh mục chi tiêu/thu nhập cho một giao dịch cụ thể

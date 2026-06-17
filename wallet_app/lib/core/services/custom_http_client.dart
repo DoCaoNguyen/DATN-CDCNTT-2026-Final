@@ -77,7 +77,10 @@ class CustomHttpClient extends http.BaseClient {
 
       final response = await http.post(
         Uri.parse(ApiConfig.refreshToken),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: jsonEncode({'refresh_token': refreshToken}),
       );
 

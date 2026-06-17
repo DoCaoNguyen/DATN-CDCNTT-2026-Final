@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_search_screen.dart'; 
+import '../../bank/screens/bank_transfer_input_screen.dart';
+import '../../chat/screens/chat_list_screen.dart';
 
 class TransferMainScreen extends StatefulWidget {
   final String token; 
@@ -22,13 +25,16 @@ class TransferMainScreen extends StatefulWidget {
 
 class _TransferMainScreenState extends State<TransferMainScreen> {
   String _fullName = 'Đang tải...';
+  final _client = CustomHttpClient();
   List<dynamic> _linkedBanks = [];
   bool _isLoading = true;
+  bool _isLoadingBanks = true;
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _fetchLinkedBanks();
   }
 
   Future<void> _fetchData() async {
@@ -46,23 +52,6 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         if (mounted) {
           setState(() {
             _fullName = data['data']?['full_name'] ?? 'Chưa cập nhật tên';
-          });
-        }
-      }
-
-      // 2. Fetch Linked Banks
-      final banksRes = await http.get(
-        Uri.parse(ApiConfig.getLinkedBanks),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
-      );
-      if (banksRes.statusCode == 200) {
-        final data = jsonDecode(banksRes.body);
-        if (mounted) {
-          setState(() {
-            _linkedBanks = data['data'] ?? [];
             _isLoading = false;
           });
         }
@@ -72,6 +61,32 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
     } catch (e) {
       debugPrint("Lỗi fetch dữ liệu transfer_main_screen: $e");
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchLinkedBanks() async {
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _linkedBanks = data['data'] ?? [];
+            _isLoadingBanks = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoadingBanks = false);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching linked banks: $e");
+      if (mounted) {
+        setState(() => _isLoadingBanks = false);
+      }
     }
   }
 
@@ -182,7 +197,6 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                       const SizedBox(width: 12),
                       const Icon(Icons.search, color: Colors.grey, size: 20),
                       const SizedBox(width: 8),
-                      // --- ĐÃ SỬA: Bọc GestureDetector để chuyển qua trang tìm kiếm ---
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
@@ -193,7 +207,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                           },
                           child: Container(
                             height: double.infinity,
-                            color: Colors.transparent, // Phải có màu trong suốt để bắt sự kiện tap
+                            color: Colors.transparent, 
                             alignment: Alignment.centerLeft,
                             child: const Text(
                               'Nhập SĐT/STK tại đây',
@@ -267,7 +281,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                        child: const Text('mo\nmo', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
+                        child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold, height: 1)),
                       ),
                       const SizedBox(width: 8),
                       const Text('Ví Mio khác', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -379,7 +393,6 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             backgroundColor: avatarColor,
             child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          // Logo Mio nhỏ đè lên góc phải dưới của Avatar
           Positioned(
             right: 0,
             bottom: 0,
@@ -389,7 +402,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                child: const Text('mo\nmo', style: TextStyle(color: Colors.white, fontSize: 4, fontWeight: FontWeight.bold, height: 1)),
+                child: const Text('mio', style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
               ),
             ),
           )
@@ -399,6 +412,14 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
       trailing: const Icon(Icons.history, color: Colors.grey),
       onTap: () {},
     );
+  }
+
+  String _maskCardNumber(String? number) {
+    if (number == null || number.isEmpty) return '';
+    if (number.length > 4) {
+      return '******${number.substring(number.length - 4)}';
+    }
+    return '******$number';
   }
 
   // ==========================================
@@ -417,54 +438,66 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: Text('Tài khoản ngân hàng của tôi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 8),
-          
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator(color: Colors.pink, strokeWidth: 2)),
+
+          if (_isLoadingBanks)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: CircularProgressIndicator(color: Colors.pink),
+              ),
             )
           else if (_linkedBanks.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey.shade100,
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: const Icon(Icons.account_balance, color: Colors.grey, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('Chưa có thẻ/tài khoản nào được liên kết', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                ],
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'Chưa liên kết tài khoản ngân hàng nào.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
             )
           else
-            ..._linkedBanks.map((bank) {
-              String cardNum = bank['card_number'] ?? '';
-              String hiddenCard = cardNum.length > 4 
-                  ? '*******${cardNum.substring(cardNum.length - 4)}'
-                  : cardNum;
-
-              return ListTile(
-                leading: Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.blue.shade50,
-                    border: Border.all(color: Colors.grey.shade300),
+            ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _linkedBanks.length,
+              itemBuilder: (context, index) {
+                final bank = _linkedBanks[index];
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BankTransferInputScreen(
+                          token: widget.token,
+                          bankName: bank['bank_name'] ?? 'Ngân hàng',
+                          bankCode: bank['bank_code'] ?? 'BANK',
+                          prefilledAccountNumber: bank['card_number'] ?? bank['account_number'],
+                          cardHolderName: bank['card_holder_name'] ?? bank['account_holder_name'],
+                        ),
+                      ),
+                    );
+                  },
+                  leading: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFE8F2FC),
+                    ),
+                    child: const Icon(Icons.account_balance, color: Color(0xFF0F75BD), size: 22),
                   ),
-                  child: Icon(Icons.account_balance, color: Colors.blue.shade800, size: 20),
-                ),
-                title: Text(_fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                subtitle: Text('${bank['bank_name']} - $hiddenCard', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              );
-            }).toList(),
+                  title: Text(
+                    bank['card_holder_name'] ?? bank['account_holder_name'] ?? 'Tài khoản liên kết', 
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                  ),
+                  subtitle: Text(
+                    "${bank['bank_name'] ?? 'Ngân hàng'} - ${_maskCardNumber(bank['card_number'] ?? bank['account_number'])}", 
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -599,7 +632,15 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildBottomNavItem(Icons.currency_exchange, 'Chuyển tiền', isActive: true),
-            _buildBottomNavItem(Icons.chat_bubble_outline, 'Chuyển qua Chat'),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => ChatListScreen(token: widget.token)),
+                );
+              },
+              child: _buildBottomNavItem(Icons.chat_bubble_outline, 'Chuyển qua Chat'),
+            ),
             _buildBottomNavItem(Icons.person_outline, 'Tôi'),
           ],
         ),

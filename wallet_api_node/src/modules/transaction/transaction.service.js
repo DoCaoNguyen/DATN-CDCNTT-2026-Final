@@ -62,11 +62,11 @@ const transactionService = {
             const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
             const balanceAfter = await repo.addBalance(client, wallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', wallet.id, 'Nạp tiền từ ngân hàng liên kết');
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'TOPUP', wallet.id, 'Nạp tiền từ ngân hàng liên kết', amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordDeposit(client, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
+            await repo.recordDeposit(client, userId, wallet.id, amount, ledgerTxId, 'SANDBOX_BANK', extRef);
 
             await client.query('COMMIT');
 
@@ -156,11 +156,11 @@ const transactionService = {
             }
             const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, 'Rút tiền về ngân hàng liên kết');
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAWAL', wallet.id, 'Rút tiền về ngân hàng liên kết', amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordWithdrawal(client, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
+            await repo.recordWithdrawal(client, userId, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
 
             await client.query('COMMIT');
 
@@ -250,11 +250,11 @@ const transactionService = {
             }
             const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAWAL', wallet.id, `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordBankTransfer(client, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
+            await repo.recordBankTransfer(client, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
 
             await client.query('COMMIT');
 
@@ -353,12 +353,12 @@ const transactionService = {
             const senderBalanceAfter = await repo.subtractBalance(client, senderWallet.id, amount);
             const receiverBalanceAfter = await repo.addBalance(client, receiverWallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', senderWallet.id, note || 'Chuyển tiền qua Ví');
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', senderWallet.id, note || 'Chuyển tiền qua Ví', amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, senderWallet.id, 'DEBIT', amount, senderBalanceBefore, senderBalanceAfter);
             await repo.createLedgerEntry(client, ledgerTxId, receiverWallet.id, 'CREDIT', amount, receiverBalanceBefore, receiverBalanceAfter);
 
-            await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, referenceCode);
+            await repo.recordTransfer(client, senderUserId, senderWallet.id, receiverWallet.user_id, receiverWallet.id, amount, note, ledgerTxId);
 
             await client.query('COMMIT');
 
@@ -448,6 +448,55 @@ const transactionService = {
             throw new Error('Transaction_Not_Found');
         }
         return result;
+    },
+
+    getMonthlyStats: async (userId) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+        
+        const stats = await repo.getMonthlyStats(wallet.id);
+        return {
+            totalSpendThisMonth: stats.total_spend_this_month ? stats.total_spend_this_month.toString() : '0',
+            totalReceiveThisMonth: stats.total_receive_this_month ? stats.total_receive_this_month.toString() : '0',
+            totalSpendLastMonth: stats.total_spend_last_month ? stats.total_spend_last_month.toString() : '0',
+        };
+    },
+
+    getTransactionsByMonth: async (userId, month, year) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const transactions = await repo.getTransactionsByMonth(wallet.id, month, year);
+        return transactions.map(item => ({
+            ...item,
+            amount: item.amount ? item.amount.toString() : '0',
+            balance_before: item.balance_before ? item.balance_before.toString() : '0',
+            balance_after: item.balance_after ? item.balance_after.toString() : '0'
+        }));
+    },
+
+    getChatList: async (userId) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const chats = await repo.getChatList(wallet.id);
+        return chats.map(item => ({
+            ...item,
+            latest_transaction_date: item.latest_transaction_date ? new Date(item.latest_transaction_date).toISOString() : null
+        }));
+    },
+
+    getChatHistory: async (userId, counterpartyPhone, page = 1, limit = 20) => {
+        const wallet = await repo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        const offset = (page - 1) * limit;
+        const history = await repo.getChatHistory(wallet.id, counterpartyPhone, limit, offset);
+        return history.map(item => ({
+            ...item,
+            amount: item.amount ? item.amount.toString() : '0',
+            created_at: item.created_at ? new Date(item.created_at).toISOString() : null
+        }));
     }
 };
 
