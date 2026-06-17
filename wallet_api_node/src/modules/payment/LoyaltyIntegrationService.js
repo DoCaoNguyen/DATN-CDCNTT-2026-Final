@@ -41,8 +41,7 @@ const LoyaltyIntegrationService = {
         try {
             // Lấy loyalty_member_id của user
             client = await pool.connect();
-            const userRes = await client.query('SELECT loyalty_member_id FROM users WHERE id = $1', [userId]);
-            const loyaltyMemberId = userRes.rows[0]?.loyalty_member_id || userId; // Dùng userId nếu chưa có
+            const loyaltyMemberId = userId; // Fallback to userId as loyalty_member_id is not in DB
 
             // Gọi API Loyalty
             // Giả lập axios request
@@ -171,19 +170,16 @@ const LoyaltyIntegrationService = {
             }
 
             for (const log of failedLogs) {
-                // Lấy userId từ bảng payment_transactions dựa trên payment_transaction_id
+                // Lấy userId từ bảng wallets và payment_transactions dựa trên payment_transaction_id bằng 1 câu JOIN
                 const txRes = await client.query(`
-                    SELECT wallet_id FROM payment_transactions WHERE id = $1
+                    SELECT payer_user_id as user_id 
+                    FROM payment_transactions 
+                    WHERE id = $1
                 `, [log.payment_transaction_id]);
 
                 if (txRes.rows.length === 0) continue;
                 
-                const walletId = txRes.rows[0].wallet_id;
-                // Lấy userId từ wallet
-                const walletRes = await client.query(`SELECT user_id FROM wallets WHERE id = $1`, [walletId]);
-                if (walletRes.rows.length === 0) continue;
-                
-                const userId = walletRes.rows[0].user_id;
+                const userId = txRes.rows[0].user_id;
 
                 // Gọi lại tích điểm
                 await LoyaltyIntegrationService.executeLoyaltyApiCall(

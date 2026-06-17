@@ -22,7 +22,7 @@ const kycService = {
 
         let status = 'PENDING';
         if (matchResult.isMatch) {
-            status = 'VERIFIED';
+            status = 'APPROVED';
             console.log(`=> KHUÔN MẶT KHỚP! Độ chính xác: ${matchResult.score}%`);
         } else {
             status = 'REJECTED'; 

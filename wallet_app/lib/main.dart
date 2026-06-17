@@ -9,7 +9,6 @@ import 'features/home/screens/home_screen.dart';
 import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
 import 'core/services/network_service.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   NetworkService().initialize();

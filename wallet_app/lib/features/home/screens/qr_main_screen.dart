@@ -15,8 +15,9 @@ import '../../transfer/screens/transfer_confirm_screen.dart';
 
 class QrMainScreen extends StatefulWidget {
   final String token;
+  final int initialTab;
 
-  const QrMainScreen({Key? key, required this.token}) : super(key: key);
+  const QrMainScreen({Key? key, required this.token, this.initialTab = 0}) : super(key: key);
 
   @override
   State<QrMainScreen> createState() => _QrMainScreenState();
@@ -45,6 +46,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialTab; // Cho phép mở thẳng tab mong muốn
     _fetchMyProfile();
     _listenToLoyaltyPoints();
   }

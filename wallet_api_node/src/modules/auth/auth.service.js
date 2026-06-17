@@ -54,7 +54,7 @@ const authService = {
 
         if (!twilioResult.valid) {
             const newAttempts = record.failed_attempts + 1;
-            
+
             if (newAttempts >= 5) {
                 await otpRepository.lockAccount(phone, newAttempts, 30);
                 throw new Error('Account_Locked_Now');
@@ -62,7 +62,7 @@ const authService = {
                 await otpRepository.updateAttempts(phone, newAttempts);
                 const err = new Error('OTP_Invalid');
                 err.remainingAttempts = 5 - newAttempts;
-                throw err; 
+                throw err;
             }
         }
 
@@ -156,19 +156,19 @@ const authService = {
         const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
         const tokenFamilyId = uuidv7();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày theo yêu cầu
-        
+
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            
+
             // Thu hồi toàn bộ Refresh Token cũ của user này
             await authRepository.revokeAllUserRefreshTokens(client, user.id);
-            
+
             // Lưu Refresh Token mới
             await authRepository.saveRefreshToken(client, user.id, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent);
-            
+
             await client.query('COMMIT');
-            
+
             // Ép buộc đăng xuất thiết bị cũ thông qua socket.io
             try {
                 const { emitToUser } = require('../../utils/socket');
@@ -225,7 +225,7 @@ const authService = {
                 throw new Error('Refresh_Token_Expired');
             }
 
-            const user = await client.query('SELECT id, role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
+            const user = await client.query('SELECT id, user_type AS role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
             if (!user || user.status !== 'ACTIVE') {
                 throw new Error('Account_Inactive');
             }

@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
-
+import '../../bank/screens/linked_banks_management_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -561,6 +561,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
+          _buildMoreSettingsItem(
+            icon: Icons.credit_card,
+            title: 'Tài khoản/Thẻ',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LinkedBanksManagementScreen(token: widget.token),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
             icon: Icons.help_outline,
             title: 'Trung tâm trợ giúp',

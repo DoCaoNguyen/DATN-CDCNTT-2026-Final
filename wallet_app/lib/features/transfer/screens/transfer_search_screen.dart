@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_amount_screen.dart';
+
 
 class TransferSearchScreen extends StatefulWidget {
   final String token;
@@ -19,6 +19,7 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final _client = CustomHttpClient();
   List<dynamic> _searchResults = [];
+  List<Contact> _phoneContacts = [];
   List<dynamic> _contactResults = [];
   bool _isLoading = false;
   bool _isLoadingContacts = false;
@@ -27,33 +28,30 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _syncContacts();
+    _fetchAndSyncContacts();
   }
 
-  Future<void> _syncContacts() async {
+  Future<void> _fetchAndSyncContacts() async {
     setState(() => _isLoadingContacts = true);
     try {
-      final PermissionStatus permissionStatus = await Permission.contacts
-          .request();
-      if (permissionStatus == PermissionStatus.granted) {
-        final contacts = await FlutterContacts.getContacts(
-          withProperties: true,
-        );
-        final Set<String> phonesSet = {};
+      final status = await FlutterContacts.permissions.request(PermissionType.read);
+      if (status == PermissionStatus.granted || status == PermissionStatus.limited) {
+        final contacts = await FlutterContacts.getAll(properties: {ContactProperty.phone});
+        
+        if (mounted) {
+          setState(() {
+            _phoneContacts = contacts.where((c) => c.phones.isNotEmpty).toList();
+          });
+        }
 
-        for (var contact in contacts) {
-          if (contact.phones.isNotEmpty) {
-            for (var phone in contact.phones) {
-              String num = phone.number.replaceAll(RegExp(r'[^0-9+]'), '');
-              if (num.startsWith('+84')) {
-                num = '0${num.substring(3)}';
-              }
-              if (num.startsWith('84')) {
-                num = '0${num.substring(2)}';
-              }
-              if (num.length >= 10 && num.length <= 11) {
-                phonesSet.add(num);
-              }
+        final Set<String> phonesSet = {};
+        for (var contact in _phoneContacts) {
+          for (var phone in contact.phones) {
+            String num = phone.number.replaceAll(RegExp(r'[^0-9+]'), '');
+            if (num.startsWith('+84')) num = '0${num.substring(3)}';
+            if (num.startsWith('84')) num = '0${num.substring(2)}';
+            if (num.length >= 10 && num.length <= 11) {
+              phonesSet.add(num);
             }
           }
         }
@@ -76,7 +74,7 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
         }
       }
     } catch (e) {
-      debugPrint("Error syncing contacts: $e");
+      debugPrint("Error fetching and syncing contacts: $e");
     } finally {
       if (mounted) setState(() => _isLoadingContacts = false);
     }
@@ -277,6 +275,50 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
                 },
               );
             }).toList(),
+            
+          const SizedBox(height: 24),
+          const Text('Danh bạ điện thoại', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          if (_isLoadingContacts)
+            const Center(child: CircularProgressIndicator(color: Colors.pink))
+          else if (_phoneContacts.isEmpty)
+            const Center(child: Text('Không có liên hệ nào hoặc chưa cấp quyền', style: TextStyle(color: Colors.grey)))
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _phoneContacts.length,
+              separatorBuilder: (context, index) => const Divider(height: 1, indent: 70),
+              itemBuilder: (context, index) {
+                final contact = _phoneContacts[index];
+                final name = contact.displayName;
+                final phone = contact.phones.first.number;
+                
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.pink.shade50,
+                    child: Text(
+                      (name != null && name.isNotEmpty) ? name[0].toUpperCase() : 'C',
+                      style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(name ?? 'Chưa có tên', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(phone, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TransferAmountScreen(
+                          token: widget.token,
+                          receiverPhone: phone,
+                          receiverName: name ?? 'Chưa có tên',
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
         ],
       ),
     );

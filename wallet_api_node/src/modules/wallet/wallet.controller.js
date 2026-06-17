@@ -4,13 +4,13 @@ const pool = require('../../config/db');
 const walletController = {
     getBalance: async (req, res) => {
         try {
-            const userId = req.user.userId; 
-            
+            const userId = req.user.userId;
+
             const result = await walletService.getWalletInfo(userId);
-            
-            res.status(200).json({ 
-                message: 'Lấy thông tin số dư thành công', 
-                data: result 
+
+            res.status(200).json({
+                message: 'Lấy thông tin số dư thành công',
+                data: result
             });
         } catch (error) {
             if (error.message === 'Wallet_Not_Found') {
@@ -35,14 +35,14 @@ const walletController = {
         if (!isValidFormat) {
             return res.status(400).json({ error: 'Mã ví không hợp lệ (Bắt buộc phải là 6 chữ số).' });
         }
-        
+
         try {
-    
+
             const newWalletCode = await walletService.setWalletCode(userId, cleanCode);
-            
-            res.status(200).json({ 
-                message: 'Tạo mã ví thành công', 
-                wallet_code: newWalletCode 
+
+            res.status(200).json({
+                message: 'Tạo mã ví thành công',
+                wallet_code: newWalletCode
             });
 
         } catch (error) {
@@ -52,7 +52,7 @@ const walletController = {
             if (error.message === 'Wallet_Code_Exists') {
                 return res.status(400).json({ error: 'Mã ví này đã có người sử dụng. Vui lòng chọn mã khác.' });
             }
-            
+
             console.error('Lỗi set wallet code:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi tạo mã ví' });
         }
@@ -159,6 +159,31 @@ const walletController = {
             }
             console.error('Lỗi kiểm tra mã PIN:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi kiểm tra mã PIN' });
+        }
+    },
+
+    unlinkBank: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const bankId = req.params.id;
+
+            if (!bankId) {
+                return res.status(400).json({ error: 'Thiếu ID ngân hàng liên kết' });
+            }
+
+            await walletService.unlinkBank(userId, bankId);
+            res.status(200).json({
+                message: 'Hủy liên kết ngân hàng thành công'
+            });
+        } catch (error) {
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của bạn' });
+            }
+            if (error.message === 'Bank_Not_Found_Or_Already_Unlinked') {
+                return res.status(404).json({ error: 'Không tìm thấy thẻ hoặc thẻ đã bị hủy liên kết trước đó' });
+            }
+            console.error('Lỗi hủy liên kết ngân hàng:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi hủy liên kết ngân hàng' });
         }
     }
 };

@@ -14,7 +14,7 @@ const initSocket = (server) => {
     // Middleware xác thực socket bằng JWT
     io.use((socket, next) => {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
-        
+
         if (!token) {
             return next(new Error('Authentication error: No token provided'));
         }

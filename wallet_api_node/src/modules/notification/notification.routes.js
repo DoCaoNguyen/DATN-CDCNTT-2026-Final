@@ -5,7 +5,7 @@ const verifyToken = require('../../middlewares/auth.middleware');
 
 /**
  * @swagger
- * /api/notifications/register-device:
+ * /api/v1/notifications/register-device:
  *   post:
  *     summary: Register or update user device FCM token
  *     tags: [Notifications]
@@ -39,7 +39,7 @@ router.post('/register-device', verifyToken, notificationController.registerDevi
 
 /**
  * @swagger
- * /api/notifications:
+ * /api/v1/notifications:
  *   get:
  *     summary: Lấy danh sách thông báo của user
  *     tags: [Notifications]
@@ -64,7 +64,7 @@ router.get('/', verifyToken, notificationController.getNotifications);
 
 /**
  * @swagger
- * /api/notifications/unread-count:
+ * /api/v1/notifications/unread-count:
  *   get:
  *     summary: Lấy số lượng thông báo chưa đọc
  *     tags: [Notifications]
@@ -78,7 +78,7 @@ router.get('/unread-count', verifyToken, notificationController.getUnreadCount);
 
 /**
  * @swagger
- * /api/notifications/read:
+ * /api/v1/notifications/read:
  *   put:
  *     summary: Đánh dấu danh sách thông báo đã đọc
  *     tags: [Notifications]
@@ -105,7 +105,7 @@ router.put('/read', verifyToken, notificationController.markAsRead);
 
 /**
  * @swagger
- * /api/notifications/read-all:
+ * /api/v1/notifications/read-all:
  *   put:
  *     summary: Đánh dấu tất cả thông báo đã đọc
  *     tags: [Notifications]
