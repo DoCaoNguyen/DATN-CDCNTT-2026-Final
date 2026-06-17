@@ -16,7 +16,8 @@ import 'bank_link_screen.dart';
 
 class DepositWithdrawScreen extends StatefulWidget {
   final String token;
-  const DepositWithdrawScreen({Key? key, required this.token}) : super(key: key);
+  final int initialTab;
+  const DepositWithdrawScreen({Key? key, required this.token, this.initialTab = 0}) : super(key: key);
 
   @override
   State<DepositWithdrawScreen> createState() => _DepositWithdrawScreenState();
@@ -24,7 +25,7 @@ class DepositWithdrawScreen extends StatefulWidget {
 
 class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   final _client = CustomHttpClient();
-  int _activeTab = 0; // 0 = Nạp tiền, 1 = Rút tiền
+  late int _activeTab; // 0 = Nạp tiền, 1 = Rút tiền
   bool _isLoading = false;
   bool _isConfirming = false; // "Thanh toán an toàn" step
   List<dynamic> _linkedBanks = [];
@@ -53,6 +54,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   @override
   void initState() {
     super.initState();
+    _activeTab = widget.initialTab;
     _fetchLinkedBanks();
     _fetchMioBalance();
   }

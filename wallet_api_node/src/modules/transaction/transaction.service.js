@@ -10,9 +10,7 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        const extRef = (externalReference && /^\d{12}$/.test(externalReference))
-            ? externalReference
-            : Math.floor(100000000000 + Math.random() * 900000000000).toString();
+        
 
         // Verify based on amount (50,000,000 VND)
         if (amount < 50000000n) {
@@ -63,6 +61,8 @@ const transactionService = {
             const balanceAfter = await repo.addBalance(client, wallet.id, amount);
 
             const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', wallet.id, 'Nạp tiền từ ngân hàng liên kết');
+            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
@@ -101,9 +101,7 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        const extRef = (externalReference && /^\d{12}$/.test(externalReference))
-            ? externalReference
-            : Math.floor(100000000000 + Math.random() * 900000000000).toString();
+        
 
         // Verify based on amount (50,000,000 VND)
         if (amount < 50000000n) {
@@ -157,6 +155,8 @@ const transactionService = {
             const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
 
             const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, 'Rút tiền về ngân hàng liên kết');
+            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
@@ -195,9 +195,7 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        const extRef = (externalReference && /^\d{12}$/.test(externalReference))
-            ? externalReference
-            : Math.floor(100000000000 + Math.random() * 900000000000).toString();
+        
 
         // Verify based on amount (50,000,000 VND)
         if (amount < 50000000n) {
@@ -251,6 +249,8 @@ const transactionService = {
             const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
 
             const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`);
+            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
@@ -358,7 +358,9 @@ const transactionService = {
             await repo.createLedgerEntry(client, ledgerTxId, senderWallet.id, 'DEBIT', amount, senderBalanceBefore, senderBalanceAfter);
             await repo.createLedgerEntry(client, ledgerTxId, receiverWallet.id, 'CREDIT', amount, receiverBalanceBefore, receiverBalanceAfter);
 
-            await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, referenceCode);
+            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const finalRef = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
+            await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, finalRef);
 
             await client.query('COMMIT');
             
@@ -424,12 +426,20 @@ const transactionService = {
         const offset = (page - 1) * limit;
         const history = await repo.getTransactionHistory(wallet.id, limit, offset);
 
-        return history.map(item => ({
-            ...item,
-            amount: item.amount ? item.amount.toString() : '0',
-            balance_before: item.balance_before ? item.balance_before.toString() : '0',
-            balance_after: item.balance_after ? item.balance_after.toString() : '0'
-        }));
+        return history.map(item => {
+            let ref = item.external_reference;
+            if (item.transaction_id) {
+                const hex = item.transaction_id.replace(/-/g, '').substring(0, 10);
+                ref = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
+            }
+            return {
+                ...item,
+                external_reference: ref,
+                amount: item.amount ? item.amount.toString() : '0',
+                balance_before: item.balance_before ? item.balance_before.toString() : '0',
+                balance_after: item.balance_after ? item.balance_after.toString() : '0'
+            };
+        });
     },
 
     updateTransactionCategory: async (userId, transactionId, categoryName, isExpenseCounted) => {
@@ -467,12 +477,20 @@ const transactionService = {
         if (!wallet) throw new Error('Wallet_Not_Found');
 
         const transactions = await repo.getTransactionsByMonth(wallet.id, month, year);
-        return transactions.map(item => ({
-            ...item,
-            amount: item.amount ? item.amount.toString() : '0',
-            balance_before: item.balance_before ? item.balance_before.toString() : '0',
-            balance_after: item.balance_after ? item.balance_after.toString() : '0'
-        }));
+        return transactions.map(item => {
+            let ref = item.external_reference;
+            if (item.transaction_id) {
+                const hex = item.transaction_id.replace(/-/g, '').substring(0, 10);
+                ref = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
+            }
+            return {
+                ...item,
+                external_reference: ref,
+                amount: item.amount ? item.amount.toString() : '0',
+                balance_before: item.balance_before ? item.balance_before.toString() : '0',
+                balance_after: item.balance_after ? item.balance_after.toString() : '0'
+            };
+        });
     },
 
     getChatList: async (userId) => {

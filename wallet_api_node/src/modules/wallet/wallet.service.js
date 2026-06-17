@@ -20,12 +20,27 @@ const walletService = {
         };
     },
 
+    getLimits: async (userId) => {
+        const wallet = await walletRepository.findByUserId(userId);
+        if (!wallet) {
+            throw new Error('Wallet_Not_Found');
+        }
+        return await walletRepository.getLimitsAndUsage(wallet.id);
+    },
+
     setWalletCode: async (userId, pinCode) => {
         try {
             const saltRounds = 10;
             const pinHash = await bcrypt.hash(pinCode, saltRounds);
             
             const result = await walletRepository.updatePinHash(userId, pinHash);
+            
+            // Unlock wallet if it was locked
+            const txRepo = require('../transaction/transaction.repository');
+            const wallet = await txRepo.getWalletByUserId(userId);
+            if (wallet) {
+                await txRepo.resetPinAttempts(wallet.id);
+            }
             
             if (!result) {
                 throw new Error('Wallet_Not_Found');

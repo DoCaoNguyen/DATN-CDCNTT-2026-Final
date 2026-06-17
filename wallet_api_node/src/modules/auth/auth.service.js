@@ -39,6 +39,27 @@ const authService = {
         return true;
     },
 
+    forgotPasswordOtp: async (phone) => {
+        const userExist = await authRepository.checkExists(null, phone);
+        if (!userExist) throw new Error('Phone_Not_Found');
+
+        const record = await otpRepository.findByPhone(phone);
+        if (record && record.locked_until && new Date(record.locked_until) > new Date()) {
+            throw new Error('Account_Locked');
+        }
+
+        // Lưu tạm vào DB với OTP là 'TW_VFY' (Twilio Verify)
+        await otpRepository.upsertOtp(phone, null, 'TW_VFY');
+
+        // Gửi bằng Twilio Verify Service do user cung cấp
+        const result = await sendOTP(phone);
+        if (!result.success) {
+            throw new Error(`OTP_Send_Failed: ${result.message}`);
+        }
+
+        return true;
+    },
+
 
     verifyOtp: async (phone, otp) => {
 
@@ -98,6 +119,25 @@ const authService = {
         } finally {
             client.release();
         }
+    },
+
+    resetPassword: async (registerToken, newPassword) => {
+        const decoded = jwt.verify(registerToken, process.env.JWT_SECRET);
+        const { phone } = decoded;
+
+        if (!phone) throw new Error('Invalid_Token');
+
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+
+        const query = `UPDATE users SET password_hash = $1 WHERE phone = $2 RETURNING id`;
+        const result = await pool.query(query, [passwordHash, phone]);
+
+        if (result.rowCount === 0) {
+            throw new Error('User_Not_Found');
+        }
+
+        return result.rows[0].id;
     },
 
     login: async (identifier, password, ipAddress, userAgent) => {

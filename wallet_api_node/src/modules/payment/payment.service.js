@@ -92,6 +92,34 @@ const paymentService = {
                 client, order.order_id, wallet.id, order.amount, ledgerTxId
             );
 
+            // [NEW] Insert Webhook Log into DB within the SAME ACID transaction
+            let webhookLogId = null;
+            let webhookPayload = null;
+            const userRepo = require('../user/user.repository');
+            const webhookService = require('../webhook/webhook.service');
+            
+            if (order.callback_url && order.merchant_id) {
+                const userProfile = await userRepo.getUserProfile(userId);
+                webhookPayload = {
+                    order_id: order.order_id,
+                    status: 'success',
+                    amount: order.amount ? order.amount.toString() : '0',
+                    wallet_transaction_id: paymentTxId.toString(),
+                    phone_number: userProfile ? userProfile.phone : ''
+                };
+                
+                // Idempotency key using payment transaction ID to prevent duplicate logs
+                const idempotencyKey = `wh_${paymentTxId}`;
+
+                webhookLogId = await webhookService.createLog(
+                    client, 
+                    order.merchant_id, 
+                    paymentTxId, 
+                    idempotencyKey, 
+                    webhookPayload
+                );
+            }
+
             await client.query('COMMIT'); 
 
             // ==========================================
@@ -103,18 +131,14 @@ const paymentService = {
             LoyaltyIntegrationService.syncPointsAfterPayment(userId, paymentTxId, order.amount)
                 .catch(err => console.error('[LOYALTY_BACKGROUND_JOB_ERROR]', err.message));
 
-            // 2. Webhook gọi về cho Merchant (chạy nền)
-            if (order.callback_url) {
-                const axios = require('axios');
-                axios.post(order.callback_url, {
-                    order_id: order.order_id,
-                    status: 'success',
-                    amount: order.amount ? order.amount.toString() : '0'
-                }).then(res => {
-                    console.log(`[WEBHOOK_SUCCESS] Webhook gửi thành công tới ${order.callback_url}, Status Code:`, res.status);
-                }).catch(err => {
-                    console.error(`[WEBHOOK_ERROR] Lỗi gửi Webhook tới ${order.callback_url}:`, err.message);
-                });
+            // 2. Đẩy Job Gửi Webhook vào Message Queue (BullMQ / Redis) với cơ chế Retry
+            if (webhookLogId) {
+                const webhookPublisher = require('../webhook/webhook.publisher');
+                webhookPublisher.publish({
+                    logId: webhookLogId,
+                    merchantId: order.merchant_id,
+                    payload: webhookPayload
+                }).catch(err => console.error('[WEBHOOK_PUBLISH_ERROR]', err));
             }
 
             return {

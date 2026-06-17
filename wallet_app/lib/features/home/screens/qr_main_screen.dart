@@ -15,8 +15,9 @@ import '../../transfer/screens/transfer_confirm_screen.dart';
 
 class QrMainScreen extends StatefulWidget {
   final String token;
+  final int initialIndex;
 
-  const QrMainScreen({Key? key, required this.token}) : super(key: key);
+  const QrMainScreen({Key? key, required this.token, this.initialIndex = 0}) : super(key: key);
 
   @override
   State<QrMainScreen> createState() => _QrMainScreenState();
@@ -45,6 +46,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _fetchMyProfile();
     _listenToLoyaltyPoints();
   }
@@ -267,7 +269,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+          padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -480,7 +482,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
               Text('${fmt(amount)}đ',
                   style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryPink)),
               const SizedBox(height: 6),
-              Text('Số dư còn lại: ${fmt(remaining as num)}đ',
+              Text('Số dư còn lại: ${fmt(num.tryParse(remaining.toString()) ?? 0)}đ',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
               const SizedBox(height: 24),
               SizedBox(

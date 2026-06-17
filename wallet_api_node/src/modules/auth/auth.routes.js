@@ -138,9 +138,12 @@ router.post('/verify-otp', authController.verifyOtp);
  *       401:
  *         description: Token đăng ký không hợp lệ hoặc đã hết hạn
  *       500:
- *         description: Lỗi hệ thống
+ *         description: Lỗi hệ thống nội bộ
  */
 router.post('/set-password', authController.setPassword);
+
+router.post('/forgot-password-otp', authController.forgotPasswordOtp);
+router.post('/reset-password', authController.resetPassword);
 
 /**
  * @swagger

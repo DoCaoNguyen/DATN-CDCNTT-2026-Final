@@ -9,6 +9,7 @@ import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../home/screens/home_screen.dart'; 
 import '../../../../core/services/socket_service.dart'; 
+import '../../forgot_password/screens/forgot_password_face_auth_screen.dart';
 
 class LoginPasswordScreen extends StatefulWidget {
   final String phoneNumber;
@@ -362,7 +363,12 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
                               alignment: Alignment.centerRight,
                               child: GestureDetector(
                                 onTap: () {
-                                  print("Đã bấm quên mật khẩu");
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ForgotPasswordFaceAuthScreen(phone: widget.phoneNumber),
+                                    ),
+                                  );
                                 },
                                 child: Text(
                                   activeLang == 'VIE' ? 'Quên mật khẩu?' : 'Forgot password?',

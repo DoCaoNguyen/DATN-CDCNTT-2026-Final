@@ -703,7 +703,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: Text(
-                            _unreadCount > 9 ? '9+' : _unreadCount.toString(),
+                            _unreadCount > 99 ? '99+' : _unreadCount.toString(),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -952,6 +952,20 @@ class _HomeScreenState extends State<HomeScreen> {
         } else {
           if (title == "Nạp/Rút" || title == "Deposit") {
             _handleDepositWithdrawClick();
+          } else if (title == "Nhận tiền" || title == "Receive") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QrMainScreen(token: widget.token, initialIndex: 1),
+              ),
+            );
+          } else if (title == "QR Thanh toán" || title == "QR Pay") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QrMainScreen(token: widget.token, initialIndex: 0),
+              ),
+            );
           } else {
             print("Đang mở tính năng: $title");
           }

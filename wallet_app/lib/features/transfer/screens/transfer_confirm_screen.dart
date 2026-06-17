@@ -8,7 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 // ignore: depend_on_referenced_packages
 import 'package:local_auth_android/local_auth_android.dart';
-
+import '../../auth/forgot_pin/screens/forgot_pin_face_auth_screen.dart';
 
 class TransferConfirmScreen extends StatefulWidget {
   final String token;
@@ -489,6 +489,70 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
     );
   }
 
+  void _showForgotPinDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Đặt lại mã PIN xác thực', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+                const SizedBox(height: 12),
+                const Text(
+                  'Bạn sẽ phải đăng xuất khỏi tài khoản này để đặt lại mã PIN xác thực.',
+                  style: TextStyle(fontSize: 15, color: Colors.black87, height: 1.4),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('KHÔNG', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(dialogContext); // Đóng Dialog
+                          Navigator.pop(context); // Đóng BottomSheet nhập mã PIN
+                          // Chuyển hướng tới màn hình xác thực khuôn mặt
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ForgotPinFaceAuthScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.pink,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        child: const Text('Đồng ý', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasKeyboard = MediaQuery.of(context).viewInsets.bottom > 0;
@@ -656,7 +720,7 @@ class _PinConfirmBottomSheetState extends State<PinConfirmBottomSheet> {
                   ],
                   const SizedBox(height: 24),
                   GestureDetector(
-                    onTap: () {}, 
+                    onTap: _showForgotPinDialog, 
                     child: const Text('Quên mã PIN?', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 12),

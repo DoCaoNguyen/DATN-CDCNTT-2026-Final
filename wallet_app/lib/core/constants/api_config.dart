@@ -17,8 +17,14 @@ class ApiConfig {
   static const String login = '$baseUrl/auth/login';
   static const String logout = '$baseUrl/auth/logout';
   static const String refreshToken = '$baseUrl/auth/refresh-token';
+  static const String forgotPasswordOtp = '$baseUrl/auth/forgot-password-otp';
+  static const String resetPassword = '$baseUrl/auth/reset-password';
+  static const String exportTransaction = '$baseUrl/transaction/export';
+  
+  // --- KYC ENDPOINTS ---
   static const String verifyKyc = '$baseUrl/kyc/verify';
   static const String getWalletBalance = '$baseUrl/wallet/balance';
+  static const String getWalletLimits = '$baseUrl/wallet/limits';
   static const String searchUsers = '$baseUrl/users/search';
   static const String transfer = '$baseUrl/transaction/transfer';
   static const String setWalletCode = '$baseUrl/wallet/set-code';

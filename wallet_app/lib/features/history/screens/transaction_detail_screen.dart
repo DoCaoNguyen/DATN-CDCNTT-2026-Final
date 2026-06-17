@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
 import '../../bank/screens/bank_transfer_input_screen.dart';
+import '../../bank/screens/deposit_withdraw_screen.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final String token;
@@ -27,11 +28,42 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   bool _isUpdating = false;
   bool _isUpdated = false;
 
+  String _determineCategoryTag(dynamic tx) {
+    if (tx['category_name'] != null && tx['category_name'].toString().isNotEmpty) {
+      return tx['category_name'].toString();
+    }
+    final note = (tx['transfer_note'] ?? tx['description'] ?? '').toString().toLowerCase();
+    if (tx['transaction_type'] == 'DEPOSIT') {
+      return "Nạp tiền";
+    }
+    if (note.contains('ăn') || note.contains('uống') || note.contains('lẩu') || note.contains('cafe') || note.contains('cơm') || note.contains('bánh')) {
+      return "Ăn uống";
+    }
+    if (note.contains('chơi') || note.contains('game') || note.contains('nhạc') || note.contains('phim') || note.contains('giải trí') || note.contains('netflix')) {
+      return "Giải trí";
+    }
+    if (note.contains('chợ') || note.contains('siêu thị') || note.contains('mua sắm') || note.contains('quần áo') || note.contains('shopee')) {
+      return "Chợ, siêu thị";
+    }
+    if (note.contains('điện') || note.contains('nước') || note.contains('internet') || note.contains('mạng') || note.contains('tiền nhà') || note.contains('học phí') || note.contains('hoá đơn')) {
+      return "Hóa đơn";
+    }
+    return "Chưa phân loại";
+  }
+
   @override
   void initState() {
     super.initState();
     _tx = Map<String, dynamic>.from(widget.transaction);
-    _categoryName = _tx['category_name'];
+    
+    final String? originalCategory = _tx['category_name'];
+    if (originalCategory != null && originalCategory.isNotEmpty) {
+      _categoryName = originalCategory;
+    } else {
+      final autoCat = _determineCategoryTag(_tx);
+      _categoryName = autoCat == "Chưa phân loại" ? null : autoCat;
+    }
+    
     _isExpenseCounted = _tx['is_expense_counted'] ?? true;
   }
 
@@ -51,12 +83,14 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       case 'Người thân': return Icons.people_outline;
       case 'Đầu tư': return Icons.account_balance_outlined;
       case 'Học tập': return Icons.school_outlined;
+      case 'Nạp tiền': return Icons.account_balance_wallet_outlined;
       default: return null;
     }
   }
 
   Color _getCategoryColor(String? name) {
     if (name == null) return Colors.grey;
+    if (name == 'Nạp tiền') return Colors.green;
     if (['Chợ, siêu thị', 'Ăn uống', 'Di chuyển'].contains(name)) return Colors.orange;
     if (['Mua sắm', 'Giải trí', 'Làm đẹp', 'Sức khỏe', 'Từ thiện'].contains(name)) return const Color(0xFFE91E63);
     if (['Hóa đơn', 'Nhà cửa', 'Người thân'].contains(name)) return Colors.blue;
@@ -448,6 +482,13 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       }
     }
 
+    String btnText = "Chuyển thêm";
+    if (txType == 'DEPOSIT') {
+      btnText = "Nạp thêm";
+    } else if (txType == 'WITHDRAW') {
+      btnText = "Rút thêm";
+    }
+
     final String displayAmount = "${isCredit ? '+' : '-'}${_formatCurrency(amountRaw)}";
 
     // Receiver info if transfer
@@ -826,6 +867,32 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         return;
                       }
 
+                      if (txType == 'DEPOSIT') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DepositWithdrawScreen(
+                              token: widget.token,
+                              initialTab: 0,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (txType == 'WITHDRAW') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DepositWithdrawScreen(
+                              token: widget.token,
+                              initialTab: 1,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
                       final targetName = isCredit ? senderName : receiverName;
                       final targetPhone = isCredit ? senderPhone : receiverPhone;
                       
@@ -847,9 +914,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      "Chuyển thêm",
-                      style: TextStyle(
+                    child: Text(
+                      btnText,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,

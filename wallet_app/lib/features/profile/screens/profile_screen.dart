@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
+import 'account_management_screen.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -271,7 +272,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildQuickSettingItem(Icons.security, 'Quản lý', badge: 'Mio'),
+          _buildQuickSettingItem(
+            Icons.security, 
+            'Quản lý\ntài khoản', 
+            badge: 'Mio',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AccountManagementScreen(
+                    token: widget.token,
+                  ),
+                ),
+              );
+            },
+          ),
           _buildQuickSettingItem(Icons.settings_applications_outlined, 'Cài đặt thanh\ntoán'),
           _buildQuickSettingItem(
             Icons.person_outline,

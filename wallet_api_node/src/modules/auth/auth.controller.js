@@ -75,6 +75,44 @@ const authController = {
         }
     },
 
+    forgotPasswordOtp: async (req, res) => {
+        const { phone } = req.body;
+        if (!phone) return res.status(400).json({ error: 'Vui lòng nhập số điện thoại' });
+
+        try {
+            await authService.forgotPasswordOtp(phone);
+            res.status(200).json({ message: 'Đã gửi mã OTP qua tin nhắn SMS' });
+        } catch (error) {
+            if (error.message === 'Phone_Not_Found') {
+                return res.status(404).json({ error: 'Số điện thoại này chưa được đăng ký' });
+            }
+            if (error.message === 'Account_Locked') {
+                return res.status(403).json({ error: 'Tài khoản đang bị khóa tạm thời do gửi OTP quá nhiều lần' });
+            }
+            console.error('Lỗi gửi OTP quên mật khẩu:', error);
+            res.status(500).json({ error: 'Lỗi server khi gửi OTP' });
+        }
+    },
+
+    resetPassword: async (req, res) => {
+        const { register_token, new_password } = req.body;
+        if (!register_token || !new_password) return res.status(400).json({ error: 'Thiếu token hoặc mật khẩu mới' });
+
+        try {
+            await authService.resetPassword(register_token, new_password);
+            res.status(200).json({ message: 'Đặt lại mật khẩu thành công!' });
+        } catch (error) {
+            if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+                return res.status(401).json({ error: 'Token đổi mật khẩu không hợp lệ hoặc đã hết hạn' });
+            }
+            if (error.message === 'User_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy tài khoản người dùng' });
+            }
+            console.error('Lỗi đổi mật khẩu:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi đổi mật khẩu' });
+        }
+    },
+
     login: async (req, res) => {
         const { identifier, password } = req.body; 
         

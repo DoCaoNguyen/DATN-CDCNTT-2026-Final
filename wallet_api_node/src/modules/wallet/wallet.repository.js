@@ -86,6 +86,64 @@ const walletRepository = {
         `;
         const result = await pool.query(query, [newId, walletId, bankName, bankCode, cardNumber, cardHolderName]);
         return result.rows[0];
+    },
+
+    getLimitsAndUsage: async (walletId) => {
+        let limitsRes = await pool.query('SELECT * FROM wallet_limits WHERE wallet_id = $1', [walletId]);
+        if (limitsRes.rows.length === 0) {
+            limitsRes = await pool.query(`
+                INSERT INTO wallet_limits (wallet_id) VALUES ($1) RETURNING *
+            `, [walletId]);
+        }
+        const limits = limitsRes.rows[0];
+
+        const dailyDepositRes = await pool.query(`
+            SELECT COALESCE(SUM(amount), 0) as total 
+            FROM deposit_transactions 
+            WHERE wallet_id = $1 AND status = 'SUCCESS' AND created_at >= CURRENT_DATE
+        `, [walletId]);
+        const dailyDepositUsage = BigInt(dailyDepositRes.rows[0].total);
+
+        const dailyWithdrawalRes = await pool.query(`
+            SELECT COALESCE(SUM(amount), 0) as total 
+            FROM withdrawal_transactions 
+            WHERE wallet_id = $1 AND status = 'SUCCESS' AND created_at >= CURRENT_DATE
+        `, [walletId]);
+        const dailyWithdrawalUsage = BigInt(dailyWithdrawalRes.rows[0].total);
+
+        const calcTxUsage = async (dateCondition) => {
+            const transferRes = await pool.query(`
+                SELECT COALESCE(SUM(amount), 0) as total 
+                FROM wallet_transfers 
+                WHERE sender_wallet_id = $1 AND status = 'SUCCESS' AND ${dateCondition}
+            `, [walletId]);
+            const paymentRes = await pool.query(`
+                SELECT COALESCE(SUM(amount), 0) as total 
+                FROM payment_transactions 
+                WHERE payer_wallet_id = $1 AND status = 'SUCCESS' AND ${dateCondition}
+            `, [walletId]);
+            return BigInt(transferRes.rows[0].total) + BigInt(paymentRes.rows[0].total);
+        };
+
+        const dailyTransactionUsage = await calcTxUsage('created_at >= CURRENT_DATE');
+        const monthlyTransactionUsage = await calcTxUsage("created_at >= date_trunc('month', CURRENT_DATE)");
+
+        return {
+            limits: {
+                daily_deposit_limit: limits.daily_deposit_limit.toString(),
+                daily_withdrawal_limit: limits.daily_withdrawal_limit.toString(),
+                daily_transaction_limit: limits.daily_transaction_limit.toString(),
+                monthly_transaction_limit: limits.monthly_transaction_limit.toString(),
+                monthly_special_service_limit: limits.monthly_special_service_limit.toString(),
+            },
+            usage: {
+                daily_deposit_usage: dailyDepositUsage.toString(),
+                daily_withdrawal_usage: dailyWithdrawalUsage.toString(),
+                daily_transaction_usage: dailyTransactionUsage.toString(),
+                monthly_transaction_usage: monthlyTransactionUsage.toString(),
+                monthly_special_service_usage: "0" 
+            }
+        };
     }
 };
 

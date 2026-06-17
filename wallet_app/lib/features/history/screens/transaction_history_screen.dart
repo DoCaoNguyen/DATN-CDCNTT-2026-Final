@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/services/custom_http_client.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/api_config.dart';
+import '../../../core/services/custom_http_client.dart';
+import 'transaction_history_filter_screen.dart';
+import 'export_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
 import 'expense_management_screen.dart';
-import 'transaction_history_filter_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final String token;
@@ -348,7 +350,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     if (note.contains('điện') || note.contains('nước') || note.contains('internet') || note.contains('học phí') || note.contains('hoá đơn')) {
       return "Hóa đơn";
     }
-    return "Mua sắm";
+    return "Chưa phân loại";
   }
 
   Color _getTagColor(String tag) {
@@ -581,6 +583,79 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  void _showUtilityBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 24, top: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 48),
+                const Text(
+                  'Tiện ích',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.black54),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            ListTile(
+              leading: const Icon(Icons.visibility_off_outlined, color: Colors.black87),
+              title: const Text('Ẩn số dư', style: TextStyle(fontSize: 15)),
+              onTap: () {
+                Navigator.pop(ctx);
+                // Future implementation
+              },
+            ),
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: const Icon(Icons.download_outlined, color: Colors.black87),
+              title: const Text('Tải dữ liệu giao dịch', style: TextStyle(fontSize: 15)),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ExportTransactionScreen(token: widget.token)),
+                );
+              },
+            ),
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: const Icon(Icons.support_agent_outlined, color: Colors.black87),
+              title: const Text('Chat với Trợ thủ AI - Mo247', style: TextStyle(fontSize: 15)),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.pop(ctx);
+                // Future implementation
+              },
+            ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final grouped = _groupTransactionsByMonth(_filteredTransactions);
@@ -684,13 +759,16 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        shape: BoxShape.circle,
+                    GestureDetector(
+                      onTap: _showUtilityBottomSheet,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF5F5F5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.grid_view_outlined, color: Colors.black54, size: 20),
                       ),
-                      child: const Icon(Icons.grid_view_outlined, color: Colors.black54, size: 20),
                     ),
                   ],
                 ),

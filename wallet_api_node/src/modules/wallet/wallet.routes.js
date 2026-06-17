@@ -50,6 +50,20 @@ router.get('/balance', walletController.getBalance);
 
 /**
  * @swagger
+ * /api/v1/wallet/limits:
+ *   get:
+ *     summary: Lấy thông tin hạn mức ví và số tiền đã sử dụng trong ngày/tháng
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin hạn mức thành công
+ */
+router.get('/limits', walletController.getLimits);
+
+/**
+ * @swagger
  * /api/v1/wallet/set-code:
  *   post:
  *     summary: Thiết lập mã ví gồm 6 chữ số

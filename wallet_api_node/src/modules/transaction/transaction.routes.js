@@ -388,4 +388,31 @@ router.get('/chat/:phone', transactionController.getChatHistory);
  */
 router.put('/:id/category', transactionController.updateCategory);
 
+/**
+ * @swagger
+ * /api/v1/transaction/export:
+ *   post:
+ *     summary: Gửi file dữ liệu giao dịch qua email
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *               duration:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Gửi thành công
+ */
+router.post('/export', transactionController.exportData);
+
 module.exports = router;

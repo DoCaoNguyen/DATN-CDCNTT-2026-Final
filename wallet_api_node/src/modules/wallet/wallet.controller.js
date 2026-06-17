@@ -21,6 +21,25 @@ const walletController = {
         }
     },
 
+    getLimits: async (req, res) => {
+        try {
+            const userId = req.user.userId; 
+            
+            const result = await walletService.getLimits(userId);
+            
+            res.status(200).json({ 
+                message: 'Lấy thông tin hạn mức thành công', 
+                data: result 
+            });
+        } catch (error) {
+            if (error.message === 'Wallet_Not_Found') {
+                return res.status(404).json({ error: 'Không tìm thấy ví của người dùng này' });
+            }
+            console.error("Lỗi lấy thông tin hạn mức:", error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi lấy hạn mức' });
+        }
+    },
+
     setWalletCode: async (req, res) => {
         const userId = req.user.userId;
         const { wallet_code } = req.body;
