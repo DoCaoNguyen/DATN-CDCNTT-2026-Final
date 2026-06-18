@@ -46,7 +46,7 @@ class SnackbarUtils {
             ],
           ),
         ),
-        backgroundColor: const Color(0xFF4CAF50),
+        backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

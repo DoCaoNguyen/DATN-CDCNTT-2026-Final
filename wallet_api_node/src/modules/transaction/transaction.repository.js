@@ -171,7 +171,7 @@ const transactionRepository = {
                 le.id AS entry_id,
                 le.transaction_id,
                 lt.transaction_type,
-                lt.category_name,
+                COALESCE(wt.category_name, lt.category_name) AS category_name,
                 lt.is_expense_counted,
                 le.entry_type,
                 le.amount,
@@ -200,6 +200,44 @@ const transactionRepository = {
             LIMIT $2 OFFSET $3;
         `;
         const result = await pool.query(query, [walletId, limit, offset]);
+        return result.rows;
+    },
+
+    getTransactionHistoryForAI: async (walletId) => {
+        const query = `
+            SELECT 
+                le.id AS entry_id,
+                le.transaction_id,
+                lt.transaction_type,
+                COALESCE(wt.category_name, lt.category_name) AS category_name,
+                lt.is_expense_counted,
+                le.entry_type,
+                le.amount,
+                le.balance_before,
+                le.balance_after,
+                lt.description,
+                lt.status,
+                le.created_at,
+                wt.note AS transfer_note,
+                u_sender.full_name AS sender_name,
+                u_sender.phone AS sender_phone,
+                u_receiver.full_name AS receiver_name,
+                u_receiver.phone AS receiver_phone,
+                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code) AS external_reference
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.transaction_id = lt.id
+            LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
+            LEFT JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
+            LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
+            LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
+            LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
+            LEFT JOIN deposit_transactions dt ON lt.id = dt.ledger_transaction_id
+            LEFT JOIN withdrawal_transactions wt_act ON lt.id = wt_act.ledger_transaction_id
+            WHERE le.wallet_id = $1 AND le.created_at >= CURRENT_DATE - INTERVAL '1 year'
+            ORDER BY le.created_at DESC
+            LIMIT 500;
+        `;
+        const result = await pool.query(query, [walletId]);
         return result.rows;
     },
 

@@ -1,0 +1,255 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../../core/constants/api_config.dart';
+import '../../../core/services/custom_http_client.dart';
+
+class AiChatScreen extends StatefulWidget {
+  final String token;
+
+  const AiChatScreen({Key? key, required this.token}) : super(key: key);
+
+  @override
+  State<AiChatScreen> createState() => _AiChatScreenState();
+}
+
+class ChatMessage {
+  final String text;
+  final bool isUser;
+
+  ChatMessage({required this.text, required this.isUser});
+}
+
+class _AiChatScreenState extends State<AiChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final List<ChatMessage> _messages = [];
+  bool _isLoading = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Add initial greeting
+    _messages.add(ChatMessage(
+      text: "Chào bạn! Mình là Trợ lý Mio 247. Mình có thể giúp gì cho bạn hôm nay?",
+      isUser: false,
+    ));
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: true));
+      _isLoading = true;
+    });
+    _messageController.clear();
+    _scrollToBottom();
+
+    try {
+      final client = CustomHttpClient();
+      final response = await client.post(
+        Uri.parse('${ApiConfig.baseUrl}/ai/chat'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}', // CustomHttpClient will also inject latest token automatically
+        },
+        body: jsonEncode({'message': text}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _messages.add(ChatMessage(text: data['data'], isUser: false));
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      } else {
+        setState(() {
+          _messages.add(ChatMessage(text: "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.", isUser: false));
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      setState(() {
+        _messages.add(ChatMessage(text: "Lỗi kết nối mạng.", isUser: false));
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F9),
+      appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFFE4EE), Color(0xFFFFE4EE)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.pink.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              "Trợ lý Mio 247",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
+            ),
+          ],
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                return _buildMessageBubble(msg);
+              },
+            ),
+          ),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(color: Colors.pink),
+            ),
+          _buildMessageInput(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(ChatMessage msg) {
+    return Align(
+      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: msg.isUser ? Colors.pink : Colors.white,
+          borderRadius: BorderRadius.circular(16).copyWith(
+            bottomRight: msg.isUser ? const Radius.circular(0) : const Radius.circular(16),
+            bottomLeft: msg.isUser ? const Radius.circular(16) : const Radius.circular(0),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        child: Text(
+          msg.text,
+          style: TextStyle(
+            color: msg.isUser ? Colors.white : Colors.black87,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageInput() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  decoration: const InputDecoration(
+                    hintText: "Nhập tin nhắn...",
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: _sendMessage,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  color: Colors.pink,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

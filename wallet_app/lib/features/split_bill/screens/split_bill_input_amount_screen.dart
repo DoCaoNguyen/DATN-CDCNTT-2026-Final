@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import '../../../core/constants/api_config.dart';
+import '../../../core/services/custom_http_client.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import 'split_bill_confirm_screen.dart';
 
 class SplitBillInputAmountScreen extends StatefulWidget {
@@ -41,6 +47,49 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
   }
 
   int get _totalMembers => widget.selectedFriends.length + 1; // +1 for "Me"
+
+  bool _isScanning = false;
+
+  Future<void> _scanReceipt() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    setState(() {
+      _isScanning = true;
+    });
+
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}/ai/scan-receipt'));
+      request.headers['Authorization'] = 'Bearer ${widget.token}';
+      request.files.add(await http.MultipartFile.fromPath('image', pickedFile.path));
+
+      final client = CustomHttpClient();
+      var response = await client.send(request);
+      var responseData = await response.stream.bytesToString();
+      var data = jsonDecode(responseData);
+
+      if (response.statusCode == 200) {
+        final double total = double.tryParse(data['data']['totalAmount'].toString()) ?? 0;
+        if (total > 0) {
+          _onAmountChanged(total.toInt().toString());
+          SnackbarUtils.showSuccess(context, 'Đã quét thành công hóa đơn!');
+        } else {
+          SnackbarUtils.showError(context, 'Không tìm thấy tổng tiền trên hóa đơn.');
+        }
+      } else {
+        SnackbarUtils.showError(context, data['error'] ?? 'Lỗi khi quét hóa đơn');
+      }
+    } catch (e) {
+      SnackbarUtils.showError(context, 'Có lỗi xảy ra: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isScanning = false;
+        });
+      }
+    }
+  }
 
   bool get _isButtonEnabled {
     if (_totalMembers == 0) return false;
@@ -184,6 +233,18 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
                     color: const Color(0xFFE91E63),
                   ),
                   const SizedBox(height: 24),
+                  if (_isScanning)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: CircularProgressIndicator(color: Colors.pink),
+                    )
+                  else
+                    TextButton.icon(
+                      onPressed: _scanReceipt,
+                      icon: const Icon(Icons.document_scanner_rounded, color: Colors.pink),
+                      label: const Text('Quét hóa đơn bằng AI', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  const SizedBox(height: 12),
                   if (!_isButtonEnabled && _amount > 0)
                     Text(
                       "Mỗi người phải trả tối thiểu 1.000đ",

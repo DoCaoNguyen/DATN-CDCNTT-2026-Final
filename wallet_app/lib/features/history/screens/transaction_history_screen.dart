@@ -8,6 +8,7 @@ import 'transaction_history_filter_screen.dart';
 import 'export_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
 import 'expense_management_screen.dart';
+import '../../ai/screens/ai_chat_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final String token;
@@ -646,7 +647,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
               onTap: () {
                 Navigator.pop(ctx);
-                // Future implementation
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AiChatScreen(token: widget.token)),
+                );
               },
             ),
             ],

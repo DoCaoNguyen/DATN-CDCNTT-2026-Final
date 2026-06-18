@@ -4,6 +4,7 @@ const repo = require('./transaction.repository');
 const { emitToUser } = require('../../utils/socket');
 const kycService = require('../kyc/kyc.service');
 const notificationService = require('../notification/notification.service');
+const aiService = require('../ai/ai.service');
 
 const transactionService = {
     deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
@@ -360,9 +361,12 @@ const transactionService = {
 
             const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
             const finalRef = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
-            await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, finalRef);
+            const transferId = await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, finalRef);
 
             await client.query('COMMIT');
+
+            // Trigger AI Categorization in background
+            aiService.categorizeTransaction(transferId, note);
             
             // Gửi thông báo real-time cho người gửi
             emitToUser(senderUserId, 'balance_update', {

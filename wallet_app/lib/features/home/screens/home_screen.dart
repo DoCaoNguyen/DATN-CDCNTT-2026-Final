@@ -22,6 +22,9 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../../core/utils/snackbar_utils.dart';
+import '../../ai/screens/voice_transfer_dialog.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -696,17 +699,201 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.06),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  size: 20,
-                  color: Colors.black87,
+              GestureDetector(
+                onTap: () async {
+                  final result = await showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => VoiceTransferDialog(token: widget.token),
+                  );
+
+                  if (result != null) {
+                    if (result['error'] != null) {
+                      SnackbarUtils.showError(context, result['error']);
+                    } else if (result['amount'] != null) {
+                      String actionType = result['action_type'] ?? "TRANSFER";
+                      
+                      if (actionType == "DEPOSIT") {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DepositWithdrawScreen(
+                              token: widget.token,
+                              initialTab: 0,
+                              initialAmount: result['amount'].toString(),
+                            ),
+                          ),
+                        );
+                        return;
+                      } else if (actionType == "WITHDRAW") {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DepositWithdrawScreen(
+                              token: widget.token,
+                              initialTab: 1,
+                              initialAmount: result['amount'].toString(),
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      String rName = result['receiver_name'] ?? "";
+                      String rPhone = "0";
+
+                      if (rName.isEmpty) {
+                        SnackbarUtils.showError(context, 'Không nghe rõ tên người nhận. Vui lòng thử lại!');
+                      } else {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.pink)),
+                        );
+
+                        try {
+                          final client = CustomHttpClient();
+                          final response = await client.get(Uri.parse('${ApiConfig.searchUsers}?q=$rName'));
+                          
+                          List<Map<String, dynamic>> matchedUsers = [];
+
+                          if (response.statusCode == 200) {
+                            final data = jsonDecode(response.body);
+                            final List users = data['data'] ?? [];
+                            for (var u in users) {
+                              matchedUsers.add({
+                                'name': u['full_name'] ?? 'Không tên',
+                                'phone': u['phone'] ?? '',
+                                'source': 'Mio App'
+                              });
+                            }
+                          }
+
+                          final PermissionStatus permissionStatus = await Permission.contacts.request();
+                          if (permissionStatus == PermissionStatus.granted) {
+                            final contacts = await FlutterContacts.getContacts(withProperties: true);
+                            String searchName = rName.toLowerCase();
+                            for (var contact in contacts) {
+                              String displayName = contact.displayName.toLowerCase();
+                              if (displayName.contains(searchName) || searchName.contains(displayName)) {
+                                if (contact.phones.isNotEmpty) {
+                                  String num = contact.phones.first.number.replaceAll(RegExp(r'[^0-9+]'), '');
+                                  if (num.startsWith('+84')) num = '0${num.substring(3)}';
+                                  if (num.startsWith('84')) num = '0${num.substring(2)}';
+                                  if (num.length >= 10 && num.length <= 11) {
+                                    bool exists = matchedUsers.any((u) => u['phone'] == num);
+                                    if (!exists) {
+                                      matchedUsers.add({
+                                        'name': contact.displayName,
+                                        'phone': num,
+                                        'source': 'Danh bạ'
+                                      });
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+
+                          if (mounted) Navigator.pop(context); // Tắt loading
+
+                          if (matchedUsers.isEmpty) {
+                            SnackbarUtils.showError(context, 'Không tìm thấy "$rName" trong danh bạ hoặc trên hệ thống.');
+                          } else if (matchedUsers.length == 1) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransferConfirmScreen(
+                                  token: widget.token,
+                                  receiverPhone: matchedUsers[0]['phone'],
+                                  receiverName: matchedUsers[0]['name'],
+                                  amount: result['amount'].toString(),
+                                  note: result['note'] ?? "",
+                                ),
+                              ),
+                            );
+                          } else {
+                            final selected = await showModalBottomSheet<Map<String, dynamic>>(
+                              context: context,
+                              backgroundColor: Colors.white,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+                              ),
+                              builder: (context) {
+                                return SafeArea(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text("Tìm thấy nhiều kết quả, vui lòng chọn:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      const SizedBox(height: 8),
+                                      const Divider(),
+                                      Flexible(
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: matchedUsers.length,
+                                          itemBuilder: (context, index) {
+                                            final u = matchedUsers[index];
+                                            return ListTile(
+                                              leading: CircleAvatar(
+                                                backgroundColor: u['source'] == 'Mio App' ? Colors.blue.shade100 : Colors.green.shade100,
+                                                child: Icon(
+                                                  u['source'] == 'Mio App' ? Icons.app_shortcut : Icons.contacts, 
+                                                  color: u['source'] == 'Mio App' ? Colors.blue : Colors.green, 
+                                                  size: 20
+                                                ),
+                                              ),
+                                              title: Text(u['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              subtitle: Text('${u['phone']} • ${u['source']}'),
+                                              onTap: () => Navigator.pop(context, u),
+                                            );
+                                          }
+                                        )
+                                      )
+                                    ]
+                                  )
+                                );
+                              }
+                            );
+
+                            if (selected != null) {
+                              if (mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TransferConfirmScreen(
+                                      token: widget.token,
+                                      receiverPhone: selected['phone'],
+                                      receiverName: selected['name'],
+                                      amount: result['amount'].toString(),
+                                      note: result['note'] ?? "",
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          debugPrint("Voice Transfer search error: $e");
+                          if (mounted) Navigator.pop(context); // Đảm bảo tắt loading nếu lỗi
+                        }
+                      }
+                    }
+                  }
+                },
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.pink.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.mic_rounded,
+                    size: 22,
+                    color: Colors.pink,
+                  ),
                 ),
               ),
             ],

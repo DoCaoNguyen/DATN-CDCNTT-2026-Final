@@ -17,7 +17,8 @@ import 'bank_link_screen.dart';
 class DepositWithdrawScreen extends StatefulWidget {
   final String token;
   final int initialTab;
-  const DepositWithdrawScreen({Key? key, required this.token, this.initialTab = 0}) : super(key: key);
+  final String? initialAmount;
+  const DepositWithdrawScreen({Key? key, required this.token, this.initialTab = 0, this.initialAmount}) : super(key: key);
 
   @override
   State<DepositWithdrawScreen> createState() => _DepositWithdrawScreenState();
@@ -55,6 +56,9 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   void initState() {
     super.initState();
     _activeTab = widget.initialTab;
+    if (widget.initialAmount != null && widget.initialAmount!.isNotEmpty) {
+      _amountController.text = _formatAmountValue(widget.initialAmount!);
+    }
     _fetchLinkedBanks();
     _fetchMioBalance();
   }
