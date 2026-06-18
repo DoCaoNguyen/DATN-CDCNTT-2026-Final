@@ -1,6 +1,9 @@
 const bcrypt = require('bcrypt');
 const adminRepository = require('./admin.repository');
 const walletRepository = require('../wallet/wallet.repository');
+const walletService = require('../wallet/wallet.service');
+const authService = require('../auth/auth.service');
+const auditLogService = require('../system/audit_log.service');
 
 const SYSTEM_ROLES = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT_STAFF'];
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -218,6 +221,39 @@ const adminService = {
         return adminService.getUserDetail(userId);
     },
 
+    resetUserPassword: async ({
+        actor,
+        userId,
+        newPassword,
+        confirmNewPassword,
+        reason,
+        ipAddress,
+        userAgent
+    }) => {
+        ensureWriteAccess(actor);
+        ensureUuid(userId, 'Invalid_User_Id');
+        const user = await adminRepository.findUserRawById(userId);
+        if (!user) throw new Error('User_Not_Found');
+        if (SYSTEM_ROLES.includes(user.user_type) && !isSuperAdmin(actor)) {
+            throw new Error('Super_Admin_Required');
+        }
+
+        return authService.resetPasswordByAdmin({
+            actorId: actor.userId || actor.id,
+            userId,
+            newPassword,
+            confirmNewPassword,
+            reason,
+            ipAddress,
+            userAgent
+        });
+    },
+
+    getUserAuditLogs: async ({ userId, query }) => {
+        await adminService.getUserDetail(userId);
+        return auditLogService.listForUser({ userId, query });
+    },
+
     listWallets: async (query) => {
         return adminRepository.listWallets({
             page: query.page,
@@ -263,6 +299,32 @@ const adminService = {
             page: query.page,
             limit: query.limit
         });
+    },
+
+    lockWallet: async ({ actor, walletId, reason, ipAddress, userAgent }) => {
+        ensureWriteAccess(actor);
+        await walletService.lockByAdmin({
+            walletId,
+            actorId: actor.userId || actor.id,
+            reason,
+            ipAddress,
+            userAgent
+        });
+
+        return adminService.getWalletDetail(walletId);
+    },
+
+    unlockWallet: async ({ actor, walletId, reason, ipAddress, userAgent }) => {
+        ensureWriteAccess(actor);
+        await walletService.unlockByAdmin({
+            walletId,
+            actorId: actor.userId || actor.id,
+            reason,
+            ipAddress,
+            userAgent
+        });
+
+        return adminService.getWalletDetail(walletId);
     }
 };
 

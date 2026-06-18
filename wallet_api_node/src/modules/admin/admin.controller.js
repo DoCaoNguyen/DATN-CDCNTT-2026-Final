@@ -31,12 +31,17 @@ function handleAdminError(res, err, logPrefix) {
         Invalid_User_Id: [400, 'VALIDATION_ERROR', 'User ID khong hop le'],
         Invalid_Wallet_Id: [400, 'VALIDATION_ERROR', 'Wallet ID khong hop le'],
         Password_Policy_Invalid: [400, 'VALIDATION_ERROR', 'Mat khau phai co toi thieu 8 ky tu'],
+        Password_Confirm_Not_Match: [400, 'VALIDATION_ERROR', 'Mat khau xac nhan khong khop'],
+        Invalid_Date_Filter: [400, 'VALIDATION_ERROR', 'Bo loc thoi gian khong hop le'],
         Invalid_User_Type: [400, 'VALIDATION_ERROR', 'Loai user khong hop le'],
         Invalid_User_Status: [400, 'VALIDATION_ERROR', 'Trang thai user khong hop le'],
         User_Conflict: [409, 'CONFLICT', 'Username, email hoac so dien thoai da ton tai'],
         Role_Not_Found: [400, 'VALIDATION_ERROR', 'Role khong ton tai hoac khong hoat dong'],
         User_Not_Found: [404, 'USER_NOT_FOUND', 'Khong tim thay user'],
         Wallet_Not_Found: [404, 'WALLET_NOT_FOUND', 'Khong tim thay vi'],
+        Wallet_Closed: [409, 'WALLET_CLOSED', 'Vi da dong vinh vien'],
+        Wallet_Already_Locked: [409, 'WALLET_ALREADY_LOCKED', 'Vi da bi khoa'],
+        Wallet_Not_Locked: [409, 'WALLET_NOT_LOCKED', 'Vi khong o trang thai khoa'],
         Admin_Write_Forbidden: [403, 'FORBIDDEN', 'Tai khoan admin hien tai khong co quyen ghi'],
         Super_Admin_Required: [403, 'FORBIDDEN', 'Chi Super Admin duoc thuc hien thao tac nay'],
         Cannot_Lock_Self: [400, 'VALIDATION_ERROR', 'Khong the khoa chinh tai khoan dang dang nhap'],
@@ -136,6 +141,34 @@ const adminController = {
         }
     },
 
+    resetUserPassword: async (req, res) => {
+        try {
+            const result = await adminService.resetUserPassword({
+                actor: req.user,
+                userId: req.params.id,
+                newPassword: req.body.new_password,
+                confirmNewPassword: req.body.confirm_new_password,
+                reason: req.body.reason,
+                ...getRequestMeta(req)
+            });
+            return success(res, result, 'Reset mat khau user thanh cong');
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin reset user password:');
+        }
+    },
+
+    getUserAuditLogs: async (req, res) => {
+        try {
+            const result = await adminService.getUserAuditLogs({
+                userId: req.params.id,
+                query: req.query
+            });
+            return success(res, result, 'Lay audit log cua user thanh cong');
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin get user audit logs:');
+        }
+    },
+
     listWallets: async (req, res) => {
         try {
             const result = await adminService.listWallets(req.query);
@@ -172,6 +205,34 @@ const adminController = {
             return success(res, result, 'Lay ledger vi thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin get wallet ledger:');
+        }
+    },
+
+    lockWallet: async (req, res) => {
+        try {
+            const result = await adminService.lockWallet({
+                actor: req.user,
+                walletId: req.params.wallet_id,
+                reason: req.body.reason,
+                ...getRequestMeta(req)
+            });
+            return success(res, result, 'Khoa vi thanh cong');
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin lock wallet:');
+        }
+    },
+
+    unlockWallet: async (req, res) => {
+        try {
+            const result = await adminService.unlockWallet({
+                actor: req.user,
+                walletId: req.params.wallet_id,
+                reason: req.body.reason,
+                ...getRequestMeta(req)
+            });
+            return success(res, result, 'Mo khoa vi thanh cong');
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin unlock wallet:');
         }
     }
 };

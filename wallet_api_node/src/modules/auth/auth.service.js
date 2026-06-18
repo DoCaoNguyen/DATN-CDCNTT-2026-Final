@@ -6,6 +6,7 @@ const { sendOTP, verifyOTP } = require('../../utils/sms');
 const authRepository = require('./auth.repository');
 const walletRepository = require('../wallet/wallet.repository');
 const otpRepository = require('../system/otp.repository');
+const auditLogRepository = require('../system/audit_log.repository');
 
 const ACCESS_TOKEN_TTL_SECONDS = Number(process.env.JWT_ACCESS_TTL_SECONDS || process.env.JWT_EXPIRES_SECONDS || 15 * 60);
 const REFRESH_TOKEN_TTL_DAYS = Number(process.env.JWT_REFRESH_TTL_DAYS || process.env.REFRESH_TOKEN_DAYS || 30);
@@ -550,6 +551,59 @@ const authService = {
         });
 
         return true;
+    },
+
+    resetPasswordByAdmin: async ({
+        actorId,
+        userId,
+        newPassword,
+        confirmNewPassword,
+        reason,
+        ipAddress,
+        userAgent
+    }) => {
+        if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
+        validatePassword(newPassword);
+        if (!reason || !String(reason).trim()) throw new Error('Reason_Required');
+
+        const user = await authRepository.findUserContextById(userId);
+        if (!user) throw new Error('User_Not_Found');
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await authRepository.updatePasswordHash(client, userId, await bcrypt.hash(newPassword, 10));
+            const tokenVersion = await authRepository.incrementTokenVersionWithClient(client, userId);
+            await authRepository.revokeAllRefreshTokensForUserWithClient(client, userId, ipAddress);
+            await authRepository.revokeUnusedPasswordResetsWithClient(client, userId);
+            await auditLogRepository.create({
+                client,
+                actorType: 'ADMIN',
+                actorId,
+                action: 'USER_PASSWORD_RESET',
+                entityType: 'users',
+                entityId: userId,
+                metadata: {
+                    sessions_revoked: true,
+                    token_version: tokenVersion
+                },
+                reason: String(reason).trim(),
+                ipAddress,
+                userAgent
+            });
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+
+        return {
+            user_id: userId,
+            sessions_revoked: true,
+            password_reset: true
+        };
     }
 };
 

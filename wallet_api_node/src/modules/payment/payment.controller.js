@@ -39,6 +39,7 @@ const paymentController = {
                 'QR_Expired': 'Mã QR đã hết hạn, vui lòng tạo lại',
                 'Order_Already_Processed': 'Đơn hàng này đã được thanh toán hoặc đã hủy',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
+                'Wallet_Not_Active': 'Ví đang bị khóa hoặc không còn hoạt động',
                 'Insufficient_Balance': 'Số dư trong ví không đủ để thanh toán'
             };
 

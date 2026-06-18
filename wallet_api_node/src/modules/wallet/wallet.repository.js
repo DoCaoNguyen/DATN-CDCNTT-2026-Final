@@ -28,6 +28,67 @@ const walletRepository = {
         return result.rows[0];
     },
 
+    findByUserIdForUpdate: async (client, userId) => {
+        const result = await client.query(`
+            SELECT id, user_id, wallet_no, status
+            FROM wallets
+            WHERE user_id = $1
+            FOR UPDATE
+        `, [userId]);
+        return result.rows[0];
+    },
+
+    findById: async (walletId, client = pool) => {
+        const result = await client.query(`
+            SELECT id, user_id, wallet_no, wallet_code, wallet_type, currency, status,
+                   lock_reason, locked_at, locked_by, closed_at, created_at, updated_at
+            FROM wallets
+            WHERE id = $1
+        `, [walletId]);
+        return result.rows[0];
+    },
+
+    findByIdForUpdate: async (client, walletId) => {
+        const result = await client.query(`
+            SELECT id, user_id, wallet_no, wallet_code, wallet_type, currency, status,
+                   lock_reason, locked_at, locked_by, closed_at, created_at, updated_at
+            FROM wallets
+            WHERE id = $1
+            FOR UPDATE
+        `, [walletId]);
+        return result.rows[0];
+    },
+
+    lockByAdmin: async (client, { walletId, actorId, reason }) => {
+        const result = await client.query(`
+            UPDATE wallets
+            SET status = 'LOCKED',
+                lock_reason = $2,
+                locked_at = CURRENT_TIMESTAMP,
+                locked_by = $3,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            RETURNING id, user_id, wallet_no, wallet_code, wallet_type, currency, status,
+                      lock_reason, locked_at, locked_by, closed_at, created_at, updated_at
+        `, [walletId, reason, actorId]);
+        return result.rows[0];
+    },
+
+    unlockByAdmin: async (client, walletId) => {
+        const result = await client.query(`
+            UPDATE wallets
+            SET status = 'ACTIVE',
+                lock_reason = NULL,
+                locked_at = NULL,
+                locked_by = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            RETURNING id, user_id, wallet_no, wallet_code, wallet_type, currency, status,
+                      lock_reason, locked_at, locked_by, closed_at, created_at, updated_at
+        `, [walletId]);
+        return result.rows[0];
+    },
+
     getBalanceByUserId: async (userId) => {
         const query = `
             SELECT 

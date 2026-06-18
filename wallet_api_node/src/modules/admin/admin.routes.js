@@ -189,9 +189,73 @@ router.use(authenticateJwt, requireAdmin);
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [new_password, confirm_new_password, reason]
+ *             properties:
+ *               new_password:
+ *                 type: string
+ *                 example: NewPassword@123
+ *               confirm_new_password:
+ *                 type: string
+ *                 example: NewPassword@123
+ *               reason:
+ *                 type: string
+ *                 example: User requested account recovery
  *     responses:
  *       200:
  *         description: Password reset
+ *       400:
+ *         description: Du lieu khong hop le
+ *       403:
+ *         description: Khong co quyen reset tai khoan nay
+ * /api/v1/admin/users/{id}/audit-logs:
+ *   get:
+ *     summary: Admin xem audit log lien quan user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: page_size
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Audit logs cua user
  */
 router.get('/users', requirePermission('admin.users.manage'), adminController.listUsers);
 router.post('/users', requirePermission('admin.users.manage'), adminController.createUser);
@@ -200,7 +264,8 @@ router.patch('/users/:id', requirePermission('admin.users.manage'), adminControl
 router.get('/users/:id/wallet', requirePermission('admin.users.manage', 'wallets.read'), adminController.getUserWallet);
 router.post('/users/:id/actions/lock', requirePermission('admin.users.manage'), adminController.lockUser);
 router.post('/users/:id/actions/unlock', requirePermission('admin.users.manage'), adminController.unlockUser);
-router.post('/users/:id/actions/reset-password', notImplemented('POST /admin/users/{id}/actions/reset-password'));
+router.post('/users/:id/actions/reset-password', requirePermission('admin.users.manage'), adminController.resetUserPassword);
+router.get('/users/:id/audit-logs', requirePermission('audit_logs.read'), adminController.getUserAuditLogs);
 
 /**
  * @swagger
@@ -352,9 +417,24 @@ router.get('/permissions', notImplemented('GET /admin/permissions'));
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 example: Giao dịch bị nghi ngờ là gian lận
  *     responses:
  *       200:
  *         description: Wallet locked
+ *       400:
+ *         description: Thieu ly do hoac wallet_id khong hop le
+ *       409:
+ *         description: Vi da khoa hoac da dong
  * /api/v1/admin/wallets/{wallet_id}/actions/unlock:
  *   post:
  *     summary: Admin mo khoa vi
@@ -367,16 +447,31 @@ router.get('/permissions', notImplemented('GET /admin/permissions'));
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 example: Đánh giá rủi ro đã hoàn thành
  *     responses:
  *       200:
  *         description: Wallet unlocked
+ *       400:
+ *         description: Thieu ly do hoac wallet_id khong hop le
+ *       409:
+ *         description: Vi khong bi khoa hoac da dong
  */
 router.get('/wallets', requirePermission('wallets.read'), adminController.listWallets);
 router.get('/wallets/:wallet_id', requirePermission('wallets.read'), adminController.getWalletDetail);
 router.get('/wallets/:wallet_id/summary', requirePermission('wallets.read'), adminController.getWalletSummary);
 router.get('/wallets/:wallet_id/ledger', requirePermission('wallets.read'), adminController.getWalletLedger);
-router.post('/wallets/:wallet_id/actions/lock', notImplemented('POST /admin/wallets/{wallet_id}/actions/lock'));
-router.post('/wallets/:wallet_id/actions/unlock', notImplemented('POST /admin/wallets/{wallet_id}/actions/unlock'));
+router.post('/wallets/:wallet_id/actions/lock', requirePermission('wallets.lock'), adminController.lockWallet);
+router.post('/wallets/:wallet_id/actions/unlock', requirePermission('wallets.lock'), adminController.unlockWallet);
 
 /**
  * @swagger

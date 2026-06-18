@@ -162,6 +162,16 @@ const authRepository = {
         return result.rows[0].token_version;
     },
 
+    incrementTokenVersionWithClient: async (client, userId) => {
+        const result = await client.query(`
+            UPDATE users
+            SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            RETURNING token_version
+        `, [userId]);
+        return result.rows[0]?.token_version;
+    },
+
     createRefreshToken: async ({ userId, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent }) => {
         const newId = uuidv7();
         const query = `
@@ -242,6 +252,23 @@ const authRepository = {
             WHERE user_id = $1 AND revoked_at IS NULL
         `;
         await pool.query(query, [userId, ipAddress || null]);
+    },
+
+    revokeAllRefreshTokensForUserWithClient: async (client, userId, ipAddress) => {
+        await client.query(`
+            UPDATE refresh_tokens
+            SET revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP),
+                revoked_by_ip = COALESCE(revoked_by_ip, $2)
+            WHERE user_id = $1 AND revoked_at IS NULL
+        `, [userId, ipAddress || null]);
+    },
+
+    revokeUnusedPasswordResetsWithClient: async (client, userId) => {
+        await client.query(`
+            UPDATE password_resets
+            SET used_at = COALESCE(used_at, CURRENT_TIMESTAMP)
+            WHERE user_id = $1 AND used_at IS NULL
+        `, [userId]);
     },
 
     recordLoginAttempt: async ({ loginId, userId, success, failureReason, ipAddress, userAgent }) => {

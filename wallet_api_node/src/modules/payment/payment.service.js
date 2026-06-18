@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const pool = require('../../config/db');
 const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
+const walletRepository = require('../wallet/wallet.repository');
 
 const paymentService = {
     createDynamicQR: async (merchantId, amount, callbackUrl, description) => {
@@ -63,8 +64,9 @@ const paymentService = {
             if (order.status !== 'PENDING') throw new Error('Order_Already_Processed');
 
             
-            const wallet = await txRepo.getWalletByUserId(userId);
+            const wallet = await walletRepository.findByUserIdForUpdate(client, userId);
             if (!wallet) throw new Error('Wallet_Not_Found');
+            if (wallet.status !== 'ACTIVE') throw new Error('Wallet_Not_Active');
 
             
             const balanceBefore = await txRepo.lockAndGetBalance(client, wallet.id);

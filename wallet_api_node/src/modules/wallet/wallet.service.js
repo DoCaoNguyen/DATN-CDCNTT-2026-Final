@@ -1,6 +1,37 @@
 const bcrypt = require('bcrypt');
+const pool = require('../../config/db');
 const walletRepository = require('./wallet.repository');
 const transactionRepo = require('../transaction/transaction.repository');
+const auditLogRepository = require('../system/audit_log.repository');
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function requireWalletId(walletId) {
+    if (!UUID_REGEX.test(String(walletId || ''))) {
+        throw new Error('Invalid_Wallet_Id');
+    }
+}
+
+function requireReason(reason) {
+    const normalized = typeof reason === 'string' ? reason.trim() : '';
+    if (!normalized) throw new Error('Reason_Required');
+    return normalized;
+}
+
+async function withTransaction(callback) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await callback(client);
+        await client.query('COMMIT');
+        return result;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+}
 
 const walletService = {
     getWalletInfo: async (userId) => {
@@ -37,6 +68,85 @@ const walletService = {
                 can_payment: wallet.status === 'ACTIVE'
             }
         };
+    },
+
+    lockByAdmin: async ({ walletId, actorId, reason, ipAddress, userAgent }) => {
+        requireWalletId(walletId);
+        const normalizedReason = requireReason(reason);
+
+        return withTransaction(async (client) => {
+            const wallet = await walletRepository.findByIdForUpdate(client, walletId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+            if (wallet.status === 'CLOSED') throw new Error('Wallet_Closed');
+            if (wallet.status === 'LOCKED') throw new Error('Wallet_Already_Locked');
+
+            const updated = await walletRepository.lockByAdmin(client, {
+                walletId,
+                actorId,
+                reason: normalizedReason
+            });
+
+            await auditLogRepository.create({
+                client,
+                actorType: 'ADMIN',
+                actorId,
+                action: 'WALLET_LOCKED',
+                entityType: 'wallets',
+                entityId: walletId,
+                oldData: { status: wallet.status },
+                newData: {
+                    status: updated.status,
+                    lock_reason: updated.lock_reason,
+                    locked_at: updated.locked_at,
+                    locked_by: updated.locked_by
+                },
+                metadata: { wallet_no: wallet.wallet_no },
+                reason: normalizedReason,
+                ipAddress,
+                userAgent
+            });
+
+            return updated;
+        });
+    },
+
+    unlockByAdmin: async ({ walletId, actorId, reason, ipAddress, userAgent }) => {
+        requireWalletId(walletId);
+        const normalizedReason = requireReason(reason);
+
+        return withTransaction(async (client) => {
+            const wallet = await walletRepository.findByIdForUpdate(client, walletId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+            if (wallet.status === 'CLOSED') throw new Error('Wallet_Closed');
+            if (wallet.status !== 'LOCKED') throw new Error('Wallet_Not_Locked');
+
+            const updated = await walletRepository.unlockByAdmin(client, walletId);
+
+            await auditLogRepository.create({
+                client,
+                actorType: 'ADMIN',
+                actorId,
+                action: 'WALLET_UNLOCKED',
+                entityType: 'wallets',
+                entityId: walletId,
+                oldData: {
+                    status: wallet.status,
+                    lock_reason: wallet.lock_reason,
+                    locked_at: wallet.locked_at,
+                    locked_by: wallet.locked_by
+                },
+                newData: { status: updated.status },
+                metadata: {
+                    wallet_no: wallet.wallet_no,
+                    previous_lock_reason: wallet.lock_reason
+                },
+                reason: normalizedReason,
+                ipAddress,
+                userAgent
+            });
+
+            return updated;
+        });
     },
 
     setWalletCode: async (userId, pinCode) => {
