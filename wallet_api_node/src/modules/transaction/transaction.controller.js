@@ -32,7 +32,9 @@ const transactionController = {
                 'PIN_Required': 'Vui lòng cung cấp mã PIN',
                 'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
                 'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
-                'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.'
+                'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
+                'Bank_Insufficient_Balance': 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.',
+                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.'
               };
 
             if (errorMap[error.message]) {
@@ -77,7 +79,9 @@ const transactionController = {
                 'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
                 'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
                 'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
-                'Insufficient_Balance': 'Số dư trong ví không đủ để rút số tiền này.'
+                'Insufficient_Balance': 'Số dư trong ví không đủ để rút số tiền này.',
+                'Bank_Insufficient_Balance': 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.',
+                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.'
             };
 
             if (errorMap[error.message]) {
@@ -131,7 +135,9 @@ const transactionController = {
                 'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
                 'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
                 'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
-                'Insufficient_Balance': 'Số dư trong ví không đủ để thực hiện giao dịch này.'
+                'Insufficient_Balance': 'Số dư trong ví không đủ để thực hiện giao dịch này.',
+                'Bank_Insufficient_Balance': 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.',
+                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.'
             };
 
             if (errorMap[error.message]) {
@@ -192,12 +198,19 @@ const transactionController = {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
 
+        // Lấy filter params
+        const filters = {};
+        if (req.query.type) filters.type = req.query.type;
+        if (req.query.startDate) filters.startDate = req.query.startDate;
+        if (req.query.endDate) filters.endDate = req.query.endDate;
+
         try {
-            const history = await txService.getTransactionHistory(userId, page, limit);
+            const history = await txService.getTransactionHistory(userId, page, limit, filters);
             res.status(200).json({
                 success: true,
                 page,
                 limit,
+                filters: Object.keys(filters).length > 0 ? filters : undefined,
                 data: history
             });
         } catch (error) {

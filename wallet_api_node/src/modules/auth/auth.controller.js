@@ -1,6 +1,19 @@
 const authService = require('./auth.service');
+const authRepository = require('./auth.repository');
 
 const authController = {
+    checkPhone: async (req, res) => {
+        const { phone } = req.body;
+        if (!phone) return res.status(400).json({ error: 'Cần cung cấp Số điện thoại' });
+        try {
+            const isExist = await authRepository.checkExists(null, phone);
+            res.status(200).json({ isExist });
+        } catch (error) {
+            console.error('Lỗi checkPhone:', error);
+            res.status(500).json({ error: 'Lỗi server' });
+        }
+    },
+
     sendOtp: async (req, res) => {
         const { email, phone } = req.body;
         if (!phone) return res.status(400).json({ error: 'Cần cung cấp Số điện thoại' });

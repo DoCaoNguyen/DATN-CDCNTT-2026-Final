@@ -1,6 +1,7 @@
 const pool = require('../../config/db');
 const splitBillRepository = require('./split_bill.repository');
 const txService = require('../transaction/transaction.service');
+const notificationService = require('../notification/notification.service');
 
 const splitBillService = {
     createBill: async (creatorId, totalAmount, splitAmount, note, members, includeMe) => {
@@ -62,6 +63,27 @@ const splitBillService = {
 
         await splitBillRepository.updateMemberStatusToPaid(memberRecordId);
         await splitBillRepository.checkPendingMembersAndCompleteBill(record.split_bill_id);
+    },
+
+    remindBill: async (creatorId, billId) => {
+        const members = await splitBillRepository.getPendingMembers(billId, creatorId);
+        if (!members || members.length === 0) return;
+        
+        for (const member of members) {
+             if (member.user_id) {
+                 await notificationService.sendBalanceChangeNotification(
+                     member.user_id,
+                     member.amount,
+                     'TRANSFER_RECEIVE', // Dùng tạm TRANSFER_RECEIVE để mượn Push Notif có chuông hoặc tạo Type mới
+                     null,
+                     'Yêu cầu thanh toán khoản tiền chia'
+                 ).catch(console.error);
+             }
+        }
+    },
+
+    cancelBill: async (creatorId, billId) => {
+        await splitBillRepository.cancelBill(billId, creatorId);
     }
 };
 

@@ -58,6 +58,11 @@ const transactionService = {
         try {
             await client.query('BEGIN'); 
 
+            // SANDBOX SIMULATION: Nạp tiền thất bại nếu số tiền có tận cùng là 999 (ví dụ: 10,999)
+            if (amount % 1000n === 999n) {
+                throw new Error('Bank_Insufficient_Balance');
+            }
+
             const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
             const balanceAfter = await repo.addBalance(client, wallet.id, amount);
 
@@ -148,6 +153,11 @@ const transactionService = {
         const client = await pool.connect();
         try {
             await client.query('BEGIN'); 
+
+            // SANDBOX SIMULATION: Rút tiền thất bại do ngân hàng bảo trì nếu số tiền tận cùng là 999
+            if (amount % 1000n === 999n) {
+                throw new Error('Bank_Maintenance');
+            }
 
             const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
             if (balanceBefore < amount) {
@@ -242,6 +252,11 @@ const transactionService = {
         const client = await pool.connect();
         try {
             await client.query('BEGIN'); 
+
+            // SANDBOX SIMULATION: Chuyển tiền tới ngân hàng thất bại nếu số tiền có tận cùng là 999
+            if (amount % 1000n === 999n) {
+                throw new Error('Bank_Maintenance');
+            }
 
             const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
             if (balanceBefore < amount) {
@@ -363,6 +378,41 @@ const transactionService = {
             const finalRef = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
             const transferId = await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, finalRef);
 
+            // Auto check and mark split bill as paid if matched
+            if (senderUserId && receiverWallet.user_id) {
+                const splitBillResult = await client.query(`
+                    SELECT sbm.id, sb.id as bill_id 
+                    FROM split_bill_members sbm
+                    JOIN split_bills sb ON sbm.split_bill_id = sb.id
+                    WHERE sbm.user_id = $1 
+                      AND sb.creator_id = $2 
+                      AND sbm.status != 'PAID'
+                      AND sbm.amount = $3
+                    LIMIT 1
+                `, [senderUserId, receiverWallet.user_id, amount]);
+
+                if (splitBillResult.rows.length > 0) {
+                    const memberId = splitBillResult.rows[0].id;
+                    const billId = splitBillResult.rows[0].bill_id;
+                    await client.query(`
+                        UPDATE split_bill_members 
+                        SET status = 'PAID', paid_at = CURRENT_TIMESTAMP 
+                        WHERE id = $1
+                    `, [memberId]);
+
+                    const pendingResult = await client.query(`
+                        SELECT id FROM split_bill_members 
+                        WHERE split_bill_id = $1 AND status != 'PAID'
+                    `, [billId]);
+                    
+                    if (pendingResult.rows.length === 0) {
+                        await client.query(`
+                            UPDATE split_bills SET status = 'COMPLETED' WHERE id = $1
+                        `, [billId]);
+                    }
+                }
+            }
+
             await client.query('COMMIT');
 
             // Trigger AI Categorization in background
@@ -423,12 +473,12 @@ const transactionService = {
         }
     },
 
-    getTransactionHistory: async (userId, page = 1, limit = 20) => {
+    getTransactionHistory: async (userId, page = 1, limit = 20, filters = {}) => {
         const wallet = await repo.getWalletByUserId(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
         const offset = (page - 1) * limit;
-        const history = await repo.getTransactionHistory(wallet.id, limit, offset);
+        const history = await repo.getTransactionHistory(wallet.id, limit, offset, filters);
 
         return history.map(item => {
             let ref = item.external_reference;

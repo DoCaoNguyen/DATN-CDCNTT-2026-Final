@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'dart:math' as math;
 import 'change_pin_screen.dart';
+import 'malware_scan_screen.dart';
+import 'package:safe_device/safe_device.dart';
 
 class LoginSecurityScreen extends StatefulWidget {
   final String token;
@@ -22,6 +24,37 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
   bool _quickLoginEnabled = true;
   bool _showMoreSecurity = false;
   String _autoLockOption = 'Không';
+  
+  int _riskCount = 0;
+  bool _isLoadingRisk = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRisks();
+  }
+
+  Future<void> _checkRisks() async {
+    int count = 0;
+    try {
+      if (await SafeDevice.isJailBroken) count++;
+      if (!(await SafeDevice.isRealDevice)) count++;
+      if (await SafeDevice.isMockLocation) count++;
+      if (await SafeDevice.isDevelopmentModeEnable) {
+        count++;
+      } else if (!(await SafeDevice.isSafeDevice)) {
+        count++;
+      }
+    } catch (e) {
+      debugPrint("Lỗi quét bảo mật nền: $e");
+    }
+    if (mounted) {
+      setState(() {
+        _riskCount = count;
+        _isLoadingRisk = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,12 +306,43 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
+                if (_isLoadingRisk)
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey),
+                  )
+                else if (_riskCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      border: Border.all(color: Colors.red.shade200),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$_riskCount',
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
                 const SizedBox(width: 8),
                 const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
               ],
             ),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MalwareScanScreen()),
+              );
+            },
           ),
           const Divider(height: 1, indent: 56, color: Color(0xFFF0F0F0)),
           // Smart OTP

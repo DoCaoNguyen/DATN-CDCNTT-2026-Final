@@ -1,13 +1,17 @@
-const pool = require('../../config/db');
+const SystemLog = require('./models/system_log.model');
 
 const logRepository = {
-    
     writeSystemLog: async (serviceName, logLevel, message, metadata) => {
-        const query = `
-            INSERT INTO system_logs (service_name, log_level, message, metadata)
-            VALUES ($1, $2, $3, $4)
-        `;
-        await pool.query(query, [serviceName, logLevel, message, JSON.stringify(metadata)]);
+        try {
+            await SystemLog.create({
+                service_name: serviceName,
+                log_level: logLevel,
+                message: message,
+                metadata: metadata
+            });
+        } catch (error) {
+            console.error('[SystemLog] Lỗi ghi log vào MongoDB:', error);
+        }
     }
 };
 

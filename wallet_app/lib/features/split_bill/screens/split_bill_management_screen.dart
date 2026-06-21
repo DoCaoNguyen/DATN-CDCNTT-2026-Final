@@ -108,6 +108,71 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen> w
     }
   }
 
+  Future<void> _handleCancel(String billId) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận hủy'),
+        content: const Text('Bạn có chắc chắn muốn hủy yêu cầu chia tiền này không? (Sẽ xóa khỏi danh sách)'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Không', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Có', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final response = await _client.post(
+        Uri.parse('${ApiConfig.baseUrl}/split-bill/cancel/$billId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        _showSuccessDialog('Đã hủy yêu cầu chia tiền thành công.');
+        _loadData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể hủy yêu cầu')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi kết nối mạng')));
+    }
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
+              child: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 48),
+            ),
+            const SizedBox(height: 20),
+            const Text('Thành công', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5)),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity, height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE91E63), foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Đóng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -542,15 +607,30 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen> w
                   if (!isCompleted) ...[
                     const Text("Chưa nhận đủ", style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.w600, fontSize: 13)),
                     const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: () => _handleRemind(item['id'].toString()),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFE91E63)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                        minimumSize: const Size(0, 32),
-                      ),
-                      child: const Text("Nhắc nhở", style: TextStyle(color: Color(0xFFE91E63), fontSize: 13, fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => _handleCancel(item['id'].toString()),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.grey),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            minimumSize: const Size(0, 32),
+                          ),
+                          child: const Text("Hủy", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          onPressed: () => _handleRemind(item['id'].toString()),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFE91E63)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            minimumSize: const Size(0, 32),
+                          ),
+                          child: const Text("Nhắc nhở", style: TextStyle(color: Color(0xFFE91E63), fontSize: 13, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
                   ] else ...[
                     const Text("Đã nhận đủ", style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 13)),

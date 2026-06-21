@@ -165,7 +165,43 @@ const transactionRepository = {
         await pool.query(query, [walletId]);
     },
 
-    getTransactionHistory: async (walletId, limit = 20, offset = 0) => {
+    getTransactionHistory: async (walletId, limit = 20, offset = 0, filters = {}) => {
+        let paramIndex = 1;
+        const params = [walletId];
+        let whereExtra = '';
+
+        // Filter theo loại giao dịch (DEPOSIT, TRANSFER, WITHDRAW, PAYMENT)
+        if (filters.type) {
+            paramIndex++;
+            whereExtra += ` AND lt.transaction_type = $${paramIndex}`;
+            params.push(filters.type.toUpperCase());
+        }
+
+        // Filter theo ngày bắt đầu
+        if (filters.startDate) {
+            paramIndex++;
+            whereExtra += ` AND le.created_at >= $${paramIndex}`;
+            params.push(new Date(filters.startDate));
+        }
+
+        // Filter theo ngày kết thúc
+        if (filters.endDate) {
+            paramIndex++;
+            whereExtra += ` AND le.created_at <= $${paramIndex}`;
+            // Đặt endDate về cuối ngày
+            const endDate = new Date(filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            params.push(endDate);
+        }
+
+        paramIndex++;
+        const limitParam = paramIndex;
+        params.push(limit);
+
+        paramIndex++;
+        const offsetParam = paramIndex;
+        params.push(offset);
+
         const query = `
             SELECT 
                 le.id AS entry_id,
@@ -181,11 +217,11 @@ const transactionRepository = {
                 lt.status,
                 le.created_at,
                 wt.note AS transfer_note,
-                u_sender.full_name AS sender_name,
-                u_sender.phone AS sender_phone,
-                u_receiver.full_name AS receiver_name,
+                COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,
+                COALESCE(u_sender.phone, u_payer.phone) AS sender_phone,
+                COALESCE(u_receiver.full_name, m.merchant_name) AS receiver_name,
                 u_receiver.phone AS receiver_phone,
-                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code) AS external_reference
+                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code, po.order_code) AS external_reference
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.transaction_id = lt.id
             LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
@@ -195,11 +231,16 @@ const transactionRepository = {
             LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
             LEFT JOIN deposit_transactions dt ON lt.id = dt.ledger_transaction_id
             LEFT JOIN withdrawal_transactions wt_act ON lt.id = wt_act.ledger_transaction_id
-            WHERE le.wallet_id = $1
+            LEFT JOIN payment_transactions pt_pay ON lt.id = pt_pay.ledger_transaction_id
+            LEFT JOIN payment_orders po ON pt_pay.payment_order_id = po.id
+            LEFT JOIN merchants m ON po.merchant_id = m.id
+            LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
+            LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
+            WHERE le.wallet_id = $1${whereExtra}
             ORDER BY le.created_at DESC
-            LIMIT $2 OFFSET $3;
+            LIMIT $${limitParam} OFFSET $${offsetParam};
         `;
-        const result = await pool.query(query, [walletId, limit, offset]);
+        const result = await pool.query(query, params);
         return result.rows;
     },
 
@@ -219,11 +260,11 @@ const transactionRepository = {
                 lt.status,
                 le.created_at,
                 wt.note AS transfer_note,
-                u_sender.full_name AS sender_name,
-                u_sender.phone AS sender_phone,
-                u_receiver.full_name AS receiver_name,
+                COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,
+                COALESCE(u_sender.phone, u_payer.phone) AS sender_phone,
+                COALESCE(u_receiver.full_name, m.merchant_name) AS receiver_name,
                 u_receiver.phone AS receiver_phone,
-                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code) AS external_reference
+                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code, po.order_code) AS external_reference
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.transaction_id = lt.id
             LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
@@ -233,6 +274,11 @@ const transactionRepository = {
             LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
             LEFT JOIN deposit_transactions dt ON lt.id = dt.ledger_transaction_id
             LEFT JOIN withdrawal_transactions wt_act ON lt.id = wt_act.ledger_transaction_id
+            LEFT JOIN payment_transactions pt_pay ON lt.id = pt_pay.ledger_transaction_id
+            LEFT JOIN payment_orders po ON pt_pay.payment_order_id = po.id
+            LEFT JOIN merchants m ON po.merchant_id = m.id
+            LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
+            LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
             WHERE le.wallet_id = $1 AND le.created_at >= CURRENT_DATE - INTERVAL '1 year'
             ORDER BY le.created_at DESC
             LIMIT 500;
@@ -291,11 +337,11 @@ const transactionRepository = {
                 lt.status,
                 le.created_at,
                 wt.note AS transfer_note,
-                u_sender.full_name AS sender_name,
-                u_sender.phone AS sender_phone,
-                u_receiver.full_name AS receiver_name,
+                COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,
+                COALESCE(u_sender.phone, u_payer.phone) AS sender_phone,
+                COALESCE(u_receiver.full_name, m.merchant_name) AS receiver_name,
                 u_receiver.phone AS receiver_phone,
-                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code) AS external_reference
+                COALESCE(dt.external_reference, wt_act.external_reference, wt.reference_code, po.order_code) AS external_reference
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.transaction_id = lt.id
             LEFT JOIN wallet_transfers wt ON lt.id = wt.transaction_id
@@ -305,6 +351,11 @@ const transactionRepository = {
             LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
             LEFT JOIN deposit_transactions dt ON lt.id = dt.ledger_transaction_id
             LEFT JOIN withdrawal_transactions wt_act ON lt.id = wt_act.ledger_transaction_id
+            LEFT JOIN payment_transactions pt_pay ON lt.id = pt_pay.ledger_transaction_id
+            LEFT JOIN payment_orders po ON pt_pay.payment_order_id = po.id
+            LEFT JOIN merchants m ON po.merchant_id = m.id
+            LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
+            LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
             WHERE le.wallet_id = $1 
               AND EXTRACT(MONTH FROM le.created_at) = $2 
               AND EXTRACT(YEAR FROM le.created_at) = $3

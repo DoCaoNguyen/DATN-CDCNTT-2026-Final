@@ -405,16 +405,23 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
   }
 
   Widget _buildSuggestionPill(String text) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.black87),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _noteController.text = text;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.black87),
+        ),
       ),
     );
   }
@@ -453,10 +460,38 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                     color: isActive ? Colors.black87 : Colors.grey,
                   ),
                 ),
-                Text(
-                  member['phone'] ?? '',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
+                member['phone'] != null && member['phone'].toString().contains('*')
+                  ? Text.rich(
+                      TextSpan(
+                        children: member['phone'].toString().split('').map((char) {
+                          if (char == '*') {
+                            return WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  '*',
+                                  style: const TextStyle(color: Colors.grey, fontSize: 14, fontFamily: 'monospace', letterSpacing: 1.2),
+                                ),
+                              ),
+                            );
+                          }
+                          return TextSpan(
+                            text: char,
+                            style: const TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'monospace', letterSpacing: 1.2),
+                          );
+                        }).toList(),
+                      ),
+                    )
+                  : Text(
+                      member['phone'] ?? '',
+                      style: const TextStyle(
+                        color: Colors.grey, 
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                        letterSpacing: 1.2,
+                      ),
+                    ),
               ],
             ),
           ),

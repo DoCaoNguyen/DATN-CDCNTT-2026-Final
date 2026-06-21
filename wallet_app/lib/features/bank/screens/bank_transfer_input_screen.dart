@@ -332,12 +332,20 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                         CircleAvatar(
                           radius: 22,
                           backgroundColor: Colors.white,
-                          child: Text(
-                            widget.bankCode,
-                            style: const TextStyle(
-                              color: Color(0xFF0F3B99),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          child: ClipOval(
+                            child: Image.network(
+                              'https://api.vietqr.io/img/${widget.bankCode}.png',
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => Text(
+                                widget.bankCode,
+                                style: const TextStyle(
+                                  color: Color(0xFF0F3B99),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                           ),
                         ),

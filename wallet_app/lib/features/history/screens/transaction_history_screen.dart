@@ -85,6 +85,37 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     }
   }
 
+  String _buildHistoryUrl(int page) {
+    String url = "${ApiConfig.getTransactionHistory}?page=$page&limit=20";
+    
+    // Convert time -> startDate, endDate
+    if (_currentFilter.time != "Tất cả") {
+      final timeStr = _currentFilter.time.replaceAll("Tháng ", "");
+      final parts = timeStr.split("/");
+      if (parts.length == 2) {
+        final month = int.tryParse(parts[0]) ?? 1;
+        final year = int.tryParse(parts[1]) ?? 2026;
+        final startStr = DateFormat('yyyy-MM-dd').format(DateTime(year, month, 1));
+        final endStr = DateFormat('yyyy-MM-dd').format(DateTime(year, month + 1, 0));
+        url += "&startDate=$startStr&endDate=$endStr";
+      }
+    }
+
+    // Convert service -> type
+    if (_currentFilter.service != null) {
+      String? type;
+      if (_currentFilter.service == "Nạp tiền") type = "DEPOSIT";
+      else if (_currentFilter.service == "Rút tiền") type = "WITHDRAW";
+      else if (_currentFilter.service == "Nhận tiền" || _currentFilter.service == "Chuyển tiền") type = "TRANSFER";
+      else if (["Chi tiêu sinh hoạt", "Hóa đơn & Tiện ích", "Giải trí & Mua sắm", "Chi phí phát sinh"].contains(_currentFilter.service)) type = "PAYMENT";
+      
+      if (type != null) {
+        url += "&type=$type";
+      }
+    }
+    return url;
+  }
+
   Future<void> _fetchHistory() async {
     if (widget.token.isEmpty) {
       setState(() {
@@ -103,7 +134,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       });
 
       final response = await _client.get(
-        Uri.parse("${ApiConfig.getTransactionHistory}?page=1&limit=20"),
+        Uri.parse(_buildHistoryUrl(1)),
       );
 
       if (response.statusCode == 200) {
@@ -153,7 +184,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     try {
       final nextPage = _currentPage + 1;
       final response = await _client.get(
-        Uri.parse("${ApiConfig.getTransactionHistory}?page=$nextPage&limit=20"),
+        Uri.parse(_buildHistoryUrl(nextPage)),
       );
 
       if (response.statusCode == 200) {
@@ -286,7 +317,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       setState(() {
         _currentFilter = result;
       });
-      _applyFilters();
+      _fetchHistory(); // Fetch new data from server with filters
     }
   }
 
@@ -446,6 +477,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       } else {
         typeLabel = "Chuyển tiền";
       }
+    } else if (tx['transaction_type'] == 'PAYMENT') {
+      typeLabel = "Thanh toán ${tx['receiver_name'] ?? ''}";
     }
 
     showModalBottomSheet(
@@ -504,6 +537,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     _buildSheetRow("Người gửi", "${tx['sender_name'] ?? 'Người dùng'} (${tx['sender_phone'] ?? ''})")
                   else
                     _buildSheetRow("Người nhận", "${tx['receiver_name'] ?? 'Người dùng'} (${tx['receiver_phone'] ?? ''})"),
+                ] else if (tx['transaction_type'] == 'PAYMENT') ...[
+                  _buildSheetRow("Đơn vị nhận", "${tx['receiver_name'] ?? 'Cửa hàng/Dịch vụ'}"),
                 ],
                 _buildSheetRow("Số dư sau giao dịch", _formatCurrency(balanceAfterRaw)),
                 _buildSheetRow("Nội dung", note),
@@ -1036,6 +1071,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               } else {
                                 title = "Nhận tiền từ ${tx['sender_name'] ?? tx['sender_phone'] ?? 'Người dùng'}";
                               }
+                            } else if (tx['transaction_type'] == 'PAYMENT') {
+                              title = "Thanh toán tại ${tx['receiver_name'] ?? 'Cửa hàng'}";
                             } else {
                               title = note;
                             }

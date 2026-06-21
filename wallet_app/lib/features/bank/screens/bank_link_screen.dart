@@ -20,6 +20,32 @@ class BankLinkScreen extends StatefulWidget {
 class _BankLinkScreenState extends State<BankLinkScreen> {
   final _client = CustomHttpClient();
   bool _isLoading = false;
+  Set<String> _linkedBankCodes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLinkedBanks();
+  }
+
+  Future<void> _fetchLinkedBanks() async {
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            final banks = data['data'] as List<dynamic>? ?? [];
+            _linkedBankCodes = banks.map((b) => b['bank_code'].toString()).toSet();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching linked banks: $e");
+    }
+  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -358,7 +384,10 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
     required Color color,
     required String schemeUrl,
   }) {
-    return Container(
+    final isLinked = _linkedBankCodes.contains(bankCode);
+    return Opacity(
+      opacity: isLinked ? 0.5 : 1.0,
+      child: Container(
       width: double.infinity,
       height: 60,
       decoration: BoxDecoration(
@@ -403,21 +432,23 @@ class _BankLinkScreenState extends State<BankLinkScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () => _checkAndLinkBank(bankName, bankCode, schemeUrl),
+            onPressed: isLinked ? null : () => _checkAndLinkBank(bankName, bankCode, schemeUrl),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: color,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              disabledBackgroundColor: Colors.white.withOpacity(0.5),
+              disabledForegroundColor: Colors.grey,
             ),
-            child: const Text(
-              'Liên kết',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            child: Text(
+              isLinked ? 'Đã liên kết' : 'Liên kết',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
         ],
       ),
-    );
+    ));
   }
 }

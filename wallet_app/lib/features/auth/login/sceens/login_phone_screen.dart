@@ -52,6 +52,60 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
     ).then((_) => isDialogClosed = true);
 
     try {
+      final String apiUrl = ApiConfig.checkPhone;
+
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'phone': phone
+        }),
+      );
+
+      if (!isDialogClosed && mounted) {
+        Navigator.pop(context); 
+        isDialogClosed = true;
+      }
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['isExist'] == true) {
+           if (mounted) {
+             Navigator.push(
+               context,
+               MaterialPageRoute(
+                 builder: (context) => LoginPasswordScreen(phoneNumber: phone),
+               ),
+             );
+           }
+        } else {
+           _showConfirmationDialog(phone, lang);
+        }
+      } else {
+         final errorData = jsonDecode(response.body);
+         _showErrorSnackBar(errorData['error'] ?? (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'));
+      }
+      
+    } catch (e) {
+      if (!isDialogClosed && mounted) {
+        Navigator.pop(context);
+        isDialogClosed = true;
+      }
+      _showErrorSnackBar(lang == 'VIE' ? 'Không thể kết nối đến Server' : 'Cannot connect to Server');
+      print('Lỗi gọi API: $e');
+    }
+  }
+
+  Future<void> _sendOtpForRegistration(String phone, String lang) async {
+    bool isDialogClosed = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator(color: AppColors.primaryPink)),
+    ).then((_) => isDialogClosed = true);
+
+    try {
       final String apiUrl = ApiConfig.sendOtp;
 
       final response = await http.post(
@@ -69,7 +123,14 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       }
 
       if (response.statusCode == 200) {
-        _showConfirmationDialog(phone, lang);
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtpVerificationScreen(phoneNumber: phone),
+            ),
+          );
+        }
       } 
       else if (response.statusCode == 403) {
         final errorData = jsonDecode(response.body);
@@ -77,19 +138,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       } 
       else {
         final errorData = jsonDecode(response.body);
-        
-        if (response.statusCode == 400 && errorData['isExist'] == true) {
-           if (mounted) {
-             Navigator.push(
-               context,
-               MaterialPageRoute(
-                 builder: (context) => LoginPasswordScreen(phoneNumber: phone),
-               ),
-             );
-           }
-        } else {
-           _showErrorSnackBar(errorData['error'] ?? (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'));
-        }
+        _showErrorSnackBar(errorData['error'] ?? (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'));
       }
       
     } catch (e) {
@@ -98,7 +147,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
         isDialogClosed = true;
       }
       _showErrorSnackBar(lang == 'VIE' ? 'Không thể kết nối đến Server' : 'Cannot connect to Server');
-      print('Lỗi gọi API: $e');
+      print('Lỗi gọi API sendOtp: $e');
     }
   }
 
@@ -269,12 +318,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context); 
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => OtpVerificationScreen(phoneNumber: phone),
-                                    ),
-                                  );
+                                  _sendOtpForRegistration(phone, activeLang);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryPink,

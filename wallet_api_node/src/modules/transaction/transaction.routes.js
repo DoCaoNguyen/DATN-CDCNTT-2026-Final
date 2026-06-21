@@ -234,7 +234,7 @@ router.post('/transfer', withIdempotency, transactionController.transfer);
  * @swagger
  * /api/v1/transaction/history:
  *   get:
- *     summary: Lấy lịch sử giao dịch của người dùng
+ *     summary: Lấy lịch sử giao dịch của người dùng (hỗ trợ filter)
  *     tags: [Transactions]
  *     security:
  *       - bearerAuth: []
@@ -251,6 +251,26 @@ router.post('/transfer', withIdempotency, transactionController.transfer);
  *           type: integer
  *           default: 20
  *         description: Số lượng giao dịch trên mỗi trang
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [DEPOSIT, TRANSFER, WITHDRAW, PAYMENT]
+ *         description: Lọc theo loại giao dịch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Lọc từ ngày (YYYY-MM-DD)
+ *         example: "2026-06-01"
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Lọc đến ngày (YYYY-MM-DD)
+ *         example: "2026-06-30"
  *     responses:
  *       200:
  *         description: Danh sách giao dịch

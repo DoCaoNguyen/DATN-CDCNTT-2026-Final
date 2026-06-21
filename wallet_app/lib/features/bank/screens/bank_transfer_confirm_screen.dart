@@ -552,12 +552,22 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                                             color: Colors.white,
                                           ),
                                           alignment: Alignment.center,
-                                          child: Text(
-                                            widget.bankCode,
-                                            style: const TextStyle(
-                                              color: Color(0xFF0F3B99),
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
+                                          child: ClipOval(
+                                            child: Image.network(
+                                              'https://api.vietqr.io/img/${widget.bankCode}.png',
+                                              fit: BoxFit.contain,
+                                              width: 30,
+                                              height: 30,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Text(
+                                                  widget.bankCode,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF0F3B99),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                );
+                                              },
                                             ),
                                           ),
                                         ),

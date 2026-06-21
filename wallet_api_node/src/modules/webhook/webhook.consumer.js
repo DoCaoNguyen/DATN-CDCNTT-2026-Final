@@ -20,17 +20,19 @@ const generateSignature = (payload, secretKey) => {
 };
 
 const processWebhookJob = async (job) => {
-    const { logId, merchantId, payload } = job.data;
-    
+    const { logId, merchantId, payload, callbackUrl } = job.data;
+    const startTime = Date.now();
     try {
         // 1. Get merchant callback info and secret key
         const merchantInfo = await webhookService.getMerchantSecret(merchantId);
         
-        if (!merchantInfo || !merchantInfo.callback_url) {
-            throw new Error('Merchant callback_url not found');
+        const targetUrl = callbackUrl || (merchantInfo ? merchantInfo.callback_url : null);
+
+        if (!targetUrl) {
+            throw new Error('Merchant callback_url not found (both dynamic and global)');
         }
 
-        const { secret_key, callback_url } = merchantInfo;
+        const secret_key = merchantInfo ? merchantInfo.secret_key : null;
 
         // 2. Prepare request with signature
         const signature = generateSignature(payload, secret_key);
@@ -38,31 +40,35 @@ const processWebhookJob = async (job) => {
         const headers = {
             'Content-Type': 'application/json',
             'X-Webhook-Signature': signature,
-            'User-Agent': 'Vipayment-Webhook-Service/1.0'
+            'User-Agent': 'Mio-Webhook-Service/1.0'
         };
 
         // 3. Send HTTP POST request
-        const response = await axios.post(callback_url, payload, {
+        console.log(`\n[WebhookConsumer] MỚI GỬI: Bắt đầu gửi Webhook sang ${targetUrl}...`);
+        const response = await axios.post(targetUrl, payload, {
             headers,
             timeout: 10000 // 10 seconds timeout
         });
+        
+        const duration = Date.now() - startTime;
 
         // 4. Check if response is successful (Axios throws on 4xx/5xx by default)
         if (response.status >= 200 && response.status < 300) {
             await webhookService.updateLogStatus(logId, 'SUCCESS');
-            console.log(`[WebhookConsumer] Webhook sent successfully. LogId: ${logId}`);
+            console.log(`[WebhookConsumer] THÀNH CÔNG: Đã nhận phản hồi từ Cửa hàng chỉ trong ${duration}ms. LogId: ${logId}\n`);
             return true;
         } else {
             throw new Error(`Unexpected HTTP Status: ${response.status}`);
         }
 
     } catch (error) {
+        const duration = Date.now() - startTime;
         // Handle failure and retry logic
         const errorMessage = error.response 
             ? `HTTP ${error.response.status}: ${JSON.stringify(error.response.data)}` 
             : error.message;
             
-        console.error(`[WebhookConsumer] Failed to send webhook for LogId: ${logId}. Error: ${errorMessage}`);
+        console.error(`[WebhookConsumer] THẤT BẠI: Quá trình gửi tốn hết ${duration}ms rồi báo lỗi. LogId: ${logId}. Lỗi: ${errorMessage}`);
 
         // Increment retry count in DB
         const { retry_count, max_retries } = await webhookService.incrementRetry(logId, errorMessage);

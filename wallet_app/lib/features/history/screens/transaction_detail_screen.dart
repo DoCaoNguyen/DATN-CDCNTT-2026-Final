@@ -465,6 +465,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final bool isCredit = entryType == 'CREDIT';
     final String txType = _tx['transaction_type'] ?? 'TRANSFER';
 
+    // Receiver info if transfer or payment
+    final String receiverName = _tx['receiver_name'] ?? '';
+    final String receiverPhone = _tx['receiver_phone'] ?? '';
+    final String senderName = _tx['sender_name'] ?? '';
+    final String senderPhone = _tx['sender_phone'] ?? '';
+
     String typeLabelHeader = "GIAO DỊCH";
     String typeLabelText = "Giao dịch";
     if (txType == 'DEPOSIT') {
@@ -481,6 +487,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         typeLabelHeader = "CHUYỂN TIỀN";
         typeLabelText = "Chuyển tiền";
       }
+    } else if (txType == 'PAYMENT') {
+      typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}";
+      typeLabelText = "Thanh toán $receiverName";
     }
 
     String btnText = "Chuyển thêm";
@@ -494,11 +503,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
     final String displayAmount = "${isCredit ? '+' : '-'}${_formatCurrency(amountRaw)}";
 
-    // Receiver info if transfer
-    final String receiverName = _tx['receiver_name'] ?? '';
-    final String receiverPhone = _tx['receiver_phone'] ?? '';
-    final String senderName = _tx['sender_name'] ?? '';
-    final String senderPhone = _tx['sender_phone'] ?? '';
+    // Receiver info variables moved up
 
     return PopScope(
       canPop: false,
@@ -582,12 +587,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF0F2),
+                                  color: txType == 'PAYMENT' ? Colors.orange.shade50 : const Color(0xFFFFF0F2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
-                                  isCredit ? Icons.call_received : Icons.send,
-                                  color: const Color(0xFFE91E63),
+                                  txType == 'PAYMENT' ? Icons.storefront : (isCredit ? Icons.call_received : Icons.send),
+                                  color: txType == 'PAYMENT' ? Colors.orange : const Color(0xFFE91E63),
                                   size: 24,
                                 ),
                               ),
@@ -597,12 +602,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      typeLabelHeader,
+                                      txType == 'PAYMENT' ? receiverName : typeLabelHeader,
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[600],
-                                        letterSpacing: 0.5,
+                                        fontSize: txType == 'PAYMENT' ? 16 : 14,
+                                        fontWeight: txType == 'PAYMENT' ? FontWeight.bold : FontWeight.w600,
+                                        color: txType == 'PAYMENT' ? Colors.black87 : Colors.grey[600],
+                                        letterSpacing: txType == 'PAYMENT' ? 0 : 0.5,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -736,7 +741,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   const SizedBox(height: 16),
 
                   // Receiver/Sender info card
-                  if (txType == 'TRANSFER')
+                  if (txType == 'TRANSFER' || txType == 'PAYMENT')
                     Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
@@ -751,38 +756,81 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         ],
                       ),
                       child: Column(
-                        children: [
-                          _buildDetailRow(
-                            isCredit ? "Tên người gửi" : "Tên Ví Mio",
-                            child: Text(
-                              isCredit ? senderName : receiverName,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          _buildDetailRow(
-                            "Tên danh bạ",
-                            child: Text(
-                              _getShortName(isCredit ? senderName : receiverName),
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          _buildDetailRow(
-                            "Số điện thoại",
-                            child: Text(
-                              isCredit ? senderPhone : receiverPhone,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                        children: txType == 'PAYMENT'
+                            ? [
+                                _buildDetailRow(
+                                  "Dịch vụ",
+                                  child: Text(
+                                    receiverName,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                _buildDetailRow(
+                                  "Cửa hàng",
+                                  child: Text(
+                                    receiverName.isNotEmpty ? receiverName.toUpperCase().replaceAll(' ', '') : "STORE",
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                _buildDetailRow(
+                                  "Nội dung",
+                                  child: Text(
+                                    note,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                _buildDetailRow(
+                                  "Mã đơn hàng",
+                                  child: Text(
+                                    extRef,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ]
+                            : [
+                                _buildDetailRow(
+                                  isCredit ? "Tên người gửi" : "Tên Ví Mio",
+                                  child: Text(
+                                    isCredit ? senderName : receiverName,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                _buildDetailRow(
+                                  "Tên danh bạ",
+                                  child: Text(
+                                    _getShortName(isCredit ? senderName : receiverName),
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                _buildDetailRow(
+                                  "Số điện thoại",
+                                  child: Text(
+                                    isCredit ? senderPhone : receiverPhone,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                       ),
                     ),
                 ],

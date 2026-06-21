@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'bank_detail_input_screen.dart';
+import 'dart:convert';
+import '../../../core/services/custom_http_client.dart';
+import '../../../core/constants/api_config.dart';
 
 class BankListScreen extends StatefulWidget {
   final String token;
@@ -15,11 +18,33 @@ class _BankListScreenState extends State<BankListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   Set<String> _installedBankCodes = {};
+  Set<String> _linkedBankCodes = {};
+  final _client = CustomHttpClient();
 
   @override
   void initState() {
     super.initState();
     _checkInstalledBanks();
+    _fetchLinkedBanks();
+  }
+
+  Future<void> _fetchLinkedBanks() async {
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            final banks = data['data'] as List<dynamic>? ?? [];
+            _linkedBankCodes = banks.map((b) => b['bank_code'].toString()).toSet();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching linked banks: $e");
+    }
   }
 
   Future<void> _checkInstalledBanks() async {
@@ -225,47 +250,51 @@ class _BankListScreenState extends State<BankListScreen> {
                         itemCount: filteredPopular.length,
                         itemBuilder: (context, index) {
                           final bank = filteredPopular[index];
+                          final isLinked = _linkedBankCodes.contains(bank['code']);
                           return GestureDetector(
-                            onTap: () => _onBankSelected(bank['name'], bank['code']),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ClipOval(
-                                    child: Image.network(
-                                      'https://api.vietqr.io/img/${bank['code']}.png',
-                                      width: 36,
-                                      height: 36,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          width: 36,
-                                          height: 36,
-                                          color: Colors.grey.shade200,
-                                          child: const Icon(Icons.account_balance_rounded, size: 18, color: Colors.grey),
-                                        );
-                                      },
+                            onTap: isLinked ? null : () => _onBankSelected(bank['name'], bank['code']),
+                            child: Opacity(
+                              opacity: isLinked ? 0.5 : 1.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.shade200),
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ClipOval(
+                                      child: Image.network(
+                                        'https://api.vietqr.io/img/${bank['code']}.png',
+                                        width: 36,
+                                        height: 36,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 36,
+                                            height: 36,
+                                            color: Colors.grey.shade200,
+                                            child: const Icon(Icons.account_balance_rounded, size: 18, color: Colors.grey),
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    bank['name'],
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      bank['name'],
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -333,42 +362,48 @@ class _BankListScreenState extends State<BankListScreen> {
                       separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF0F0F5)),
                       itemBuilder: (context, index) {
                         final bank = filteredAll[index];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              'https://api.vietqr.io/img/${bank['code']}.png',
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: Colors.pink.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    bank['name']!.substring(0, minOf(2, bank['name']!.length)).toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Colors.pink,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                        final isLinked = _linkedBankCodes.contains(bank['code']);
+                        return Opacity(
+                          opacity: isLinked ? 0.5 : 1.0,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                'https://api.vietqr.io/img/${bank['code']}.png',
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: Colors.pink.shade50,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                  ),
-                                );
-                              },
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      bank['name']!.substring(0, minOf(2, bank['name']!.length)).toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.pink,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
+                            title: Text(
+                              bank['name']!,
+                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                            ),
+                            trailing: isLinked 
+                                ? const Text('Đã liên kết', style: TextStyle(color: Colors.grey, fontSize: 12))
+                                : const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
+                            onTap: isLinked ? null : () => _onBankSelected(bank['name']!, bank['code']!),
                           ),
-                          title: Text(
-                            bank['name']!,
-                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
-                          onTap: () => _onBankSelected(bank['name']!, bank['code']!),
                         );
                       },
                     ),

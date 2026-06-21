@@ -168,9 +168,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
         return;
       }
 
-      // --- Loại 2: QR thanh toán có số tiền (vipayment://) ---
+      // --- Loại 2: QR thanh toán có số tiền (mio://) ---
       final cleaned = raw.trim();
-      if (cleaned.toLowerCase().startsWith('vipayment://pay')) {
+      if (cleaned.toLowerCase().startsWith('mio://pay')) {
         try {
           final uri = Uri.tryParse(cleaned);
           if (uri == null) {
@@ -213,7 +213,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
 
           // Ngược lại (QR thanh toán hóa đơn / merchant) thì mở Bottom Sheet xác nhận thanh toán trực tiếp
           _scannerController.stop();
-          _showPaymentConfirmSheet(token, amount, desc);
+          _fetchPaymentPreviewAndShowConfirm(token, amount, desc);
         } catch (e) {
           debugPrint('Lỗi quét mã QR thanh toán: $e');
           _showErrorDialog('Không đọc được mã QR thanh toán.');
@@ -251,9 +251,51 @@ class _QrMainScreenState extends State<QrMainScreen> {
   }
 
   // ============================================================
+  // LẤY THÔNG TIN ĐƠN HÀNG TRƯỚC KHI THANH TOÁN (PREVIEW)
+  // ============================================================
+  Future<void> _fetchPaymentPreviewAndShowConfirm(String token, int fallbackAmount, String fallbackDesc) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator(color: AppColors.primaryPink)),
+      );
+
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.paymentPreview}?qr_token=$token'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Đóng loading
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body)['data'];
+        
+        if (data['is_expired'] == true || data['can_pay'] == false) {
+           _showErrorDialog('Mã QR thanh toán đã hết hạn hoặc đã được xử lý.');
+           return;
+        }
+
+        final amount = int.tryParse(data['amount'].toString()) ?? fallbackAmount;
+        final description = data['description'] ?? fallbackDesc;
+        final merchantName = data['merchant_name'] ?? 'Cửa hàng / Đối tác';
+        
+        _showPaymentConfirmSheet(token, amount, description, merchantName);
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Không lấy được thông tin đơn hàng.';
+        _showErrorDialog(error);
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Đóng loading
+      _showErrorDialog('Lỗi kết nối khi lấy thông tin đơn hàng.');
+    }
+  }
+
+  // ============================================================
   // BOTTOM SHEET XÁC NHẬN THANH TOÁN QR
   // ============================================================
-  void _showPaymentConfirmSheet(String qrToken, int amount, String description) {
+  void _showPaymentConfirmSheet(String qrToken, int amount, String description, String merchantName) {
     String fmtAmt(int v) => v
         .toString()
         .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
@@ -318,6 +360,16 @@ class _QrMainScreenState extends State<QrMainScreen> {
                 ),
                 child: Column(
                   children: [
+                    Text(
+                      merchantName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       '${fmtAmt(amount)}đ',
                       style: const TextStyle(

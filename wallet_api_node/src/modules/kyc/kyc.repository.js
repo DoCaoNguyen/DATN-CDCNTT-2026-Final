@@ -35,7 +35,7 @@ const kycRepository = {
             const result = await client.query(insertQuery, values);
             
             if (status === 'VERIFIED') {
-                await client.query("UPDATE users SET is_kyc_verified = TRUE WHERE id = $1", [userId]);
+                await client.query("UPDATE users SET is_kyc_verified = TRUE, full_name = $1 WHERE id = $2", [ocrData.full_name, userId]);
             }
 
             await client.query('COMMIT');

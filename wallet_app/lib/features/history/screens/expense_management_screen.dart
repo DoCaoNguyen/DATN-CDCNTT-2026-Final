@@ -129,7 +129,12 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16, top: 16),
+              padding: EdgeInsets.only(
+                bottom: 20 + MediaQuery.of(context).padding.bottom, 
+                left: 16, 
+                right: 16, 
+                top: 16
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

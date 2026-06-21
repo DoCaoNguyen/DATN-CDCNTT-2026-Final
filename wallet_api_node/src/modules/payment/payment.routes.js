@@ -42,6 +42,10 @@ const withIdempotency = require('../../middlewares/idempotency.middleware');
  *                 type: string
  *                 description: Mô tả đơn hàng
  *                 example: "Thanh toán đơn hàng ORD123"
+ *               merchant_order_id:
+ *                 type: string
+ *                 description: Mã đơn hàng riêng của Merchant (tùy chọn, để đối soát)
+ *                 example: "MY_SHOP_ORDER_001"
  *     responses:
  *       201:
  *         description: Tạo hóa đơn thành công
@@ -56,9 +60,11 @@ const withIdempotency = require('../../middlewares/idempotency.middleware');
  *                 data:
  *                   type: object
  *                   properties:
- *                     order_id:
+ *                     order_code:
  *                       type: string
  *                     qr_token:
+ *                       type: string
+ *                     merchant_order_id:
  *                       type: string
  *       400:
  *         description: Số tiền không hợp lệ
@@ -68,6 +74,128 @@ const withIdempotency = require('../../middlewares/idempotency.middleware');
  *         description: Lỗi hệ thống
  */
 router.post('/create', verifyApiKey, paymentController.createOrder);
+
+/**
+ * @swagger
+ * /api/v1/payment/status:
+ *   get:
+ *     summary: Merchant tra cứu trạng thái đơn hàng thanh toán
+ *     tags: [Payment]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: order_code
+ *         schema:
+ *           type: string
+ *         description: Mã đơn hàng hệ thống (ORDxxx)
+ *         example: "ORD1718096505123"
+ *       - in: query
+ *         name: merchant_order_id
+ *         schema:
+ *           type: string
+ *         description: Mã đơn hàng riêng của Merchant
+ *         example: "MY_SHOP_ORDER_001"
+ *     responses:
+ *       200:
+ *         description: Tra cứu thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order_code:
+ *                       type: string
+ *                     order_status:
+ *                       type: string
+ *                       enum: [PENDING, SUCCESS, EXPIRED, CANCELLED]
+ *                     payment:
+ *                       type: object
+ *                       nullable: true
+ *       400:
+ *         description: Thiếu order_code hoặc merchant_order_id
+ *       401:
+ *         description: API Key không hợp lệ
+ *       404:
+ *         description: Không tìm thấy đơn hàng
+ */
+router.get('/status', verifyApiKey, paymentController.getOrderStatus);
+
+/**
+ * @swagger
+ * /api/v1/payment/transaction/{id}:
+ *   get:
+ *     summary: Merchant tra cứu chi tiết một giao dịch thanh toán
+ *     tags: [Payment]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID giao dịch thanh toán (payment_transaction_id)
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin giao dịch thành công
+ *       401:
+ *         description: API Key không hợp lệ
+ *       404:
+ *         description: Không tìm thấy giao dịch
+ */
+router.get('/transaction/:id', verifyApiKey, paymentController.getPaymentTransaction);
+
+/**
+ * @swagger
+ * /api/v1/payment/preview:
+ *   get:
+ *     summary: Xem trước thông tin đơn hàng từ QR Token (Mobile app gọi trước khi xác nhận)
+ *     tags: [Payment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: qr_token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Token QR lấy từ mã QR đã quét
+ *         example: "f5e9464b9c384f124a8ca17da3a9f4f26bb3e5e554291ab13decdd55e9af0998"
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin đơn hàng thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order_code:
+ *                       type: string
+ *                     amount:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     merchant_name:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     is_expired:
+ *                       type: boolean
+ *                     can_pay:
+ *                       type: boolean
+ *       400:
+ *         description: Thiếu QR Token
+ *       404:
+ *         description: Không tìm thấy đơn hàng
+ */
+router.get('/preview', verifyToken, paymentController.previewPayment);
 
 /**
  * @swagger

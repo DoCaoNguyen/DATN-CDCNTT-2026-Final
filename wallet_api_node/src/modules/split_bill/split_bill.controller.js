@@ -68,7 +68,27 @@ const splitBillController = {
     },
 
     remind: async (req, res) => {
-        res.status(200).json({ success: true, message: 'Đã gửi lời nhắc' });
+        try {
+            const userId = req.user.userId;
+            const billId = req.params.id;
+            await splitBillService.remindBill(userId, billId);
+            res.status(200).json({ success: true, message: 'Đã gửi lời nhắc' });
+        } catch (error) {
+            console.error('Remind split bill error:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    cancel: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const billId = req.params.id;
+            await splitBillService.cancelBill(userId, billId);
+            res.status(200).json({ success: true, message: 'Đã hủy yêu cầu chia tiền' });
+        } catch (error) {
+            console.error('Cancel split bill error:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };
 

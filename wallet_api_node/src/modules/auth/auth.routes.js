@@ -10,6 +10,8 @@ const verifyToken = require('../../middlewares/auth.middleware');
  *   description: Các API đăng ký, đăng nhập và xác thực OTP
  */
 
+router.post('/check-phone', authController.checkPhone);
+
 /**
  * @swagger
  * /api/v1/auth/send-otp:

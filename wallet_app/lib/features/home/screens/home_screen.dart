@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isPinSet = false;
   bool _isLoadingBalance = true;
   int _unreadCount = 0;
+  String _fullName = "Bạn";
 
   SocketService? _socketService;
   final _client = CustomHttpClient();
@@ -65,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _fetchBalance();
     _fetchUnreadCount();
+    _fetchProfile();
     _initSocket();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -311,6 +313,33 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       debugPrint("Fetch unread count error: $e");
+    }
+  }
+
+  Future<void> _fetchProfile() async {
+    if (widget.token.isEmpty) return;
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getMyProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          final String? name = data['data']?['full_name'];
+          if (name != null && name.trim().isNotEmpty && mounted) {
+            setState(() {
+              _fullName = name.trim().split(' ').last;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Fetch profile error: $e");
     }
   }
 
@@ -664,13 +693,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.pink.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.notifications_none_rounded,
                         size: 22,
-                        color: Colors.black87,
+                        color: Colors.pink,
                       ),
                     ),
                     if (_unreadCount > 0)
@@ -890,7 +919,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.mic_rounded,
+                    Icons.auto_awesome_rounded,
                     size: 22,
                     color: Colors.pink,
                   ),
@@ -953,8 +982,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               Text(
                 activeLang == 'VIE'
-                    ? "Trung Tâm Tài Chính của Thống"
-                    : "Thong's Financial Center",
+                    ? "Trung Tâm Tài Chính của $_fullName"
+                    : "$_fullName's Financial Center",
                 style: TextStyle(
                   color: Colors.blue.shade700,
                   fontWeight: FontWeight.bold,

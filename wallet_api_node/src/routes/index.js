@@ -25,4 +25,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/split-bill', splitBillRoutes);
 router.use('/ai', aiRoutes);
 
+const merchantRoutes = require('../modules/merchant/merchant.routes');
+router.use('/merchant', merchantRoutes);
+
 module.exports = router;

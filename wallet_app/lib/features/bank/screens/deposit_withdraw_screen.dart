@@ -13,6 +13,7 @@ import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import 'deposit_withdraw_success_screen.dart';
 import 'bank_link_screen.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class DepositWithdrawScreen extends StatefulWidget {
   final String token;
@@ -314,7 +315,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
       } else {
         final data = jsonDecode(response.body);
         final String errorMessage = data['error'] ?? "Giao dịch không thành công.";
-        if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
+
+        if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa') || errorMessage.contains('PIN')) {
           return errorMessage;
         } else {
           if (!mounted) return null;
@@ -384,7 +386,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         });
       } else {
         final data = jsonDecode(response.body);
-        _showErrorSnackBar(data['error'] ?? "Xác thực khuôn mặt thất bại.");
+        final String errorMessage = data['error'] ?? "Xác thực khuôn mặt thất bại.";
+        _showErrorSnackBar(errorMessage);
       }
     } catch (e) {
       _showErrorSnackBar("Lỗi kết nối máy chủ khi xác thực khuôn mặt.");
@@ -394,9 +397,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+    SnackbarUtils.showError(context, message);
   }
 
   void _showPinBottomSheet() {
@@ -503,7 +504,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                               color: isSelected ? Colors.pink.shade50.withOpacity(0.1) : Colors.white,
                             ),
                             child: ListTile(
-                              leading: const Icon(Icons.account_balance_rounded, color: Colors.pink),
+                              leading: _buildBankIcon(bank, 36),
                               title: Text(
                                 bank['bank_name'] ?? 'Ngân hàng',
                                 style: const TextStyle(fontWeight: FontWeight.w600),
@@ -537,6 +538,33 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   }
 
   // --- UI WIDGET BUILDERS ---
+  Widget _buildBankIcon(Map<String, dynamic>? bank, double size) {
+    if (bank != null && bank['bank_code'] != null && bank['bank_code'].toString().isNotEmpty) {
+      String bCode = bank['bank_code'].toString();
+      if (bCode.toUpperCase() == 'AGR' || bCode.toUpperCase() == 'AGRIBANK') {
+        bCode = 'VBA';
+      }
+      return Container(
+        width: size,
+        height: size,
+        padding: EdgeInsets.all(size * 0.1),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size * 0.2),
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Image.network(
+          'https://api.vietqr.io/img/$bCode.png',
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size * 0.7);
+          },
+        ),
+      );
+    }
+    return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size);
+  }
+
   Widget _buildHomeOrConfirmScreen() {
     if (_isConfirming) {
       return _buildConfirmLayout();
@@ -905,7 +933,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.account_balance_rounded, color: Colors.pink, size: 24),
+                                    _buildBankIcon(_selectedBank, 32),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(

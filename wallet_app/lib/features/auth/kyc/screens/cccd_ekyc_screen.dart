@@ -54,8 +54,9 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
           
           // Chuyển đổi định dạng ngày phục vụ cho BAC
           final rawDob = parsed['dob'] ?? '';
+          final rawIssueDate = parsed['issueDate'] ?? '';
           _dobYYMMDD = NfcKycService.formatDobToYYMMDD(rawDob);
-          _doeYYMMDD = NfcKycService.calculateExpiryDate(rawDob);
+          _doeYYMMDD = NfcKycService.calculateExpiryDate(rawDob, rawIssueDate);
 
           _currentStep = 2; // Chuyển sang bước đọc NFC
           _errorMessage = null;

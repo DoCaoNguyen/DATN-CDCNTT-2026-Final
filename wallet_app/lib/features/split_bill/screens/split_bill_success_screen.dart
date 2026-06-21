@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'split_bill_management_screen.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class SplitBillSuccessScreen extends StatelessWidget {
   final String token;
@@ -150,15 +151,11 @@ class SplitBillSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   _buildDashedLine(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text("QR Thu tiền", style: TextStyle(fontWeight: FontWeight.w600)),
-                        Icon(Icons.keyboard_arrow_down_rounded),
-                      ],
-                    ),
+                  _QrCodeSection(
+                    amount: splitAmount, 
+                    note: note,
+                    phone: me['realPhone'] ?? me['phone'] ?? '',
+                    name: (me['realName'] ?? me['name'] ?? '').replaceAll(' (Tôi)', ''),
                   ),
                   _buildDashedLine(),
                   Padding(
@@ -401,6 +398,82 @@ class SplitBillSuccessScreen extends StatelessWidget {
           direction: Axis.horizontal,
         );
       },
+    );
+  }
+}
+
+class _QrCodeSection extends StatefulWidget {
+  final double amount;
+  final String note;
+  final String phone;
+  final String name;
+
+  const _QrCodeSection({
+    Key? key, 
+    required this.amount, 
+    required this.note,
+    required this.phone,
+    required this.name,
+  }) : super(key: key);
+
+  @override
+  State<_QrCodeSection> createState() => _QrCodeSectionState();
+}
+
+class _QrCodeSectionState extends State<_QrCodeSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          },
+          child: Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("QR Thu tiền", style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 4),
+                Icon(_isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
+              ],
+            ),
+          ),
+        ),
+        if (_isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: QrImageView(
+                    data: 'mio://pay?token=split_bill&phone=${Uri.encodeComponent(widget.phone)}&name=${Uri.encodeComponent(widget.name)}&amount=${widget.amount.toInt()}&description=${Uri.encodeComponent(widget.note)}',
+                    version: QrVersions.auto,
+                    size: 160.0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Đưa mã này cho bạn bè quét bằng Camera\nhoặc App ngân hàng",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                )
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

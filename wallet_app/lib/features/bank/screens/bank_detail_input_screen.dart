@@ -60,7 +60,9 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
             _cardHolderName = name.toUpperCase();
           }
           if (idNumber != null && idNumber.isNotEmpty) {
-            _cccd = idNumber;
+            String masked = List.generate(idNumber.length > 4 ? idNumber.length - 4 : 0, (index) => '•').join() + 
+                            (idNumber.length > 4 ? idNumber.substring(idNumber.length - 4) : idNumber);
+            _cccd = masked;
           } else {
             _cccd = "Chưa cập nhật CCCD";
           }
@@ -282,6 +284,8 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey.shade700,
+                                letterSpacing: 3.0,
+                                fontFamily: 'monospace',
                               ),
                             ),
                           ],

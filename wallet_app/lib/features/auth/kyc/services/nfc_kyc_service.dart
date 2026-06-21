@@ -61,7 +61,7 @@ class NfcKycService {
         'dob': parts[3], // DDMMYYYY
         'gender': parts[4],
         'address': parts[5],
-        'issueDate': parts[6],
+        'issueDate': parts[6], // DDMMYYYY
       };
     } catch (e) {
       return null;
@@ -71,38 +71,51 @@ class NfcKycService {
   /// Tính toán ngày hết hạn (Date of Expiry - DOE) của CCCD Việt Nam theo quy định:
   /// CCCD hết hạn vào ngày sinh nhật ở các mốc tuổi: 25, 40 và 60.
   /// Định dạng trả về: YYMMDD phục vụ cho ICAO BAC.
-  static String calculateExpiryDate(String dobStr) {
-    final cleaned = dobStr.replaceAll(RegExp(r'[^0-9]'), '');
-    if (cleaned.length < 8) return '';
-    final dayStr = cleaned.substring(0, 2);
-    final monthStr = cleaned.substring(2, 4);
-    final yearStr = cleaned.substring(4, 8);
+  static String calculateExpiryDate(String dobStr, [String? issueDateStr]) {
+    final cleanedDob = dobStr.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanedDob.length < 8) return '';
+    
+    final birthDay = int.parse(cleanedDob.substring(0, 2));
+    final birthMonth = int.parse(cleanedDob.substring(2, 4));
+    final birthYear = int.parse(cleanedDob.substring(4, 8));
 
-    final birthYear = int.parse(yearStr);
-    final birthMonth = int.parse(monthStr);
-    final birthDay = int.parse(dayStr);
+    int referenceYear = DateTime.now().year;
+    int referenceMonth = DateTime.now().month;
+    int referenceDay = DateTime.now().day;
 
-    final now = DateTime.now();
-    int currentAge = now.year - birthYear;
-    // Nếu chưa tới ngày sinh nhật trong năm nay thì trừ đi 1 tuổi
-    if (now.month < birthMonth || (now.month == birthMonth && now.day < birthDay)) {
+    // Nếu có ngày cấp, tính tuổi tại thời điểm cấp
+    if (issueDateStr != null && issueDateStr.isNotEmpty) {
+      final cleanedIssue = issueDateStr.replaceAll(RegExp(r'[^0-9]'), '');
+      if (cleanedIssue.length >= 8) {
+        referenceDay = int.parse(cleanedIssue.substring(0, 2));
+        referenceMonth = int.parse(cleanedIssue.substring(2, 4));
+        referenceYear = int.parse(cleanedIssue.substring(4, 8));
+      }
+    }
+
+    int currentAge = referenceYear - birthYear;
+    if (referenceMonth < birthMonth || (referenceMonth == birthMonth && referenceDay < birthDay)) {
       currentAge--;
     }
 
     int expiryYear;
-    if (currentAge < 25) {
+    // Theo luật CCCD: cấp trước 2 năm của mốc tuổi thì được cộng dồn đến mốc tiếp theo
+    // Các mốc: 25, 40, 60
+    if (currentAge < 23) {
       expiryYear = birthYear + 25;
-    } else if (currentAge < 40) {
+    } else if (currentAge < 38) {
       expiryYear = birthYear + 40;
-    } else if (currentAge < 60) {
+    } else if (currentAge < 58) {
       expiryYear = birthYear + 60;
     } else {
-      // Trên 60 tuổi CCCD có giá trị vô thời hạn, giả định đến sinh nhật 100 tuổi để điền vào ICAO BAC
-      expiryYear = birthYear + 100;
+      // Cấp từ 58 tuổi trở lên là Không thời hạn. Đa số chip dùng 991231 hoặc birthYear + 100
+      expiryYear = birthYear + 100; 
     }
 
     final yy = (expiryYear % 100).toString().padLeft(2, '0');
-    return '$yy$monthStr$dayStr';
+    final mm = birthMonth.toString().padLeft(2, '0');
+    final dd = birthDay.toString().padLeft(2, '0');
+    return '$yy$mm$dd';
   }
 
   /// Định dạng ngày sinh từ bất kỳ dạng nào chứa 8 chữ số sang YYMMDD phục vụ cho ICAO BAC

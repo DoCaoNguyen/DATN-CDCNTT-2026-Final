@@ -1,15 +1,17 @@
 const { v7: uuidv7 } = require('uuid');
 
+const pool = require('../../config/db');
+
 const paymentRepository = {
-    createOrder: async (client, merchantId, orderCode, amount, callbackUrl, description, expiredAt) => {
+    createOrder: async (client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId = null) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO payment_orders (id, merchant_id, order_code, amount, callback_url, description, status, expired_at)
-            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7) 
+            INSERT INTO payment_orders (id, merchant_id, order_code, amount, callback_url, description, status, expired_at, merchant_order_id)
+            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8) 
             RETURNING id;
         `;
         const result = await client.query(query, [
-            newId, merchantId, orderCode, amount, callbackUrl, description, expiredAt
+            newId, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId
         ]);
         return result.rows[0].id;
     },
@@ -40,7 +42,7 @@ const paymentRepository = {
     lockAndGetOrder: async (client, qrToken) => {
         const query = `
             SELECT po.id AS order_id, po.amount, po.status, po.merchant_id, 
-                   po.callback_url, pq.expired_at
+                   po.callback_url, po.merchant_order_id, po.order_code, pq.expired_at
             FROM payment_qr_codes pq
             JOIN payment_orders po ON pq.payment_order_id = po.id
             WHERE pq.qr_token = $1
@@ -64,6 +66,68 @@ const paymentRepository = {
         `;
         const result = await client.query(query, [newId, orderId, payerWalletId, amount, ledgerTxId]);
         return result.rows[0].id;
+    },
+
+    // ===== NEW: Preview đơn hàng từ QR Token (không lock) =====
+    getOrderByQrToken: async (qrToken) => {
+        const query = `
+            SELECT po.id AS order_id, po.order_code, po.merchant_order_id,
+                   po.amount, po.description, po.status, po.currency,
+                   pq.expired_at, pq.qr_token,
+                   m.merchant_name
+            FROM payment_qr_codes pq
+            JOIN payment_orders po ON pq.payment_order_id = po.id
+            LEFT JOIN merchants m ON po.merchant_id = m.id
+            WHERE pq.qr_token = $1;
+        `;
+        const result = await pool.query(query, [qrToken]);
+        return result.rows[0];
+    },
+
+    // ===== NEW: Merchant tra cứu trạng thái order bằng order_code =====
+    getOrderByCode: async (merchantId, orderCode) => {
+        const query = `
+            SELECT po.id AS order_id, po.order_code, po.merchant_order_id,
+                   po.amount, po.description, po.status, po.currency,
+                   po.expired_at, po.created_at,
+                   pt.id AS payment_transaction_id, pt.status AS payment_status,
+                   pt.paid_at
+            FROM payment_orders po
+            LEFT JOIN payment_transactions pt ON po.id = pt.payment_order_id
+            WHERE po.merchant_id = $1 AND po.order_code = $2;
+        `;
+        const result = await pool.query(query, [merchantId, orderCode]);
+        return result.rows[0];
+    },
+
+    // ===== NEW: Merchant tra cứu bằng merchant_order_id riêng =====
+    getOrderByMerchantOrderId: async (merchantId, merchantOrderId) => {
+        const query = `
+            SELECT po.id AS order_id, po.order_code, po.merchant_order_id,
+                   po.amount, po.description, po.status, po.currency,
+                   po.expired_at, po.created_at,
+                   pt.id AS payment_transaction_id, pt.status AS payment_status,
+                   pt.paid_at
+            FROM payment_orders po
+            LEFT JOIN payment_transactions pt ON po.id = pt.payment_order_id
+            WHERE po.merchant_id = $1 AND po.merchant_order_id = $2;
+        `;
+        const result = await pool.query(query, [merchantId, merchantOrderId]);
+        return result.rows[0];
+    },
+
+    // ===== NEW: Lấy chi tiết payment transaction =====
+    getPaymentTransactionById: async (merchantId, transactionId) => {
+        const query = `
+            SELECT pt.id, pt.payment_order_id, pt.amount, pt.status, pt.paid_at, pt.created_at,
+                   po.order_code, po.merchant_order_id, po.description,
+                   po.status AS order_status
+            FROM payment_transactions pt
+            JOIN payment_orders po ON pt.payment_order_id = po.id
+            WHERE pt.id = $1 AND po.merchant_id = $2;
+        `;
+        const result = await pool.query(query, [transactionId, merchantId]);
+        return result.rows[0];
     }
 };
 

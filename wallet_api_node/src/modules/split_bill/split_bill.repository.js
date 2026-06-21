@@ -41,7 +41,7 @@ const splitBillRepository = {
             FROM split_bills sb
             LEFT JOIN split_bill_members sbm ON sb.id = sbm.split_bill_id
             LEFT JOIN users u ON sbm.user_id = u.id
-            WHERE sb.creator_id = $1
+            WHERE sb.creator_id = $1 AND sb.status != 'CANCELLED'
             GROUP BY sb.id
             ORDER BY sb.created_at DESC
         `;
@@ -57,7 +57,7 @@ const splitBillRepository = {
             FROM split_bills sb
             JOIN split_bill_members sbm ON sb.id = sbm.split_bill_id
             JOIN users c ON sb.creator_id = c.id
-            WHERE sbm.user_id = $1 AND sb.creator_id != $1
+            WHERE sbm.user_id = $1 AND sb.creator_id != $1 AND sbm.status != 'CANCELLED' AND sb.status != 'CANCELLED'
             ORDER BY sb.created_at DESC
         `;
         const res = await pool.query(query, [userId]);
@@ -93,6 +93,29 @@ const splitBillRepository = {
         if (parseInt(checkRes.rows[0].pending_count) === 0) {
             await pool.query(`UPDATE split_bills SET status = 'COMPLETED' WHERE id = $1`, [billId]);
         }
+    },
+
+    cancelBill: async (billId, creatorId) => {
+        const query = `
+            UPDATE split_bills SET status = 'CANCELLED' 
+            WHERE id = $1 AND creator_id = $2
+        `;
+        const res = await pool.query(query, [billId, creatorId]);
+        if (res.rowCount > 0) {
+            const query2 = `
+                UPDATE split_bill_members SET status = 'CANCELLED'
+                WHERE split_bill_id = $1 AND status = 'PENDING'
+            `;
+            await pool.query(query2, [billId]);
+        }
+    },
+
+    getPendingMembers: async (billId, creatorId) => {
+        const q1 = await pool.query('SELECT id, total_amount, split_amount FROM split_bills WHERE id=$1 AND creator_id=$2', [billId, creatorId]);
+        if (q1.rows.length === 0) return [];
+        
+        const q2 = await pool.query('SELECT user_id, amount FROM split_bill_members WHERE split_bill_id = $1 AND status = $2', [billId, 'PENDING']);
+        return q2.rows;
     }
 };
 

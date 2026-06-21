@@ -45,7 +45,37 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchMyProfile();
     _syncContacts();
+  }
+
+  Future<void> _fetchMyProfile() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/users/me'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body)['data'];
+        if (mounted) {
+          setState(() {
+            String fullName = data['full_name'] ?? 'Phan Văn Thống';
+            _me['name'] = '$fullName (Tôi)';
+            _me['realName'] = fullName;
+            _me['shortName'] = 'Tôi';
+            _me['id'] = data['id'].toString();
+            _me['realPhone'] = data['phone'] ?? '';
+            
+            if (data['phone'] != null && data['phone'].toString().length >= 4) {
+               String p = data['phone'].toString();
+               _me['phone'] = '*******${p.substring(p.length - 3)}';
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch profile: $e');
+    }
   }
 
   Future<void> _syncContacts() async {
@@ -87,12 +117,19 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
               setState(() {
                 _friends = contactResults.map((user) {
                   String name = user['full_name'] ?? 'Chưa cập nhật tên';
+                  String rawPhone = user['phone'] ?? '';
+                  String maskedPhone = rawPhone;
+                  if (rawPhone.length >= 4) {
+                    maskedPhone = '*******${rawPhone.substring(rawPhone.length - 3)}';
+                  }
+
                   return {
                     'id': user['id'].toString(),
                     'name': name,
                     'shortName': name.split(' ').last,
                     'initials': name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                    'phone': user['phone'] ?? '',
+                    'phone': maskedPhone,
+                    'realPhone': rawPhone,
                     'avatar': user['avatar'],
                     'color': Colors.pink.shade50,
                   };
@@ -373,7 +410,38 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                                         : null,
                                   ),
                                   title: Text(friend['name'], style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                  subtitle: Text(friend['phone'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                  subtitle: friend['phone'].toString().contains('*')
+                                    ? Text.rich(
+                                        TextSpan(
+                                          children: friend['phone'].toString().split('').map((char) {
+                                            if (char == '*') {
+                                              return WidgetSpan(
+                                                alignment: PlaceholderAlignment.middle,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.only(top: 4.0),
+                                                  child: Text(
+                                                    '*',
+                                                    style: const TextStyle(color: Colors.grey, fontSize: 14, fontFamily: 'monospace', letterSpacing: 1.2),
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                            return TextSpan(
+                                              text: char,
+                                              style: const TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'monospace', letterSpacing: 1.2),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      )
+                                    : Text(
+                                        friend['phone'], 
+                                        style: const TextStyle(
+                                          color: Colors.grey, 
+                                          fontSize: 12,
+                                          fontFamily: 'monospace',
+                                          letterSpacing: 1.2,
+                                        )
+                                      ),
                                   trailing: Checkbox(
                                     value: isSelected,
                                     activeColor: const Color(0xFFE91E63),

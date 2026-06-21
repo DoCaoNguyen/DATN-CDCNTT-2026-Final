@@ -10,7 +10,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const masterRouter = require('./src/routes');
 const app = express();
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const { initSocket } = require('./src/utils/socket');
 const swaggerUi = require('swagger-ui-express');
@@ -18,6 +18,9 @@ const swaggerSpec = require('./src/config/swagger');
 require('./src/cron/token_cleanup.cron');
 require('./src/cron/loyaltySyncRetry.cron');
 require('./src/modules/webhook/webhook.consumer');
+const connectMongoDB = require('./src/config/mongodb');
+
+connectMongoDB();
 
 
 initSocket(server);
@@ -31,6 +34,7 @@ app.use(helmet());
 app.use(cors({
     origin: [
         'http://localhost:3000', 
+        'http://localhost:5173',
         'https://admin.yourdomain.com', 
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'

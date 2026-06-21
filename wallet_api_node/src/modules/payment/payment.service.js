@@ -4,7 +4,7 @@ const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
 
 const paymentService = {
-    createDynamicQR: async (merchantId, amount, callbackUrl, description) => {
+    createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
         const client = await pool.connect();
         
         try {
@@ -16,7 +16,7 @@ const paymentService = {
             
             
             const orderId = await paymentRepo.createOrder(
-                client, merchantId, orderCode, amount, callbackUrl, description, expiredAt
+                client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId
             );
 
             
@@ -24,7 +24,7 @@ const paymentService = {
             
             
             
-            const qrContent = `vipayment://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}`;
+            const qrContent = `mio://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}`;
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=L&data=${encodeURIComponent(qrContent)}`;
 
             // Lưu thông tin mã QR
@@ -33,13 +33,16 @@ const paymentService = {
             await client.query('COMMIT');
 
             return {
-                order_code: orderCode,
-                amount: amount,
+                // Định dạng chuẩn PayOS để dễ tích hợp
+                orderCode: orderCode,
+                amount: Number(amount),
                 description: description || null,
-                qr_content: qrContent,
-                qr_token: qrToken,
-                qr_image_url: qrImageUrl,
-                expired_at: expiredAt
+                currency: 'VND',
+                paymentLinkId: qrToken,
+                status: 'PENDING',
+                checkoutUrl: qrImageUrl,
+                qrCode: qrContent,
+                expiredAt: expiredAt,
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -92,16 +95,37 @@ const paymentService = {
                 client, order.order_id, wallet.id, order.amount, ledgerTxId
             );
 
+            // [NEW] CREDIT TIỀN CHO MERCHANT
+            if (order.merchant_id) {
+                const merchantRepo = require('../merchant/merchant.repository');
+                const merchantUserId = await merchantRepo.getMerchantUserId(order.merchant_id);
+                
+                if (merchantUserId) {
+                    const merchantWallet = await txRepo.getWalletByUserId(merchantUserId);
+                    if (merchantWallet) {
+                        const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantWallet.id);
+                        const mBalanceAfter = await txRepo.addBalance(client, merchantWallet.id, order.amount);
+                        
+                        await txRepo.createLedgerEntry(
+                            client, ledgerTxId, merchantWallet.id, 'CREDIT', order.amount, mBalanceBefore, mBalanceAfter
+                        );
+                    }
+                }
+            }
+
             // [NEW] Insert Webhook Log into DB within the SAME ACID transaction
             let webhookLogId = null;
             let webhookPayload = null;
             const userRepo = require('../user/user.repository');
             const webhookService = require('../webhook/webhook.service');
             
-            if (order.callback_url && order.merchant_id) {
+            if (order.merchant_id) {
                 const userProfile = await userRepo.getUserProfile(userId);
                 webhookPayload = {
-                    order_id: order.order_id,
+                    // Dữ liệu chuẩn (ưu tiên mã của Merchant truyền vào)
+                    order_id: order.merchant_order_id || order.order_code,
+                    merchant_order_id: order.merchant_order_id || null,
+                    orderCode: order.order_code,
                     status: 'success',
                     amount: order.amount ? order.amount.toString() : '0',
                     wallet_transaction_id: paymentTxId.toString(),
@@ -137,12 +161,15 @@ const paymentService = {
                 webhookPublisher.publish({
                     logId: webhookLogId,
                     merchantId: order.merchant_id,
-                    payload: webhookPayload
+                    payload: webhookPayload,
+                    callbackUrl: order.callback_url
                 }).catch(err => console.error('[WEBHOOK_PUBLISH_ERROR]', err));
             }
 
             return {
-                order_id: order.order_id,
+                order_id: order.merchant_order_id || order.order_code,
+                merchant_order_id: order.merchant_order_id || null,
+                order_code: order.order_code,
                 amount_paid: order.amount ? order.amount.toString() : '0',
                 balance_remaining: balanceAfter ? balanceAfter.toString() : '0'
             };
@@ -168,7 +195,7 @@ const paymentService = {
             );
 
             const qrToken = crypto.randomBytes(32).toString('hex');
-            const qrContent = `vipayment://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}&phone=${encodeURIComponent(userPhone || '')}&name=${encodeURIComponent(userName || '')}`;
+            const qrContent = `mio://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}&phone=${encodeURIComponent(userPhone || '')}&name=${encodeURIComponent(userName || '')}`;
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=L&data=${encodeURIComponent(qrContent)}`;
 
             await paymentRepo.createQrCode(client, orderId, qrContent, qrToken, expiredAt);

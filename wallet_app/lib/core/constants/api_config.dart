@@ -11,6 +11,7 @@ class ApiConfig {
   }
 
   // --- AUTH ENDPOINTS ---
+  static const String checkPhone = '$baseUrl/auth/check-phone';
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
   static const String setPassword = '$baseUrl/auth/set-password';
@@ -35,6 +36,7 @@ class ApiConfig {
   static const String getChatList = '$baseUrl/transaction/chat-list';
   static String getChatHistory(String phone) => '$baseUrl/transaction/chat/$phone';
   static const String requestMoneyQR = '$baseUrl/payment/request';
+  static const String paymentPreview = '$baseUrl/payment/preview';
   static const String processPayment = '$baseUrl/payment/process';
   static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
   static const String linkBank = '$baseUrl/wallet/link-bank';
