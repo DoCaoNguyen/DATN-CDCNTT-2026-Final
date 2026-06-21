@@ -46,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _balance = "0";
   String? _walletCode;
+  String _userName = "Bạn";
   bool _isPinSet = false;
   bool _isLoadingBalance = true;
   int _unreadCount = 0;
@@ -65,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _fetchBalance();
+    _fetchUserProfile();
     _fetchUnreadCount();
     _fetchProfile();
     _initSocket();
@@ -289,6 +291,32 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print("Lỗi lấy số dư ví: $e");
       if (mounted) setState(() => _isLoadingBalance = false);
+    }
+  }
+
+  Future<void> _fetchUserProfile() async {
+    if (widget.token.isEmpty) return;
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getMyProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            final fullName = data['data']?['full_name'] ?? "Bạn";
+            final names = fullName.toString().trim().split(' ');
+            _userName = names.isNotEmpty ? names.last : "Bạn";
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Fetch profile error: $e");
     }
   }
 
@@ -1153,6 +1181,30 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         if (!widget.isVerified) {
           _showKycDialog();
+          return;
+        }
+        if (title == "Nạp/Rút" || title == "Deposit") {
+          if (!_isPinSet) {
+            _showSetWalletCodeDialog();
+            return;
+          }
+          _handleDepositWithdrawClick();
+        } else if (title == "Nhận tiền" || title == "Receive") {
+          // Mở thẳng tab QR Nhận tiền
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QrMainScreen(token: widget.token, initialTab: 1),
+            ),
+          );
+        } else if (title == "QR Thanh toán" || title == "QR Pay") {
+          // Mở thẳng tab Quét mã QR
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QrMainScreen(token: widget.token, initialTab: 0),
+            ),
+          );
         } else {
           if (title == "Nạp/Rút" || title == "Deposit") {
             _handleDepositWithdrawClick();

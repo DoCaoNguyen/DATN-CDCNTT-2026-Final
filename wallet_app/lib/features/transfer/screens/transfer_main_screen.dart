@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_search_screen.dart'; 
@@ -24,14 +25,44 @@ class TransferMainScreen extends StatefulWidget {
 }
 
 class _TransferMainScreenState extends State<TransferMainScreen> {
+  String _fullName = 'Đang tải...';
   final _client = CustomHttpClient();
   List<dynamic> _linkedBanks = [];
+  bool _isLoading = true;
   bool _isLoadingBanks = true;
 
   @override
   void initState() {
     super.initState();
+    _fetchData();
     _fetchLinkedBanks();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      // 1. Fetch Profile
+      final profileRes = await http.get(
+        Uri.parse(ApiConfig.getMyProfile),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (profileRes.statusCode == 200) {
+        final data = jsonDecode(profileRes.body);
+        if (mounted) {
+          setState(() {
+            _fullName = data['data']?['full_name'] ?? 'Chưa cập nhật tên';
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint("Lỗi fetch dữ liệu transfer_main_screen: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _fetchLinkedBanks() async {
@@ -411,6 +442,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: Text('Tài khoản ngân hàng của tôi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 8),
+
           if (_isLoadingBanks)
             const Center(
               child: Padding(
@@ -475,9 +507,6 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
     );
   }
 
-  // ==========================================
-  // 5. PHẦN ƯU ĐÃI KHI CHUYỂN TIỀN
-  // ==========================================
   Widget _buildOffersSection() {
     return Container(
       margin: const EdgeInsets.only(top: 8),

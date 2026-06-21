@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:permission_handler/permission_handler.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 import 'bank_transfer_confirm_screen.dart';
 
@@ -243,10 +243,10 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
   }
 
   Future<void> _openContacts() async {
-    final PermissionStatus permissionStatus = await Permission.contacts.request();
-    if (permissionStatus == PermissionStatus.granted) {
+    final status = await FlutterContacts.permissions.request(PermissionType.read);
+    if (status == PermissionStatus.granted || status == PermissionStatus.limited) {
       try {
-        final Contact? contact = await FlutterContacts.openExternalPick();
+        final Contact? contact = await FlutterContacts.native.showPicker(properties: {ContactProperty.phone});
         if (contact != null && contact.phones.isNotEmpty) {
           String phone = contact.phones.first.number;
           phone = phone.replaceAll(RegExp(r'[^0-9+]'), '');

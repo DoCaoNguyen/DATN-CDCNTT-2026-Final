@@ -66,10 +66,10 @@ const notificationRepository = {
         `;
         const result = await pool.query(query, [
             newId,
-            userId, 
-            title, 
-            content, 
-            notificationType, 
+            userId,
+            title,
+            content,
+            notificationType,
             referenceId
         ]);
         return result.rows[0];

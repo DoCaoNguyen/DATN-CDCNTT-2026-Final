@@ -1,27 +1,32 @@
 
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
 
 const otpRepository = {
     
     findByPhone: async (phone) => {
-        const result = await pool.query('SELECT * FROM otp_tracking WHERE phone = $1', [phone]);
+        const result = await pool.query('SELECT * FROM otp_tracking WHERE phone = $1 ORDER BY created_at DESC LIMIT 1', [phone]);
         return result.rows[0]; 
     },
 
     
     upsertOtp: async (phone, email, otpCode) => {
-        const query = `
-            INSERT INTO otp_tracking (phone, email, otp_code, failed_attempts, locked_until, expired_at, created_at)
-            VALUES ($1, $2, $3, 0, NULL, NOW() + INTERVAL '5 minutes', NOW())
-            ON CONFLICT (phone) DO UPDATE SET
-                email = EXCLUDED.email,
-                otp_code = EXCLUDED.otp_code,
-                failed_attempts = 0,
-                locked_until = NULL,
-                expired_at = EXCLUDED.expired_at,
-                created_at = EXCLUDED.created_at;
-        `;
-        await pool.query(query, [phone, email, otpCode]);
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query('DELETE FROM otp_tracking WHERE phone = $1', [phone]);
+            const query = `
+                INSERT INTO otp_tracking (id, phone, email, otp_hash, failed_attempts, locked_until, expired_at, created_at)
+                VALUES ($1, $2, $3, $4, 0, NULL, NOW() + INTERVAL '5 minutes', NOW())
+            `;
+            await client.query(query, [uuidv7(), phone, email, otpCode]);
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     },
 
     

@@ -3,7 +3,7 @@ const pool = require('../../config/db');
 const { v7: uuidv7 } = require('uuid');
 
 const walletRepository = {
-    
+
     create: async (client, userId) => {
         const newId = uuidv7();
         const query = `INSERT INTO wallets (id, user_id) VALUES ($1, $2)`;
@@ -12,7 +12,7 @@ const walletRepository = {
     },
 
     findByUserId: async (userId) => {
-        
+
         const query = `SELECT id FROM wallets WHERE user_id = $1`;
         const result = await pool.query(query, [userId]);
         return result.rows[0];
@@ -33,7 +33,7 @@ const walletRepository = {
             LEFT JOIN users u ON w.user_id = u.id
             WHERE w.user_id = $1
         `;
-        
+
         const result = await pool.query(query, [userId]);
         return result.rows[0];
     },
@@ -57,7 +57,7 @@ const walletRepository = {
             RETURNING wallet_code;
         `;
         const result = await pool.query(query, [walletCode, userId]);
-        return result.rows[0]; 
+        return result.rows[0];
     },
 
     getUserInfoForQR: async (userId) => {

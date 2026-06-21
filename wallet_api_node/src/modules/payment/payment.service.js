@@ -81,7 +81,7 @@ const paymentService = {
 
             
             const ledgerTxId = await txRepo.createLedgerTransaction(
-                client, 'PAYMENT', order.order_id, 'Thanh toán đơn hàng QR'
+                client, 'PAYMENT', order.order_id, 'Thanh toán đơn hàng QR', order.amount
             );
 
             
@@ -92,7 +92,7 @@ const paymentService = {
 
             
             const paymentTxId = await paymentRepo.createPaymentTransaction(
-                client, order.order_id, wallet.id, order.amount, ledgerTxId
+                client, order.order_id, userId, wallet.id, order.amount, ledgerTxId
             );
 
             // [NEW] CREDIT TIỀN CHO MERCHANT

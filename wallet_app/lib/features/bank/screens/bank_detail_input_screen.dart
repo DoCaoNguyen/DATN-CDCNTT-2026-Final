@@ -27,7 +27,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
   final _client = CustomHttpClient();
   final TextEditingController _accountNumberController = TextEditingController();
   String _cardHolderName = "PHAN VAN THONG";
-  String _cccd = "Đang tải...";
+  String _cccd = "Đang tải..."; // Initially loading
   bool _isLoading = false;
   bool _hasAttemptedSubmit = false;
 
@@ -54,7 +54,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String? name = data['data']?['full_name'];
-        final String? idNumber = data['data']?['identity_number'];
+        final String? idNumber = data['data']?['id_number'] ?? data['data']?['identity_number'];
         setState(() {
           if (name != null && name.isNotEmpty) {
             _cardHolderName = name.toUpperCase();

@@ -7,10 +7,14 @@ const withIdempotency = async (req, res, next) => {
     if (!idempotencyKey) {
         return next();
     }
+    const actorId = req.user ? req.user.userId : '00000000-0000-0000-0000-000000000000';
+    const actorType = req.user ? 'USER' : 'SYSTEM';
+    const requestPath = req.originalUrl || req.path;
+
     try {
-        const existingRecord = await idempotencyRepo.findByKey(idempotencyKey);
+        const existingRecord = await idempotencyRepo.findByKey(actorType, actorId, idempotencyKey);
         if (existingRecord) {
-            return res.status(200).json(existingRecord.response_data);
+            return res.status(200).json(existingRecord.response_body);
         }
 
         // Lock bằng Redis (Chống Concurrency 100 requests cùng lúc)
@@ -25,7 +29,7 @@ const withIdempotency = async (req, res, next) => {
         res.json = function (body) {
             if (res.statusCode >= 200 && res.statusCode < 300) {
                 const requestHash = crypto.createHash('sha256').update(JSON.stringify(req.body)).digest('hex');
-                idempotencyRepo.saveKey(idempotencyKey, requestHash, body)
+                idempotencyRepo.saveKey(actorType, actorId, requestPath, idempotencyKey, requestHash, body)
                     .catch(err => console.error('Lỗi lưu Idempotency Key:', err));
             }
             redis.del(lockKey).catch(() => {});

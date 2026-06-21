@@ -198,30 +198,25 @@ router.post('/link-bank', walletController.linkBank);
 
 /**
  * @swagger
- * /api/v1/wallet/verify-pin:
- *   post:
- *     summary: Xác thực mã PIN của ví
+ * /api/v1/wallet/unlink-bank/{id}:
+ *   delete:
+ *     summary: Hủy liên kết tài khoản ngân hàng
  *     tags: [Wallet]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - pin
- *             properties:
- *               pin:
- *                 type: string
- *                 example: "123456"
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của ngân hàng liên kết
  *     responses:
  *       200:
- *         description: Mã PIN chính xác
- *       400:
- *         description: Sai PIN, PIN chưa được cài đặt hoặc ví bị khóa tạm thời
+ *         description: Hủy liên kết thành công
+ *       404:
+ *         description: Không tìm thấy thẻ
  */
-router.post('/verify-pin', walletController.verifyPin);
+router.delete('/unlink-bank/:id', walletController.unlinkBank);
 
 module.exports = router;

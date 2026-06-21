@@ -28,14 +28,14 @@ const userService = {
         // Sinh mã OTP 6 số ngẫu nhiên
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         // Lưu vào DB (5 phút)
-        await userRepository.saveEmailOtp(userId, otpCode, 5);
+        await userRepository.saveEmailOtp(userId, email, otpCode, 5);
         // Gửi email
         const mailer = require('../../utils/mailer');
         await mailer.sendOtpEmail(email, otpCode);
     },
 
     verifyEmailOtp: async (userId, email, otpCode) => {
-        const otpRecord = await userRepository.checkEmailOtp(userId);
+        const otpRecord = await userRepository.checkEmailOtp(userId, email);
         if (!otpRecord || !otpRecord.email_otp) {
             throw new Error('Bạn chưa yêu cầu mã OTP');
         }
@@ -48,7 +48,7 @@ const userService = {
 
         // OTP hợp lệ -> Cập nhật email và xóa OTP
         await userRepository.updateUserEmail(userId, email);
-        await userRepository.clearEmailOtp(userId);
+        await userRepository.clearEmailOtp(userId, email);
     }
 };
 

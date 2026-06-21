@@ -20,12 +20,12 @@ const authRepository = {
 
     findByEmailOrPhone: async (identifier) => {
         const query = `
-            SELECT id, email, phone, password_hash, role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
+            SELECT id, email, phone, password_hash, user_type AS role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
             FROM users 
             WHERE email = $1 OR phone = $1
         `;
         const result = await pool.query(query, [identifier]);
-        return result.rows[0]; 
+        return result.rows[0];
     },
 
     updateFailedLogin: async (userId, attempts, lockMinutes = 0) => {
@@ -87,7 +87,7 @@ const authRepository = {
         `;
         await client.query(query, [tokenFamilyId, ipAddress]);
     },
-    
+
     markRefreshTokenAsReused: async (client, tokenHash) => {
         const query = `UPDATE refresh_tokens SET reused_at = CURRENT_TIMESTAMP WHERE token_hash = $1`;
         await client.query(query, [tokenHash]);

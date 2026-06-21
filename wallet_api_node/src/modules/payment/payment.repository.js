@@ -5,6 +5,8 @@ const pool = require('../../config/db');
 const paymentRepository = {
     createOrder: async (client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId = null) => {
         const newId = uuidv7();
+        const idempotencyKey = uuidv7();
+        const merchantOrderId = 'M' + Date.now();
         const query = `
             INSERT INTO payment_orders (id, merchant_id, order_code, amount, callback_url, description, status, expired_at, merchant_order_id)
             VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8) 
@@ -19,7 +21,7 @@ const paymentRepository = {
     createQrCode: async (client, orderId, qrContent, qrToken, expiredAt) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO payment_qr_codes (id, payment_order_id, qr_content, qr_token, expired_at)
+            INSERT INTO payment_qr_codes (id, payment_order_id, qr_payload, qr_token, expired_at)
             VALUES ($1, $2, $3, $4, $5) 
             RETURNING id;
         `;
@@ -27,15 +29,29 @@ const paymentRepository = {
         return result.rows[0].id;
     },
 
-    // Tạo đơn hàng nhận tiền cho người dùng thường (không cần merchant_id)
+    getSystemMerchantId: async (client) => {
+        const query = `SELECT id FROM merchants LIMIT 1`;
+        const result = await client.query(query);
+        if (result.rows.length === 0) {
+            // Default UUID if no merchant exists yet
+            return '00000000-0000-0000-0000-000000000000';
+        }
+        return result.rows[0].id;
+    },
+
+    // Tạo đơn hàng nhận tiền cho người dùng thường (sử dụng System Merchant)
     createUserOrder: async (client, orderCode, amount, description, expiredAt) => {
         const newId = uuidv7();
+        const idempotencyKey = uuidv7();
+        const merchantOrderId = 'REQ' + Date.now();
+        const merchantId = await paymentRepository.getSystemMerchantId(client);
+
         const query = `
-            INSERT INTO payment_orders (id, order_code, amount, description, status, expired_at)
-            VALUES ($1, $2, $3, $4, 'PENDING', $5)
+            INSERT INTO payment_orders (id, merchant_id, payment_no, merchant_order_id, amount, description, status, idempotency_key, expired_at)
+            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
             RETURNING id;
         `;
-        const result = await client.query(query, [newId, orderCode, amount, description, expiredAt]);
+        const result = await client.query(query, [newId, merchantId, orderCode, merchantOrderId, amount, description, idempotencyKey, expiredAt]);
         return result.rows[0].id;
     },
 
@@ -57,14 +73,15 @@ const paymentRepository = {
         await client.query(query, [status, orderId]);
     },
 
-    createPaymentTransaction: async (client, orderId, payerWalletId, amount, ledgerTxId) => {
+    createPaymentTransaction: async (client, orderId, payerUserId, payerWalletId, amount, ledgerTxId) => {
         const newId = uuidv7();
+        const idempotencyKey = uuidv7();
         const query = `
-            INSERT INTO payment_transactions (id, payment_order_id, payer_wallet_id, amount, ledger_transaction_id, status, paid_at)
-            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', CURRENT_TIMESTAMP)
+            INSERT INTO payment_transactions (id, payment_order_id, payer_user_id, payer_wallet_id, amount, ledger_transaction_id, status, idempotency_key, paid_at)
+            VALUES ($1, $2, $3, $4, $5, $6, 'SUCCESS', $7, CURRENT_TIMESTAMP)
             RETURNING id;
         `;
-        const result = await client.query(query, [newId, orderId, payerWalletId, amount, ledgerTxId]);
+        const result = await client.query(query, [newId, orderId, payerUserId, payerWalletId, amount, ledgerTxId, idempotencyKey]);
         return result.rows[0].id;
     },
 

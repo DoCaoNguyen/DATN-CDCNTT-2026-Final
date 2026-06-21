@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./src/config/firebase');
 BigInt.prototype.toJSON = function () {
     return this.toString();
 };

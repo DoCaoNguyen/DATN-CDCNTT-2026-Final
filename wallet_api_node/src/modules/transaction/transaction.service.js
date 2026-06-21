@@ -7,7 +7,7 @@ const notificationService = require('../notification/notification.service');
 const aiService = require('../ai/ai.service');
 
 const transactionService = {
-    deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
+    deposit: async (userId, amount, pin, faceImagePath, externalReference) => {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
@@ -56,7 +56,7 @@ const transactionService = {
 
         const client = await pool.connect();
         try {
-            await client.query('BEGIN'); 
+            await client.query('BEGIN');
 
             // SANDBOX SIMULATION: Nạp tiền thất bại nếu số tiền có tận cùng là 999 (ví dụ: 10,999)
             if (amount % 1000n === 999n) {
@@ -72,10 +72,10 @@ const transactionService = {
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordDeposit(client, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
+            await repo.recordDeposit(client, userId, wallet.id, amount, ledgerTxId, 'SANDBOX_BANK', extRef);
 
-            await client.query('COMMIT'); 
-            
+            await client.query('COMMIT');
+
             emitToUser(userId, 'balance_update', {
                 type: 'DEPOSIT',
                 amount: amount.toString(),
@@ -88,12 +88,12 @@ const transactionService = {
                 console.error('Lỗi gửi push notification nạp tiền:', err);
             });
 
-            return { 
+            return {
                 id: extRef,
                 external_reference: extRef,
-                amount: amount.toString(), 
-                balanceBefore: balanceBefore.toString(), 
-                balanceAfter: balanceAfter.toString() 
+                amount: amount.toString(),
+                balanceBefore: balanceBefore.toString(),
+                balanceAfter: balanceAfter.toString()
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -103,7 +103,7 @@ const transactionService = {
         }
     },
 
-    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => { 
+    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
@@ -152,7 +152,7 @@ const transactionService = {
 
         const client = await pool.connect();
         try {
-            await client.query('BEGIN'); 
+            await client.query('BEGIN');
 
             // SANDBOX SIMULATION: Rút tiền thất bại do ngân hàng bảo trì nếu số tiền tận cùng là 999
             if (amount % 1000n === 999n) {
@@ -171,10 +171,10 @@ const transactionService = {
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordWithdrawal(client, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
+            await repo.recordWithdrawal(client, userId, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
 
-            await client.query('COMMIT'); 
-            
+            await client.query('COMMIT');
+
             emitToUser(userId, 'balance_update', {
                 type: 'WITHDRAW',
                 amount: amount.toString(),
@@ -187,12 +187,12 @@ const transactionService = {
                 console.error('Lỗi gửi push notification rút tiền:', err);
             });
 
-            return { 
+            return {
                 id: extRef,
                 external_reference: extRef,
-                amount: amount.toString(), 
-                balanceBefore: balanceBefore.toString(), 
-                balanceAfter: balanceAfter.toString() 
+                amount: amount.toString(),
+                balanceBefore: balanceBefore.toString(),
+                balanceAfter: balanceAfter.toString()
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -251,7 +251,7 @@ const transactionService = {
 
         const client = await pool.connect();
         try {
-            await client.query('BEGIN'); 
+            await client.query('BEGIN');
 
             // SANDBOX SIMULATION: Chuyển tiền tới ngân hàng thất bại nếu số tiền có tận cùng là 999
             if (amount % 1000n === 999n) {
@@ -270,10 +270,10 @@ const transactionService = {
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordBankTransfer(client, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
+            await repo.recordBankTransfer(client, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
 
-            await client.query('COMMIT'); 
-            
+            await client.query('COMMIT');
+
             emitToUser(userId, 'balance_update', {
                 type: 'WITHDRAW',
                 amount: amount.toString(),
@@ -286,12 +286,12 @@ const transactionService = {
                 console.error('Lỗi gửi push notification chuyển tiền ngân hàng:', err);
             });
 
-            return { 
+            return {
                 id: extRef,
                 external_reference: extRef,
-                amount: amount.toString(), 
-                balanceBefore: balanceBefore.toString(), 
-                balanceAfter: balanceAfter.toString() 
+                amount: amount.toString(),
+                balanceBefore: balanceBefore.toString(),
+                balanceAfter: balanceAfter.toString()
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -303,7 +303,7 @@ const transactionService = {
 
     transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin) => {
         const senderWallet = await repo.getWalletForPinCheck(senderUserId);
-        
+
         if (!senderWallet) {
             throw new Error('Sender_Wallet_Not_Found');
         }
@@ -315,7 +315,7 @@ const transactionService = {
                 throw new Error('Wallet_Locked_PIN');
             } else {
                 await repo.resetPinAttempts(senderWallet.id);
-                senderWallet.pin_failed_attempts = 0; 
+                senderWallet.pin_failed_attempts = 0;
             }
         }
 
@@ -325,7 +325,7 @@ const transactionService = {
         const isPinMatch = await bcrypt.compare(pin, senderWallet.pin_hash);
         if (!isPinMatch) {
             const newAttempts = (senderWallet.pin_failed_attempts || 0) + 1;
-            
+
             if (newAttempts >= 3) {
                 const lockTime = new Date(Date.now() + 30 * 60000);
                 await repo.updatePinAttempts(senderWallet.id, newAttempts, lockTime);
@@ -354,7 +354,7 @@ const transactionService = {
             await client.query('BEGIN');
 
             const sortedWallets = [senderWallet.id, receiverWallet.id].sort();
-            
+
             let senderBalanceBefore, receiverBalanceBefore;
             for (let wId of sortedWallets) {
                 const bal = await repo.lockAndGetBalance(client, wId);
@@ -369,7 +369,7 @@ const transactionService = {
             const senderBalanceAfter = await repo.subtractBalance(client, senderWallet.id, amount);
             const receiverBalanceAfter = await repo.addBalance(client, receiverWallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', senderWallet.id, note || 'Chuyển tiền qua Ví');
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', senderWallet.id, note || 'Chuyển tiền qua Ví', amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, senderWallet.id, 'DEBIT', amount, senderBalanceBefore, senderBalanceAfter);
             await repo.createLedgerEntry(client, ledgerTxId, receiverWallet.id, 'CREDIT', amount, receiverBalanceBefore, receiverBalanceAfter);
@@ -439,10 +439,10 @@ const transactionService = {
 
             // Gửi Push Notification cho người gửi (Biến động giảm)
             notificationService.sendBalanceChangeNotification(
-                senderUserId, 
-                amount, 
-                'TRANSFER_SEND', 
-                ledgerTxId, 
+                senderUserId,
+                amount,
+                'TRANSFER_SEND',
+                ledgerTxId,
                 receiverWallet.full_name || receiverIdentifier
             ).catch(err => {
                 console.error('Lỗi gửi push notification gửi tiền:', err);
@@ -451,19 +451,19 @@ const transactionService = {
             // Gửi Push Notification cho người nhận (Biến động tăng)
             if (receiverWallet.user_id) {
                 notificationService.sendBalanceChangeNotification(
-                    receiverWallet.user_id, 
-                    amount, 
-                    'TRANSFER_RECEIVE', 
-                    ledgerTxId, 
+                    receiverWallet.user_id,
+                    amount,
+                    'TRANSFER_RECEIVE',
+                    ledgerTxId,
                     senderWallet.full_name || senderWallet.phone
                 ).catch(err => {
                     console.error('Lỗi gửi push notification nhận tiền:', err);
                 });
             }
 
-            return { 
-                amount: amount.toString(), 
-                balanceAfter: senderBalanceAfter.toString() 
+            return {
+                amount: amount.toString(),
+                balanceAfter: senderBalanceAfter.toString()
             };
         } catch (error) {
             await client.query('ROLLBACK');
