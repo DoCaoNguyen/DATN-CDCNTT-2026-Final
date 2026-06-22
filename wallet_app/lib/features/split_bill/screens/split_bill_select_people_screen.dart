@@ -30,7 +30,7 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
     'name': 'Phan Văn Thống (Tôi)',
     'shortName': 'Tôi',
     'initials': 'VT',
-    'phone': '*******437',
+    'phone': '•••••••437',
     'color': Colors.pink.shade50,
   };
 
@@ -68,7 +68,7 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
             
             if (data['phone'] != null && data['phone'].toString().length >= 4) {
                String p = data['phone'].toString();
-               _me['phone'] = '*******${p.substring(p.length - 3)}';
+               _me['phone'] = '•••••••${p.substring(p.length - 3)}';
             }
           });
         }
@@ -120,7 +120,7 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                   String rawPhone = user['phone'] ?? '';
                   String maskedPhone = rawPhone;
                   if (rawPhone.length >= 4) {
-                    maskedPhone = '*******${rawPhone.substring(rawPhone.length - 3)}';
+                    maskedPhone = '•••••••${rawPhone.substring(rawPhone.length - 3)}';
                   }
 
                   return {

@@ -29,6 +29,7 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen> w
   bool _isLoading = true;
   List<dynamic> _receivables = [];
   List<dynamic> _payables = [];
+  final Set<String> _remindedIds = {};
 
   @override
   void initState() {
@@ -99,7 +100,10 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen> w
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã gửi nhắc nhở thành công')));
+        setState(() {
+          _remindedIds.add(billId);
+        });
+        SnackbarUtils.showSuccess(context, 'Đã gửi nhắc nhở thành công.');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể gửi nhắc nhở')));
       }
@@ -620,16 +624,27 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen> w
                           child: const Text("Hủy", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(width: 8),
-                        OutlinedButton(
-                          onPressed: () => _handleRemind(item['id'].toString()),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE91E63)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                            minimumSize: const Size(0, 32),
-                          ),
-                          child: const Text("Nhắc nhở", style: TextStyle(color: Color(0xFFE91E63), fontSize: 13, fontWeight: FontWeight.bold)),
-                        ),
+                        _remindedIds.contains(item['id'].toString())
+                            ? OutlinedButton(
+                                onPressed: null,
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.grey),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                  minimumSize: const Size(0, 32),
+                                ),
+                                child: const Text("Đã nhắc nhở", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                              )
+                            : OutlinedButton(
+                                onPressed: () => _handleRemind(item['id'].toString()),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFE91E63)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                  minimumSize: const Size(0, 32),
+                                ),
+                                child: const Text("Nhắc nhở", style: TextStyle(color: Color(0xFFE91E63), fontSize: 13, fontWeight: FontWeight.bold)),
+                              ),
                       ],
                     ),
                   ] else ...[

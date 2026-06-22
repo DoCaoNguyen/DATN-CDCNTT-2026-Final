@@ -32,6 +32,10 @@ const notificationService = {
                 title = 'Tài khoản Nhận Tiền';
                 body = `+${amountFormatted} từ ${extraInfo || 'người gửi'}.`;
                 break;
+            case 'SPLIT_BILL_REMIND':
+                title = 'Nhắc nhở thanh toán tiền chia';
+                body = `Bạn có một khoản tiền ${amountFormatted} cần thanh toán cho ${extraInfo || 'người tạo'}.`;
+                break;
             default:
                 body = `Số dư tài khoản thay đổi ${amountFormatted}.`;
         }

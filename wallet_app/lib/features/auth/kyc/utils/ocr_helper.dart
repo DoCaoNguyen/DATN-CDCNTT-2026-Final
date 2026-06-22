@@ -3,6 +3,9 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 
 class OcrHelper {
   static Future<bool> validateIdCardQuality(File imageFile, bool isFront) async {
+    // Nếu là mặt sau, bỏ qua nhận diện chữ để dễ chụp hơn
+    if (!isFront) return true;
+    
     try {
       final inputImage = InputImage.fromFile(imageFile);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
@@ -11,16 +14,11 @@ class OcrHelper {
 
       String text = recognizedText.text.toUpperCase();
 
-      if (isFront) {
-        if (text.trim().isEmpty || recognizedText.blocks.length < 4) return false;
-        bool hasTop = text.contains("CỘNG HÒA") || text.contains("VIỆT NAM");
-        bool hasTitle = text.contains("CĂN CƯỚC") || text.contains("CÔNG DÂN") || text.contains("CHỨNG MINH");
-        bool hasId = RegExp(r'\d{9,12}').hasMatch(text);
-        return hasTop && hasTitle && hasId;
-      } else {
-        // Chỉ cần mặt sau chứa "ĐẶC ĐIỂM" là hợp lệ
-        return text.contains("ĐẶC ĐIỂM") || text.contains("DAC DIEM") || text.contains("ĐẶC");
-      }
+      if (text.trim().isEmpty || recognizedText.blocks.length < 4) return false;
+      bool hasTop = text.contains("CỘNG HÒA") || text.contains("VIỆT NAM");
+      bool hasTitle = text.contains("CĂN CƯỚC") || text.contains("CÔNG DÂN") || text.contains("CHỨNG MINH");
+      bool hasId = RegExp(r'\d{9,12}').hasMatch(text);
+      return hasTop && hasTitle && hasId;
     } catch (e) {
       return false;
     }

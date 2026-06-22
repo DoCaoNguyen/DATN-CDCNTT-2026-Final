@@ -3,6 +3,7 @@ const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const notificationRepository = require('../notification/notification.repository');
 const admin = require('../../config/firebase');
+const LoyaltySyncLog = require('./models/loyalty_sync_log.model');
 
 // Mock URL for Loyalty API, fallback to a mock domain if not set
 const LOYALTY_API_URL = process.env.LOYALTY_API_URL || 'https://mock-loyalty-api.com/api/points/sync';
@@ -13,21 +14,18 @@ const LoyaltyIntegrationService = {
      * Chạy ngầm (Background Job)
      */
     syncPointsAfterPayment: async (userId, paymentTransactionId, amount) => {
-        // Khởi tạo log PENDING
+        // Khởi tạo log PENDING trong MongoDB
         const logId = uuidv7();
-        let client;
         try {
-            client = await pool.connect();
-            await client.query(`
-                INSERT INTO loyalty_sync_logs (id, payment_transaction_id, amount, status, retry_count, created_at)
-                VALUES ($1, $2, $3, 'PENDING', 0, CURRENT_TIMESTAMP)
-            `, [logId, paymentTransactionId, amount]);
+            await LoyaltySyncLog.create({
+                _id: logId,
+                payment_transaction_id: paymentTransactionId,
+                amount: amount,
+                status: 'PENDING'
+            });
         } catch (error) {
             console.error('[LOYALTY_SYNC] Error inserting initial log:', error.message);
-            if (client) client.release();
             return; // Lỗi DB khi ghi log thì dừng lại
-        } finally {
-            if (client) client.release();
         }
 
         await LoyaltyIntegrationService.executeLoyaltyApiCall(userId, paymentTransactionId, amount, logId);
@@ -67,11 +65,10 @@ const LoyaltyIntegrationService = {
             }
 
             // Thành công -> Cập nhật log
-            await client.query(`
-                UPDATE loyalty_sync_logs 
-                SET status = 'SUCCESS', earned_points = $1
-                WHERE id = $2
-            `, [earnedPoints, logId]);
+            await LoyaltySyncLog.updateOne(
+                { _id: logId },
+                { $set: { status: 'SUCCESS', earned_points: earnedPoints } }
+            );
 
             // Bắn Push Notification
             await LoyaltyIntegrationService.sendPointsNotification(userId, earnedPoints, paymentTransactionId);
@@ -80,14 +77,13 @@ const LoyaltyIntegrationService = {
             console.error('[LOYALTY_SYNC] Error syncing points:', error.message);
             
             // Cập nhật trạng thái FAILED
-            if (client) {
-                await client.query(`
-                    UPDATE loyalty_sync_logs 
-                    SET status = 'FAILED', 
-                        retry_count = retry_count + $1
-                    WHERE id = $2
-                `, [isRetry ? 1 : 0, logId]);
-            }
+            await LoyaltySyncLog.updateOne(
+                { _id: logId },
+                { 
+                    $set: { status: 'FAILED' },
+                    $inc: { retry_count: isRetry ? 1 : 0 }
+                }
+            );
         } finally {
             if (client) client.release();
         }
@@ -157,17 +153,18 @@ const LoyaltyIntegrationService = {
     retryFailedSyncs: async () => {
         let client;
         try {
-            client = await pool.connect();
-            // Lấy các log FAILED và thử lại < 3 lần
-            const res = await client.query(`
-                SELECT * FROM loyalty_sync_logs 
-                WHERE status = 'FAILED' AND retry_count < 3
-                LIMIT 50
-            `);
+            // Lấy các log FAILED và thử lại < 3 lần từ MongoDB
+            const failedLogs = await LoyaltySyncLog.find({
+                status: 'FAILED',
+                retry_count: { $lt: 3 }
+            }).limit(50);
 
-            const failedLogs = res.rows;
             if (failedLogs.length > 0) {
                 console.log(`[LOYALTY_SYNC_CRON] Found ${failedLogs.length} failed logs. Retrying...`);
+            }
+
+            if (failedLogs.length > 0) {
+                client = await pool.connect();
             }
 
             for (const log of failedLogs) {
@@ -190,7 +187,7 @@ const LoyaltyIntegrationService = {
                     userId, 
                     log.payment_transaction_id, 
                     log.amount, 
-                    log.id, 
+                    log._id, 
                     true // isRetry
                 );
             }

@@ -10,17 +10,18 @@ const authRepository = {
 
     create: async (client, email, phone, passwordHash) => {
         const newId = uuidv7();
+        const fullName = 'User ' + (phone ? phone.slice(-4) : 'Unknown');
         const query = `
-            INSERT INTO users (id, email, phone, password_hash) 
-            VALUES ($1, $2, $3, $4) RETURNING id
+            INSERT INTO users (id, email, phone, password_hash, full_name) 
+            VALUES ($1, $2, $3, $4, $5) RETURNING id
         `;
-        const result = await client.query(query, [newId, email, phone, passwordHash]);
+        const result = await client.query(query, [newId, email, phone, passwordHash, fullName]);
         return result.rows[0].id;
     },
 
     findByEmailOrPhone: async (identifier) => {
         const query = `
-            SELECT id, email, phone, password_hash, role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
+            SELECT id, email, phone, password_hash, user_type as role, status, failed_login_attempts, locked_until, is_kyc_verified, token_version 
             FROM users 
             WHERE email = $1 OR phone = $1
         `;

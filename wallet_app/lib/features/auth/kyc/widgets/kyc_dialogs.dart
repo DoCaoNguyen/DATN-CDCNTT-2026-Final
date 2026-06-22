@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../home/screens/home_screen.dart';
 
 class KycDialogs {
@@ -56,7 +57,13 @@ class KycDialogs {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryPink),
-                onPressed: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen(userId: userId, isVerified: true)), (route) => false),
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('is_verified', true);
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen(userId: userId, isVerified: true)), (route) => false);
+                  }
+                },
                 child: const Text('Về trang chủ', style: TextStyle(color: Colors.white)),
               ),
             ),

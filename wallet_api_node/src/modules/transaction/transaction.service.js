@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const repo = require('./transaction.repository');
 const { emitToUser } = require('../../utils/socket');
@@ -66,13 +67,15 @@ const transactionService = {
             const balanceBefore = await repo.lockAndGetBalance(client, wallet.id);
             const balanceAfter = await repo.addBalance(client, wallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', wallet.id, 'Nạp tiền từ ngân hàng liên kết');
-            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const depositId = uuidv7();
+            const hex = depositId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', depositId, 'DEPOSIT', 'Nạp tiền từ ngân hàng liên kết', amount);
+            
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordDeposit(client, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
+            await repo.recordDeposit(client, depositId, 'DEP-' + extRef, userId, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
 
             await client.query('COMMIT'); 
             
@@ -165,13 +168,15 @@ const transactionService = {
             }
             const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, 'Rút tiền về ngân hàng liên kết');
-            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const withdrawId = uuidv7();
+            const hex = withdrawId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
+
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', withdrawId, 'WITHDRAWAL', 'Rút tiền về ngân hàng liên kết', amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordWithdrawal(client, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
+            await repo.recordWithdrawal(client, withdrawId, 'WDR-' + extRef, userId, wallet.id, amount, ledgerTxId, linkedBankId, extRef);
 
             await client.query('COMMIT'); 
             
@@ -264,13 +269,15 @@ const transactionService = {
             }
             const balanceAfter = await repo.subtractBalance(client, wallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', wallet.id, `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`);
-            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
+            const transferId = uuidv7();
+            const hex = transferId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', transferId, 'WITHDRAWAL', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
+            
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordBankTransfer(client, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
+            await repo.recordBankTransfer(client, transferId, 'BNK-' + extRef, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
 
             await client.query('COMMIT'); 
             
@@ -369,46 +376,50 @@ const transactionService = {
             const senderBalanceAfter = await repo.subtractBalance(client, senderWallet.id, amount);
             const receiverBalanceAfter = await repo.addBalance(client, receiverWallet.id, amount);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', senderWallet.id, note || 'Chuyển tiền qua Ví');
+            const tId = uuidv7();
+            const hex = tId.replace(/-/g, '').substring(0, 10);
+            const finalRef = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
+
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', tId, 'TRANSFER', note || 'Chuyển tiền qua Ví', amount);
 
             await repo.createLedgerEntry(client, ledgerTxId, senderWallet.id, 'DEBIT', amount, senderBalanceBefore, senderBalanceAfter);
             await repo.createLedgerEntry(client, ledgerTxId, receiverWallet.id, 'CREDIT', amount, receiverBalanceBefore, receiverBalanceAfter);
 
-            const hex = ledgerTxId.replace(/-/g, '').substring(0, 10);
-            const finalRef = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
-            const transferId = await repo.recordTransfer(client, senderWallet.id, receiverWallet.id, amount, note, ledgerTxId, finalRef);
+            const transferId = await repo.recordTransfer(client, tId, 'TRF-' + finalRef, senderUserId, senderWallet.id, receiverWallet.user_id, receiverWallet.id, amount, note, finalRef);
 
             // Auto check and mark split bill as paid if matched
             if (senderUserId && receiverWallet.user_id) {
-                const splitBillResult = await client.query(`
-                    SELECT sbm.id, sb.id as bill_id 
-                    FROM split_bill_members sbm
-                    JOIN split_bills sb ON sbm.split_bill_id = sb.id
-                    WHERE sbm.user_id = $1 
-                      AND sb.creator_id = $2 
-                      AND sbm.status != 'PAID'
-                      AND sbm.amount = $3
+                const fundingResult = await client.query(`
+                    SELECT gfm.id, gf.id as funding_id 
+                    FROM group_funding_members gfm
+                    JOIN group_fundings gf ON gfm.group_funding_id = gf.id
+                    WHERE gfm.user_id = $1 
+                      AND gf.creator_user_id = $2 
+                      AND gf.type = 'SPLIT_BILL'
+                      AND gfm.status != 'PAID'
+                      AND gfm.amount = $3
                     LIMIT 1
                 `, [senderUserId, receiverWallet.user_id, amount]);
 
-                if (splitBillResult.rows.length > 0) {
-                    const memberId = splitBillResult.rows[0].id;
-                    const billId = splitBillResult.rows[0].bill_id;
+                if (fundingResult.rows.length > 0) {
+                    const memberId = fundingResult.rows[0].id;
+                    const fundingId = fundingResult.rows[0].funding_id;
+                    
                     await client.query(`
-                        UPDATE split_bill_members 
+                        UPDATE group_funding_members 
                         SET status = 'PAID', paid_at = CURRENT_TIMESTAMP 
                         WHERE id = $1
                     `, [memberId]);
 
                     const pendingResult = await client.query(`
-                        SELECT id FROM split_bill_members 
-                        WHERE split_bill_id = $1 AND status != 'PAID'
-                    `, [billId]);
+                        SELECT id FROM group_funding_members 
+                        WHERE group_funding_id = $1 AND status != 'PAID'
+                    `, [fundingId]);
                     
                     if (pendingResult.rows.length === 0) {
                         await client.query(`
-                            UPDATE split_bills SET status = 'COMPLETED' WHERE id = $1
-                        `, [billId]);
+                            UPDATE group_fundings SET status = 'COMPLETED' WHERE id = $1
+                        `, [fundingId]);
                     }
                 }
             }

@@ -28,7 +28,7 @@ const authService = {
         }
 
         // Lưu tạm vào DB với OTP là 'TW_VFY' (Twilio Verify)
-        await otpRepository.upsertOtp(phone, email, 'TW_VFY');
+        await otpRepository.upsertOtp(phone, email, 'TW_VFY', 'REGISTER');
 
         // Gửi bằng Twilio Verify Service do user cung cấp
         const result = await sendOTP(phone);
@@ -49,7 +49,7 @@ const authService = {
         }
 
         // Lưu tạm vào DB với OTP là 'TW_VFY' (Twilio Verify)
-        await otpRepository.upsertOtp(phone, null, 'TW_VFY');
+        await otpRepository.upsertOtp(phone, null, 'TW_VFY', 'FORGOT_PASSWORD');
 
         // Gửi bằng Twilio Verify Service do user cung cấp
         const result = await sendOTP(phone);
@@ -109,7 +109,7 @@ const authService = {
             const passwordHash = await bcrypt.hash(password, saltRounds);
 
             const newUserId = await authRepository.create(client, email, phone, passwordHash);
-            await walletRepository.create(client, newUserId);
+            await walletRepository.create(client, newUserId, phone);
 
             await client.query('COMMIT');
             return newUserId;
@@ -265,7 +265,7 @@ const authService = {
                 throw new Error('Refresh_Token_Expired');
             }
 
-            const user = await client.query('SELECT id, role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
+            const user = await client.query('SELECT id, user_type as role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
             if (!user || user.status !== 'ACTIVE') {
                 throw new Error('Account_Inactive');
             }

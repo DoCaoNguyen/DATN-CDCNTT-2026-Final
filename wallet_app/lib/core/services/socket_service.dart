@@ -34,6 +34,8 @@ class SocketService {
     if (_token == null) return;
     
     if (_socket != null) {
+      // Cập nhật token mới nếu có
+      _socket!.auth = {'token': _token};
       if (!_socket!.connected) {
         _socket!.connect();
       }
@@ -82,11 +84,12 @@ class SocketService {
     }
   }
 
-  void sendMessage(String receiverPhone, String content) {
+  void sendMessage(String receiverPhone, String content, {String messageType = 'TEXT'}) {
     if (_socket != null) {
       _socket!.emit('send_message', {
         'receiverPhone': receiverPhone,
         'content': content,
+        'messageType': messageType,
       });
     } else {
       debugPrint('Socket is not initialized');

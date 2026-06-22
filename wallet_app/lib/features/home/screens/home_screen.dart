@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/kyc/sceens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
@@ -329,8 +330,15 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          final String? name = data['data']?['full_name'];
+        if (data['data'] != null || data['success'] == true) {
+          final profileData = data['data'] ?? data;
+          
+          // Đồng bộ trạng thái KYC mới nhất từ server lưu vào máy
+          bool isKycVerified = profileData['is_kyc_verified'] == true;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('is_verified', isKycVerified);
+
+          final String? name = profileData['full_name'];
           if (name != null && name.trim().isNotEmpty && mounted) {
             setState(() {
               _fullName = name.trim().split(' ').last;

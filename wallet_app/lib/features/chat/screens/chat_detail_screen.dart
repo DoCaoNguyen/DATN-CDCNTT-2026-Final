@@ -5,6 +5,8 @@ import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/services/socket_service.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
+import 'red_packet_create_screen.dart';
+import '../widgets/red_packet_dialog.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String token;
@@ -239,13 +241,97 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ],
                   ),
                 )
+              else if (msg['message_type'] == 'RED_PACKET')
+                // Bong bóng lì xì
+                Builder(
+                  builder: (context) {
+                    final rpInfo = msg['red_packet_info'] ?? {};
+                    final isClaimed = rpInfo['is_claimed'] == true;
+                    final isExhausted = rpInfo['status'] == 'EXHAUSTED';
+
+                    String title = 'Lì Xì';
+                    String subTitle = isReceived ? 'Bấm để giật lì xì' : 'Bạn đã gửi lì xì';
+                    IconData iconData = Icons.money_rounded;
+                    Color bubbleColor = Colors.red.shade600;
+                    Color iconColor = Colors.amber;
+
+                    if (isClaimed) {
+                      title = 'Lì Xì đã nhận';
+                      subTitle = 'Bạn đã nhận lì xì này';
+                      iconData = Icons.check_circle_rounded;
+                      bubbleColor = Colors.orange.shade400;
+                      iconColor = Colors.white;
+                    } else if (isExhausted) {
+                      title = 'Lì Xì đã hết';
+                      subTitle = 'Tiếc quá, đã bị giật hết!';
+                      iconData = Icons.sentiment_dissatisfied_rounded;
+                      bubbleColor = Colors.grey.shade500;
+                      iconColor = Colors.white;
+                    }
+
+                    return GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => RedPacketDialog(
+                            token: widget.token,
+                            redPacketId: msg['note'] ?? '',
+                          ),
+                        ).then((_) => _fetchChatHistory());
+                      },
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 250),
+                        decoration: BoxDecoration(
+                          color: bubbleColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  Icon(iconData, color: iconColor, size: 36),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          subTitle,
+                                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
+                              ),
+                              child: const Text('Mio Lì Xì', style: TextStyle(color: Colors.white, fontSize: 10)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                )
               else 
                 // Bong bóng giao dịch tiền
                 Container(
                   constraints: const BoxConstraints(maxWidth: 250),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isReceived ? const Color(0xFFE8F5E9) : const Color(0xFFF5F5F5), // Xanh lá nhạt nếu nhận, xám nếu chuyển
+                    color: isReceived ? const Color(0xFFE8F5E9) : const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: isReceived ? Colors.green.shade200 : Colors.grey.shade300),
                   ),
@@ -269,7 +355,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       Text(amountFormatted, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
                       const SizedBox(height: 4),
                       Text(isReceived ? 'Nhận tiền qua Mio' : 'Chuyển tiền qua Mio', style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                      if (msg['note'] != null && msg['note'].toString().isNotEmpty)
+                      if (msg['note'] != null && msg['note'].toString().isNotEmpty && msg['message_type'] != 'RED_PACKET')
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text('"${msg['note']}"', style: const TextStyle(fontSize: 13, color: Colors.black54, fontStyle: FontStyle.italic)),
@@ -366,7 +452,29 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             _buildActionBtn(Icons.chat_bubble_outline_rounded, 'Nhắc trả tiền', Colors.pink),
             _buildActionBtn(Icons.card_giftcard_rounded, 'Gửi thiệp', Colors.pinkAccent),
-            _buildActionBtn(Icons.money_rounded, 'Giật lì xì', Colors.redAccent),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RedPacketCreateScreen(
+                      token: widget.token,
+                      counterpartyPhone: widget.counterpartyPhone,
+                    ),
+                  ),
+                );
+                
+                if (result != null) {
+                  // result là redPacketId
+                  SocketService().sendMessage(
+                    widget.counterpartyPhone, 
+                    result, // content = redPacketId
+                    messageType: 'RED_PACKET'
+                  );
+                }
+              },
+              child: _buildActionBtn(Icons.money_rounded, 'Lì xì', Colors.redAccent),
+            ),
           ],
         ),
       ),

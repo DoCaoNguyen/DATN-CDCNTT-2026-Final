@@ -29,7 +29,7 @@ const userRepository = {
 
     getUserProfile: async (userId) => {
         const query = `
-            SELECT u.full_name, u.phone, u.email, k.id_number as identity_number
+            SELECT u.full_name, u.phone, u.email, u.is_kyc_verified, k.id_number as identity_number
             FROM users u
             LEFT JOIN user_kyc k ON u.id = k.user_id
             WHERE u.id = $1
@@ -39,13 +39,13 @@ const userRepository = {
     },
 
     getAllUsers: async () => {
-        const query = 'SELECT id, full_name, phone, email, role, status, created_at FROM users ORDER BY created_at DESC';
+        const query = 'SELECT id, full_name, phone, email, user_type as role, status, is_kyc_verified, created_at FROM users ORDER BY created_at DESC';
         const result = await pool.query(query);
         return result.rows;
     },
 
     getUserById: async (userId) => {
-        const query = 'SELECT id, full_name, phone, email, role, status, created_at FROM users WHERE id = $1';
+        const query = 'SELECT id, full_name, phone, email, user_type as role, status, is_kyc_verified, created_at FROM users WHERE id = $1';
         const result = await pool.query(query, [userId]);
         return result.rows[0];
     },

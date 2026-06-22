@@ -9,14 +9,29 @@ const splitBillService = {
         try {
             await client.query('BEGIN');
             
-            const billId = await splitBillRepository.createBill(creatorId, totalAmount, splitAmount, note, client);
+            const memberCount = members.length + (includeMe ? 1 : 0);
+            const totalAmountInt = Math.round(Number(totalAmount));
+            const baseAmount = Math.floor(totalAmountInt / memberCount);
+            let remainder = totalAmountInt % memberCount;
+
+            const billId = await splitBillRepository.createBill(creatorId, totalAmountInt, note, memberCount, client);
 
             for (const member of members) {
-                await splitBillRepository.createMember(billId, member.user_id, member.amount, 'PENDING', null, client);
+                let memberAmount = baseAmount;
+                if (remainder > 0) {
+                    memberAmount += 1;
+                    remainder -= 1;
+                }
+                await splitBillRepository.createMember(billId, member.user_id, memberAmount, 'PENDING', null, client);
             }
             
             if (includeMe) {
-                await splitBillRepository.createMember(billId, creatorId, splitAmount, 'PAID', new Date(), client);
+                let myAmount = baseAmount;
+                if (remainder > 0) {
+                    myAmount += 1;
+                    remainder -= 1;
+                }
+                await splitBillRepository.createMember(billId, creatorId, myAmount, 'PAID', new Date(), client);
             }
 
             await client.query('COMMIT');
@@ -66,6 +81,9 @@ const splitBillService = {
     },
 
     remindBill: async (creatorId, billId) => {
+        const creatorQuery = await pool.query('SELECT full_name FROM users WHERE id = $1', [creatorId]);
+        const creatorName = creatorQuery.rows[0]?.full_name || 'người tạo';
+        
         const members = await splitBillRepository.getPendingMembers(billId, creatorId);
         if (!members || members.length === 0) return;
         
@@ -74,9 +92,9 @@ const splitBillService = {
                  await notificationService.sendBalanceChangeNotification(
                      member.user_id,
                      member.amount,
-                     'TRANSFER_RECEIVE', // Dùng tạm TRANSFER_RECEIVE để mượn Push Notif có chuông hoặc tạo Type mới
+                     'SPLIT_BILL_REMIND', 
                      null,
-                     'Yêu cầu thanh toán khoản tiền chia'
+                     creatorName
                  ).catch(console.error);
              }
         }

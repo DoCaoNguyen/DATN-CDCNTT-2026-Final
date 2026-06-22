@@ -36,6 +36,7 @@ const initSocket = (server) => {
         socket.join(`user_${userId}`);
 
         socket.on('send_message', async (data) => {
+            console.log('--- Socket send_message received ---', data);
             try {
                 const transactionRepository = require('../modules/transaction/transaction.repository');
                 const senderWallet = await transactionRepository.getWalletByUserId(userId);
@@ -45,7 +46,8 @@ const initSocket = (server) => {
                     return socket.emit('error', { message: 'Không tìm thấy người dùng hợp lệ' });
                 }
 
-                const msg = await transactionRepository.saveChatMessage(senderWallet.id, receiverWallet.id, data.content);
+                const messageType = data.messageType || 'TEXT';
+                const msg = await transactionRepository.saveChatMessage(senderWallet.id, receiverWallet.id, data.content, messageType);
                 
                 // Format msg để đồng nhất với API
                 const formattedMsg = {
@@ -53,7 +55,7 @@ const initSocket = (server) => {
                     amount: "0",
                     note: msg.content,
                     created_at: msg.created_at.toISOString(),
-                    message_type: 'TEXT'
+                    message_type: messageType
                 };
 
                 // Gửi cho người nhận qua socket (Realtime)

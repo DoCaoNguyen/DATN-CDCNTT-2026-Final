@@ -49,4 +49,9 @@ class ApiConfig {
   static const String getUnreadNotificationCount = '$baseUrl/notifications/unread-count';
   static const String markNotificationRead = '$baseUrl/notifications/read';
   static const String markAllNotificationsRead = '$baseUrl/notifications/read-all';
+
+  // --- RED PACKET ENDPOINTS ---
+  static const String createRedPacket = '$baseUrl/red-packet/create';
+  static String getRedPacketDetails(String id) => '$baseUrl/red-packet/$id';
+  static String claimRedPacket(String id) => '$baseUrl/red-packet/$id/claim';
 }

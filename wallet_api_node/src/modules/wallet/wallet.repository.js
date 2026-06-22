@@ -4,10 +4,10 @@ const { v7: uuidv7 } = require('uuid');
 
 const walletRepository = {
     
-    create: async (client, userId) => {
+    create: async (client, userId, walletNo) => {
         const newId = uuidv7();
-        const query = `INSERT INTO wallets (id, user_id) VALUES ($1, $2)`;
-        await client.query(query, [newId, userId]);
+        const query = `INSERT INTO wallets (id, user_id, wallet_no) VALUES ($1, $2, $3)`;
+        await client.query(query, [newId, userId, walletNo]);
         return newId;
     },
 

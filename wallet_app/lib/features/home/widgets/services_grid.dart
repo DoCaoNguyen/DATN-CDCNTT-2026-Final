@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../transfer/screens/transfer_main_screen.dart';
 import '../../bank/screens/bank_transfer_list_screen.dart';
 import '../../split_bill/screens/split_bill_management_screen.dart';
+import '../../chat/screens/red_packet_create_screen.dart';
 
 class ServicesGrid extends StatelessWidget {
   final String activeLang;
@@ -29,6 +30,7 @@ class ServicesGrid extends StatelessWidget {
       {'icon': Icons.send_rounded, 'name': activeLang == 'VIE' ? 'Chuyển tiền' : 'Transfer', 'color': Colors.pink},
       {'icon': Icons.account_balance_rounded, 'name': activeLang == 'VIE' ? 'Ngân hàng' : 'Bank', 'color': Colors.blueAccent},
       {'icon': Icons.pie_chart_rounded, 'name': activeLang == 'VIE' ? 'Chia tiền' : 'Split Bill', 'color': Colors.orange},
+      {'icon': Icons.card_giftcard_rounded, 'name': activeLang == 'VIE' ? 'Lì xì' : 'Red Packet', 'color': Colors.red},
     ];
 
     return Container(
@@ -64,6 +66,8 @@ class ServicesGrid extends StatelessWidget {
                   onRefreshBalance();
                 } else if (service['name'].toString().contains('Chia tiền') || service['name'].toString().contains('Split Bill')) {
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => SplitBillManagementScreen(token: token, me: const {})));
+                } else if (service['name'].toString().contains('Lì xì') || service['name'].toString().contains('Red Packet')) {
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => RedPacketCreateScreen(token: token)));
                 }
               }
             },
