@@ -32,4 +32,30 @@ const verifyToken = async (req, res, next) => {
     }
 };
 
+const requireAdmin = async (req, res, next) => {
+    try {
+        const userId = req.user.userId || req.user.id;
+        const query = `
+            SELECT r.code 
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = $1
+        `;
+        const result = await pool.query(query, [userId]);
+        const roles = result.rows.map(row => row.code);
+        
+        if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) {
+            req.user.roles = roles;
+            return next();
+        }
+        
+        return res.status(403).json({ error: 'Không có quyền truy cập tài nguyên này' });
+    } catch (error) {
+        console.error('requireAdmin error:', error);
+        return res.status(500).json({ error: 'Lỗi kiểm tra quyền hạn' });
+    }
+};
+
 module.exports = verifyToken;
+module.exports.verifyToken = verifyToken;
+module.exports.requireAdmin = requireAdmin;

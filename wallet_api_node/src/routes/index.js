@@ -13,6 +13,7 @@ const notificationRoutes = require('../modules/notification/notification.routes'
 const splitBillRoutes = require('../modules/split_bill/split_bill.routes');
 const aiRoutes = require('../modules/ai/ai.routes');
 const redPacketRoutes = require('../modules/red_packet/red_packet.routes');
+const adminRoutes = require('../modules/admin/admin.routes');
 
 router.use(apiLogger);
 router.use(auditLogger);
@@ -26,6 +27,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/split-bill', splitBillRoutes);
 router.use('/ai', aiRoutes);
 router.use('/red-packet', redPacketRoutes);
+router.use('/admin', adminRoutes);
 
 const merchantRoutes = require('../modules/merchant/merchant.routes');
 router.use('/merchant', merchantRoutes);
