@@ -1,363 +1,363 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { v7: uuidv7 } = require('uuid');
-const pool = require('../../config/db');
 const { sendOTP, verifyOTP } = require('../../utils/sms');
 const authRepository = require('./auth.repository');
-const walletRepository = require('../wallet/wallet.repository');
 const otpRepository = require('../system/otp.repository');
-
-const authService = {
-    // Sửa lại để phòng trường hợp user chỉ truyền phone vào hàm (như trong controller họ đang sửa)
-    requestOtp: async (emailOrPhone, phoneOpt) => {
-        // Tự động phân tích tham số nếu chỉ truyền 1 tham số (phone)
-        let phone = phoneOpt;
-        let email = emailOrPhone;
-        if (!phoneOpt) {
-            phone = emailOrPhone; // Nếu truyền 1 tham số thì đó là phone
-            email = null; // Set thẳng email bằng null theo yêu cầu
-        }
-
-        const userExist = await authRepository.checkExists(email, phone);
-        if (userExist) throw new Error('Email_Phone_Exists');
-
-        const record = await otpRepository.findByPhone(phone);
-        if (record && record.locked_until && new Date(record.locked_until) > new Date()) {
-            throw new Error('Account_Locked');
-        }
-
-        // Lưu tạm vào DB với OTP là 'TW_VFY' (Twilio Verify)
-        await otpRepository.upsertOtp(phone, email, 'TW_VFY', 'REGISTER');
-
-        // Gửi bằng Twilio Verify Service do user cung cấp
-        const result = await sendOTP(phone);
-        if (!result.success) {
-            throw new Error(`OTP_Send_Failed: ${result.message}`);
-        }
-
-        return true;
-    },
-
-    forgotPasswordOtp: async (phone) => {
-        const userExist = await authRepository.checkExists(null, phone);
-        if (!userExist) throw new Error('Phone_Not_Found');
-
-        const record = await otpRepository.findByPhone(phone);
-        if (record && record.locked_until && new Date(record.locked_until) > new Date()) {
-            throw new Error('Account_Locked');
-        }
-
-        // Lưu tạm vào DB với OTP là 'TW_VFY' (Twilio Verify)
-        await otpRepository.upsertOtp(phone, null, 'TW_VFY', 'FORGOT_PASSWORD');
-
-        // Gửi bằng Twilio Verify Service do user cung cấp
-        const result = await sendOTP(phone);
-        if (!result.success) {
-            throw new Error(`OTP_Send_Failed: ${result.message}`);
-        }
-
-        return true;
-    },
-
-
-    verifyOtp: async (phone, otp) => {
-
-        const record = await otpRepository.findByPhone(phone);
-        if (!record) throw new Error('OTP_Not_Found');
-
-        if (record.locked_until && new Date(record.locked_until) > new Date()) {
-            throw new Error('Account_Locked');
-        }
-
-        // Sử dụng Twilio Verify do user cung cấp
-        const twilioResult = await verifyOTP(phone, otp);
-
-        if (!twilioResult.valid) {
-            const newAttempts = record.failed_attempts + 1;
-            
-            if (newAttempts >= 5) {
-                await otpRepository.lockAccount(phone, newAttempts, 30);
-                throw new Error('Account_Locked_Now');
-            } else {
-                await otpRepository.updateAttempts(phone, newAttempts);
-                const err = new Error('OTP_Invalid');
-                err.remainingAttempts = 5 - newAttempts;
-                throw err; 
-            }
-        }
-
-        const registerToken = jwt.sign(
-            { email: record.email, phone: phone },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' }
-        );
-
-        await otpRepository.deleteByPhone(phone);
-
-        return registerToken;
-    },
-
-    registerUserAndWallet: async (registerToken, password) => {
-        const decoded = jwt.verify(registerToken, process.env.JWT_SECRET);
-        const { email, phone } = decoded;
-
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            const saltRounds = 10;
-            const passwordHash = await bcrypt.hash(password, saltRounds);
-
-            const newUserId = await authRepository.create(client, email, phone, passwordHash);
-            await walletRepository.create(client, newUserId, phone);
-
-            await client.query('COMMIT');
-            return newUserId;
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-    },
-
-    resetPassword: async (registerToken, newPassword) => {
-        const decoded = jwt.verify(registerToken, process.env.JWT_SECRET);
-        const { phone } = decoded;
-
-        if (!phone) throw new Error('Invalid_Token');
-
-        const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(newPassword, saltRounds);
-
-        const query = `UPDATE users SET password_hash = $1 WHERE phone = $2 RETURNING id`;
-        const result = await pool.query(query, [passwordHash, phone]);
-
-        if (result.rowCount === 0) {
-            throw new Error('User_Not_Found');
-        }
-
-        return result.rows[0].id;
-    },
-
-    login: async (identifier, password, ipAddress, userAgent) => {
-        const user = await authRepository.findByEmailOrPhone(identifier);
-        if (!user) throw new Error('Invalid_Credentials');
-
-
-        if (user.locked_until) {
-            if (new Date(user.locked_until) > new Date()) {
-                throw new Error('Account_Locked');
-            } else {
-                user.failed_login_attempts = 0;
-                await authRepository.resetFailedLogin(user.id);
-            }
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-
-
-        if (!isMatch) {
-            const newAttempts = (user.failed_login_attempts || 0) + 1;
-
-
-            if (newAttempts >= 5) {
-                await authRepository.updateFailedLogin(user.id, newAttempts, 30);
-                throw new Error('Account_Locked_Now');
-            }
-
-            else {
-                await authRepository.updateFailedLogin(user.id, newAttempts, 0);
-                const err = new Error('Invalid_Credentials');
-                err.remainingAttempts = 5 - newAttempts;
-                throw err;
-            }
-        }
-
-
-        if (user.status !== 'ACTIVE') throw new Error('Account_Inactive');
-
-
-        if (user.failed_login_attempts > 0 || user.locked_until) {
-            await authRepository.resetFailedLogin(user.id);
-        }
-
-
-        // Tăng token_version của người dùng để vô hiệu hóa tất cả thiết bị trước đó
-        const newTokenVersion = await authRepository.incrementTokenVersion(user.id);
-
-        const accessToken = jwt.sign(
-            { userId: user.id, role: user.role, tokenVersion: newTokenVersion },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' }
-        );
-
-        const refreshTokenStr = crypto.randomBytes(40).toString('hex');
-        const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
-        const tokenFamilyId = uuidv7();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày theo yêu cầu
-        
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            
-            // Thu hồi toàn bộ Refresh Token cũ của user này
-            await authRepository.revokeAllUserRefreshTokens(client, user.id);
-            
-            // Lưu Refresh Token mới
-            await authRepository.saveRefreshToken(client, user.id, tokenHash, tokenFamilyId, expiresAt, ipAddress, userAgent);
-            
-            await client.query('COMMIT');
-            
-            // Ép buộc đăng xuất thiết bị cũ thông qua socket.io
-            try {
-                const { emitToUser } = require('../../utils/socket');
-                emitToUser(user.id, 'force_logout', { reason: 'logged_in_elsewhere' });
-            } catch (socketErr) {
-                console.error('Lỗi khi gửi sự kiện kick-out qua socket:', socketErr);
-            }
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-
-        return {
-            access_token: accessToken,
-            refresh_token: refreshTokenStr,
-            user_info: {
-                id: user.id,
-                email: user.email,
-                phone: user.phone,
-                role: user.role,
-                is_kyc_verified: user.is_kyc_verified
-            }
-        };
-    },
-
-    refreshToken: async (oldRefreshToken, ipAddress, userAgent) => {
-        const client = await pool.connect();
-        let isCommitted = false;
-
-        try {
-            await client.query('BEGIN');
-
-            const tokenHash = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
-            const tokenRecord = await authRepository.findRefreshTokenForUpdate(client, tokenHash);
-
-            if (!tokenRecord) {
-                throw new Error('Invalid_Refresh_Token');
-            }
-
-            if (tokenRecord.revoked_at) {
-                throw new Error('Refresh_Token_Revoked');
-            }
-
-            if (tokenRecord.reused_at) {
-                await authRepository.revokeRefreshTokenFamily(client, tokenRecord.token_family_id, ipAddress);
-                await client.query('COMMIT');
-                isCommitted = true;
-                throw new Error('Refresh_Token_Reused');
-            }
-
-            if (new Date(tokenRecord.expires_at) < new Date()) {
-                throw new Error('Refresh_Token_Expired');
-            }
-
-            const user = await client.query('SELECT id, user_type as role, status, token_version FROM users WHERE id = $1', [tokenRecord.user_id]).then(res => res.rows[0]);
-            if (!user || user.status !== 'ACTIVE') {
-                throw new Error('Account_Inactive');
-            }
-
-            await authRepository.markRefreshTokenAsReused(client, tokenHash);
-
-            const accessToken = jwt.sign(
-                { userId: user.id, role: user.role, tokenVersion: user.token_version },
-                process.env.JWT_SECRET,
-                { expiresIn: '15m' }
-            );
-
-            const newRefreshTokenStr = crypto.randomBytes(40).toString('hex');
-            const newTokenHash = crypto.createHash('sha256').update(newRefreshTokenStr).digest('hex');
-            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày theo yêu cầu
-
-            await authRepository.saveRefreshToken(client, user.id, newTokenHash, tokenRecord.token_family_id, expiresAt, ipAddress, userAgent);
-
-            await client.query('COMMIT');
-            isCommitted = true;
-
-            return {
-                access_token: accessToken,
-                refresh_token: newRefreshTokenStr
-            };
-        } catch (error) {
-            if (!isCommitted) {
-                await client.query('ROLLBACK');
-            }
-            throw error;
-        } finally {
-            client.release();
-        }
-    },
-
-    logout: async (rawRefreshToken) => {
-        const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
-        return await authRepository.revokeOne(tokenHash);
-    },
-
-    resetPasswordByAdmin: async ({
-        actorId,
-        userId,
-        newPassword,
-        confirmNewPassword,
-        reason,
+const auditLogRepository = require('../system/audit_log.repository');
+const mongoose = require('mongoose');
+
+const ACCESS_TOKEN_TTL_SECONDS = Number(process.env.JWT_EXPIRES_SECONDS || 3600);
+const REFRESH_TOKEN_DAYS = Number(process.env.REFRESH_TOKEN_DAYS || 7);
+const REFRESH_TOKEN_REMEMBER_DAYS = Number(process.env.REFRESH_TOKEN_REMEMBER_DAYS || 30);
+const MAX_FAILED_LOGIN = Number(process.env.MAX_FAILED_LOGIN || 5);
+const LOCK_MINUTES = Number(process.env.LOGIN_LOCK_MINUTES || 30);
+const RESET_TOKEN_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES || 15);
+
+function ensureJwtSecret() {
+    if (!process.env.JWT_SECRET) throw new Error('Auth_Config_Missing');
+    return process.env.JWT_SECRET;
+}
+
+function opaqueToken() {
+    return crypto.randomBytes(48).toString('base64url');
+}
+
+function tokenHash(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function normalizeOptional(value) {
+    if (value === undefined || value === null) return null;
+    return String(value).trim() || null;
+}
+
+function validatePassword(password) {
+    if (typeof password !== 'string' || password.length < 8) {
+        throw new Error('Password_Policy_Invalid');
+    }
+}
+
+function publicUser(user, context) {
+    return {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        phone: user.phone,
+        email: user.email,
+        status: user.status,
+        is_kyc_verified: user.is_kyc_verified,
+        roles: context.roles.map(role => role.code),
+        permissions: context.permissions
+    };
+}
+
+function signAccessToken(user, context) {
+    return jwt.sign({
+        sub: user.id,
+        userId: user.id,
+        user_type: user.user_type,
+        roles: context.roles.map(role => role.code),
+        permissions: context.permissions,
+        token_type: 'ACCESS',
+        tokenVersion: Number(user.token_version)
+    }, ensureJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL_SECONDS });
+}
+
+async function writeSecurityLog(data) {
+    if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) return null;
+    try {
+        return await mongoose.connection.db.collection('security_logs').insertOne({
+            ...data,
+            created_at: new Date()
+        });
+    } catch (error) {
+        console.error('[SECURITY_LOG_ERROR]', error.message);
+        return null;
+    }
+}
+
+async function issueTokenPair(user, context, { rememberMe, ipAddress, userAgent, familyId, client }) {
+    const rawRefreshToken = opaqueToken();
+    const refreshDays = rememberMe ? REFRESH_TOKEN_REMEMBER_DAYS : REFRESH_TOKEN_DAYS;
+    const expiresAt = new Date(Date.now() + refreshDays * 24 * 60 * 60 * 1000);
+    await authRepository.saveRefreshToken(client, {
+        userId: user.id,
+        tokenHash: tokenHash(rawRefreshToken),
+        tokenFamilyId: familyId || uuidv7(),
+        expiresAt,
         ipAddress,
         userAgent
-    }) => {
-        if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
-        if (!reason || !String(reason).trim()) throw new Error('Reason_Required');
+    });
+    return {
+        access_token: signAccessToken(user, context),
+        refresh_token: rawRefreshToken,
+        expires_in: ACCESS_TOKEN_TTL_SECONDS
+    };
+}
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            const bcrypt = require('bcrypt');
-            await authRepository.updatePasswordHash(client, userId, await bcrypt.hash(newPassword, 10));
-            const tokenVersion = await authRepository.incrementTokenVersionWithClient(client, userId);
-            await authRepository.revokeAllRefreshTokensForUserWithClient(client, userId, ipAddress);
-            await authRepository.revokeUnusedPasswordResetsWithClient(client, userId);
-            
-            // Audit log
-            const query = `
-                INSERT INTO audit_logs
-                    (trace_id, actor_type, actor_id, action, entity_type, entity_id, metadata, reason, ip_address, user_agent)
-                VALUES ($1, $2, $3, $4, 'users', $5, $6, $7, $8, $9)
-            `;
-            await client.query(query, [
-                `trace-auth-${Date.now()}`,
-                'ADMIN',
-                actorId || null,
-                'USER_PASSWORD_RESET',
-                userId || null,
-                JSON.stringify({ sessions_revoked: true, token_version: tokenVersion }),
-                String(reason).trim(),
-                ipAddress || null,
-                userAgent || null
-            ]);
+const authService = {
+    register: async ({ payload, ipAddress, userAgent }) => {
+        const fullName = normalizeOptional(payload.full_name);
+        const username = normalizeOptional(payload.username);
+        const email = normalizeOptional(payload.email);
+        const phone = normalizeOptional(payload.phone);
+        const password = payload.password;
+        if (!fullName || fullName.length < 2 || !phone || !password) throw new Error('Validation_Error');
+        if (password !== payload.confirm_password) throw new Error('Password_Confirm_Not_Match');
+        validatePassword(password);
+        if (await authRepository.checkExists(email, phone, username)) throw new Error('User_Conflict');
 
-            await client.query('COMMIT');
-        } catch (error) {
-            await client.query('ROLLBACK');
+        const passwordHash = await bcrypt.hash(password, 10);
+        const created = await authRepository.withTransaction(async client => {
+            const user = await authRepository.createUser(client, {
+                fullName, username, email, phone, passwordHash
+            });
+            const roleAssigned = await authRepository.assignRoleByCode(client, user.id, 'USER');
+            if (!roleAssigned) throw new Error('Role_Not_Found');
+            const wallet = await authRepository.createWallet(client, user.id);
+            return { user, wallet };
+        });
+
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: created.user.id,
+            action: 'auth.user_registered',
+            entityType: 'users',
+            entityId: created.user.id,
+            newData: { phone, email, role: 'USER', wallet_id: created.wallet.id },
+            ipAddress,
+            userAgent
+        });
+        return created;
+    },
+
+    login: async ({ loginId, password, rememberMe, ipAddress, userAgent }) => {
+        if (!loginId || !password) throw new Error('Validation_Error');
+        const user = await authRepository.findByLoginId(loginId);
+        if (!user) {
+            await writeSecurityLog({ event: 'LOGIN_FAILED', login_id: loginId, reason: 'INVALID_CREDENTIALS', ip_address: ipAddress });
+            throw new Error('Invalid_Credentials');
+        }
+        if (['LOCKED', 'BLOCKED', 'INACTIVE'].includes(user.status)) throw new Error('Account_Inactive');
+        if (user.locked_until && new Date(user.locked_until) > new Date()) throw new Error('Account_Locked');
+
+        const passwordMatches = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatches) {
+            const attempts = Number(user.failed_login_attempts || 0) + 1;
+            await authRepository.updateFailedLogin(user.id, attempts, attempts >= MAX_FAILED_LOGIN ? LOCK_MINUTES : 0);
+            await writeSecurityLog({
+                event: attempts >= MAX_FAILED_LOGIN ? 'ACCOUNT_TEMP_LOCKED' : 'LOGIN_FAILED',
+                actor_id: String(user.id),
+                failed_attempts: attempts,
+                ip_address: ipAddress,
+                user_agent: userAgent
+            });
+            const error = new Error(attempts >= MAX_FAILED_LOGIN ? 'Account_Locked_Now' : 'Invalid_Credentials');
+            error.remainingAttempts = Math.max(MAX_FAILED_LOGIN - attempts, 0);
             throw error;
-        } finally {
-            client.release();
         }
 
+        await authRepository.markLoginSuccess(user.id);
+        user.failed_login_attempts = 0;
+        user.locked_until = null;
+        const context = await authRepository.getRolesAndPermissions(user.id);
+        const tokens = await authRepository.withTransaction(client =>
+            issueTokenPair(user, context, { rememberMe, ipAddress, userAgent, client })
+        );
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: user.id,
+            action: 'auth.login_succeeded',
+            entityType: 'users',
+            entityId: user.id,
+            ipAddress,
+            userAgent
+        });
+        return { ...tokens, user: publicUser(user, context) };
+    },
+
+    refreshToken: async ({ refreshToken, ipAddress, userAgent }) => {
+        const hash = tokenHash(refreshToken);
+        let reuseDetected = false;
+        const result = await authRepository.withTransaction(async client => {
+            const record = await authRepository.findRefreshTokenForUpdate(client, hash);
+            if (!record) throw new Error('Invalid_Refresh_Token');
+            if (record.revoked_at) {
+                await authRepository.markRefreshTokenReused(client, record.id);
+                await authRepository.revokeRefreshTokenFamily(client, record.token_family_id, ipAddress);
+                reuseDetected = true;
+                return null;
+            }
+            if (new Date(record.expires_at) <= new Date()) throw new Error('Refresh_Token_Expired');
+
+            const user = await authRepository.findById(record.user_id);
+            if (!user || user.status !== 'ACTIVE') throw new Error('Account_Inactive');
+            const context = await authRepository.getRolesAndPermissions(user.id);
+            await authRepository.markRefreshTokenUsed(client, record.id, ipAddress);
+            return issueTokenPair(user, context, {
+                ipAddress,
+                userAgent,
+                familyId: record.token_family_id,
+                client
+            });
+        });
+        if (reuseDetected) {
+            await writeSecurityLog({ event: 'REFRESH_TOKEN_REUSE', token_hash_prefix: hash.slice(0, 12), ip_address: ipAddress });
+            throw new Error('Refresh_Token_Reused');
+        }
+        return result;
+    },
+
+    logout: async ({ userId, refreshToken, ipAddress, userAgent }) => {
+        await authRepository.revokeOne(tokenHash(refreshToken), userId, ipAddress);
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: userId,
+            action: 'auth.logout',
+            entityType: 'users',
+            entityId: userId,
+            ipAddress,
+            userAgent
+        });
+    },
+
+    getMe: async userId => {
+        const user = await authRepository.findById(userId);
+        if (!user) throw new Error('User_Not_Found');
+        const context = await authRepository.getRolesAndPermissions(userId);
         return {
-            user_id: userId,
-            sessions_revoked: true,
-            password_reset: true
+            ...publicUser(user, context),
+            roles: context.roles
         };
+    },
+
+    changePassword: async ({ userId, currentPassword, newPassword, confirmNewPassword, ipAddress, userAgent }) => {
+        validatePassword(newPassword);
+        if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
+        const user = await authRepository.findById(userId);
+        if (!user) throw new Error('User_Not_Found');
+        if (!await bcrypt.compare(currentPassword, user.password_hash)) throw new Error('Current_Password_Invalid');
+        if (await bcrypt.compare(newPassword, user.password_hash)) throw new Error('Password_Must_Be_Different');
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        await authRepository.withTransaction(async client => {
+            await authRepository.updatePassword(client, userId, passwordHash);
+            await authRepository.revokeAllUserRefreshTokens(client, userId, ipAddress);
+        });
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: userId,
+            action: 'auth.password_changed',
+            entityType: 'users',
+            entityId: userId,
+            ipAddress,
+            userAgent
+        });
+    },
+
+    forgotPassword: async ({ identifier, ipAddress, userAgent }) => {
+        const user = identifier ? await authRepository.findByLoginId(identifier) : null;
+        if (!user) return { accepted: true };
+        const rawToken = opaqueToken();
+        await authRepository.createPasswordReset({
+            userId: user.id,
+            tokenHash: tokenHash(rawToken),
+            expiresAt: new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000),
+            ipAddress,
+            userAgent
+        });
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: user.id,
+            action: 'auth.password_reset_requested',
+            entityType: 'users',
+            entityId: user.id,
+            ipAddress,
+            userAgent
+        });
+        return {
+            accepted: true,
+            ...(process.env.NODE_ENV === 'production' ? {} : { reset_token: rawToken })
+        };
+    },
+
+    resetPassword: async ({ resetToken, newPassword, confirmNewPassword, ipAddress, userAgent }) => {
+        validatePassword(newPassword);
+        if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
+        const hash = tokenHash(resetToken);
+        let userId;
+        await authRepository.withTransaction(async client => {
+            const reset = await authRepository.findPasswordResetForUpdate(client, hash);
+            if (!reset || reset.used_at || new Date(reset.expires_at) <= new Date()) {
+                throw new Error('Password_Reset_Token_Invalid');
+            }
+            userId = reset.user_id;
+            await authRepository.updatePassword(client, userId, await bcrypt.hash(newPassword, 10));
+            await authRepository.consumePasswordReset(client, reset.id);
+            await authRepository.revokeAllUserRefreshTokens(client, userId, ipAddress);
+        });
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: userId,
+            action: 'auth.password_reset_completed',
+            entityType: 'users',
+            entityId: userId,
+            ipAddress,
+            userAgent
+        });
+    },
+
+    requestOtp: async (emailOrPhone, phoneOpt) => {
+        const phone = phoneOpt || emailOrPhone;
+        const email = phoneOpt ? emailOrPhone : null;
+        if (await authRepository.checkExists(email, phone)) throw new Error('Email_Phone_Exists');
+        const existing = await otpRepository.findByPhone(phone);
+        if (existing?.locked_until && new Date(existing.locked_until) > new Date()) throw new Error('Account_Locked');
+        await otpRepository.upsertOtp(phone, email, tokenHash(opaqueToken()), 'REGISTER');
+        const sent = await sendOTP(phone);
+        if (!sent.success) throw new Error('OTP_Send_Failed');
+    },
+
+    verifyOtp: async (phone, otp) => {
+        const record = await otpRepository.findByPhone(phone);
+        if (!record) throw new Error('OTP_Not_Found');
+        if (new Date(record.expired_at) <= new Date()) throw new Error('OTP_Expired');
+        if (record.locked_until && new Date(record.locked_until) > new Date()) throw new Error('Account_Locked');
+        const verified = await verifyOTP(phone, otp);
+        if (!verified.valid) {
+            const attempts = Number(record.failed_attempts || 0) + 1;
+            if (attempts >= MAX_FAILED_LOGIN) {
+                await otpRepository.lockAccount(phone, attempts, LOCK_MINUTES);
+                throw new Error('Account_Locked_Now');
+            }
+            await otpRepository.updateAttempts(phone, attempts);
+            const error = new Error('OTP_Invalid');
+            error.remainingAttempts = MAX_FAILED_LOGIN - attempts;
+            throw error;
+        }
+        await otpRepository.deleteByPhone(phone);
+        return jwt.sign({
+            phone,
+            email: record.email,
+            purpose: record.purpose,
+            token_type: 'REGISTRATION'
+        }, ensureJwtSecret(), { expiresIn: '15m' });
+    },
+
+    registerUserAndWallet: async (registerToken, password, fullName = null) => {
+        validatePassword(password);
+        const decoded = jwt.verify(registerToken, ensureJwtSecret());
+        if (decoded.token_type !== 'REGISTRATION' || decoded.purpose !== 'REGISTER') throw new Error('Invalid_Token');
+        return authService.register({
+            payload: {
+                full_name: fullName || `User ${String(decoded.phone).slice(-4)}`,
+                phone: decoded.phone,
+                email: decoded.email,
+                password,
+                confirm_password: password
+            }
+        });
     }
 };
 

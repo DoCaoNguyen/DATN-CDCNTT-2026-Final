@@ -1,82 +1,84 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
-const verifyToken = async (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Không tìm thấy Access Token' });
+function unauthorized(res, code, message) {
+    return res.status(401).json({ success: false, message, error_code: code });
+}
+
+function forbidden(res, message) {
+    return res.status(403).json({ success: false, message, error_code: 'FORBIDDEN' });
+}
+
+const authenticateJwt = async (req, res, next) => {
+    const header = req.headers.authorization;
+    if (!header || !/^Bearer\s+/i.test(header)) {
+        return unauthorized(res, 'UNAUTHORIZED', 'Thiếu access token');
     }
-
-    const token = authHeader.split(' ')[1];
-
     try {
+        const token = header.replace(/^Bearer\s+/i, '').trim();
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Truy vấn database để so sánh token_version hiện tại của người dùng
-        const query = 'SELECT token_version FROM users WHERE id = $1';
-        const result = await pool.query(query, [decoded.userId]);
-
-        if (result.rows.length === 0) {
-            return res.status(401).json({ error: 'Người dùng không tồn tại' });
+        if (decoded.token_type && decoded.token_type !== 'ACCESS') {
+            return unauthorized(res, 'UNAUTHORIZED', 'Token không đúng loại');
         }
-
-        const currentVersion = result.rows[0].token_version;
-        if (decoded.tokenVersion === undefined || decoded.tokenVersion !== currentVersion) {
-            return res.status(401).json({ error: 'Tài khoản đã được đăng nhập ở thiết bị khác' });
+        const userId = decoded.sub || decoded.userId || decoded.id;
+        const result = await pool.query(`
+            SELECT id, user_type, status, token_version
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+        const user = result.rows[0];
+        if (!user) return unauthorized(res, 'UNAUTHORIZED', 'Người dùng không tồn tại');
+        if (['LOCKED', 'BLOCKED', 'INACTIVE'].includes(user.status)) {
+            return forbidden(res, 'Tài khoản đã bị khóa hoặc chưa kích hoạt');
         }
-
-        req.user = decoded;
-        next();
+        if (Number(decoded.tokenVersion) !== Number(user.token_version)) {
+            return unauthorized(res, 'TOKEN_REVOKED', 'Token đã bị thu hồi');
+        }
+        const roles = Array.isArray(decoded.roles)
+            ? decoded.roles
+            : [decoded.role || user.user_type].filter(Boolean);
+        req.user = {
+            ...decoded,
+            id: userId,
+            userId,
+            sub: userId,
+            user_type: decoded.user_type || user.user_type,
+            role: roles[0],
+            roles,
+            permissions: Array.isArray(decoded.permissions) ? decoded.permissions : []
+        };
+        return next();
     } catch (error) {
-        return res.status(401).json({ error: 'Token không hợp lệ hoặc đã hết hạn' });
+        if (error.name === 'TokenExpiredError') {
+            return unauthorized(res, 'TOKEN_EXPIRED', 'Access token đã hết hạn');
+        }
+        return unauthorized(res, 'UNAUTHORIZED', 'Access token không hợp lệ');
     }
 };
 
-const requireAdmin = async (req, res, next) => {
-    try {
-        const userId = req.user.userId || req.user.id;
-        const query = `
-            SELECT r.code 
-            FROM user_roles ur
-            JOIN roles r ON ur.role_id = r.id
-            WHERE ur.user_id = $1
-        `;
-        const result = await pool.query(query, [userId]);
-        const roles = result.rows.map(row => row.code);
-
-        if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) {
-            req.user.roles = roles;
-            return next();
-        }
-
-        return res.status(403).json({ error: 'Không có quyền truy cập tài nguyên này' });
-    } catch (error) {
-        console.error('requireAdmin error:', error);
-        return res.status(500).json({ error: 'Lỗi kiểm tra quyền hạn' });
+const requireRole = (...allowedRoles) => (req, res, next) => {
+    const roles = req.user?.roles || [];
+    if (!allowedRoles.some(role => roles.includes(role))) {
+        return forbidden(res, 'Không có vai trò phù hợp');
     }
+    return next();
 };
 
-const requirePermission = (...permissions) => {
-    return async (req, res, next) => {
-        try {
-            if (req.user && req.user.roles && req.user.roles.includes('SUPER_ADMIN')) {
-                return next();
-            }
-
-            if (req.user && req.user.roles && req.user.roles.includes('ADMIN')) {
-                return next();
-            }
-
-            return res.status(403).json({ error: 'Không có quyền thực hiện thao tác này' });
-        } catch (error) {
-            console.error('requirePermission error:', error);
-            return res.status(500).json({ error: 'Lỗi kiểm tra quyền hạn' });
-        }
-    };
+const requirePermission = (...requiredPermissions) => (req, res, next) => {
+    const permissions = req.user?.permissions || [];
+    if (!requiredPermissions.every(permission => permissions.includes(permission))) {
+        return forbidden(res, 'Không có quyền truy cập tài nguyên này');
+    }
+    return next();
 };
 
-module.exports = verifyToken;
-module.exports.verifyToken = verifyToken;
-module.exports.requireAdmin = requireAdmin;
+const requireAdmin = requireRole('ADMIN', 'SUPER_ADMIN', 'SUPPORT_STAFF');
+const requireMerchant = requireRole('MERCHANT_OWNER', 'MERCHANT_STAFF');
+
+module.exports = authenticateJwt;
+module.exports.verifyToken = authenticateJwt;
+module.exports.authenticateJwt = authenticateJwt;
+module.exports.requireRole = requireRole;
 module.exports.requirePermission = requirePermission;
-module.exports.authenticateJwt = verifyToken;
+module.exports.requireAdmin = requireAdmin;
+module.exports.requireMerchant = requireMerchant;

@@ -40,8 +40,13 @@ const otpRepository = {
 
     
     lockAccount: async (phone, attempts, lockMinutes) => {
-        const query = `UPDATE otp_tracking SET failed_attempts = $1, locked_until = NOW() + INTERVAL '${lockMinutes} minutes' WHERE phone = $2`;
-        await pool.query(query, [attempts, phone]);
+        const query = `
+            UPDATE otp_tracking
+            SET failed_attempts = $1,
+                locked_until = NOW() + ($3::text || ' minutes')::interval
+            WHERE phone = $2
+        `;
+        await pool.query(query, [attempts, phone, Number(lockMinutes)]);
     },
 
     
