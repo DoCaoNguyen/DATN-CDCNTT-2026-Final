@@ -10,7 +10,7 @@ import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
 import 'account_management_screen.dart';
-
+import 'help_center_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -86,8 +86,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildUtilitiesGrid(),
                 const SizedBox(height: 16),
                 _buildScamTipsSection(),
-                const SizedBox(height: 16),
-                _buildCharitySection(),
                 const SizedBox(height: 16),
                 _buildMoreSettingsSection(),
                 _buildFooterSection(),
@@ -516,56 +514,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCharitySection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.favorite_border_rounded, color: AppColors.primaryPink),
-                  const SizedBox(width: 8),
-                  const Text('Máy tính cho em', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 80,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.computer_rounded, color: Colors.black26),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Tặng phòng máy cho học sinh nghèo miền núi: Lập Quỹ Tấm lòng vàng...',
-                  style: TextStyle(fontSize: 13),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMoreSettingsSection() {
     return Container(
@@ -579,7 +527,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildMoreSettingsItem(
             icon: Icons.help_outline_rounded,
             title: 'Trung tâm trợ giúp',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HelpCenterScreen(
+                    token: widget.token,
+                    fullName: _fullName,
+                    phone: _phone,
+                  ),
+                ),
+              );
+            },
           ),
           const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(

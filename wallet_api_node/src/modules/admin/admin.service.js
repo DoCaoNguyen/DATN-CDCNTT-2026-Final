@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const adminRepository = require('./admin.repository');
 const walletRepository = require('../wallet/wallet.repository');
+const authService = require('../auth/auth.service');
+const walletService = require('../wallet/wallet.service');
 const auditLogService = require('../system/audit_log.service');
 
 const SYSTEM_ROLES = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT_STAFF'];
@@ -236,28 +238,14 @@ const adminService = {
             throw new Error('Super_Admin_Required');
         }
 
-        if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
-        if (!newPassword || newPassword.length < 8) throw new Error('Password_Policy_Invalid');
-        if (!normalizeOptional(reason)) throw new Error('Reason_Required');
-
-        const passwordHash = await bcrypt.hash(newPassword, 10);
-        
-        await adminRepository.withTransaction(async (client) => {
-            const updated = await adminRepository.resetPasswordByAdmin(client, userId, passwordHash);
-            // Delete all refresh tokens to force re-login
-            await client.query('DELETE FROM refresh_tokens WHERE user_id = $1', [userId]);
-            
-            await adminRepository.writeAuditLog({
-                actorId: actor.userId || actor.id,
-                action: 'admin.user_password_reset',
-                entityType: 'users',
-                entityId: userId,
-                oldData: { token_version: user.token_version },
-                newData: { token_version: updated.token_version },
-                reason,
-                ipAddress,
-                userAgent
-            });
+        await authService.resetPasswordByAdmin({
+            actorId: actor.userId || actor.id,
+            userId,
+            newPassword,
+            confirmNewPassword,
+            reason,
+            ipAddress,
+            userAgent
         });
 
         return adminService.getUserDetail(userId);
@@ -317,27 +305,12 @@ const adminService = {
 
     lockWallet: async ({ actor, walletId, reason, ipAddress, userAgent }) => {
         ensureWriteAccess(actor);
-        ensureUuid(walletId, 'Invalid_Wallet_Id');
-        if (!normalizeOptional(reason)) throw new Error('Reason_Required');
-
-        const oldWallet = await adminRepository.findWalletById(walletId);
-        if (!oldWallet) throw new Error('Wallet_Not_Found');
-        if (oldWallet.status === 'CLOSED') throw new Error('Wallet_Closed');
-        if (oldWallet.status === 'LOCKED') throw new Error('Wallet_Already_Locked');
-
-        await adminRepository.withTransaction(async (client) => {
-            const updated = await adminRepository.lockWalletByAdmin(client, walletId, actor.userId || actor.id, reason);
-            await adminRepository.writeAuditLog({
-                actorId: actor.userId || actor.id,
-                action: 'admin.wallet_locked',
-                entityType: 'wallets',
-                entityId: walletId,
-                oldData: { status: oldWallet.status },
-                newData: { status: updated.status, lock_reason: updated.lock_reason },
-                reason,
-                ipAddress,
-                userAgent
-            });
+        await walletService.lockByAdmin({
+            walletId,
+            actorId: actor.userId || actor.id,
+            reason,
+            ipAddress,
+            userAgent
         });
 
         return adminService.getWalletDetail(walletId);
@@ -345,27 +318,12 @@ const adminService = {
 
     unlockWallet: async ({ actor, walletId, reason, ipAddress, userAgent }) => {
         ensureWriteAccess(actor);
-        ensureUuid(walletId, 'Invalid_Wallet_Id');
-        if (!normalizeOptional(reason)) throw new Error('Reason_Required');
-
-        const oldWallet = await adminRepository.findWalletById(walletId);
-        if (!oldWallet) throw new Error('Wallet_Not_Found');
-        if (oldWallet.status === 'CLOSED') throw new Error('Wallet_Closed');
-        if (oldWallet.status !== 'LOCKED') throw new Error('Wallet_Not_Locked');
-
-        await adminRepository.withTransaction(async (client) => {
-            const updated = await adminRepository.unlockWalletByAdmin(client, walletId);
-            await adminRepository.writeAuditLog({
-                actorId: actor.userId || actor.id,
-                action: 'admin.wallet_unlocked',
-                entityType: 'wallets',
-                entityId: walletId,
-                oldData: { status: oldWallet.status, lock_reason: oldWallet.lock_reason },
-                newData: { status: updated.status },
-                reason,
-                ipAddress,
-                userAgent
-            });
+        await walletService.unlockByAdmin({
+            walletId,
+            actorId: actor.userId || actor.id,
+            reason,
+            ipAddress,
+            userAgent
         });
 
         return adminService.getWalletDetail(walletId);
