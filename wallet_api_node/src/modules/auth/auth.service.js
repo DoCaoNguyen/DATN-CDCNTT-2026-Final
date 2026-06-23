@@ -304,6 +304,60 @@ const authService = {
     logout: async (rawRefreshToken) => {
         const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
         return await authRepository.revokeOne(tokenHash);
+    },
+
+    resetPasswordByAdmin: async ({
+        actorId,
+        userId,
+        newPassword,
+        confirmNewPassword,
+        reason,
+        ipAddress,
+        userAgent
+    }) => {
+        if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
+        if (!reason || !String(reason).trim()) throw new Error('Reason_Required');
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const bcrypt = require('bcrypt');
+            await authRepository.updatePasswordHash(client, userId, await bcrypt.hash(newPassword, 10));
+            const tokenVersion = await authRepository.incrementTokenVersionWithClient(client, userId);
+            await authRepository.revokeAllRefreshTokensForUserWithClient(client, userId, ipAddress);
+            await authRepository.revokeUnusedPasswordResetsWithClient(client, userId);
+            
+            // Audit log
+            const query = `
+                INSERT INTO audit_logs
+                    (trace_id, actor_type, actor_id, action, entity_type, entity_id, metadata, reason, ip_address, user_agent)
+                VALUES ($1, $2, $3, $4, 'users', $5, $6, $7, $8, $9)
+            `;
+            await client.query(query, [
+                `trace-auth-${Date.now()}`,
+                'ADMIN',
+                actorId || null,
+                'USER_PASSWORD_RESET',
+                userId || null,
+                JSON.stringify({ sessions_revoked: true, token_version: tokenVersion }),
+                String(reason).trim(),
+                ipAddress || null,
+                userAgent || null
+            ]);
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+
+        return {
+            user_id: userId,
+            sessions_revoked: true,
+            password_reset: true
+        };
     }
 };
 
