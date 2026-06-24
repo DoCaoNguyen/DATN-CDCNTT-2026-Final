@@ -863,7 +863,7 @@ router.post('/webhooks/jobs/retry-due', notImplemented('POST /admin/webhooks/job
  *       200:
  *         description: System alerts
  */
-router.get('/dashboard/kpis', notImplemented('GET /admin/dashboard/kpis'));
+router.get('/dashboard/kpis', adminController.getDashboardKPIs);
 router.get('/dashboard/transactions-chart', notImplemented('GET /admin/dashboard/transactions-chart'));
 router.get('/dashboard/success-rate', notImplemented('GET /admin/dashboard/success-rate'));
 router.get('/dashboard/top-merchants', notImplemented('GET /admin/dashboard/top-merchants'));
