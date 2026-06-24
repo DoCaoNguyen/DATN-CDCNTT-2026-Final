@@ -98,7 +98,7 @@ async function issueTokenPair(user, context, { rememberMe, ipAddress, userAgent,
 }
 
 const authService = {
-    register: async ({ payload, ipAddress, userAgent }) => {
+    register: async ({ payload, ipAddress, userAgent, skipPasswordPolicy = false }) => {
         const fullName = normalizeOptional(payload.full_name);
         const username = normalizeOptional(payload.username);
         const email = normalizeOptional(payload.email);
@@ -106,7 +106,11 @@ const authService = {
         const password = payload.password;
         if (!fullName || fullName.length < 2 || !phone || !password) throw new Error('Validation_Error');
         if (password !== payload.confirm_password) throw new Error('Password_Confirm_Not_Match');
-        validatePassword(password);
+        if (skipPasswordPolicy) {
+            // Mobile legacy flow keeps the old behavior: the Flutter app owns the 6-digit PIN validation.
+        } else {
+            validatePassword(password);
+        }
         if (await authRepository.checkExists(email, phone, username)) throw new Error('User_Conflict');
 
         const passwordHash = await bcrypt.hash(password, 10);
@@ -176,6 +180,75 @@ const authService = {
             userAgent
         });
         return { ...tokens, user: publicUser(user, context) };
+    },
+
+    loginMobileLegacy: async ({ identifier, password, ipAddress, userAgent }) => {
+        if (!identifier || !password) throw new Error('Validation_Error');
+        const user = await authRepository.findByLoginId(identifier);
+        if (!user) throw new Error('Invalid_Credentials');
+
+        if (user.locked_until) {
+            if (new Date(user.locked_until) > new Date()) {
+                throw new Error('Account_Locked');
+            }
+            await authRepository.markLoginSuccess(user.id);
+            user.failed_login_attempts = 0;
+            user.locked_until = null;
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatches) {
+            const attempts = Number(user.failed_login_attempts || 0) + 1;
+            await authRepository.updateFailedLogin(user.id, attempts, attempts >= MAX_FAILED_LOGIN ? LOCK_MINUTES : 0);
+            const error = new Error(attempts >= MAX_FAILED_LOGIN ? 'Account_Locked_Now' : 'Invalid_Credentials');
+            error.remainingAttempts = Math.max(MAX_FAILED_LOGIN - attempts, 0);
+            throw error;
+        }
+
+        if (user.status !== 'ACTIVE') throw new Error('Account_Inactive');
+
+        if (Number(user.failed_login_attempts || 0) > 0 || user.locked_until) {
+            await authRepository.markLoginSuccess(user.id);
+        }
+
+        const tokenVersion = await authRepository.incrementTokenVersion(user.id);
+        const accessToken = jwt.sign({
+            userId: user.id,
+            role: user.user_type,
+            tokenVersion
+        }, ensureJwtSecret(), { expiresIn: '15m' });
+
+        const refreshToken = crypto.randomBytes(40).toString('hex');
+        await authRepository.withTransaction(async client => {
+            await authRepository.revokeAllUserRefreshTokens(client, user.id, ipAddress);
+            await authRepository.saveRefreshToken(client, {
+                userId: user.id,
+                tokenHash: tokenHash(refreshToken),
+                tokenFamilyId: uuidv7(),
+                expiresAt: new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000),
+                ipAddress,
+                userAgent
+            });
+        });
+
+        try {
+            const { emitToUser } = require('../../utils/socket');
+            emitToUser(user.id, 'force_logout', { reason: 'logged_in_elsewhere' });
+        } catch (socketErr) {
+            console.error('Loi khi gui su kien kick-out qua socket:', socketErr);
+        }
+
+        return {
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            user_info: {
+                id: user.id,
+                email: user.email,
+                phone: user.phone,
+                role: user.user_type,
+                is_kyc_verified: user.is_kyc_verified
+            }
+        };
     },
 
     refreshToken: async ({ refreshToken, ipAddress, userAgent }) => {
@@ -319,6 +392,16 @@ const authService = {
         if (!sent.success) throw new Error('OTP_Send_Failed');
     },
 
+    forgotPasswordOtp: async phone => {
+        const user = phone ? await authRepository.findByLoginId(phone) : null;
+        if (!user) throw new Error('Phone_Not_Found');
+        const existing = await otpRepository.findByPhone(phone);
+        if (existing?.locked_until && new Date(existing.locked_until) > new Date()) throw new Error('Account_Locked');
+        await otpRepository.upsertOtp(phone, null, tokenHash(opaqueToken()), 'FORGOT_PASSWORD');
+        const sent = await sendOTP(phone);
+        if (!sent.success) throw new Error('OTP_Send_Failed');
+    },
+
     verifyOtp: async (phone, otp) => {
         const record = await otpRepository.findByPhone(phone);
         if (!record) throw new Error('OTP_Not_Found');
@@ -346,7 +429,6 @@ const authService = {
     },
 
     registerUserAndWallet: async (registerToken, password, fullName = null) => {
-        validatePassword(password);
         const decoded = jwt.verify(registerToken, ensureJwtSecret());
         if (decoded.token_type !== 'REGISTRATION' || decoded.purpose !== 'REGISTER') throw new Error('Invalid_Token');
         return authService.register({
@@ -356,7 +438,29 @@ const authService = {
                 email: decoded.email,
                 password,
                 confirm_password: password
-            }
+            },
+            skipPasswordPolicy: true
+        });
+    },
+
+    resetPasswordMobileLegacy: async (registerToken, newPassword, ipAddress, userAgent) => {
+        const decoded = jwt.verify(registerToken, ensureJwtSecret());
+        if (decoded.token_type !== 'REGISTRATION' || decoded.purpose !== 'FORGOT_PASSWORD') throw new Error('Invalid_Token');
+        const user = await authRepository.findByLoginId(decoded.phone);
+        if (!user) throw new Error('User_Not_Found');
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        await authRepository.withTransaction(async client => {
+            await authRepository.updatePassword(client, user.id, passwordHash);
+            await authRepository.revokeAllUserRefreshTokens(client, user.id, ipAddress);
+        });
+        await auditLogRepository.create({
+            actorType: 'USER',
+            actorId: user.id,
+            action: 'auth.password_reset_completed_mobile_legacy',
+            entityType: 'users',
+            entityId: user.id,
+            ipAddress,
+            userAgent
         });
     }
 };
