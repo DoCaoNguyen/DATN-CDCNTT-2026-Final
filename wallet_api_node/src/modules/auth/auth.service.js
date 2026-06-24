@@ -108,7 +108,7 @@ const authService = {
             const saltRounds = 10;
             const passwordHash = await bcrypt.hash(password, saltRounds);
 
-            const newUserId = await authRepository.create(client, email, phone, passwordHash);
+            const newUserId = await authRepository.create(client, null, phone, passwordHash);
             await walletRepository.create(client, newUserId, phone);
 
             await client.query('COMMIT');

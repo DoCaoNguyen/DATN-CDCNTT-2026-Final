@@ -17,6 +17,6 @@ auditLogSchema.index({ actor_id: 1, created_at: -1 });
 auditLogSchema.index({ entity_type: 1, entity_id: 1 });
 auditLogSchema.index({ action: 1 });
 
-const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+const AuditLog = mongoose.model('AuditLog', auditLogSchema, 'audit_logs');
 
 module.exports = AuditLog;

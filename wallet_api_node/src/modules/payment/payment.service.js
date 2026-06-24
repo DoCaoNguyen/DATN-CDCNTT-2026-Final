@@ -80,8 +80,11 @@ const paymentService = {
             await paymentRepo.updateOrderStatus(client, order.order_id, 'SUCCESS');
 
             
+            const { v7: uuidv7 } = require('uuid');
+            const paymentTxId = uuidv7();
+
             const ledgerTxId = await txRepo.createLedgerTransaction(
-                client, 'PAYMENT', order.order_id, 'Thanh toán đơn hàng QR'
+                client, 'PAYMENT', paymentTxId, 'PAYMENT', 'Thanh toán đơn hàng QR', order.amount
             );
 
             
@@ -91,11 +94,11 @@ const paymentService = {
             );
 
             
-            const paymentTxId = await paymentRepo.createPaymentTransaction(
-                client, order.order_id, wallet.id, order.amount, ledgerTxId
+            await paymentRepo.createPaymentTransaction(
+                client, order.order_id, userId, wallet.id, order.amount, paymentTxId
             );
 
-            // [NEW] CREDIT TIỀN CHO MERCHANT
+            // [NEW] CREDIT TIỀN CHO MERCHANT VÀ THU PHÍ MDR
             if (order.merchant_id) {
                 const merchantRepo = require('../merchant/merchant.repository');
                 const merchantUserId = await merchantRepo.getMerchantUserId(order.merchant_id);
@@ -103,12 +106,48 @@ const paymentService = {
                 if (merchantUserId) {
                     const merchantWallet = await txRepo.getWalletByUserId(merchantUserId);
                     if (merchantWallet) {
+                        // TÍNH PHÍ MDR TỪ CẤU HÌNH
+                        let feeAmount = 0n;
+                        let netAmount = order.amount;
+                        const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
+                        
+                        if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
+                            const mdrRateFloat = parseFloat(feeConfig.fee_value);
+                            feeAmount = BigInt(Math.round(Number(order.amount) * mdrRateFloat));
+                            netAmount = order.amount - feeAmount;
+                        }
+
                         const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantWallet.id);
-                        const mBalanceAfter = await txRepo.addBalance(client, merchantWallet.id, order.amount);
+                        const mBalanceAfter = await txRepo.addBalance(client, merchantWallet.id, netAmount);
                         
                         await txRepo.createLedgerEntry(
-                            client, ledgerTxId, merchantWallet.id, 'CREDIT', order.amount, mBalanceBefore, mBalanceAfter
+                            client, ledgerTxId, merchantWallet.id, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
                         );
+
+                        // GHI NHẬN DOANH THU PHÍ HỆ THỐNG
+                        if (feeAmount > 0n) {
+                            await txRepo.createSystemLedgerEntry(
+                                client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
+                            );
+                            
+                            // GHI LOG VÀO MONGODB
+                            const SystemLog = require('../system/models/system_log.model');
+                            SystemLog.create({
+                                action: 'COLLECT_MDR_FEE',
+                                entity_type: 'PAYMENT_TRANSACTION',
+                                entity_id: paymentTxId,
+                                status: 'SUCCESS',
+                                metadata: {
+                                    merchant_id: order.merchant_id,
+                                    order_id: order.order_id,
+                                    total_amount: order.amount.toString(),
+                                    fee_amount: feeAmount.toString(),
+                                    net_amount: netAmount.toString()
+                                },
+                                ip_address: 'system',
+                                user_agent: 'payment.service'
+                            }).catch(err => console.error('[MongoLog Error]', err));
+                        }
                     }
                 }
             }

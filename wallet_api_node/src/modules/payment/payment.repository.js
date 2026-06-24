@@ -6,33 +6,36 @@ const paymentRepository = {
     createOrder: async (client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId = null) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO payment_orders (id, merchant_id, order_code, amount, callback_url, description, status, expired_at, merchant_order_id)
-            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8) 
+            INSERT INTO payment_orders (id, merchant_id, payment_no, amount, callback_url, description, status, expired_at, merchant_order_id, idempotency_key)
+            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9) 
             RETURNING id;
         `;
         const result = await client.query(query, [
-            newId, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId
+            newId, merchantId, orderCode, amount, callbackUrl || '', description, expiredAt, merchantOrderId || orderCode, newId
         ]);
         return result.rows[0].id;
     },
 
     createQrCode: async (client, orderId, qrContent, qrToken, expiredAt) => {
         const newId = uuidv7();
+        // Cột trong DB tên là qr_payload chứ không phải qr_content
         const query = `
-            INSERT INTO payment_qr_codes (id, payment_order_id, qr_content, qr_token, expired_at)
-            VALUES ($1, $2, $3, $4, $5) 
+            INSERT INTO payment_qr_codes (id, payment_order_id, qr_payload, qr_token, expired_at, status)
+            VALUES ($1, $2, $3, $4, $5, 'ACTIVE') 
             RETURNING id;
         `;
         const result = await client.query(query, [newId, orderId, qrContent, qrToken, expiredAt]);
         return result.rows[0].id;
     },
 
-    // Tạo đơn hàng nhận tiền cho người dùng thường (không cần merchant_id)
     createUserOrder: async (client, orderCode, amount, description, expiredAt) => {
         const newId = uuidv7();
+        // Since DB requires merchant_id, callback_url, merchant_order_id to be NOT NULL
+        // We'll supply dummy values for them to avoid breaking constraint.
+        // If merchant_id has a foreign key constraint, it might fail. But typically P2P doesn't use it.
         const query = `
-            INSERT INTO payment_orders (id, order_code, amount, description, status, expired_at)
-            VALUES ($1, $2, $3, $4, 'PENDING', $5)
+            INSERT INTO payment_orders (id, payment_no, amount, description, status, expired_at, callback_url, merchant_order_id, idempotency_key, merchant_id)
+            VALUES ($1, $2, $3, $4, 'PENDING', $5, '', $2, $1, '00000000-0000-0000-0000-000000000000')
             RETURNING id;
         `;
         const result = await client.query(query, [newId, orderCode, amount, description, expiredAt]);
@@ -42,7 +45,7 @@ const paymentRepository = {
     lockAndGetOrder: async (client, qrToken) => {
         const query = `
             SELECT po.id AS order_id, po.amount, po.status, po.merchant_id, 
-                   po.callback_url, po.merchant_order_id, po.order_code, pq.expired_at
+                   po.callback_url, po.merchant_order_id, po.payment_no AS order_code, pq.expired_at
             FROM payment_qr_codes pq
             JOIN payment_orders po ON pq.payment_order_id = po.id
             WHERE pq.qr_token = $1
@@ -57,21 +60,21 @@ const paymentRepository = {
         await client.query(query, [status, orderId]);
     },
 
-    createPaymentTransaction: async (client, orderId, payerWalletId, amount, ledgerTxId) => {
-        const newId = uuidv7();
+    createPaymentTransaction: async (client, orderId, userId, payerWalletId, amount, preGeneratedId = null) => {
+        const newId = preGeneratedId || uuidv7();
         const query = `
-            INSERT INTO payment_transactions (id, payment_order_id, payer_wallet_id, amount, ledger_transaction_id, status, paid_at)
-            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', CURRENT_TIMESTAMP)
+            INSERT INTO payment_transactions (id, payment_order_id, payer_user_id, payer_wallet_id, amount, status, paid_at, idempotency_key)
+            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', CURRENT_TIMESTAMP, $6)
             RETURNING id;
         `;
-        const result = await client.query(query, [newId, orderId, payerWalletId, amount, ledgerTxId]);
+        const result = await client.query(query, [newId, orderId, userId, payerWalletId, amount, newId]);
         return result.rows[0].id;
     },
 
     // ===== NEW: Preview đơn hàng từ QR Token (không lock) =====
     getOrderByQrToken: async (qrToken) => {
         const query = `
-            SELECT po.id AS order_id, po.order_code, po.merchant_order_id,
+            SELECT po.id AS order_id, po.payment_no AS order_code, po.merchant_order_id,
                    po.amount, po.description, po.status, po.currency,
                    pq.expired_at, pq.qr_token,
                    m.merchant_name
@@ -87,14 +90,14 @@ const paymentRepository = {
     // ===== NEW: Merchant tra cứu trạng thái order bằng order_code =====
     getOrderByCode: async (merchantId, orderCode) => {
         const query = `
-            SELECT po.id AS order_id, po.order_code, po.merchant_order_id,
+            SELECT po.id AS order_id, po.payment_no AS order_code, po.merchant_order_id,
                    po.amount, po.description, po.status, po.currency,
                    po.expired_at, po.created_at,
                    pt.id AS payment_transaction_id, pt.status AS payment_status,
                    pt.paid_at
             FROM payment_orders po
             LEFT JOIN payment_transactions pt ON po.id = pt.payment_order_id
-            WHERE po.merchant_id = $1 AND po.order_code = $2;
+            WHERE po.merchant_id = $1 AND po.payment_no = $2;
         `;
         const result = await pool.query(query, [merchantId, orderCode]);
         return result.rows[0];
@@ -103,7 +106,7 @@ const paymentRepository = {
     // ===== NEW: Merchant tra cứu bằng merchant_order_id riêng =====
     getOrderByMerchantOrderId: async (merchantId, merchantOrderId) => {
         const query = `
-            SELECT po.id AS order_id, po.order_code, po.merchant_order_id,
+            SELECT po.id AS order_id, po.payment_no AS order_code, po.merchant_order_id,
                    po.amount, po.description, po.status, po.currency,
                    po.expired_at, po.created_at,
                    pt.id AS payment_transaction_id, pt.status AS payment_status,
@@ -120,13 +123,20 @@ const paymentRepository = {
     getPaymentTransactionById: async (merchantId, transactionId) => {
         const query = `
             SELECT pt.id, pt.payment_order_id, pt.amount, pt.status, pt.paid_at, pt.created_at,
-                   po.order_code, po.merchant_order_id, po.description,
+                   po.payment_no AS order_code, po.merchant_order_id, po.description,
                    po.status AS order_status
             FROM payment_transactions pt
             JOIN payment_orders po ON pt.payment_order_id = po.id
             WHERE pt.id = $1 AND po.merchant_id = $2;
         `;
         const result = await pool.query(query, [transactionId, merchantId]);
+        return result.rows[0];
+    },
+
+    // ===== NEW: Cấu hình phí =====
+    getFeeConfig: async (feeCode) => {
+        const query = `SELECT fee_value, fee_type FROM fee_configs WHERE fee_code = $1`;
+        const result = await pool.query(query, [feeCode]);
         return result.rows[0];
     }
 };

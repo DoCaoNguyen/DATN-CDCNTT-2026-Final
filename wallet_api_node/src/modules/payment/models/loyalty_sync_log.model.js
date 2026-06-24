@@ -23,6 +23,6 @@ loyaltySyncLogSchema.pre('findOneAndUpdate', function() {
 loyaltySyncLogSchema.index({ status: 1, retry_count: 1 });
 loyaltySyncLogSchema.index({ payment_transaction_id: 1 });
 
-const LoyaltySyncLog = mongoose.model('LoyaltySyncLog', loyaltySyncLogSchema);
+const LoyaltySyncLog = mongoose.model('LoyaltySyncLog', loyaltySyncLogSchema, 'loyalty_sync_logs');
 
 module.exports = LoyaltySyncLog;

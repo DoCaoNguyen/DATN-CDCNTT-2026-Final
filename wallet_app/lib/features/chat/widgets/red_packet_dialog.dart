@@ -144,9 +144,12 @@ class _RedPacketDialogState extends State<RedPacketDialog> with SingleTickerProv
             ),
             child: Stack(
               children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
                     const SizedBox(height: 36),
                     // Người gửi
                     CircleAvatar(
@@ -295,6 +298,7 @@ class _RedPacketDialogState extends State<RedPacketDialog> with SingleTickerProv
                     else
                       const SizedBox(height: 48), // Padding dưới nếu ko có ds
                   ],
+                  ),
                 ),
                 // Close btn
                 Positioned(
