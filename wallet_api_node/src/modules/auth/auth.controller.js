@@ -77,9 +77,21 @@ const authController = {
     },
 
     login: async (req, res) => {
+        const isMobileLegacyLogin = req.body.identifier && !req.body.login_id;
         try {
+            if (isMobileLegacyLogin) {
+                const data = await authService.loginMobileLegacy({
+                    identifier: req.body.identifier,
+                    password: req.body.password,
+                    ...requestMeta(req)
+                });
+                return res.status(200).json({
+                    message: 'Đăng nhập thành công',
+                    data
+                });
+            }
             const data = await authService.login({
-                loginId: req.body.login_id || req.body.identifier,
+                loginId: req.body.login_id,
                 password: req.body.password,
                 rememberMe: Boolean(req.body.remember_me),
                 ...requestMeta(req)
@@ -90,6 +102,26 @@ const authController = {
                 user_info: data.user
             });
         } catch (error) {
+            if (isMobileLegacyLogin) {
+                if (error.message === 'Account_Locked' || error.message === 'Account_Locked_Now') {
+                    return res.status(403).json({ error: 'Tài khoản của bạn đã bị khóa 30 phút do nhập sai mật khẩu quá nhiều lần.' });
+                }
+                if (error.message === 'Invalid_Credentials') {
+                    const remaining = error.remainingAttempts;
+                    return res.status(401).json({
+                        error: remaining ? `Mật khẩu không chính xác. Bạn còn ${remaining} lần thử.` : 'Tài khoản hoặc mật khẩu không chính xác.',
+                        remainingAttempts: remaining
+                    });
+                }
+                if (error.message === 'Account_Inactive') {
+                    return res.status(403).json({ error: 'Tài khoản đã bị khóa hoặc chưa kích hoạt' });
+                }
+                if (error.message === 'Validation_Error') {
+                    return res.status(400).json({ error: 'Vui lòng nhập Email/Số điện thoại và Mật khẩu' });
+                }
+                console.error('Lỗi API Login:', error);
+                return res.status(500).json({ error: 'Lỗi hệ thống khi đăng nhập' });
+            }
             return handleError(req, res, error);
         }
     },
@@ -157,7 +189,18 @@ const authController = {
     },
 
     resetPassword: async (req, res) => {
+        const isMobileLegacyReset = req.body.register_token && req.body.new_password && !req.body.reset_token;
         try {
+            if (isMobileLegacyReset) {
+                const meta = requestMeta(req);
+                await authService.resetPasswordMobileLegacy(
+                    req.body.register_token,
+                    req.body.new_password,
+                    meta.ipAddress,
+                    meta.userAgent
+                );
+                return res.status(200).json({ message: 'Đặt lại mật khẩu thành công!' });
+            }
             await authService.resetPassword({
                 resetToken: req.body.reset_token || req.body.register_token,
                 newPassword: req.body.new_password,
@@ -166,6 +209,31 @@ const authController = {
             });
             return success(req, res, 200, 'Password reset');
         } catch (error) {
+            if (isMobileLegacyReset) {
+                if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError' || error.message === 'Invalid_Token') {
+                    return res.status(401).json({ error: 'Token đổi mật khẩu không hợp lệ hoặc đã hết hạn' });
+                }
+                if (error.message === 'User_Not_Found') {
+                    return res.status(404).json({ error: 'Không tìm thấy tài khoản người dùng' });
+                }
+                console.error('Lỗi đổi mật khẩu:', error);
+                return res.status(500).json({ error: 'Lỗi hệ thống khi đổi mật khẩu' });
+            }
+            return handleError(req, res, error);
+        }
+    },
+
+    forgotPasswordOtp: async (req, res) => {
+        try {
+            await authService.forgotPasswordOtp(req.body.phone);
+            return res.status(200).json({ message: 'Đã gửi mã OTP qua tin nhắn SMS' });
+        } catch (error) {
+            if (error.message === 'Phone_Not_Found') {
+                return res.status(404).json({ error: 'Số điện thoại này chưa được đăng ký' });
+            }
+            if (error.message === 'Account_Locked') {
+                return res.status(403).json({ error: 'Tài khoản đang bị khóa tạm thời do gửi OTP quá nhiều lần' });
+            }
             return handleError(req, res, error);
         }
     },
@@ -173,14 +241,7 @@ const authController = {
     checkPhone: async (req, res) => {
         try {
             const isExist = await authRepository.checkExists(null, req.body.phone);
-            return res.status(200).json({
-                success: true,
-                message: 'Phone checked',
-                data: { is_exist: isExist },
-                // Backward-compatible field used by LoginPhoneScreen.
-                isExist,
-                trace_id: traceId(req)
-            });
+            return res.status(200).json({ isExist });
         } catch (error) {
             return handleError(req, res, error);
         }
@@ -189,8 +250,14 @@ const authController = {
     sendOtp: async (req, res) => {
         try {
             await authService.requestOtp(req.body.email || req.body.phone, req.body.email ? req.body.phone : undefined);
-            return success(req, res, 200, 'OTP sent');
+            return res.status(200).json({ message: 'Đã gửi mã OTP qua tin nhắn SMS' });
         } catch (error) {
+            if (error.message === 'Email_Phone_Exists') {
+                return res.status(400).json({ error: 'Email hoặc Số điện thoại đã được đăng ký', isExist: true });
+            }
+            if (error.message === 'Account_Locked') {
+                return res.status(403).json({ error: 'Số điện thoại này đang bị khóa bảo mật. Vui lòng thử lại sau 30 phút.' });
+            }
             return handleError(req, res, error);
         }
     },
@@ -198,8 +265,26 @@ const authController = {
     verifyOtp: async (req, res) => {
         try {
             const registerToken = await authService.verifyOtp(req.body.phone, req.body.otp);
-            return success(req, res, 200, 'OTP verified', { register_token: registerToken });
+            return res.status(200).json({
+                message: 'Xác thực OTP thành công',
+                register_token: registerToken
+            });
         } catch (error) {
+            if (error.message === 'Account_Locked' || error.message === 'Account_Locked_Now') {
+                return res.status(403).json({ error: 'Tài khoản của bạn đã bị khóa do nhập sai quá nhiều lần. Vui lòng thử lại sau 30 phút.' });
+            }
+            if (error.message === 'OTP_Invalid') {
+                return res.status(400).json({
+                    error: `Mã OTP không chính xác. Bạn còn ${error.remainingAttempts} lần thử.`,
+                    remainingAttempts: error.remainingAttempts
+                });
+            }
+            if (error.message === 'OTP_Expired') {
+                return res.status(400).json({ error: 'Mã OTP đã hết hạn. Vui lòng gửi lại mã mới.' });
+            }
+            if (error.message === 'OTP_Not_Found') {
+                return res.status(400).json({ error: 'Không tìm thấy yêu cầu OTP. Vui lòng gửi lại mã.' });
+            }
             return handleError(req, res, error);
         }
     },
@@ -211,8 +296,11 @@ const authController = {
                 req.body.password,
                 req.body.full_name
             );
-            return success(req, res, 201, 'User registered', data);
+            return res.status(201).json({ message: 'Tạo tài khoản và Ví thành công!' });
         } catch (error) {
+            if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+                return res.status(401).json({ error: 'Token đăng ký không hợp lệ hoặc đã hết hạn' });
+            }
             return handleError(req, res, error);
         }
     }
