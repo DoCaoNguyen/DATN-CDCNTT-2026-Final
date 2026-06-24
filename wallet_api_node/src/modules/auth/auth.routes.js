@@ -178,17 +178,43 @@ const router = express.Router();
  *           minLength: 8
  */
 
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 20,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: 'Quá nhiều yêu cầu xác thực, vui lòng thử lại sau',
-        error_code: 'RATE_LIMIT_EXCEEDED'
-    }
-});
+/**
+ * @swagger
+ * /api/v1/auth/check-phone:
+ *   post:
+ *     summary: Kiểm tra xem số điện thoại đã được đăng ký chưa
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 description: Số điện thoại cần kiểm tra
+ *                 example: "0987654321"
+ *     responses:
+ *       200:
+ *         description: Thành công, trả về trạng thái tồn tại của số điện thoại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Lỗi thiếu tham số truyền vào
+ *       500:
+ *         description: Lỗi hệ thống nội bộ
+ */
+router.post('/check-phone', authController.checkPhone);
 
 /**
  * @swagger
@@ -340,7 +366,77 @@ router.post('/login', authLimiter, authController.login);
  *       401:
  *         description: Refresh token khong hop le, het han hoac bi reuse
  */
-router.post('/refresh-token', authController.refreshToken);
+router.post('/set-password', authController.setPassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/forgot-password-otp:
+ *   post:
+ *     summary: Yêu cầu gửi OTP để khôi phục mật khẩu
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - identifier
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 description: Số điện thoại hoặc Email đã đăng ký
+ *                 example: "0987654321"
+ *     responses:
+ *       200:
+ *         description: Đã gửi mã OTP thành công
+ *       404:
+ *         description: Không tìm thấy tài khoản
+ *       500:
+ *         description: Lỗi server nội bộ
+ */
+router.post('/forgot-password-otp', authController.forgotPasswordOtp);
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-password:
+ *   post:
+ *     summary: Đặt lại mật khẩu mới bằng mã OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - identifier
+ *               - otp
+ *               - new_password
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 description: Số điện thoại hoặc Email
+ *                 example: "0987654321"
+ *               otp:
+ *                 type: string
+ *                 description: Mã OTP đã nhận được
+ *                 example: "123456"
+ *               new_password:
+ *                 type: string
+ *                 description: Mật khẩu mới
+ *                 example: "NewPass123!"
+ *     responses:
+ *       200:
+ *         description: Đặt lại mật khẩu thành công
+ *       400:
+ *         description: Mã OTP không chính xác hoặc thiếu tham số
+ *       404:
+ *         description: Không tìm thấy tài khoản
+ *       500:
+ *         description: Lỗi server nội bộ
+ */
+router.post('/reset-password', authController.resetPassword);
 
 /**
  * @swagger

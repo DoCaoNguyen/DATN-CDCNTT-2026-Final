@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const MODEL_NAME = "gemini-3.1-flash-lite"; 
 
 const aiService = {
-    categorizeTransaction: async (transferId, note) => {
+    categorizeTransaction: async (ledgerTransactionId, note) => {
         if (!note || note.trim() === "") return;
 
         try {
@@ -21,10 +21,10 @@ const aiService = {
             const categoryName = result.response.text().trim();
 
             await pool.query(
-                `UPDATE wallet_transfers SET category_name = $1 WHERE id = $2`,
-                [categoryName, transferId]
+                `UPDATE ledger_transactions SET category_name = $1 WHERE id = $2`,
+                [categoryName, ledgerTransactionId]
             );
-            console.log(`[AI Auto Categorize] Transfer ${transferId} categorized as ${categoryName}`);
+            console.log(`[AI Auto Categorize] Transaction ${ledgerTransactionId} categorized as ${categoryName}`);
         } catch (error) {
             console.error("[AI Auto Categorize] Error:", error.message);
         }

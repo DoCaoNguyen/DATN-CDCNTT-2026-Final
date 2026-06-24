@@ -13,6 +13,6 @@ systemLogSchema.index({ created_at: -1 });
 systemLogSchema.index({ service_name: 1, created_at: -1 });
 systemLogSchema.index({ log_level: 1 });
 
-const SystemLog = mongoose.model('SystemLog', systemLogSchema);
+const SystemLog = mongoose.model('SystemLog', systemLogSchema, 'system_logs');
 
 module.exports = SystemLog;

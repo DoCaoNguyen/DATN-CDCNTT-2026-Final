@@ -80,23 +80,11 @@ const redPacketService = {
                 if (rp.type === 'EQUAL') {
                     // For EQUAL, each gets total_amount / total_count
                     claimAmount = BigInt(rp.total_amount) / BigInt(rp.total_count);
+                    claimAmount = remainingAmount / BigInt(rp.remaining_count);
                 } else {
-                    // For RANDOM, random between 1 and (remainingAmount / remainingCount * 2)
-                    // Ensure at least 1 VND per remaining count
-                    const maxSafeAmount = (remainingAmount / BigInt(rp.remaining_count)) * 2n;
-                    const minAmount = 1000n; // At least 1000 VND
-                    
-                    if (maxSafeAmount <= minAmount) {
-                         claimAmount = remainingAmount / BigInt(rp.remaining_count);
-                    } else {
-                         // random BigInt
-                         const diff = Number(maxSafeAmount - minAmount);
-                         const rand = BigInt(Math.floor(Math.random() * diff));
-                         claimAmount = minAmount + rand;
-                    }
-                    if (claimAmount > remainingAmount - BigInt(rp.remaining_count - 1) * 1000n) {
-                         claimAmount = remainingAmount - BigInt(rp.remaining_count - 1) * 1000n;
-                    }
+                    const maxClaim = Number(remainingAmount) - (rp.remaining_count - 1) * 1000;
+                    const randomAmount = Math.floor(Math.random() * (maxClaim - 1000 + 1)) + 1000;
+                    claimAmount = BigInt(randomAmount);
                 }
             }
 
@@ -110,12 +98,16 @@ const redPacketService = {
             // Record receiver
             const receiverRecord = await redPacketRepository.addReceiver(client, redPacketId, userId, wallet.id, claimAmount);
 
+            // Fetch creator name for description
+            const creatorRes = await client.query('SELECT full_name FROM users WHERE id = $1', [rp.creator_user_id]);
+            const creatorName = creatorRes.rows[0]?.full_name || 'Người dùng';
+
             // Update balance
             const currentBalance = await transactionRepository.lockAndGetBalance(client, wallet.id);
             const balanceAfter = await transactionRepository.addBalance(client, wallet.id, claimAmount);
 
             // Record transaction
-            const ledgerId = await transactionRepository.createLedgerTransaction(client, 'PAYMENT', null, `Nhận lì xì từ ${rp.id}`);
+            const ledgerId = await transactionRepository.createLedgerTransaction(client, 'RECEIVE', receiverRecord.id, 'RED_PACKET', `Nhận lì xì từ ${creatorName}`, claimAmount);
             await transactionRepository.createLedgerEntry(client, ledgerId, wallet.id, 'CREDIT', claimAmount, currentBalance, balanceAfter);
 
             await client.query('COMMIT');

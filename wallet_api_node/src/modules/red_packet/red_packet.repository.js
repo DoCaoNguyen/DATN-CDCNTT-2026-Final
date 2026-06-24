@@ -60,6 +60,15 @@ const redPacketRepository = {
         return result.rows[0];
     },
 
+    checkIfReceived: async (redPacketId, walletId) => {
+        const query = `
+            SELECT id FROM group_funding_members 
+            WHERE group_funding_id = $1 AND wallet_id = $2 AND status = 'PAID'
+        `;
+        const result = await pool.query(query, [redPacketId, walletId]);
+        return result.rows.length > 0;
+    },
+
     getReceivers: async (redPacketId) => {
         const query = `
             SELECT gfm.*, u.full_name as receiver_name, u.phone as receiver_phone

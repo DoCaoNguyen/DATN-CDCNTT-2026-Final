@@ -26,6 +26,7 @@ import '../../../core/utils/snackbar_utils.dart';
 import '../../ai/screens/voice_transfer_dialog.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../chat/screens/chat_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -929,6 +930,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: const Icon(
                     Icons.auto_awesome_rounded,
                     size: 22,
+                    color: Colors.pink,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatListScreen(token: widget.token),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.pink.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 20,
                     color: Colors.pink,
                   ),
                 ),

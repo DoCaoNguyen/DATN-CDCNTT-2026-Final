@@ -490,6 +490,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     } else if (txType == 'PAYMENT') {
       typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}";
       typeLabelText = "Thanh toán $receiverName";
+    } else if (txType == 'RECEIVE') {
+      typeLabelHeader = "NHẬN LÌ XÌ";
+      typeLabelText = note;
     }
 
     String btnText = "Chuyển thêm";
@@ -684,6 +687,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 "Tổng",
                                 child: const Text("Miễn phí", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
                               ),
+                              if (note.isNotEmpty && note != 'Giao dịch')
+                                _buildDetailRow(
+                                  "Nội dung",
+                                  child: Text(note, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
+                                ),
                               _buildDetailRow(
                                 "Danh mục",
                                 child: GestureDetector(
@@ -741,7 +749,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   const SizedBox(height: 16),
 
                   // Receiver/Sender info card
-                  if (txType == 'TRANSFER' || txType == 'PAYMENT')
+                  if (txType == 'TRANSFER' || txType == 'PAYMENT' || txType == 'RECEIVE')
                     Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(

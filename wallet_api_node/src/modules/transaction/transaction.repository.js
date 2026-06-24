@@ -84,6 +84,16 @@ const transactionRepository = {
         return newId;
     },
 
+    createSystemLedgerEntry: async (client, ledgerTransactionId, systemAccountCode, type, amount) => {
+        const newId = uuidv7();
+        const query = `
+            INSERT INTO ledger_entries (id, ledger_transaction_id, system_account_code, entry_type, amount, balance_before, balance_after, account_type)
+            VALUES ($1, $2, $3, $4, $5, 0, 0, 'SYSTEM');
+        `;
+        await client.query(query, [newId, ledgerTransactionId, systemAccountCode, type, amount.toString()]);
+        return newId;
+    },
+
     recordDeposit: async (client, id, depositNo, userId, walletId, amount, ledgerId, depositMethod = 'LINKED_BANK', externalReference = null) => {
         const idempotencyKey = id; // Fallback idempotency key
         const query = `
@@ -207,8 +217,8 @@ const transactionRepository = {
                 le.id AS entry_id,
                 le.ledger_transaction_id AS transaction_id,
                 lt.transaction_type,
-                lt.transaction_type AS category_name,
-                true AS is_expense_counted,
+                COALESCE(lt.category_name, lt.transaction_type) AS category_name,
+                COALESCE(lt.is_expense_counted, true) AS is_expense_counted,
                 le.entry_type,
                 le.amount,
                 le.balance_before,
@@ -217,9 +227,9 @@ const transactionRepository = {
                 lt.status,
                 le.created_at,
                 wt.description AS transfer_note,
-                COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,
-                COALESCE(u_sender.phone, u_payer.phone) AS sender_phone,
-                COALESCE(u_receiver.full_name, m.merchant_name) AS receiver_name,
+                COALESCE(u_sender.full_name, u_payer.full_name, u_rp_creator.full_name) AS sender_name,
+                COALESCE(u_sender.phone, u_payer.phone, u_rp_creator.phone) AS sender_phone,
+                COALESCE(u_receiver.full_name, m.merchant_name, CASE WHEN gf.id IS NOT NULL THEN 'Bao lì xì' ELSE NULL END) AS receiver_name,
                 u_receiver.phone AS receiver_phone,
                 COALESCE(dt.external_reference, wt_act.external_reference, wt.transfer_no, po.payment_no) AS external_reference
             FROM ledger_entries le
@@ -236,6 +246,11 @@ const transactionRepository = {
             LEFT JOIN merchants m ON po.merchant_id = m.id
             LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
             LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
+            
+            LEFT JOIN group_fundings gf ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'PAYMENT' AND lt.source_id = gf.id
+            LEFT JOIN group_funding_members gfm ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'RECEIVE' AND lt.source_id = gfm.id
+            LEFT JOIN group_fundings gf2 ON gfm.group_funding_id = gf2.id
+            LEFT JOIN users u_rp_creator ON gf2.creator_user_id = u_rp_creator.id
             WHERE le.wallet_id = $1${whereExtra}
             ORDER BY le.created_at DESC
             LIMIT $${limitParam} OFFSET $${offsetParam};
@@ -250,8 +265,8 @@ const transactionRepository = {
                 le.id AS entry_id,
                 le.ledger_transaction_id AS transaction_id,
                 lt.transaction_type,
-                lt.transaction_type AS category_name,
-                true AS is_expense_counted,
+                COALESCE(lt.category_name, lt.transaction_type) AS category_name,
+                COALESCE(lt.is_expense_counted, true) AS is_expense_counted,
                 le.entry_type,
                 le.amount,
                 le.balance_before,
@@ -290,7 +305,7 @@ const transactionRepository = {
     checkTransactionOwnership: async (transactionId, walletId) => {
         const query = `
             SELECT 1 FROM ledger_entries 
-            WHERE transaction_id = $1 AND wallet_id = $2
+            WHERE ledger_transaction_id = $1 AND wallet_id = $2
             LIMIT 1;
         `;
         const result = await pool.query(query, [transactionId, walletId]);

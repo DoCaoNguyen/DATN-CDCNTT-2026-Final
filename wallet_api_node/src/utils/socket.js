@@ -66,12 +66,18 @@ const initSocket = (server) => {
                     counterparty_phone: senderWallet.phone || ''
                 });
 
+                // Chuẩn bị nội dung cho push notification
+                let notificationContent = data.content;
+                if (messageType === 'RED_PACKET') {
+                    notificationContent = 'Đã gửi một bao lì xì 🧧';
+                }
+
                 // Gửi Push Notification (FCM) cho người nhận
                 const notificationService = require('../modules/notification/notification.service');
                 notificationService.sendChatMessageNotification(
                     receiverWallet.user_id,
                     senderWallet.full_name,
-                    data.content,
+                    notificationContent,
                     msg.id
                 ).catch(err => console.error("Lỗi gửi push notification chat:", err));
 

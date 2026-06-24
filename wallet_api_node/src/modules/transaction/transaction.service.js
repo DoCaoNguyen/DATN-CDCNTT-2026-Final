@@ -427,7 +427,7 @@ const transactionService = {
             await client.query('COMMIT');
 
             // Trigger AI Categorization in background
-            aiService.categorizeTransaction(transferId, note);
+            aiService.categorizeTransaction(ledgerTxId, note);
             
             // Gửi thông báo real-time cho người gửi
             emitToUser(senderUserId, 'balance_update', {
