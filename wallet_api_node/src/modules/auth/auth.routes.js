@@ -1,13 +1,181 @@
 const express = require('express');
-const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const authController = require('./auth.controller');
-const verifyToken = require('../../middlewares/auth.middleware');
+const { authenticateJwt } = require('../../middlewares/auth.middleware');
+
+const router = express.Router();
 
 /**
  * @swagger
  * tags:
- *   name: Auth
- *   description: Các API đăng ký, đăng nhập và xác thực OTP
+ *   - name: Auth
+ *     description: Dang ky, dang nhap, token, OTP Mobile va bao mat tai khoan
+ * components:
+ *   schemas:
+ *     AuthError:
+ *       type: object
+ *       required: [success, message, error_code, trace_id]
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *           example: Du lieu khong hop le
+ *         error_code:
+ *           type: string
+ *           example: VALIDATION_ERROR
+ *         errors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               field:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *         trace_id:
+ *           type: string
+ *           example: trace-auth-error-001
+ *     AuthUser:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         username:
+ *           type: string
+ *           nullable: true
+ *         full_name:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         email:
+ *           type: string
+ *           format: email
+ *           nullable: true
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, PENDING_VERIFY, LOCKED, BLOCKED, INACTIVE]
+ *         is_kyc_verified:
+ *           type: boolean
+ *         roles:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [USER]
+ *         permissions:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example:
+ *             - wallet.wallets.read
+ *             - wallet.transfers.create
+ *     AuthTokenPair:
+ *       type: object
+ *       properties:
+ *         access_token:
+ *           type: string
+ *           description: JWT access token
+ *         refresh_token:
+ *           type: string
+ *           description: Opaque refresh token, chi hien thi cho client
+ *         expires_in:
+ *           type: integer
+ *           example: 3600
+ *     RegisterRequest:
+ *       type: object
+ *       required: [full_name, phone, password, confirm_password]
+ *       properties:
+ *         full_name:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 255
+ *           example: Nguyen Van An
+ *         username:
+ *           type: string
+ *           maxLength: 100
+ *           example: user_an
+ *         phone:
+ *           type: string
+ *           maxLength: 20
+ *           example: "0900000001"
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: an@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           minLength: 8
+ *           example: Password@123
+ *         confirm_password:
+ *           type: string
+ *           format: password
+ *           minLength: 8
+ *           example: Password@123
+ *     LoginRequest:
+ *       type: object
+ *       required: [login_id, password]
+ *       properties:
+ *         login_id:
+ *           type: string
+ *           description: Username, email hoac so dien thoai
+ *           example: "0900000001"
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: Password@123
+ *         remember_me:
+ *           type: boolean
+ *           default: false
+ *     MobileLoginRequest:
+ *       type: object
+ *       required: [identifier, password]
+ *       properties:
+ *         identifier:
+ *           type: string
+ *           description: So dien thoai hoac email cua tai khoan Mobile
+ *           example: "0900000001"
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: "123456"
+ *     RefreshTokenRequest:
+ *       type: object
+ *       required: [refresh_token]
+ *       properties:
+ *         refresh_token:
+ *           type: string
+ *     PasswordChangeRequest:
+ *       type: object
+ *       required: [current_password, new_password, confirm_new_password]
+ *       properties:
+ *         current_password:
+ *           type: string
+ *           format: password
+ *         new_password:
+ *           type: string
+ *           format: password
+ *           minLength: 8
+ *         confirm_new_password:
+ *           type: string
+ *           format: password
+ *           minLength: 8
+ *     PasswordResetRequest:
+ *       type: object
+ *       required: [reset_token, new_password, confirm_new_password]
+ *       properties:
+ *         reset_token:
+ *           type: string
+ *         new_password:
+ *           type: string
+ *           format: password
+ *           minLength: 8
+ *         confirm_new_password:
+ *           type: string
+ *           format: password
+ *           minLength: 8
  */
 
 /**
@@ -50,133 +218,153 @@ router.post('/check-phone', authController.checkPhone);
 
 /**
  * @swagger
- * /api/v1/auth/send-otp:
+ * /api/v1/auth/register:
  *   post:
- *     summary: Gửi mã OTP xác thực qua số điện thoại/email
+ *     summary: Dang ky tai khoan vi
+ *     description: Tao user, gan role USER, tao wallet va wallet balance trong cung transaction.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - phone
- *             properties:
- *               phone:
- *                 type: string
- *                 description: Số điện thoại nhận OTP
- *                 example: "0987654321"
- *               email:
- *                 type: string
- *                 description: Email để đồng bộ hoặc gửi thông tin
- *                 example: "user@example.com"
- *     responses:
- *       200:
- *         description: Đã gửi mã OTP thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Đã gửi mã OTP qua tin nhắn SMS"
- *       400:
- *         description: Thiếu số điện thoại hoặc thông tin đã tồn tại
- *       403:
- *         description: Tài khoản bị tạm khóa bảo mật
- *       500:
- *         description: Lỗi server nội bộ
- */
-router.post('/send-otp', authController.sendOtp);
-
-/**
- * @swagger
- * /api/v1/auth/verify-otp:
- *   post:
- *     summary: Xác thực mã OTP nhận được
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - phone
- *               - otp
- *             properties:
- *               phone:
- *                 type: string
- *                 example: "0987654321"
- *               otp:
- *                 type: string
- *                 description: Mã OTP gồm 6 chữ số
- *                 example: "123456"
- *     responses:
- *       200:
- *         description: Xác thực OTP thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Xác thực OTP thành công"
- *                 register_token:
- *                   type: string
- *                   description: JWT token dùng để thiết lập mật khẩu
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *       400:
- *         description: Mã OTP sai hoặc đã hết hạn
- *       403:
- *         description: Tài khoản bị khóa do nhập sai quá nhiều lần
- */
-router.post('/verify-otp', authController.verifyOtp);
-
-/**
- * @swagger
- * /api/v1/auth/set-password:
- *   post:
- *     summary: Thiết lập mật khẩu và khởi tạo ví cho tài khoản mới
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - register_token
- *               - password
- *             properties:
- *               register_token:
- *                 type: string
- *                 description: Token nhận được sau khi xác thực OTP thành công
- *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *               password:
- *                 type: string
- *                 description: Mật khẩu mong muốn cho tài khoản
- *                 example: "SecurePass123!"
+ *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
  *       201:
- *         description: Tạo tài khoản và ví thành công
+ *         description: Dang ky thanh cong
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Tạo tài khoản và Ví thành công!"
+ *                   example: User registered
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/AuthUser'
+ *                     wallet:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         wallet_no:
+ *                           type: string
+ *                         status:
+ *                           type: string
+ *                           example: ACTIVE
+ *                         currency:
+ *                           type: string
+ *                           example: VND
+ *                         available_balance:
+ *                           type: integer
+ *                           format: int64
+ *                           example: 0
+ *                         locked_balance:
+ *                           type: integer
+ *                           format: int64
+ *                           example: 0
+ *                 trace_id:
+ *                   type: string
  *       400:
- *         description: Thiếu tham số bắt buộc
- *       401:
- *         description: Token đăng ký không hợp lệ hoặc đã hết hạn
+ *         description: Du lieu hoac password khong hop le
+ *       409:
+ *         description: Phone, email hoac username da ton tai
+ *       429:
+ *         description: Vuot rate limit
  *       500:
- *         description: Lỗi hệ thống nội bộ
+ *         description: Loi he thong hoac RBAC chua duoc seed
+ */
+router.post('/register', authLimiter, authController.register);
+
+/**
+ * @swagger
+ * /api/v1/auth/login:
+ *   post:
+ *     summary: Dang nhap tai khoan
+ *     description: Web/Admin/Merchant Portal dung login_id. Mobile dung identifier de giu luong dang nhap cua ung dung vi.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             oneOf:
+ *               - $ref: '#/components/schemas/LoginRequest'
+ *               - $ref: '#/components/schemas/MobileLoginRequest'
+ *     responses:
+ *       200:
+ *         description: Dang nhap thanh cong
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Login success
+ *                 data:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/AuthTokenPair'
+ *                     - type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/AuthUser'
+ *                         user_info:
+ *                           $ref: '#/components/schemas/AuthUser'
+ *                 trace_id:
+ *                   type: string
+ *       400:
+ *         description: Thieu thong tin dang nhap
+ *       401:
+ *         description: Sai thong tin dang nhap
+ *       403:
+ *         description: Tai khoan bi khoa hoac chua kich hoat
+ *       429:
+ *         description: Vuot rate limit
+ */
+router.post('/login', authLimiter, authController.login);
+
+/**
+ * @swagger
+ * /api/v1/auth/refresh-token:
+ *   post:
+ *     summary: Rotation refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshTokenRequest'
+ *     responses:
+ *       200:
+ *         description: Cap token pair moi va revoke refresh token cu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                   example: Token refreshed
+ *                 data:
+ *                   $ref: '#/components/schemas/AuthTokenPair'
+ *                 trace_id:
+ *                   type: string
+ *       401:
+ *         description: Refresh token khong hop le, het han hoac bi reuse
  */
 router.post('/set-password', authController.setPassword);
 
@@ -252,9 +440,10 @@ router.post('/reset-password', authController.resetPassword);
 
 /**
  * @swagger
- * /api/v1/auth/login:
+ * /api/v1/auth/forgot-password:
  *   post:
- *     summary: Đăng nhập hệ thống bằng SĐT hoặc Email
+ *     summary: Tao yeu cau quen mat khau
+ *     description: Luon tra ket qua chung de khong lam lo tai khoan co ton tai hay khong.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -262,85 +451,146 @@ router.post('/reset-password', authController.resetPassword);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - identifier
- *               - password
+ *             required: [identifier]
  *             properties:
  *               identifier:
  *                 type: string
- *                 description: Số điện thoại hoặc Email đăng ký
- *                 example: "0987654321"
- *               password:
- *                 type: string
- *                 example: "SecurePass123!"
+ *                 description: Username, email hoac phone
+ *                 example: "0900000001"
  *     responses:
  *       200:
- *         description: Đăng nhập thành công
+ *         description: Yeu cau duoc tiep nhan
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
  *                 message:
  *                   type: string
- *                   example: "Đăng nhập thành công"
  *                 data:
  *                   type: object
  *                   properties:
- *                     token:
+ *                     accepted:
+ *                       type: boolean
+ *                     reset_token:
  *                       type: string
- *                       description: JWT Access Token dùng cho các API tiếp theo
- *                     user:
- *                       type: object
- *                       properties:
- *                         user_id:
- *                           type: string
- *                         full_name:
- *                           type: string
- *                         phone:
- *                           type: string
- *                         email:
- *                           type: string
- *       400:
- *         description: Thiếu thông tin đăng nhập
- *       401:
- *         description: Sai thông tin đăng nhập (mật khẩu)
- *       403:
- *         description: Tài khoản bị khóa hoặc chưa kích hoạt
+ *                       description: Chi tra trong moi truong khong phai production de test
+ *                 trace_id:
+ *                   type: string
+ *       429:
+ *         description: Vuot rate limit
  */
-router.post('/login', authController.login);
+router.post('/forgot-password', authLimiter, authController.forgotPassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-password:
+ *   post:
+ *     summary: Dat lai mat khau bang reset token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PasswordResetRequest'
+ *     responses:
+ *       200:
+ *         description: Dat lai mat khau thanh cong va revoke session cu
+ *       400:
+ *         description: Reset token hoac password khong hop le
+ *       429:
+ *         description: Vuot rate limit
+ */
+router.post('/reset-password', authLimiter, authController.resetPassword);
 
 /**
  * @swagger
  * /api/v1/auth/logout:
  *   post:
- *     summary: Đăng xuất khỏi hệ thống
+ *     summary: Dang xuat va revoke refresh token
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshTokenRequest'
+ *     responses:
+ *       200:
+ *         description: Dang xuat thanh cong
+ *       401:
+ *         description: Access token hoac refresh token khong hop le
+ */
+router.post('/logout', authenticateJwt, authController.logout);
+
+/**
+ * @swagger
+ * /api/v1/auth/change-password:
+ *   post:
+ *     summary: Doi mat khau cua tai khoan hien tai
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PasswordChangeRequest'
+ *     responses:
+ *       200:
+ *         description: Doi mat khau thanh cong va revoke refresh token cu
+ *       400:
+ *         description: Mat khau hien tai sai hoac mat khau moi khong hop le
+ *       401:
+ *         description: Access token khong hop le
+ */
+router.post('/change-password', authenticateJwt, authController.changePassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/me:
+ *   get:
+ *     summary: Lay thong tin tai khoan hien tai
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Đăng xuất thành công
+ *         description: Thong tin user, roles va permissions
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
  *                 message:
  *                   type: string
- *                   example: "Đăng xuất thành công"
+ *                   example: Current user
+ *                 data:
+ *                   $ref: '#/components/schemas/AuthUser'
+ *                 trace_id:
+ *                   type: string
  *       401:
- *         description: Token không hợp lệ hoặc thiếu token
- *       500:
- *         description: Lỗi hệ thống
+ *         description: Access token khong hop le hoac het han
+ *       404:
+ *         description: User khong ton tai
  */
-router.post('/logout', verifyToken, authController.logout);
+router.get('/me', authenticateJwt, authController.me);
+
+// Mobile OTP registration and password recovery endpoints.
 
 /**
  * @swagger
- * /api/v1/auth/refresh-token:
+ * /api/v1/auth/check-phone:
  *   post:
- *     summary: Làm mới Access Token
+ *     summary: Mobile kiem tra so dien thoai da dang ky
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -348,19 +598,146 @@ router.post('/logout', verifyToken, authController.logout);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - refresh_token
+ *             required: [phone]
  *             properties:
- *               refresh_token:
+ *               phone:
+ *                 type: string
+ *                 example: "0900000001"
+ *     responses:
+ *       200:
+ *         description: Ket qua kiem tra
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isExist:
+ *                   type: boolean
+ *                   description: true neu so dien thoai da ton tai
+ */
+router.post('/check-phone', authController.checkPhone);
+
+/**
+ * @swagger
+ * /api/v1/auth/send-otp:
+ *   post:
+ *     summary: Mobile gui OTP dang ky qua Twilio Verify
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [phone]
+ *             properties:
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: OTP da duoc gui
+ *       409:
+ *         description: Phone hoac email da ton tai
+ *       429:
+ *         description: Vuot rate limit
+ *       502:
+ *         description: Twilio khong gui duoc OTP
+ */
+router.post('/send-otp', authLimiter, authController.sendOtp);
+
+/**
+ * @swagger
+ * /api/v1/auth/verify-otp:
+ *   post:
+ *     summary: Mobile xac minh OTP va cap registration token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [phone, otp]
+ *             properties:
+ *               phone:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: OTP hop le
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 register_token:
+ *                   type: string
+ *       400:
+ *         description: OTP sai, het han hoac khong ton tai
+ *       403:
+ *         description: OTP bi khoa tam thoi
+ */
+router.post('/verify-otp', authLimiter, authController.verifyOtp);
+
+/**
+ * @swagger
+ * /api/v1/auth/set-password:
+ *   post:
+ *     summary: Mobile hoan tat dang ky tu registration token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [register_token, password]
+ *             properties:
+ *               register_token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Mat khau/PIN do ung dung Mobile gui len trong buoc hoan tat dang ky
+ *               full_name:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tao user, role, wallet va balance thanh cong
+ *       400:
+ *         description: Password khong hop le
+ *       401:
+ *         description: Registration token khong hop le
+ */
+router.post('/set-password', authLimiter, authController.setPassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/forgot-password-otp:
+ *   post:
+ *     summary: Mobile gui OTP quen mat khau
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [phone]
+ *             properties:
+ *               phone:
  *                 type: string
  *     responses:
  *       200:
- *         description: Refresh token thành công
- *       400:
- *         description: Thiếu Refresh Token
- *       401:
- *         description: Refresh Token không hợp lệ hoặc hết hạn
+ *         description: Yeu cau reset duoc tiep nhan
  */
-router.post('/refresh-token', authController.refreshToken);
+router.post('/forgot-password-otp', authLimiter, authController.forgotPasswordOtp);
 
 module.exports = router;

@@ -20,6 +20,114 @@ const walletService = {
         };
     },
 
+    verifyPin: async (userId, pin) => {
+        const wallet = await walletRepository.findByUserId(userId);
+        if (!wallet || !wallet.pin_hash) {
+            throw new Error('Pin_Not_Set');
+        }
+
+        const isValid = await bcrypt.compare(pin, wallet.pin_hash);
+        return isValid;
+    },
+
+    getWalletSummary: async (userId) => {
+        const wallet = await walletService.getWalletInfo(userId);
+        return {
+            wallet,
+            capabilities: {
+                can_topup: wallet.status === 'ACTIVE',
+                can_transfer: wallet.status === 'ACTIVE',
+                can_payment: wallet.status === 'ACTIVE'
+            }
+        };
+    },
+
+    lockByAdmin: async ({ walletId, actorId, reason, ipAddress, userAgent }) => {
+        if (!reason || !String(reason).trim()) throw new Error('Reason_Required');
+        const pool = require('../../config/db');
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const wallet = await walletRepository.findByIdForUpdate(client, walletId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+            if (wallet.status === 'CLOSED') throw new Error('Wallet_Closed');
+            if (wallet.status === 'LOCKED') throw new Error('Wallet_Already_Locked');
+
+            const updated = await walletRepository.lockByAdmin(client, {
+                walletId,
+                actorId,
+                reason: String(reason).trim()
+            });
+
+            await client.query(`
+                INSERT INTO audit_logs
+                    (trace_id, actor_type, actor_id, action, entity_type, entity_id, old_data, new_data, metadata, reason, ip_address, user_agent)
+                VALUES ($1, $2, $3, $4, 'wallets', $5, $6, $7, $8, $9, $10, $11)
+            `, [
+                `trace-wallet-${Date.now()}`,
+                'ADMIN',
+                actorId,
+                'WALLET_LOCKED',
+                walletId,
+                JSON.stringify({ status: wallet.status }),
+                JSON.stringify({ status: updated.status, lock_reason: updated.lock_reason, locked_at: updated.locked_at, locked_by: updated.locked_by }),
+                JSON.stringify({ wallet_no: wallet.wallet_no }),
+                String(reason).trim(),
+                ipAddress || null,
+                userAgent || null
+            ]);
+
+            await client.query('COMMIT');
+            return updated;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    unlockByAdmin: async ({ walletId, actorId, reason, ipAddress, userAgent }) => {
+        if (!reason || !String(reason).trim()) throw new Error('Reason_Required');
+        const pool = require('../../config/db');
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const wallet = await walletRepository.findByIdForUpdate(client, walletId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+            if (wallet.status === 'CLOSED') throw new Error('Wallet_Closed');
+            if (wallet.status !== 'LOCKED') throw new Error('Wallet_Not_Locked');
+
+            const updated = await walletRepository.unlockByAdmin(client, walletId);
+
+            await client.query(`
+                INSERT INTO audit_logs
+                    (trace_id, actor_type, actor_id, action, entity_type, entity_id, old_data, new_data, metadata, reason, ip_address, user_agent)
+                VALUES ($1, $2, $3, $4, 'wallets', $5, $6, $7, $8, $9, $10, $11)
+            `, [
+                `trace-wallet-${Date.now()}`,
+                'ADMIN',
+                actorId,
+                'WALLET_UNLOCKED',
+                walletId,
+                JSON.stringify({ status: wallet.status, lock_reason: wallet.lock_reason, locked_at: wallet.locked_at, locked_by: wallet.locked_by }),
+                JSON.stringify({ status: updated.status }),
+                JSON.stringify({ wallet_no: wallet.wallet_no, previous_lock_reason: wallet.lock_reason }),
+                String(reason).trim(),
+                ipAddress || null,
+                userAgent || null
+            ]);
+
+            await client.query('COMMIT');
+            return updated;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
     getLimits: async (userId) => {
         const wallet = await walletRepository.findByUserId(userId);
         if (!wallet) {
