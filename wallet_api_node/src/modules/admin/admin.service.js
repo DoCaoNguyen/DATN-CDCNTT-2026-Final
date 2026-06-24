@@ -327,6 +327,12 @@ const adminService = {
         });
 
         return adminService.getWalletDetail(walletId);
+    },
+    // ==========================================
+    // DASHBOARD SERVICE
+    // ==========================================
+    getDashboardKPIs: async () => {
+        return adminRepository.getDashboardStats();
     }
 };
 

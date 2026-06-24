@@ -234,6 +234,22 @@ const adminController = {
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin unlock wallet:');
         }
+    },
+    // ==========================================
+    // DASHBOARD CONTROLLER
+    // ==========================================
+    getDashboardKPIs: async (req, res) => {
+        try {
+            const result = await adminService.getDashboardKPIs();
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Lấy dữ liệu Dashboard thành công', 
+                data: result 
+            });
+        } catch (err) {
+            console.error("Lỗi Dashboard:", err);
+            return res.status(500).json({ success: false, error: err.message });
+        }
     }
 };
 
