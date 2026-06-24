@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../core/utils/date_formatter.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
@@ -49,7 +50,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (isoString == null) return '';
     final date = DateTime.parse(isoString).toLocal();
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return DateFormat('HH:mm').format(date);
     }
     return DateFormat('dd/MM').format(date);
@@ -67,42 +70,76 @@ class _ChatListScreenState extends State<ChatListScreen> {
             _buildTabs(),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Colors.pink))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.pink),
+                    )
                   : _chatList.isEmpty
-                      ? const Center(child: Text("Chưa có tin nhắn nào", style: TextStyle(color: Colors.grey)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(top: 8),
-                          itemCount: _chatList.length,
-                          itemBuilder: (context, index) {
-                            final chat = _chatList[index];
-                            final name = chat['counterparty_name'] ?? 'Người lạ';
-                            final phone = chat['counterparty_phone'] ?? '';
-                            final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-                            
-                            return ListTile(
-                              tileColor: Colors.white,
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.grey.shade300,
-                                child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ? const Center(
+                      child: Text(
+                        "Chưa có tin nhắn nào",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(top: 8),
+                      itemCount: _chatList.length,
+                      itemBuilder: (context, index) {
+                        final chat = _chatList[index];
+                        final name = chat['counterparty_name'] ?? 'Người lạ';
+                        final phone = chat['counterparty_phone'] ?? '';
+                        final initial = name.isNotEmpty
+                            ? name[0].toUpperCase()
+                            : 'U';
+
+                        return ListTile(
+                          tileColor: Colors.white,
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.grey.shade300,
+                            child: Text(
+                              initial,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              subtitle: const Text('[Chuyển nhận tiền]', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                              trailing: Text(_formatDate(chat['latest_transaction_date']), style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChatDetailScreen(
-                                      token: widget.token,
-                                      counterpartyPhone: phone,
-                                      counterpartyName: name,
-                                    ),
-                                  ),
-                                ).then((_) => _fetchChatList()); // Refresh when back
-                              },
-                            );
+                            ),
+                          ),
+                          title: Text(
+                            name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            '[Chuyển nhận tiền]',
+                            style: TextStyle(color: Colors.grey, fontSize: 13),
+                          ),
+                          trailing: Text(
+                            DateFormatter.format(
+                              chat['latest_transaction_date'],
+                            ),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatDetailScreen(
+                                  token: widget.token,
+                                  counterpartyPhone: phone,
+                                  counterpartyName: name,
+                                ),
+                              ),
+                            ).then(
+                              (_) => _fetchChatList(),
+                            ); // Refresh when back
                           },
-                        ),
+                        );
+                      },
+                    ),
             ),
             _buildBottomNav(context),
           ],
@@ -118,10 +155,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFFFE4EE),
-            Color(0xFFFFF0F5),
-          ],
+          colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5)],
         ),
       ),
       child: Column(
@@ -130,28 +164,40 @@ class _ChatListScreenState extends State<ChatListScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Tin nhắn', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const Text(
+                'Tin nhắn',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
                     child: const Icon(Icons.grid_view_rounded, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
                     child: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
                     child: const Icon(Icons.home_rounded, size: 20),
                   ),
                 ],
-              )
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -165,12 +211,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm',
                 hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-                prefixIcon: Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Colors.grey,
+                  size: 20,
+                ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -233,14 +283,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => TransferMainScreen(token: widget.token)),
+                    MaterialPageRoute(
+                      builder: (_) => TransferMainScreen(token: widget.token),
+                    ),
                   );
                 },
-                child: _buildBottomNavItem(Icons.currency_exchange_rounded, 'Chuyển tiền', isActive: false),
+                child: _buildBottomNavItem(
+                  Icons.currency_exchange_rounded,
+                  'Chuyển tiền',
+                  isActive: false,
+                ),
               ),
             ),
             Expanded(
-              child: _buildBottomNavItem(Icons.chat_bubble_rounded, 'Chuyển qua Chat', isActive: true),
+              child: _buildBottomNavItem(
+                Icons.chat_bubble_rounded,
+                'Chuyển qua Chat',
+                isActive: true,
+              ),
             ),
           ],
         ),
@@ -248,19 +308,23 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _buildBottomNavItem(IconData icon, String label, {bool isActive = false}) {
+  Widget _buildBottomNavItem(
+    IconData icon,
+    String label, {
+    bool isActive = false,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: isActive ? Colors.pink : Colors.grey),
         const SizedBox(height: 4),
         Text(
-          label, 
+          label,
           style: TextStyle(
-            fontSize: 11, 
+            fontSize: 11,
             color: isActive ? Colors.pink : Colors.grey,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal
-          )
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ],
     );

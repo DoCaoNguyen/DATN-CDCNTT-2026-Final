@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/notification_service.dart';
 import 'core/constants/app_colors.dart';
-import 'features/auth/login/sceens/login_phone_screen.dart';
+import 'features/auth/login/screens/login_phone_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
@@ -14,10 +14,12 @@ import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent, // transparent status bar
-    statusBarIconBrightness: Brightness.dark, // dark text for status bar
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // transparent status bar
+      statusBarIconBrightness: Brightness.dark, // dark text for status bar
+    ),
+  );
   NetworkService().initialize();
 
   String? token;

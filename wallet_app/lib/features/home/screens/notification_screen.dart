@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/app_colors.dart';
@@ -52,16 +53,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> _markAsRead(String id, String currentStatus) async {
     if (currentStatus == 'READ') return;
-    
+
     try {
       final response = await _client.put(
         Uri.parse(ApiConfig.markNotificationRead),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'notificationIds': [id]
-        })
+          'notificationIds': [id],
+        }),
       );
-      
+
       if (response.statusCode == 200) {
         setState(() {
           final index = _notifications.indexWhere((n) => n['id'] == id);
@@ -79,9 +80,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     try {
       final response = await _client.put(
         Uri.parse(ApiConfig.markAllNotificationsRead),
-        headers: {'Content-Type': 'application/json'}
+        headers: {'Content-Type': 'application/json'},
       );
-      
+
       if (response.statusCode == 200) {
         setState(() {
           for (var notif in _notifications) {
@@ -151,7 +152,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Thông báo', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Thông báo',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
@@ -171,7 +175,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryPink))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryPink),
+            )
           : RefreshIndicator(
               onRefresh: _fetchNotifications,
               color: AppColors.primaryPink,
@@ -184,11 +190,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.notifications_off_rounded, size: 80, color: Colors.grey[400]),
+                            Icon(
+                              Icons.notifications_off_rounded,
+                              size: 80,
+                              color: Colors.grey[400],
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               'Chưa có thông báo nào',
-                              style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -200,8 +214,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       itemBuilder: (context, index) {
                         final notif = _notifications[index];
                         final isUnread = notif['status'] == 'UNREAD';
-                        final iconType = _getIconForType(notif['notification_type']);
-                        final iconColor = _getColorForType(notif['notification_type']);
+                        final iconType = _getIconForType(
+                          notif['notification_type'],
+                        );
+                        final iconColor = _getColorForType(
+                          notif['notification_type'],
+                        );
 
                         return GestureDetector(
                           onTap: () {
@@ -209,21 +227,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             // Here you could add navigation to transaction detail if needed
                           },
                           child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: isUnread ? Colors.blue.withOpacity(0.05) : Colors.white,
+                              color: isUnread
+                                  ? Colors.blue.withValues(alpha: 0.05)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isUnread ? Colors.blue.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+                                color: isUnread
+                                    ? Colors.blue.withValues(alpha: 0.3)
+                                    : Colors.grey.withValues(alpha: 0.1),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.03),
+                                  color: Colors.black.withValues(alpha: 0.03),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
-                                )
-                              ]
+                                ),
+                              ],
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,24 +256,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: iconColor.withOpacity(0.1),
+                                    color: iconColor.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(iconType, color: iconColor, size: 24),
+                                  child: Icon(
+                                    iconType,
+                                    color: iconColor,
+                                    size: 24,
+                                  ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Text(
                                               notif['title'] ?? '',
                                               style: TextStyle(
-                                                fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                                                fontWeight: isUnread
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w600,
                                                 fontSize: 16,
                                                 color: Colors.black87,
                                               ),
@@ -270,13 +303,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                         notif['content'] ?? '',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: isUnread ? Colors.black87 : Colors.black54,
+                                          color: isUnread
+                                              ? Colors.black87
+                                              : Colors.black54,
                                           height: 1.4,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        _formatDate(notif['created_at']),
+                                        DateFormatter.format(
+                                          notif['created_at'],
+                                        ),
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey[500],

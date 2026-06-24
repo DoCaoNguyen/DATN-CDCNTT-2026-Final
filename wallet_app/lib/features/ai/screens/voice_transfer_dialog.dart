@@ -21,7 +21,9 @@ class _VoiceTransferDialogState extends State<VoiceTransferDialog> {
     final text = _textController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập nội dung cần chuyển tiền.')),
+        const SnackBar(
+          content: Text('Vui lòng nhập nội dung cần chuyển tiền.'),
+        ),
       );
       return;
     }
@@ -42,7 +44,8 @@ class _VoiceTransferDialogState extends State<VoiceTransferDialog> {
         final data = jsonDecode(response.body);
         if (mounted) Navigator.pop(context, data['data']);
       } else {
-        if (mounted) Navigator.pop(context, {'error': 'AI không thể phân tích nội dung.'});
+        if (mounted)
+          Navigator.pop(context, {'error': 'AI không thể phân tích nội dung.'});
       }
     } catch (e) {
       if (mounted) Navigator.pop(context, {'error': 'Lỗi kết nối máy chủ AI.'});
@@ -100,14 +103,20 @@ class _VoiceTransferDialogState extends State<VoiceTransferDialog> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              suffixIcon: _isProcessing 
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              suffixIcon: _isProcessing
                   ? const Padding(
                       padding: EdgeInsets.all(12.0),
                       child: SizedBox(
-                        width: 24, 
-                        height: 24, 
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.pink)
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.pink,
+                        ),
                       ),
                     )
                   : IconButton(

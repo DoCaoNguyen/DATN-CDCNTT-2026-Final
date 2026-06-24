@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
-import '../../transfer/screens/transfer_confirm_screen.dart'; // To reuse PinConfirmBottomSheet
+import '../../../core/widgets/pin_confirm_bottom_sheet.dart'; // To reuse PinConfirmBottomSheet
 import 'bank_link_success_screen.dart';
 
 class BankDetailInputScreen extends StatefulWidget {
@@ -25,7 +25,8 @@ class BankDetailInputScreen extends StatefulWidget {
 
 class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
   final _client = CustomHttpClient();
-  final TextEditingController _accountNumberController = TextEditingController();
+  final TextEditingController _accountNumberController =
+      TextEditingController();
   String _cardHolderName = "PHAN VAN THONG";
   String _cccd = "Đang tải...";
   bool _isLoading = false;
@@ -48,9 +49,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
 
   Future<void> _fetchUserProfile() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getMyProfile),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getMyProfile));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String? name = data['data']?['full_name'];
@@ -60,8 +59,14 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
             _cardHolderName = name.toUpperCase();
           }
           if (idNumber != null && idNumber.isNotEmpty) {
-            String masked = List.generate(idNumber.length > 4 ? idNumber.length - 4 : 0, (index) => '•').join() + 
-                            (idNumber.length > 4 ? idNumber.substring(idNumber.length - 4) : idNumber);
+            String masked =
+                List.generate(
+                  idNumber.length > 4 ? idNumber.length - 4 : 0,
+                  (index) => '•',
+                ).join() +
+                (idNumber.length > 4
+                    ? idNumber.substring(idNumber.length - 4)
+                    : idNumber);
             _cccd = masked;
           } else {
             _cccd = "Chưa cập nhật CCCD";
@@ -99,9 +104,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.linkBank),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'bank_name': widget.bankName,
           'bank_code': widget.bankCode,
@@ -115,7 +118,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
       if (response.statusCode == 200) {
         if (!mounted) return null;
         Navigator.pop(context); // Close PIN bottom sheet
-        
+
         // Navigate to Success Screen
         Navigator.pushReplacement(
           context,
@@ -152,13 +155,18 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
         ),
         title: Text(
           widget.bankName,
-          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () =>
+                Navigator.popUntil(context, (route) => route.isFirst),
           ),
         ],
       ),
@@ -212,7 +220,10 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                             // Field: Số tài khoản
                             const Text(
                               'Số tài khoản',
-                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 6),
                             TextField(
@@ -220,41 +231,69 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
                                 setState(() {
-                                  if (_hasAttemptedSubmit) _hasAttemptedSubmit = false;
+                                  if (_hasAttemptedSubmit)
+                                    _hasAttemptedSubmit = false;
                                 });
                               },
                               decoration: InputDecoration(
                                 hintText: 'Nhập số tài khoản',
-                                errorText: showError ? 'Quý khách chưa nhập số tài khoản' : null,
+                                errorText: showError
+                                    ? 'Quý khách chưa nhập số tài khoản'
+                                    : null,
                                 errorStyle: const TextStyle(color: Colors.red),
                                 suffixIcon: showError
-                                    ? const Icon(Icons.warning_amber_rounded, color: Colors.red)
+                                    ? const Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.red,
+                                      )
                                     : null,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
                                 enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: showError ? Colors.red : Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: showError
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                  ),
                                 ),
                                 focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: showError ? Colors.red : Colors.pink),
+                                  borderSide: BorderSide(
+                                    color: showError ? Colors.red : Colors.pink,
+                                  ),
                                 ),
                               ),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 20),
 
                             // Field: Chủ tài khoản
                             const Text(
                               'Chủ tài khoản',
-                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 6),
                             TextField(
-                              controller: TextEditingController(text: _cardHolderName),
+                              controller: TextEditingController(
+                                text: _cardHolderName,
+                              ),
                               enabled: false,
                               decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
                                 disabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey.shade200),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade200,
+                                  ),
                                 ),
                               ),
                               style: TextStyle(
@@ -268,16 +307,24 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                             // Field: CCCD
                             const Text(
                               'CCCD',
-                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 6),
                             TextField(
                               controller: TextEditingController(text: _cccd),
                               enabled: false,
                               decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
                                 disabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey.shade200),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade200,
+                                  ),
                                 ),
                               ),
                               style: TextStyle(
@@ -303,7 +350,11 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info_outline_rounded, color: Colors.blueAccent, size: 20),
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              color: Colors.blueAccent,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -324,7 +375,11 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.security_rounded, color: Colors.pink.shade400, size: 16),
+                          Icon(
+                            Icons.security_rounded,
+                            color: Colors.pink.shade400,
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
                           const Text(
                             'Mọi thông tin của bạn đều được bảo mật theo tiêu chuẩn quốc tế PCI DSS.',
@@ -349,7 +404,9 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                     child: ElevatedButton(
                       onPressed: _onContinuePressed,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isAccountEmpty ? Colors.grey.shade300 : Colors.pink,
+                        backgroundColor: isAccountEmpty
+                            ? Colors.grey.shade300
+                            : Colors.pink,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -361,7 +418,9 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: isAccountEmpty ? Colors.grey.shade500 : Colors.white,
+                          color: isAccountEmpty
+                              ? Colors.grey.shade500
+                              : Colors.white,
                         ),
                       ),
                     ),
@@ -372,7 +431,7 @@ class _BankDetailInputScreenState extends State<BankDetailInputScreen> {
           ),
           if (_isLoading)
             Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               child: const Center(
                 child: CircularProgressIndicator(color: Colors.pink),
               ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dmrtd/dmrtd.dart';
@@ -74,7 +75,7 @@ class NfcKycService {
   static String calculateExpiryDate(String dobStr, [String? issueDateStr]) {
     final cleanedDob = dobStr.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanedDob.length < 8) return '';
-    
+
     final birthDay = int.parse(cleanedDob.substring(0, 2));
     final birthMonth = int.parse(cleanedDob.substring(2, 4));
     final birthYear = int.parse(cleanedDob.substring(4, 8));
@@ -94,7 +95,8 @@ class NfcKycService {
     }
 
     int currentAge = referenceYear - birthYear;
-    if (referenceMonth < birthMonth || (referenceMonth == birthMonth && referenceDay < birthDay)) {
+    if (referenceMonth < birthMonth ||
+        (referenceMonth == birthMonth && referenceDay < birthDay)) {
       currentAge--;
     }
 
@@ -109,7 +111,7 @@ class NfcKycService {
       expiryYear = birthYear + 60;
     } else {
       // Cấp từ 58 tuổi trở lên là Không thời hạn. Đa số chip dùng 991231 hoặc birthYear + 100
-      expiryYear = birthYear + 100; 
+      expiryYear = birthYear + 100;
     }
 
     final yy = (expiryYear % 100).toString().padLeft(2, '0');
@@ -138,39 +140,45 @@ class NfcKycService {
     required String dobYYMMDD,
     required String doeYYMMDD,
   }) async {
-    print("[NFC_DEBUG] Bắt đầu quá trình đọc chip NFC");
-    print("[NFC_DEBUG] Tham số đầu vào: CCCD=$documentNumber, dobYYMMDD=$dobYYMMDD, doeYYMMDD=$doeYYMMDD");
+    debugPrint("[NFC_DEBUG] Bắt đầu quá trình đọc chip NFC");
+    debugPrint(
+      "[NFC_DEBUG] Tham số đầu vào: CCCD=$documentNumber, dobYYMMDD=$dobYYMMDD, doeYYMMDD=$doeYYMMDD",
+    );
 
     // 1. Kiểm tra phần cứng NFC và bắt đầu Poll (đọc NFC)
     final availability = await FlutterNfcKit.nfcAvailability;
-    print("[NFC_DEBUG] Trạng thái NFC Availability: $availability");
+    debugPrint("[NFC_DEBUG] Trạng thái NFC Availability: $availability");
     if (availability == NFCAvailability.not_supported) {
       throw Exception("Thiết bị của bạn không hỗ trợ tính năng NFC.");
     }
 
-    print("[NFC_DEBUG] Bắt đầu Poll thẻ NFC (timeout 20s)...");
+    debugPrint("[NFC_DEBUG] Bắt đầu Poll thẻ NFC (timeout 20s)...");
     NFCTag tag;
     try {
       tag = await FlutterNfcKit.poll(
         timeout: const Duration(seconds: 20),
         androidPlatformSound: true,
       );
-      print("[NFC_DEBUG] Đã phát hiện thẻ NFC!");
-      print("[NFC_DEBUG] Chi tiết thẻ - Type: ${tag.type}, ID: ${tag.id}, Standard: ${tag.standard}");
+      debugPrint("[NFC_DEBUG] Đã phát hiện thẻ NFC!");
+      debugPrint(
+        "[NFC_DEBUG] Chi tiết thẻ - Type: ${tag.type}, ID: ${tag.id}, Standard: ${tag.standard}",
+      );
     } catch (e) {
-      print("[NFC_DEBUG] Lỗi khi quét/poll thẻ NFC: $e");
+      debugPrint("[NFC_DEBUG] Lỗi khi quét/poll thẻ NFC: $e");
       rethrow;
     }
 
     // 2. Kiểm tra định dạng thẻ (CCCD Việt Nam/Hộ chiếu tuân theo ISO 7816)
     if (tag.type != NFCTagType.iso7816) {
-      print("[NFC_DEBUG] Loại thẻ không khớp iso7816 (phát hiện: ${tag.type})");
+      debugPrint(
+        "[NFC_DEBUG] Loại thẻ không khớp iso7816 (phát hiện: ${tag.type})",
+      );
       await FlutterNfcKit.finish();
       throw Exception("Định dạng thẻ không tương thích với CCCD gắn chip.");
     }
 
     // 3. Khởi tạo ComProvider và Passport session của dmrtd
-    print("[NFC_DEBUG] Kết nối NfcKitComProvider...");
+    debugPrint("[NFC_DEBUG] Kết nối NfcKitComProvider...");
     final comProvider = NfcKitComProvider();
     await comProvider.connect();
     final passport = Passport(comProvider);
@@ -179,78 +187,88 @@ class NfcKycService {
       // 4. Thiết lập Basic Access Control (BAC) dùng MRZ Keys
       final parsedDob = _parseYYMMDD(dobYYMMDD);
       final parsedDoe = _parseYYMMDD(doeYYMMDD);
-      print("[NFC_DEBUG] Khởi tạo DBAKey với:");
-      print("            - Document Number: $documentNumber");
-      print("            - DOB Parsed: $parsedDob (yymmdd: $dobYYMMDD)");
-      print("            - DOE Parsed: $parsedDoe (yymmdd: $doeYYMMDD)");
+      debugPrint("[NFC_DEBUG] Khởi tạo DBAKey với:");
+      debugPrint("            - Document Number: $documentNumber");
+      debugPrint("            - DOB Parsed: $parsedDob (yymmdd: $dobYYMMDD)");
+      debugPrint("            - DOE Parsed: $parsedDoe (yymmdd: $doeYYMMDD)");
 
-      final dbaKey = DBAKey(
-        documentNumber,
-        parsedDob,
-        parsedDoe,
-      );
-      
+      final dbaKey = DBAKey(documentNumber, parsedDob, parsedDoe);
+
       // Bắt đầu Session BAC
-      print("[NFC_DEBUG] Đang thiết lập session BAC (startSession)...");
+      debugPrint("[NFC_DEBUG] Đang thiết lập session BAC (startSession)...");
       try {
         await passport.startSession(dbaKey);
-        print("[NFC_DEBUG] Thiết lập session BAC thành công!");
+        debugPrint("[NFC_DEBUG] Thiết lập session BAC thành công!");
       } catch (sessionError) {
-        print("[NFC_DEBUG] THẤT BẠI khi thiết lập session BAC: $sessionError");
-        throw Exception("Không thể thiết lập kết nối bảo mật BAC với thẻ chip. Vui lòng kiểm tra Số CCCD, Ngày sinh và Ngày hết hạn đã chính xác chưa.\nChi tiết: $sessionError");
+        debugPrint(
+          "[NFC_DEBUG] THẤT BẠI khi thiết lập session BAC: $sessionError",
+        );
+        throw Exception(
+          "Không thể thiết lập kết nối bảo mật BAC với thẻ chip. Vui lòng kiểm tra Số CCCD, Ngày sinh và Ngày hết hạn đã chính xác chưa.\nChi tiết: $sessionError",
+        );
       }
 
       // 5. Đọc các tệp dữ liệu Data Group 1 (DG1 - Thông tin cá nhân)
-      print("[NFC_DEBUG] Đang đọc EfCOM...");
+      debugPrint("[NFC_DEBUG] Đang đọc EfCOM...");
       EfCOM efcom;
       try {
         efcom = await passport.readEfCOM();
-        print("[NFC_DEBUG] Đọc EfCOM thành công! Các DG tags có sẵn: ${efcom.dgTags}");
+        debugPrint(
+          "[NFC_DEBUG] Đọc EfCOM thành công! Các DG tags có sẵn: ${efcom.dgTags}",
+        );
       } catch (efcomError) {
-        print("[NFC_DEBUG] Lỗi khi đọc EfCOM: $efcomError");
-        throw Exception("Không thể đọc tệp EfCOM cấu trúc thẻ. Chi tiết: $efcomError");
+        debugPrint("[NFC_DEBUG] Lỗi khi đọc EfCOM: $efcomError");
+        throw Exception(
+          "Không thể đọc tệp EfCOM cấu trúc thẻ. Chi tiết: $efcomError",
+        );
       }
-      
+
       String fullName = "Không xác định";
       String sex = "Không xác định";
       String dob = dobYYMMDD;
 
       if (efcom.dgTags.contains(EfDG1.TAG)) {
-        print("[NFC_DEBUG] Đang đọc EfDG1 (Thông tin cá nhân)...");
+        debugPrint("[NFC_DEBUG] Đang đọc EfDG1 (Thông tin cá nhân)...");
         try {
           final dg1 = await passport.readEfDG1();
-          print("[NFC_DEBUG] Đọc EfDG1 thành công!");
+          debugPrint("[NFC_DEBUG] Đọc EfDG1 thành công!");
           final mrz = dg1.mrz;
           fullName = "${mrz.firstName} ${mrz.lastName}".trim();
           sex = mrz.gender.toString();
           dob = mrz.dateOfBirth.toString();
-          print("[NFC_DEBUG] Dữ liệu MRZ trích xuất: Họ tên=$fullName, Giới tính=$sex, Ngày sinh=$dob");
+          debugPrint(
+            "[NFC_DEBUG] Dữ liệu MRZ trích xuất: Họ tên=$fullName, Giới tính=$sex, Ngày sinh=$dob",
+          );
         } catch (dg1Error) {
-          print("[NFC_DEBUG] Lỗi khi đọc/phân tích EfDG1: $dg1Error");
-          throw Exception("Không thể đọc thông tin cá nhân từ DG1. Chi tiết: $dg1Error");
+          debugPrint("[NFC_DEBUG] Lỗi khi đọc/phân tích EfDG1: $dg1Error");
+          throw Exception(
+            "Không thể đọc thông tin cá nhân từ DG1. Chi tiết: $dg1Error",
+          );
         }
       } else {
-        print("[NFC_DEBUG] Cảnh báo: Thẻ không chứa DG1 tag!");
+        debugPrint("[NFC_DEBUG] Cảnh báo: Thẻ không chứa DG1 tag!");
       }
 
       // 6. Đọc tệp dữ liệu Data Group 2 (DG2 - Ảnh chân dung)
       Uint8List? faceBytes;
       if (efcom.dgTags.contains(EfDG2.TAG)) {
-        print("[NFC_DEBUG] Đang đọc EfDG2 (Ảnh chân dung)...");
+        debugPrint("[NFC_DEBUG] Đang đọc EfDG2 (Ảnh chân dung)...");
         try {
           final dg2 = await passport.readEfDG2();
           faceBytes = dg2.imageData;
-          print("[NFC_DEBUG] Đọc EfDG2 thành công! Độ dài ảnh: ${faceBytes?.length} bytes");
+          debugPrint(
+            "[NFC_DEBUG] Đọc EfDG2 thành công! Độ dài ảnh: ${faceBytes?.length} bytes",
+          );
         } catch (dg2Error) {
-          print("[NFC_DEBUG] Lỗi khi đọc EfDG2: $dg2Error");
+          debugPrint("[NFC_DEBUG] Lỗi khi đọc EfDG2: $dg2Error");
           // Không throw để vẫn trả về thông tin văn bản nếu chỉ lỗi ảnh chân dung
         }
       } else {
-        print("[NFC_DEBUG] Cảnh báo: Thẻ không chứa DG2 tag!");
+        debugPrint("[NFC_DEBUG] Cảnh báo: Thẻ không chứa DG2 tag!");
       }
 
       // 7. Giải phóng NFC và trả về kết quả
-      print("[NFC_DEBUG] Hoàn thành đọc NFC. Ngắt kết nối...");
+      debugPrint("[NFC_DEBUG] Hoàn thành đọc NFC. Ngắt kết nối...");
       await comProvider.disconnect();
       return CccdKycResult(
         documentNumber: documentNumber,
@@ -260,7 +278,7 @@ class NfcKycService {
         faceImageBytes: faceBytes,
       );
     } catch (e) {
-      print("[NFC_DEBUG] Phát hiện ngoại lệ trong quá trình đọc NFC: $e");
+      debugPrint("[NFC_DEBUG] Phát hiện ngoại lệ trong quá trình đọc NFC: $e");
       // Luôn đảm bảo đóng kết nối NFC kể cả khi lỗi xảy ra
       await comProvider.disconnect();
       rethrow;

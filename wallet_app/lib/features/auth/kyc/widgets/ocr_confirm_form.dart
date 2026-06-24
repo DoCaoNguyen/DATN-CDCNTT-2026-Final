@@ -26,7 +26,10 @@ class OcrConfirmForm extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Xác nhận thông tin', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Xác nhận thông tin',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -45,7 +48,10 @@ class OcrConfirmForm extends StatelessWidget {
               controller: idNumberController,
               readOnly: true,
               decoration: InputDecoration(
-                labelText: "Số CCCD", border: const OutlineInputBorder(), filled: true, fillColor: Colors.grey.shade100,
+                labelText: "Số CCCD",
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey.shade100,
               ),
             ),
             const SizedBox(height: 16),
@@ -53,7 +59,8 @@ class OcrConfirmForm extends StatelessWidget {
               controller: fullNameController,
               readOnly: false,
               decoration: const InputDecoration(
-                labelText: "Họ và Tên", border: OutlineInputBorder(),
+                labelText: "Họ và Tên",
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -65,7 +72,10 @@ class OcrConfirmForm extends StatelessWidget {
                     controller: dobController,
                     readOnly: true,
                     decoration: InputDecoration(
-                      labelText: "Ngày sinh (DD/MM/YYYY)", border: const OutlineInputBorder(), filled: true, fillColor: Colors.grey.shade100,
+                      labelText: "Ngày sinh (DD/MM/YYYY)",
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
                     ),
                   ),
                 ),
@@ -76,7 +86,8 @@ class OcrConfirmForm extends StatelessWidget {
                     controller: genderController,
                     readOnly: false,
                     decoration: const InputDecoration(
-                      labelText: "Giới tính", border: OutlineInputBorder(),
+                      labelText: "Giới tính",
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -99,7 +110,8 @@ class OcrConfirmForm extends StatelessWidget {
               readOnly: false,
               maxLines: 2,
               decoration: const InputDecoration(
-                labelText: "Quê quán / Nơi thường trú", border: OutlineInputBorder(),
+                labelText: "Quê quán / Nơi thường trú",
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 32),
@@ -107,11 +119,16 @@ class OcrConfirmForm extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryPink),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryPink,
+                ),
                 onPressed: onSubmit,
-                child: const Text('Thông tin hợp lệ, Đọc chip NFC', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text(
+                  'Thông tin hợp lệ, Đọc chip NFC',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
-import '../../features/auth/login/sceens/login_phone_screen.dart';
+import '../../features/auth/login/screens/login_phone_screen.dart';
 
 class CustomHttpClient extends http.BaseClient {
   final http.Client _innerClient = http.Client();
-  
+
   // Global NavigatorKey dùng để hiển thị Dialog hoặc điều hướng cưỡng bức (Force Navigate) từ xa không cần BuildContext
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   // Cờ hiệu ngăn chặn việc hiển thị lặp lại nhiều Dialog khi nhiều API cùng lỗi 401 cùng lúc
   static bool _isLoggingOut = false;
@@ -34,7 +35,8 @@ class CustomHttpClient extends http.BaseClient {
 
     // 4. Lắng nghe và đánh chặn mã lỗi 401
     if (response.statusCode == 401) {
-      if (request.url.path.contains('/auth/refresh-token') || request.url.path.contains('/auth/login')) {
+      if (request.url.path.contains('/auth/refresh-token') ||
+          request.url.path.contains('/auth/login')) {
         _handleUnauthorized();
         return response;
       }
@@ -43,23 +45,24 @@ class CustomHttpClient extends http.BaseClient {
       if (refreshSuccess) {
         final newPrefs = await SharedPreferences.getInstance();
         final newToken = newPrefs.getString('auth_token');
-        
+
         final newRequest = http.Request(request.method, request.url);
         newRequest.headers.addAll(request.headers);
         if (newToken != null && newToken.isNotEmpty) {
           newRequest.headers['Authorization'] = 'Bearer $newToken';
         }
-        
+
         if (request is http.Request) {
           newRequest.bodyBytes = request.bodyBytes;
         } else if (request is http.MultipartRequest) {
-          final multipartReq = http.MultipartRequest(request.method, request.url)
-            ..headers.addAll(newRequest.headers)
-            ..fields.addAll(request.fields)
-            ..files.addAll(request.files);
+          final multipartReq =
+              http.MultipartRequest(request.method, request.url)
+                ..headers.addAll(newRequest.headers)
+                ..fields.addAll(request.fields)
+                ..files.addAll(request.files);
           return await _innerClient.send(multipartReq);
         }
-        
+
         return await _innerClient.send(newRequest);
       } else {
         _handleUnauthorized();
@@ -86,9 +89,15 @@ class CustomHttpClient extends http.BaseClient {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        String newToken = responseData['access_token'] ?? responseData['data']['access_token'] ?? '';
-        String newRefreshToken = responseData['refresh_token'] ?? responseData['data']['refresh_token'] ?? '';
-        
+        String newToken =
+            responseData['access_token'] ??
+            responseData['data']['access_token'] ??
+            '';
+        String newRefreshToken =
+            responseData['refresh_token'] ??
+            responseData['data']['refresh_token'] ??
+            '';
+
         if (newToken.isNotEmpty) {
           await prefs.setString('auth_token', newToken);
           if (newRefreshToken.isNotEmpty) {
@@ -123,12 +132,17 @@ class CustomHttpClient extends http.BaseClient {
           context: context,
           barrierDismissible: false,
           builder: (dialogCtx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: const Row(
               children: [
                 Icon(Icons.warning_amber_rounded, color: Colors.red),
                 SizedBox(width: 8),
-                Text('Cảnh báo bảo mật', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Cảnh báo bảo mật',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             content: const Text(
@@ -139,10 +153,16 @@ class CustomHttpClient extends http.BaseClient {
               TextButton(
                 onPressed: () {
                   Navigator.pop(dialogCtx); // Đóng Dialog
-                  _navigateToLogin();       // Điều hướng về màn hình Login
+                  _navigateToLogin(); // Điều hướng về màn hình Login
                 },
-                child: const Text('Đăng nhập lại', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold)),
-              )
+                child: const Text(
+                  'Đăng nhập lại',
+                  style: TextStyle(
+                    color: Colors.pink,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
         );

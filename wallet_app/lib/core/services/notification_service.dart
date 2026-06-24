@@ -34,10 +34,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       storageBucket: "wallet-app-loyalty.firebasestorage.app",
     ),
   );
-  
+
   debugPrint("Background Isolate nhận được tin nhắn FCM: ${message.messageId}");
-  
-  // Nếu gói tin FCM ĐÃ CÓ sẵn payload `notification` (title, body), 
+
+  // Nếu gói tin FCM ĐÃ CÓ sẵn payload `notification` (title, body),
   // hệ điều hành (Android/iOS) đã TỰ ĐỘNG hiển thị thông báo trên khay hệ thống.
   // Do đó, ta KHÔNG gọi `showLocalNotification` để tránh bị hiển thị thông báo kép (duplicate).
   if (message.notification == null) {
@@ -49,11 +49,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   // Singleton Pattern
   NotificationService._privateConstructor();
-  static final NotificationService instance = NotificationService._privateConstructor();
+  static final NotificationService instance =
+      NotificationService._privateConstructor();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
   // Lưu trữ token hiện tại của thiết bị
   String? _fcmToken;
 
@@ -66,11 +68,12 @@ class NotificationService {
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
 
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
@@ -89,7 +92,9 @@ class NotificationService {
 
     // 3. Đăng ký listener xử lý thông báo khi ứng dụng đang mở (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint("Foreground nhận được tin nhắn FCM: ${message.notification?.title}");
+      debugPrint(
+        "Foreground nhận được tin nhắn FCM: ${message.notification?.title}",
+      );
       if (message.notification == null || Platform.isAndroid) {
         showLocalNotification(message);
       }
@@ -140,8 +145,10 @@ class NotificationService {
         granted = true;
       }
     }
-    
-    debugPrint("Quyền Push Notification: ${granted ? 'Được cấp' : 'Bị từ chối'}");
+
+    debugPrint(
+      "Quyền Push Notification: ${granted ? 'Được cấp' : 'Bị từ chối'}",
+    );
     return granted;
   }
 
@@ -169,20 +176,22 @@ class NotificationService {
       final client = CustomHttpClient();
       final response = await client.post(
         Uri.parse(ApiConfig.registerDevice),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'fcmToken': _fcmToken,
           'deviceName': _getDeviceModelName(),
-          'deviceType': Platform.isAndroid ? 'ANDROID' : (Platform.isIOS ? 'IOS' : 'WEB'),
+          'deviceType': Platform.isAndroid
+              ? 'ANDROID'
+              : (Platform.isIOS ? 'IOS' : 'WEB'),
         }),
       );
 
       if (response.statusCode == 200) {
         debugPrint("Đồng bộ FCM Token lên Backend thành công!");
       } else {
-        debugPrint("Đồng bộ FCM Token thất bại: ${response.statusCode} - ${response.body}");
+        debugPrint(
+          "Đồng bộ FCM Token thất bại: ${response.statusCode} - ${response.body}",
+        );
       }
     } catch (e) {
       debugPrint("Lỗi kết nối khi gửi FCM Token lên Backend: $e");
@@ -193,13 +202,18 @@ class NotificationService {
   Future<void> showLocalNotification(RemoteMessage message) async {
     // Ưu tiên parse từ `data` payload vì chúng ta ép hệ thống đánh thức app thông qua Data Payload
     final data = message.data;
-    
-    String title = data['title'] ?? message.notification?.title ?? 'Biến động số dư';
-    String body = data['body'] ?? message.notification?.body ?? 'Tài khoản của bạn vừa có sự thay đổi.';
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    String title =
+        data['title'] ?? message.notification?.title ?? 'Biến động số dư';
+    String body =
+        data['body'] ??
+        message.notification?.body ??
+        'Tài khoản của bạn vừa có sự thay đổi.';
+
+    const AndroidNotificationDetails
+    androidDetails = AndroidNotificationDetails(
       'wallet_balance_channel_id', // ID trùng với Channel đã tạo
-      'Biến Động Số Dư',           // Tên Channel hiển thị trong Settings của điện thoại
+      'Biến Động Số Dư', // Tên Channel hiển thị trong Settings của điện thoại
       channelDescription: 'Thông báo biến động số dư ví điện tử',
       importance: Importance.max,
       priority: Priority.high,
@@ -223,7 +237,9 @@ class NotificationService {
       title: title,
       body: body,
       notificationDetails: notificationDetails,
-      payload: jsonEncode(data), // Truyền data payload để xử lý khi click vào thông báo
+      payload: jsonEncode(
+        data,
+      ), // Truyền data payload để xử lý khi click vào thông báo
     );
   }
 
@@ -238,7 +254,9 @@ class NotificationService {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
@@ -247,7 +265,9 @@ class NotificationService {
     if (response.payload != null) {
       try {
         final Map<String, dynamic> data = jsonDecode(response.payload!);
-        debugPrint("Người dùng đã click vào thông báo. Dữ liệu nhận được: $data");
+        debugPrint(
+          "Người dùng đã click vào thông báo. Dữ liệu nhận được: $data",
+        );
         // Bạn có thể phát triển thêm logic điều hướng ở đây, ví dụ:
         // Navigator.push(context, MaterialPageRoute(builder: (_) => TransactionHistoryScreen(...)));
       } catch (e) {

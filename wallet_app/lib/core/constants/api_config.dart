@@ -2,7 +2,8 @@ class ApiConfig {
   // --- BASE URL ---
   // Dùng 10.0.2.2 cho máy ảo Android
   // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
-  static const String baseUrl = 'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
+  static const String baseUrl =
+      'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
 
   static String get socketUrl {
     final uri = Uri.parse(baseUrl);
@@ -21,7 +22,7 @@ class ApiConfig {
   static const String forgotPasswordOtp = '$baseUrl/auth/forgot-password-otp';
   static const String resetPassword = '$baseUrl/auth/reset-password';
   static const String exportTransaction = '$baseUrl/transaction/export';
-  
+
   // --- KYC ENDPOINTS ---
   static const String verifyKyc = '$baseUrl/kyc/verify';
   static const String getWalletBalance = '$baseUrl/wallet/balance';
@@ -34,7 +35,8 @@ class ApiConfig {
   static const String getTransactionStats = '$baseUrl/transaction/stats';
   static const String getTransactionsByMonth = '$baseUrl/transaction/month';
   static const String getChatList = '$baseUrl/transaction/chat-list';
-  static String getChatHistory(String phone) => '$baseUrl/transaction/chat/$phone';
+  static String getChatHistory(String phone) =>
+      '$baseUrl/transaction/chat/$phone';
   static const String requestMoneyQR = '$baseUrl/payment/request';
   static const String paymentPreview = '$baseUrl/payment/preview';
   static const String processPayment = '$baseUrl/payment/process';
@@ -46,9 +48,11 @@ class ApiConfig {
   static const String bankTransfer = '$baseUrl/transaction/bank-transfer';
   static const String registerDevice = '$baseUrl/notifications/register-device';
   static const String getNotifications = '$baseUrl/notifications';
-  static const String getUnreadNotificationCount = '$baseUrl/notifications/unread-count';
+  static const String getUnreadNotificationCount =
+      '$baseUrl/notifications/unread-count';
   static const String markNotificationRead = '$baseUrl/notifications/read';
-  static const String markAllNotificationsRead = '$baseUrl/notifications/read-all';
+  static const String markAllNotificationsRead =
+      '$baseUrl/notifications/read-all';
 
   // --- RED PACKET ENDPOINTS ---
   static const String createRedPacket = '$baseUrl/red-packet/create';

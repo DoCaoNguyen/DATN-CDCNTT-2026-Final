@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../services/home_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../auth/kyc/sceens/kyc_flow_screen.dart';
+import '../../auth/kyc/screens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
 import '../../../core/constants/api_config.dart';
 import '../widgets/set_wallet_code_dialog.dart';
 import '../widgets/wallet_card.dart';
 import '../widgets/services_grid.dart';
+import '../widgets/home_header.dart';
+import '../widgets/home_banners.dart';
 import 'qr_main_screen.dart';
 import 'notification_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -21,7 +24,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 // ignore: depend_on_referenced_packages
 import 'package:local_auth_android/local_auth_android.dart';
-import '../../transfer/screens/transfer_confirm_screen.dart';
+import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import '../../ai/screens/voice_transfer_dialog.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
@@ -45,6 +48,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final HomeService _homeService = HomeService();
   int _selectedIndex = 0;
   String _balance = "0";
   String? _walletCode;
@@ -139,7 +143,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pink,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -147,7 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: const Text(
               "Đồng ý",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -166,9 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
           try {
             final response = await _client.post(
               Uri.parse(ApiConfig.verifyPin),
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'pin': pin}),
             );
 
@@ -192,7 +199,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final LocalAuthentication auth = LocalAuthentication();
     try {
       final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
-      final bool canAuthenticate = canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await auth.isDeviceSupported();
 
       if (!canAuthenticate) {
         _showErrorSnackBar("Thiết bị không hỗ trợ xác thực sinh trắc học.");
@@ -256,99 +264,42 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _isLoadingBalance = false);
       return;
     }
-
-    try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getWalletBalance),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _balance =
-                responseData['data']?['available_balance']?.toString() ?? "0";
-            _walletCode = responseData['data']?['wallet_code'];
-            _isPinSet = responseData['data']?['is_pin_set'] ?? false;
-            _isLoadingBalance = false;
-          });
-
-          // Nếu đã KYC mà chưa có mã PIN thì hiện popup bắt tạo
-          if (widget.isVerified && !_isPinSet) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showSetWalletCodeDialog();
-            });
-          }
-        }
-      } else {
-        if (mounted) setState(() => _isLoadingBalance = false);
+    final data = await _homeService.fetchBalance(widget.token);
+    if (data != null && mounted) {
+      setState(() {
+        _balance = data['available_balance']?.toString() ?? "0";
+        _walletCode = data['wallet_code'];
+        _isPinSet = data['is_pin_set'] ?? false;
+        _isLoadingBalance = false;
+      });
+      if (widget.isVerified && !_isPinSet) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showSetWalletCodeDialog();
+        });
       }
-    } catch (e) {
-      print("Lỗi lấy số dư ví: $e");
+    } else {
       if (mounted) setState(() => _isLoadingBalance = false);
     }
   }
 
   Future<void> _fetchUnreadCount() async {
-    if (widget.token.isEmpty) return;
-    try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getUnreadNotificationCount),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true && mounted) {
-          setState(() {
-            _unreadCount = data['unreadCount'] ?? 0;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Fetch unread count error: $e");
+    final count = await _homeService.fetchUnreadCount(widget.token);
+    if (mounted) {
+      setState(() {
+        _unreadCount = count;
+      });
     }
   }
 
   Future<void> _fetchProfile() async {
-    if (widget.token.isEmpty) return;
-    try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getMyProfile),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-          'ngrok-skip-browser-warning': 'true',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['data'] != null || data['success'] == true) {
-          final profileData = data['data'] ?? data;
-          
-          // Đồng bộ trạng thái KYC mới nhất từ server lưu vào máy
-          bool isKycVerified = profileData['is_kyc_verified'] == true;
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('is_verified', isKycVerified);
-
-          final String? name = profileData['full_name'];
-          if (name != null && name.trim().isNotEmpty && mounted) {
-            setState(() {
-              _fullName = name.trim().split(' ').last;
-            });
-          }
-        }
+    final data = await _homeService.fetchProfile(widget.token);
+    if (data != null && mounted) {
+      final String? name = data['full_name'];
+      if (name != null && name.trim().isNotEmpty) {
+        setState(() {
+          _fullName = name.trim().split(' ').last;
+        });
       }
-    } catch (e) {
-      debugPrint("Fetch profile error: $e");
     }
   }
 
@@ -472,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'Tài khoản của bạn đã liên kết với:\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)',
+          'Tài khoản của bạn đã liên kết với:\n\n$bankName - $cardNumber\n\n(Tính năng Nạp/Rút tiền đang được phát triển thêm)',
         ),
         actions: [
           TextButton(
@@ -505,7 +456,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: Column(
                       children: [
-                        _buildHeaderSection(activeLang),
+                        HomeHeader(
+                          activeLang: activeLang,
+                          token: widget.token,
+                          unreadCount: _unreadCount,
+                          onRefreshUnread: _fetchUnreadCount,
+                          isVerified: widget.isVerified,
+                          onRequireKyc: _showKycDialog,
+                          onDepositWithdraw: _handleDepositWithdrawClick,
+                        ),
 
                         // Đã thay thế thẻ ví cũ bằng Widget WalletCard
                         WalletCard(
@@ -515,7 +474,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           onToggleVisibility: _fetchBalance,
                         ),
 
-                        _buildFinancialCenterBanner(activeLang),
+                        FinancialCenterBanner(
+                          activeLang: activeLang,
+                          fullName: _fullName,
+                        ),
 
                         // Đã thay thế Grid cũ bằng Widget ServicesGrid
                         ServicesGrid(
@@ -528,8 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           onRefreshBalance: _fetchBalance,
                         ),
 
-                        _buildEventBanner(activeLang),
-                        _buildRecommendations(activeLang),
+                        HomeEventBanner(activeLang: activeLang),
+                        HomeRecommendations(activeLang: activeLang),
                         const SizedBox(height: 80),
                       ],
                     ),
@@ -635,657 +597,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeaderSection(String activeLang) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFE0F7FA), Color(0xFFF1F8E9), Colors.white],
-        ),
-      ),
-      padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 20),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    textAlignVertical: TextAlignVertical.center,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
-                      hintText: activeLang == 'VIE'
-                          ? "Tìm bạn bè để chuyển tiền"
-                          : "Find friends to transfer",
-                      hintStyle: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NotificationScreen(token: widget.token),
-                    ),
-                  );
-                  _fetchUnreadCount(); // Refresh count when coming back
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: Colors.pink.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        size: 22,
-                        color: Colors.pink,
-                      ),
-                    ),
-                    if (_unreadCount > 0)
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
-                          ),
-                          child: Text(
-                            _unreadCount > 99 ? '99+' : _unreadCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              height: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () async {
-                  final result = await showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => VoiceTransferDialog(token: widget.token),
-                  );
-
-                  if (result != null) {
-                    if (result['error'] != null) {
-                      SnackbarUtils.showError(context, result['error']);
-                    } else if (result['amount'] != null) {
-                      String actionType = result['action_type'] ?? "TRANSFER";
-                      
-                      if (actionType == "DEPOSIT") {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DepositWithdrawScreen(
-                              token: widget.token,
-                              initialTab: 0,
-                              initialAmount: result['amount'].toString(),
-                            ),
-                          ),
-                        );
-                        return;
-                      } else if (actionType == "WITHDRAW") {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DepositWithdrawScreen(
-                              token: widget.token,
-                              initialTab: 1,
-                              initialAmount: result['amount'].toString(),
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-
-                      String rName = result['receiver_name'] ?? "";
-                      String rPhone = "0";
-
-                      if (rName.isEmpty) {
-                        SnackbarUtils.showError(context, 'Không nghe rõ tên người nhận. Vui lòng thử lại!');
-                      } else {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.pink)),
-                        );
-
-                        try {
-                          final client = CustomHttpClient();
-                          final response = await client.get(Uri.parse('${ApiConfig.searchUsers}?q=$rName'));
-                          
-                          List<Map<String, dynamic>> matchedUsers = [];
-
-                          if (response.statusCode == 200) {
-                            final data = jsonDecode(response.body);
-                            final List users = data['data'] ?? [];
-                            for (var u in users) {
-                              matchedUsers.add({
-                                'name': u['full_name'] ?? 'Không tên',
-                                'phone': u['phone'] ?? '',
-                                'source': 'Mio App'
-                              });
-                            }
-                          }
-
-                          final PermissionStatus permissionStatus = await Permission.contacts.request();
-                          if (permissionStatus == PermissionStatus.granted) {
-                            final contacts = await FlutterContacts.getContacts(withProperties: true);
-                            String searchName = rName.toLowerCase();
-                            for (var contact in contacts) {
-                              String displayName = contact.displayName.toLowerCase();
-                              if (displayName.contains(searchName) || searchName.contains(displayName)) {
-                                if (contact.phones.isNotEmpty) {
-                                  String num = contact.phones.first.number.replaceAll(RegExp(r'[^0-9+]'), '');
-                                  if (num.startsWith('+84')) num = '0${num.substring(3)}';
-                                  if (num.startsWith('84')) num = '0${num.substring(2)}';
-                                  if (num.length >= 10 && num.length <= 11) {
-                                    bool exists = matchedUsers.any((u) => u['phone'] == num);
-                                    if (!exists) {
-                                      matchedUsers.add({
-                                        'name': contact.displayName,
-                                        'phone': num,
-                                        'source': 'Danh bạ'
-                                      });
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-
-                          if (mounted) Navigator.pop(context); // Tắt loading
-
-                          if (matchedUsers.isEmpty) {
-                            SnackbarUtils.showError(context, 'Không tìm thấy "$rName" trong danh bạ hoặc trên hệ thống.');
-                          } else if (matchedUsers.length == 1) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TransferConfirmScreen(
-                                  token: widget.token,
-                                  receiverPhone: matchedUsers[0]['phone'],
-                                  receiverName: matchedUsers[0]['name'],
-                                  amount: result['amount'].toString(),
-                                  note: result['note'] ?? "",
-                                ),
-                              ),
-                            );
-                          } else {
-                            final selected = await showModalBottomSheet<Map<String, dynamic>>(
-                              context: context,
-                              backgroundColor: Colors.white,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(20))
-                              ),
-                              builder: (context) {
-                                return SafeArea(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const SizedBox(height: 16),
-                                      const Text("Tìm thấy nhiều kết quả, vui lòng chọn:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                      const SizedBox(height: 8),
-                                      const Divider(),
-                                      Flexible(
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: matchedUsers.length,
-                                          itemBuilder: (context, index) {
-                                            final u = matchedUsers[index];
-                                            return ListTile(
-                                              leading: CircleAvatar(
-                                                backgroundColor: u['source'] == 'Mio App' ? Colors.blue.shade100 : Colors.green.shade100,
-                                                child: Icon(
-                                                  u['source'] == 'Mio App' ? Icons.app_shortcut : Icons.contacts, 
-                                                  color: u['source'] == 'Mio App' ? Colors.blue : Colors.green, 
-                                                  size: 20
-                                                ),
-                                              ),
-                                              title: Text(u['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                              subtitle: Text('${u['phone']} • ${u['source']}'),
-                                              onTap: () => Navigator.pop(context, u),
-                                            );
-                                          }
-                                        )
-                                      )
-                                    ]
-                                  )
-                                );
-                              }
-                            );
-
-                            if (selected != null) {
-                              if (mounted) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TransferConfirmScreen(
-                                      token: widget.token,
-                                      receiverPhone: selected['phone'],
-                                      receiverName: selected['name'],
-                                      amount: result['amount'].toString(),
-                                      note: result['note'] ?? "",
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                        } catch (e) {
-                          debugPrint("Voice Transfer search error: $e");
-                          if (mounted) Navigator.pop(context); // Đảm bảo tắt loading nếu lỗi
-                        }
-                      }
-                    }
-                  }
-                },
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.pink.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    size: 22,
-                    color: Colors.pink,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatListScreen(token: widget.token),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.pink.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 20,
-                    color: Colors.pink,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildQuickAction(
-                  Icons.account_balance_wallet_rounded,
-                  Colors.pink,
-                  activeLang == 'VIE' ? "Nạp/Rút" : "Deposit",
-                ),
-                _buildQuickAction(
-                  Icons.qr_code_rounded,
-                  Colors.pink,
-                  activeLang == 'VIE' ? "Nhận tiền" : "Receive",
-                ),
-                _buildQuickAction(
-                  Icons.qr_code_scanner_rounded,
-                  Colors.pink,
-                  activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay",
-                ),
-                _buildQuickAction(
-                  Icons.apps_rounded,
-                  Colors.pink,
-                  activeLang == 'VIE' ? "Ví tiện ích" : "Utilities",
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinancialCenterBanner(String activeLang) {
-    return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.shield_rounded,
-                color: Colors.blue.shade700,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                activeLang == 'VIE'
-                    ? "Trung Tâm Tài Chính của $_fullName"
-                    : "$_fullName's Financial Center",
-                style: TextStyle(
-                  color: Colors.blue.shade700,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          Icon(Icons.chevron_right_rounded, color: Colors.blue.shade700, size: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEventBanner(String activeLang) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            activeLang == 'VIE' ? "Sự kiện đang diễn ra" : "Ongoing Events",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              height: 120,
-              width: double.infinity,
-              color: Colors.red,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: 0.2,
-                      child: Container(color: Colors.black),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          activeLang == 'VIE'
-                              ? "Dùng Ví Trả Sau\nHoàn tiền 50%*"
-                              : "Use Postpaid Wallet\n50% Cashback*",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          activeLang == 'VIE'
-                              ? "Tối đa 10k mọi giao dịch từ 1-30/6"
-                              : "Max 10k for all transactions June 1-30",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        activeLang == 'VIE' ? "Khám phá ngay" : "Explore Now",
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendations(String activeLang) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.only(top: 8, bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              activeLang == 'VIE' ? "Mio đề xuất" : "Recommended",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 110,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildRecommendItem(
-                  Icons.campaign_rounded,
-                  activeLang == 'VIE' ? "Từ 220k" : "From 220k",
-                  activeLang == 'VIE'
-                      ? "Loa thông\nbáo chuyển ..."
-                      : "Payment\nSpeaker",
-                  Colors.pink,
-                ),
-                _buildRecommendItem(
-                  Icons.card_giftcard_rounded,
-                  activeLang == 'VIE' ? "Hoàn 50%" : "50% Back",
-                  activeLang == 'VIE'
-                      ? "Ví Trả Sau -\nHoàn 50%"
-                      : "Postpaid -\n50% Back",
-                  Colors.pinkAccent,
-                ),
-                _buildRecommendItem(
-                  Icons.sports_esports_rounded,
-                  null,
-                  activeLang == 'VIE' ? "Mã thẻ Game\nOnline" : "Game\nCards",
-                  Colors.blue,
-                ),
-                _buildRecommendItem(
-                  Icons.account_balance_wallet_rounded,
-                  null,
-                  activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag",
-                  Colors.orange,
-                ),
-                _buildRecommendItem(
-                  Icons.electric_bolt_rounded,
-                  null,
-                  activeLang == 'VIE'
-                      ? "Thanh toán\nđiện"
-                      : "Electricity\nBill",
-                  Colors.yellow.shade700,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(IconData icon, Color color, String title) {
-    return GestureDetector(
-      onTap: () {
-        if (!widget.isVerified) {
-          _showKycDialog();
-        } else {
-          if (title == "Nạp/Rút" || title == "Deposit") {
-            _handleDepositWithdrawClick();
-          } else if (title == "Nhận tiền" || title == "Receive") {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => QrMainScreen(token: widget.token, initialIndex: 1),
-              ),
-            );
-          } else if (title == "QR Thanh toán" || title == "QR Pay") {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => QrMainScreen(token: widget.token, initialIndex: 0),
-              ),
-            );
-          } else {
-            print("Đang mở tính năng: $title");
-          }
-        }
-      },
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendItem(
-    IconData icon,
-    String? badge,
-    String title,
-    Color color,
-  ) {
-    return Container(
-      width: 80,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              if (badge != null)
-                Positioned(
-                  top: -8,
-                  left: -5,
-                  right: -5,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      badge,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11),
-          ),
-        ],
-      ),
     );
   }
 

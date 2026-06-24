@@ -11,8 +11,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
-import '../../transfer/screens/transfer_confirm_screen.dart'; // For PinConfirmBottomSheet
+import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'bank_transfer_success_screen.dart';
+import '../widgets/transaction_details_card.dart';
+import '../widgets/payment_source_card.dart';
 
 class BankTransferConfirmScreen extends StatefulWidget {
   final String token;
@@ -37,12 +39,14 @@ class BankTransferConfirmScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<BankTransferConfirmScreen> createState() => _BankTransferConfirmScreenState();
+  State<BankTransferConfirmScreen> createState() =>
+      _BankTransferConfirmScreenState();
 }
 
 class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
   final _client = CustomHttpClient();
-  final String _refCode = "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
+  final String _refCode =
+      "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
   bool _isLoading = false;
   String _mioBalance = "0đ";
 
@@ -77,12 +81,11 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
 
   Future<void> _fetchMioBalance() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getWalletBalance),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getWalletBalance));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final rawBalance = data['data']?['available_balance']?.toString() ?? "0";
+        final rawBalance =
+            data['data']?['available_balance']?.toString() ?? "0";
         if (mounted) {
           setState(() {
             _mioBalance = _formatAmount(rawBalance);
@@ -156,7 +159,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         frontCamera,
         ResolutionPreset.high,
         enableAudio: false,
-        imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+        imageFormatGroup: Platform.isAndroid
+            ? ImageFormatGroup.nv21
+            : ImageFormatGroup.bgra8888,
       );
       await _cameraController!.initialize();
 
@@ -185,7 +190,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
           rotation: InputImageRotation.rotation270deg,
-          format: Platform.isAndroid ? InputImageFormat.nv21 : InputImageFormat.bgra8888,
+          format: Platform.isAndroid
+              ? InputImageFormat.nv21
+              : InputImageFormat.bgra8888,
           bytesPerRow: image.planes[0].bytesPerRow,
         ),
       );
@@ -197,7 +204,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
           double leftEye = face.leftEyeOpenProbability ?? 1.0;
           double rightEye = face.rightEyeOpenProbability ?? 1.0;
           double headY = face.headEulerAngleY ?? 0.0;
-          double faceRatio = face.boundingBox.width / (image.width < image.height ? image.width : image.height);
+          double faceRatio =
+              face.boundingBox.width /
+              (image.width < image.height ? image.width : image.height);
 
           if (_livenessTask == 0 && faceRatio < 0.45) {
             setState(() => _livenessTask = 1); // Move closer
@@ -212,11 +221,11 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               _hasBlinked = true;
             } else if (_hasBlinked && leftEye > 0.8 && rightEye > 0.8) {
               setState(() => _livenessTask = 5);
-              
+
               // 1. Capture the photo first
               await _cameraController?.stopImageStream();
               final photo = await _cameraController!.takePicture();
-              
+
               // 2. Remove preview from widget tree
               if (mounted) {
                 setState(() {
@@ -224,11 +233,11 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                   _isCameraInitialized = false;
                 });
               }
-              
+
               // 3. Dispose camera safely
               await _cameraController?.dispose();
               _cameraController = null;
-              
+
               _executeTransactionWithFace(File(photo.path));
             }
           }
@@ -243,13 +252,20 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
 
   String _getLivenessInstruction() {
     switch (_livenessTask) {
-      case 0: return "Vui lòng đưa điện thoại RA XA";
-      case 1: return "Vui lòng đưa điện thoại LẠI GẦN";
-      case 2: return "Vui lòng QUAY ĐẦU SANG TRÁI";
-      case 3: return "Vui lòng QUAY ĐẦU SANG PHẢI";
-      case 4: return "Vui lòng CHỚP MẮT";
-      case 5: return "Đang xác nhận khuôn mặt...";
-      default: return "Đang phân tích...";
+      case 0:
+        return "Vui lòng đưa điện thoại RA XA";
+      case 1:
+        return "Vui lòng đưa điện thoại LẠI GẦN";
+      case 2:
+        return "Vui lòng QUAY ĐẦU SANG TRÁI";
+      case 3:
+        return "Vui lòng QUAY ĐẦU SANG PHẢI";
+      case 4:
+        return "Vui lòng CHỚP MẮT";
+      case 5:
+        return "Đang xác nhận khuôn mặt...";
+      default:
+        return "Đang phân tích...";
     }
   }
 
@@ -257,9 +273,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.bankTransfer),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'amount': widget.amount,
           'pin': pin,
@@ -275,7 +289,8 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         Navigator.pop(context); // Close PIN Sheet
 
         final now = DateTime.now();
-        final formattedTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+        final formattedTime =
+            "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
 
         Navigator.pushReplacement(
           context,
@@ -296,15 +311,16 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         return null;
       } else {
         final data = jsonDecode(response.body);
-        final String errorMessage = data['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại.';
-        
+        final String errorMessage =
+            data['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại.';
+
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
-          return errorMessage; 
+          return errorMessage;
         } else {
           if (!mounted) return null;
           Navigator.pop(context); // Close PIN Sheet
           _showBeautifulErrorDialog(errorMessage);
-          return null; 
+          return null;
         }
       }
     } catch (e) {
@@ -319,8 +335,11 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
   Future<void> _executeTransactionWithFace(File selfieFile) async {
     setState(() => _isLoading = true);
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.bankTransfer));
-      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.bankTransfer),
+      );
+
       // Auto token will be added by CustomHttpClient interceptor if we use it, but for MultipartRequest we should just pass it to _client.send
       final prefs = await SharedPreferences.getInstance();
       final String? authToken = prefs.getString('auth_token');
@@ -334,7 +353,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       request.fields['bank_name'] = widget.bankName;
       request.fields['account_number'] = widget.accountNumber;
       request.fields['external_reference'] = _refCode;
-      
+
       request.files.add(
         await http.MultipartFile.fromPath('face_image', selfieFile.path),
       );
@@ -344,7 +363,8 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final now = DateTime.now();
-        final formattedTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+        final formattedTime =
+            "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
 
         if (!mounted) return;
         Navigator.pushReplacement(
@@ -365,7 +385,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         );
       } else {
         final data = jsonDecode(response.body);
-        _showBeautifulErrorDialog(data['error'] ?? "Xác thực khuôn mặt thất bại.");
+        _showBeautifulErrorDialog(
+          data['error'] ?? "Xác thực khuôn mặt thất bại.",
+        );
       }
     } catch (e) {
       _showErrorSnackBar("Lỗi kết nối máy chủ khi xác thực khuôn mặt.");
@@ -386,22 +408,52 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.orange.shade50, shape: BoxShape.circle),
-              child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 48),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 20),
-            const Text('Giao dịch không thành công', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            const Text(
+              'Giao dịch không thành công',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 24),
             SizedBox(
-              width: double.infinity, height: 48,
+              width: double.infinity,
+              height: 48,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: const Text(
+                  'Đã hiểu',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -409,26 +461,8 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
-  }
-
-  Widget _buildDetailRow(String title, String value, {bool isBlue = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          Text(
-            value, 
-            style: TextStyle(
-              fontWeight: FontWeight.bold, 
-              fontSize: 14,
-              color: isBlue ? Colors.blue.shade700 : Colors.black87
-            )
-          ),
-        ],
-      ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -452,12 +486,18 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               height: size.height,
               child: CameraPreview(_cameraController!),
             ),
-            CustomPaint(size: size, painter: CameraOverlayPainter(isSelfie: true)),
+            CustomPaint(
+              size: size,
+              painter: CameraOverlayPainter(isSelfie: true),
+            ),
             SafeArea(
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_rounded,
+                    color: Colors.white,
+                  ),
                   onPressed: () async {
                     setState(() {
                       _isScanningFace = false;
@@ -481,18 +521,29 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                 children: [
                   const Text(
                     "XÁC THỰC KHUÔN MẶT GIAO DỊCH",
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.8),
+                      color: Colors.red.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _getLivenessInstruction(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -512,9 +563,16 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Thanh toán an toàn', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Thanh toán an toàn',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
-      body: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.pink))
           : Column(
               children: [
@@ -526,7 +584,8 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                           height: 100,
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
-                              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                               colors: [Color(0xFFFFE4EE), Color(0xFFF5F5F9)],
                             ),
                           ),
@@ -535,117 +594,109 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          height: 40,
-                                          width: 40,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.grey.shade200),
-                                            color: Colors.white,
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: ClipOval(
-                                            child: Image.network(
-                                              'https://api.vietqr.io/img/${widget.bankCode}.png',
-                                              fit: BoxFit.contain,
-                                              width: 30,
-                                              height: 30,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Text(
-                                                  widget.bankCode,
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF0F3B99),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                (widget.cardHolderName ?? 'PHAN VAN THONG').toUpperCase(),
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                "${widget.bankName} - ${widget.accountNumber}",
-                                                style: const TextStyle(fontSize: 13, color: Colors.grey),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Divider(height: 1),
-                                    const SizedBox(height: 12),
-                                    _buildDetailRow('Số tiền', _formatAmount(widget.amount)),
-                                    _buildDetailRow('Tên gợi nhớ', getNickname(widget.cardHolderName ?? 'PHAN VAN THONG')),
-                                    _buildDetailRow('Tin nhắn', widget.note),
-                                    _buildDetailRow('Phí giao dịch', 'Miễn phí'),
-                                  ],
+                              TransactionDetailsCard(
+                                bankCode: widget.bankCode,
+                                cardHolderName: widget.cardHolderName,
+                                bankName: widget.bankName,
+                                accountNumber: widget.accountNumber,
+                                amountFormatted: _formatAmount(widget.amount),
+                                note: widget.note,
+                                nickname: getNickname(
+                                  widget.cardHolderName ?? 'PHAN VAN THONG',
                                 ),
                               ),
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Row(
                                       children: [
-                                        Text('Trả ngay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Text(
+                                          'Trả ngay',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
                                         SizedBox(width: 4),
-                                        Icon(Icons.visibility_rounded, size: 16, color: Colors.grey),
+                                        Icon(
+                                          Icons.visibility_rounded,
+                                          size: 16,
+                                          color: Colors.grey,
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.pink, width: 1.5),
+                                        border: Border.all(
+                                          color: Colors.pink,
+                                          width: 1.5,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
-                                        color: Colors.pink.shade50.withOpacity(0.3)
+                                        color: Colors.pink.shade50.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ),
                                       child: Row(
                                         children: [
                                           Container(
                                             padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                                            child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold, height: 1)),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.pink,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Text(
+                                              'mio',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                                height: 1,
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                const Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                                Text(_mioBalance, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                                const Text(
+                                                  'Ví Mio',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _mioBalance,
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ),
-                                          const Icon(Icons.radio_button_checked_rounded, color: Colors.pink),
+                                          const Icon(
+                                            Icons.radio_button_checked_rounded,
+                                            color: Colors.pink,
+                                          ),
                                         ],
                                       ),
-                                    )
+                                    ),
                                   ],
                                 ),
-                              )
+                              ),
                             ],
                           ),
                         ),
@@ -657,7 +708,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border(top: BorderSide(color: Colors.grey.shade200))
+                    border: Border(
+                      top: BorderSide(color: Colors.grey.shade200),
+                    ),
                   ),
                   child: SafeArea(
                     top: false,
@@ -667,33 +720,59 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Tổng tiền', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                            Text(_formatAmount(widget.amount), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Tổng tiền',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              _formatAmount(widget.amount),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
-                          width: double.infinity, height: 50,
+                          width: double.infinity,
+                          height: 50,
                           child: ElevatedButton(
-                            onPressed: _handleConfirmClick, 
+                            onPressed: _handleConfirmClick,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.pink,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.lock_outline_rounded, color: Colors.white, size: 18),
-                                  SizedBox(width: 8),
-                                  Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Xác nhận',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
     );

@@ -51,7 +51,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
         setState(() {
           _qrResult = parsed;
           _docNumber = parsed['documentNumber'] ?? '';
-          
+
           // Chuyển đổi định dạng ngày phục vụ cho BAC
           final rawDob = parsed['dob'] ?? '';
           final rawIssueDate = parsed['issueDate'] ?? '';
@@ -89,15 +89,21 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
     } catch (e) {
       String userFriendlyError = 'Đọc NFC thất bại. Vui lòng thử lại!';
       final errStr = e.toString().toLowerCase();
-      
+
       if (errStr.contains('timeout')) {
-        userFriendlyError = 'Thời gian kết nối quá hạn. Vui lòng áp thẻ sát hơn.';
-      } else if (errStr.contains('session') || errStr.contains('bac') || errStr.contains('security')) {
-        userFriendlyError = 'Sai thông tin BAC (Số CCCD hoặc Ngày sinh không khớp với chip).';
+        userFriendlyError =
+            'Thời gian kết nối quá hạn. Vui lòng áp thẻ sát hơn.';
+      } else if (errStr.contains('session') ||
+          errStr.contains('bac') ||
+          errStr.contains('security')) {
+        userFriendlyError =
+            'Sai thông tin BAC (Số CCCD hoặc Ngày sinh không khớp với chip).';
       } else if (errStr.contains('not supported')) {
         userFriendlyError = 'Thiết bị không hỗ trợ tính năng đọc NFC.';
-      } else if (errStr.contains('nfc finish') || errStr.contains('disconnected')) {
-        userFriendlyError = 'Thẻ bị ngắt kết nối đột ngột. Hãy giữ yên thẻ khi đọc.';
+      } else if (errStr.contains('nfc finish') ||
+          errStr.contains('disconnected')) {
+        userFriendlyError =
+            'Thẻ bị ngắt kết nối đột ngột. Hãy giữ yên thẻ khi đọc.';
       }
 
       setState(() {
@@ -111,7 +117,10 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Xác thực danh tính eKYC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Xác thực danh tính eKYC',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -180,7 +189,11 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
           child: Center(
             child: Text(
               '$step',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
@@ -232,7 +245,7 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
         // Lớp phủ tối đục lỗ khung quét ở giữa
         ColorFiltered(
           colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.6),
+            Colors.black.withValues(alpha: 0.6),
             BlendMode.srcOut,
           ),
           child: Stack(
@@ -276,7 +289,11 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
             children: [
               Text(
                 'Quét mã QR trên CCCD',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8),
@@ -317,21 +334,33 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
           const SizedBox(height: 32),
           const Text(
             'Kết nối NFC với CCCD',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
-            _isNfcLoading 
-                ? _nfcStatusMessage 
+            _isNfcLoading
+                ? _nfcStatusMessage
                 : 'Đặt mặt sau thẻ CCCD áp sát vào đầu đọc NFC ở lưng điện thoại và giữ nguyên tay.',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.5),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
           if (_errorMessage != null) ...[
             Text(
               _errorMessage!,
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500, fontSize: 14),
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -347,11 +376,17 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
                 icon: const Icon(Icons.nfc_rounded, color: Colors.white),
                 label: const Text(
                   'Bắt đầu đọc NFC',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 0,
                 ),
               ),
@@ -372,16 +407,27 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-            child: const Icon(Icons.verified_rounded, color: Colors.green, size: 48),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.verified_rounded,
+              color: Colors.green,
+              size: 48,
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
             'Xác thực thẻ chip thành công!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
           ),
           const SizedBox(height: 24),
-          
+
           // Hiển thị ảnh trích xuất từ chip
           if (_nfcResult!.faceImageBytes != null) ...[
             Container(
@@ -389,7 +435,11 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade200, width: 3),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
                 ],
               ),
               child: ClipRRect(
@@ -407,11 +457,18 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.broken_image_rounded, color: Colors.grey, size: 36),
+                          const Icon(
+                            Icons.broken_image_rounded,
+                            color: Colors.grey,
+                            size: 36,
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'Lỗi nén JP2\n(Cần giải mã)',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 11,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -435,13 +492,20 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
             ),
             child: Column(
               children: [
-                _buildInfoRow('Số CCCD', _nfcResult!.documentNumber, isBoldValue: true),
+                _buildInfoRow(
+                  'Số CCCD',
+                  _nfcResult!.documentNumber,
+                  isBoldValue: true,
+                ),
                 const Divider(),
                 _buildInfoRow('Họ và Tên', _nfcResult!.fullName),
                 const Divider(),
                 _buildInfoRow('Ngày sinh', _nfcResult!.dateOfBirth),
                 const Divider(),
-                _buildInfoRow('Giới tính', _nfcResult!.sex == 'F' ? 'Nữ' : 'Nam'),
+                _buildInfoRow(
+                  'Giới tính',
+                  _nfcResult!.sex == 'F' ? 'Nữ' : 'Nam',
+                ),
               ],
             ),
           ),
@@ -456,11 +520,17 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text(
                 'Hoàn tất xác thực',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
@@ -499,7 +569,11 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
           const SizedBox(height: 16),
           const Text(
             'Lỗi xảy ra',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -517,7 +591,10 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
               });
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            child: const Text('Thử lại từ đầu', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Thử lại từ đầu',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),

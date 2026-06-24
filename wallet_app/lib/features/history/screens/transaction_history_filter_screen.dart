@@ -29,31 +29,67 @@ class TransactionFilterConfig {
 class TransactionHistoryFilterScreen extends StatefulWidget {
   final TransactionFilterConfig initialConfig;
 
-  const TransactionHistoryFilterScreen({
-    Key? key,
-    required this.initialConfig,
-  }) : super(key: key);
+  const TransactionHistoryFilterScreen({Key? key, required this.initialConfig})
+    : super(key: key);
 
   @override
-  State<TransactionHistoryFilterScreen> createState() => _TransactionHistoryFilterScreenState();
+  State<TransactionHistoryFilterScreen> createState() =>
+      _TransactionHistoryFilterScreenState();
 }
 
-class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilterScreen> {
+class _TransactionHistoryFilterScreenState
+    extends State<TransactionHistoryFilterScreen> {
   late TransactionFilterConfig _config;
   bool _showAllMonths = false;
 
-  final List<String> _accountOptions = ["Tất cả", "Ví Mio", "Tài khoản ngân hàng"];
-  
+  final List<String> _accountOptions = [
+    "Tất cả",
+    "Ví Mio",
+    "Tài khoản ngân hàng",
+  ];
+
   final List<Map<String, dynamic>> _serviceOptions = [
-    {"label": "Nhận tiền", "icon": Icons.arrow_downward_rounded, "color": Colors.green},
+    {
+      "label": "Nhận tiền",
+      "icon": Icons.arrow_downward_rounded,
+      "color": Colors.green,
+    },
     {"label": "Rút tiền", "icon": Icons.outbox_rounded, "color": Colors.teal},
-    {"label": "Chuyển tiền", "icon": Icons.swap_horiz_rounded, "color": Colors.red},
-    {"label": "Nạp tiền", "icon": Icons.account_balance_wallet_rounded, "color": Colors.blue},
-    {"label": "Chi tiêu sinh hoạt", "icon": Icons.shopping_basket_rounded, "color": Colors.orange},
-    {"label": "Hóa đơn & Tiện ích", "icon": Icons.receipt_long_rounded, "color": Colors.green},
-    {"label": "Giải trí & Mua sắm", "icon": Icons.movie_rounded, "color": Colors.pinkAccent},
-    {"label": "Chi phí phát sinh", "icon": Icons.warning_amber_rounded, "color": Colors.redAccent},
-    {"label": "Khác", "icon": Icons.more_horiz_rounded, "color": Colors.grey.shade600},
+    {
+      "label": "Chuyển tiền",
+      "icon": Icons.swap_horiz_rounded,
+      "color": Colors.red,
+    },
+    {
+      "label": "Nạp tiền",
+      "icon": Icons.account_balance_wallet_rounded,
+      "color": Colors.blue,
+    },
+    {
+      "label": "Chi tiêu sinh hoạt",
+      "icon": Icons.shopping_basket_rounded,
+      "color": Colors.orange,
+    },
+    {
+      "label": "Hóa đơn & Tiện ích",
+      "icon": Icons.receipt_long_rounded,
+      "color": Colors.green,
+    },
+    {
+      "label": "Giải trí & Mua sắm",
+      "icon": Icons.movie_rounded,
+      "color": Colors.pinkAccent,
+    },
+    {
+      "label": "Chi phí phát sinh",
+      "icon": Icons.warning_amber_rounded,
+      "color": Colors.redAccent,
+    },
+    {
+      "label": "Khác",
+      "icon": Icons.more_horiz_rounded,
+      "color": Colors.grey.shade600,
+    },
   ];
 
   List<String> _getMonths() {
@@ -77,14 +113,20 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
       ),
     );
   }
 
   Widget _buildTimeChips() {
     List<String> allMonths = _getMonths();
-    List<String> displayMonths = _showAllMonths ? allMonths : allMonths.take(4).toList();
+    List<String> displayMonths = _showAllMonths
+        ? allMonths
+        : allMonths.take(4).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -102,15 +144,25 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                   });
                 },
                 child: Container(
-                  width: (MediaQuery.of(context).size.width - 32 - 24) / 3, // 3 columns
+                  width:
+                      (MediaQuery.of(context).size.width - 32 - 24) /
+                      3, // 3 columns
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.pink.shade50 : Colors.white,
-                    border: Border.all(color: isSelected ? Colors.pink : Colors.transparent),
+                    border: Border.all(
+                      color: isSelected ? Colors.pink : Colors.transparent,
+                    ),
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: isSelected ? [] : [
-                      BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 2))
-                    ],
+                    boxShadow: isSelected
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: Colors.grey.shade200,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -118,7 +170,9 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                     style: TextStyle(
                       fontSize: 13,
                       color: isSelected ? Colors.pink : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -137,13 +191,19 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
               children: [
                 Text(
                   _showAllMonths ? "Thu gọn" : "Xem thêm",
-                  style: const TextStyle(color: Colors.pink, fontSize: 13, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    color: Colors.pink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Icon(
-                  _showAllMonths ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                  _showAllMonths
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
                   color: Colors.pink,
                   size: 16,
-                )
+                ),
               ],
             ),
           ),
@@ -171,11 +231,19 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.pink.shade50 : Colors.white,
-                border: Border.all(color: isSelected ? Colors.pink : Colors.transparent),
+                border: Border.all(
+                  color: isSelected ? Colors.pink : Colors.transparent,
+                ),
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: isSelected ? [] : [
-                  BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 2))
-                ],
+                boxShadow: isSelected
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.grey.shade200,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               alignment: Alignment.center,
               child: Text(
@@ -227,11 +295,19 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
             child: Container(
               decoration: BoxDecoration(
                 color: isSelected ? Colors.pink.shade50 : Colors.white,
-                border: Border.all(color: isSelected ? Colors.pink : Colors.transparent),
+                border: Border.all(
+                  color: isSelected ? Colors.pink : Colors.transparent,
+                ),
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: isSelected ? [] : [
-                  BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 2))
-                ],
+                boxShadow: isSelected
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.grey.shade200,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -239,7 +315,7 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(icon, color: color, size: 20),
@@ -252,9 +328,11 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                     style: TextStyle(
                       fontSize: 11,
                       color: isSelected ? Colors.pink : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -286,7 +364,11 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
         ),
         title: const Text(
           "Bộ lọc Lịch sử giao dịch",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         actions: [
           IconButton(
@@ -295,7 +377,8 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -305,11 +388,7 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFE4EE),
-              Color(0xFFFFF0F5),
-              Color(0xFFF5F5F9),
-            ],
+            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
           ),
         ),
         child: Column(
@@ -343,7 +422,11 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4)),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
                 ],
               ),
               child: Row(
@@ -358,9 +441,14 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.grey.shade200,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: const Text("Xóa bộ lọc", style: TextStyle(color: Colors.black54, fontSize: 16)),
+                      child: const Text(
+                        "Xóa bộ lọc",
+                        style: TextStyle(color: Colors.black54, fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -372,9 +460,18 @@ class _TransactionHistoryFilterScreenState extends State<TransactionHistoryFilte
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.pink,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: const Text("Áp dụng", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        "Áp dụng",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],

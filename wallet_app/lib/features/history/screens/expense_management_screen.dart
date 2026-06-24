@@ -2,17 +2,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../utils/transaction_category_helper.dart';
 
 class ExpenseManagementScreen extends StatefulWidget {
   final String token;
 
-  const ExpenseManagementScreen({
-    Key? key,
-    required this.token,
-  }) : super(key: key);
+  const ExpenseManagementScreen({Key? key, required this.token})
+    : super(key: key);
 
   @override
-  State<ExpenseManagementScreen> createState() => _ExpenseManagementScreenState();
+  State<ExpenseManagementScreen> createState() =>
+      _ExpenseManagementScreenState();
 }
 
 class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
@@ -39,16 +40,22 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
 
     try {
       int lastMonth = _currentDate.month == 1 ? 12 : _currentDate.month - 1;
-      int yearOfLastMonth = _currentDate.month == 1 ? _currentDate.year - 1 : _currentDate.year;
+      int yearOfLastMonth = _currentDate.month == 1
+          ? _currentDate.year - 1
+          : _currentDate.year;
 
       // Fetch current month
       final currentRes = await _client.get(
-        Uri.parse("${ApiConfig.getTransactionsByMonth}?month=${_currentDate.month}&year=${_currentDate.year}"),
+        Uri.parse(
+          "${ApiConfig.getTransactionsByMonth}?month=${_currentDate.month}&year=${_currentDate.year}",
+        ),
       );
 
       // Fetch last month
       final lastRes = await _client.get(
-        Uri.parse("${ApiConfig.getTransactionsByMonth}?month=$lastMonth&year=$yearOfLastMonth"),
+        Uri.parse(
+          "${ApiConfig.getTransactionsByMonth}?month=$lastMonth&year=$yearOfLastMonth",
+        ),
       );
 
       List<dynamic> currentTx = [];
@@ -56,7 +63,8 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
 
       if (currentRes.statusCode == 200) {
         final currentData = jsonDecode(currentRes.body);
-        if (currentData['success'] == true) currentTx = currentData['data'] ?? [];
+        if (currentData['success'] == true)
+          currentTx = currentData['data'] ?? [];
       }
 
       if (lastRes.statusCode == 200) {
@@ -65,9 +73,8 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
       }
 
       _calculateSpends(currentTx, lastTx);
-
     } catch (e) {
-      print("Lỗi lấy dữ liệu tháng: $e");
+      debugPrint("Lỗi lấy dữ liệu tháng: $e");
     } finally {
       if (mounted) {
         setState(() {
@@ -77,7 +84,10 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
     }
   }
 
-  void _calculateSpends(List<dynamic> currentMonthTx, List<dynamic> lastMonthTx) {
+  void _calculateSpends(
+    List<dynamic> currentMonthTx,
+    List<dynamic> lastMonthTx,
+  ) {
     int total = 0;
     Map<String, int> cats = {};
     Map<String, int> lastCats = {};
@@ -85,7 +95,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
     for (var tx in currentMonthTx) {
       if (tx['entry_type'] == 'DEBIT') {
         final int amt = int.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
-        final String cat = _determineCategoryTag(tx);
+        final String cat = TransactionCategoryHelper.determineCategoryTag(tx);
         total += amt;
         cats[cat] = (cats[cat] ?? 0) + amt;
       }
@@ -94,7 +104,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
     for (var tx in lastMonthTx) {
       if (tx['entry_type'] == 'DEBIT') {
         final int amt = int.tryParse(tx['amount']?.toString() ?? '0') ?? 0;
-        final String cat = _determineCategoryTag(tx);
+        final String cat = TransactionCategoryHelper.determineCategoryTag(tx);
         lastCats[cat] = (lastCats[cat] ?? 0) + amt;
       }
     }
@@ -108,7 +118,11 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
 
   void _changeMonth(int offset) {
     setState(() {
-      _currentDate = DateTime(_currentDate.year, _currentDate.month + offset, 1);
+      _currentDate = DateTime(
+        _currentDate.year,
+        _currentDate.month + offset,
+        1,
+      );
     });
     _fetchMonthData();
   }
@@ -130,10 +144,10 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
           builder: (context, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: 20 + MediaQuery.of(context).padding.bottom, 
-                left: 16, 
-                right: 16, 
-                top: 16
+                bottom: 20 + MediaQuery.of(context).padding.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -144,11 +158,18 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                       const SizedBox(width: 24),
                       const Text(
                         "Chọn thời gian hiển thị chi tiêu",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close_rounded, size: 24, color: Colors.black54),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          size: 24,
+                          color: Colors.black54,
+                        ),
                       ),
                     ],
                   ),
@@ -163,7 +184,10 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chevron_left_rounded, size: 20),
+                          icon: const Icon(
+                            Icons.chevron_left_rounded,
+                            size: 20,
+                          ),
                           onPressed: () {
                             setModalState(() {
                               tempYear--;
@@ -172,10 +196,16 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                         ),
                         Text(
                           "Năm $tempYear",
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                          icon: const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 20,
+                          ),
                           onPressed: () {
                             setModalState(() {
                               tempYear++;
@@ -189,19 +219,23 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 2.5,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 2.5,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
                     itemCount: 12,
                     itemBuilder: (context, index) {
                       final m = index + 1;
-                      
-                      final differenceInMonths = (now.year - tempYear) * 12 + now.month - m;
-                      final bool isSelectable = differenceInMonths >= 0 && differenceInMonths < 12;
-                      final bool isSelected = tempMonth == m && tempYear == _currentDate.year;
+
+                      final differenceInMonths =
+                          (now.year - tempYear) * 12 + now.month - m;
+                      final bool isSelectable =
+                          differenceInMonths >= 0 && differenceInMonths < 12;
+                      final bool isSelected =
+                          tempMonth == m && tempYear == _currentDate.year;
 
                       return GestureDetector(
                         onTap: isSelectable
@@ -214,16 +248,20 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.pink : Colors.transparent,
+                            color: isSelected
+                                ? Colors.pink
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             "Tháng $m",
                             style: TextStyle(
-                              color: isSelectable 
-                                ? (isSelected ? Colors.white : Colors.black87)
-                                : Colors.grey.shade400,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelectable
+                                  ? (isSelected ? Colors.white : Colors.black87)
+                                  : Colors.grey.shade400,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
@@ -244,9 +282,17 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                           style: TextButton.styleFrom(
                             backgroundColor: Colors.grey.shade200,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          child: const Text("Xoá bộ lọc", style: TextStyle(color: Colors.black54, fontSize: 16)),
+                          child: const Text(
+                            "Xoá bộ lọc",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -262,9 +308,18 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                           style: TextButton.styleFrom(
                             backgroundColor: Colors.pink,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          child: const Text("Áp dụng", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            "Áp dụng",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -276,33 +331,6 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
         );
       },
     );
-  }
-
-  String _determineCategoryTag(dynamic tx) {
-    if (tx['category_name'] != null && tx['category_name'].toString().isNotEmpty) {
-      return tx['category_name'].toString();
-    }
-    final note = (tx['transfer_note'] ?? tx['description'] ?? '').toString().toLowerCase();
-    if (tx['transaction_type'] == 'DEPOSIT') {
-      return "Nạp tiền";
-    }
-    if (note.contains('ăn') || note.contains('uống') || note.contains('lẩu') || note.contains('cafe') || note.contains('cơm') || note.contains('bánh')) {
-      return "Ăn uống";
-    }
-    if (note.contains('chơi') || note.contains('game') || note.contains('nhạc') || note.contains('phim') || note.contains('giải trí') || note.contains('netflix')) {
-      return "Giải trí";
-    }
-    if (note.contains('chợ') || note.contains('siêu thị') || note.contains('mua sắm') || note.contains('quần áo') || note.contains('shopee')) {
-      return "Chợ, siêu thị";
-    }
-    if (note.contains('điện') || note.contains('nước') || note.contains('mạng') || note.contains('tiền nhà')) {
-      return "Hóa đơn";
-    }
-    return "Chưa phân loại";
-  }
-
-  String _formatCurrency(int amount) {
-    return "${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
   }
 
   String _getMonthLabel() {
@@ -369,7 +397,11 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
         ),
         title: const Text(
           "Quản lý chi tiêu",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         actions: [
           IconButton(
@@ -382,7 +414,8 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -392,216 +425,348 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFE4EE),
-              Color(0xFFFFF0F5),
-              Color(0xFFF5F5F9),
-            ],
+            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
           ),
         ),
-        child: _isLoading 
-          ? const Center(child: CircularProgressIndicator(color: Colors.pink))
-          : SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Card
-            Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Month Selector
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InkWell(
-                          onTap: () => _changeMonth(-1),
-                          child: const Icon(Icons.chevron_left_rounded, color: Colors.black54),
-                        ),
-                        GestureDetector(
-                          onTap: _showMonthPickerBottomSheet,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today_rounded, size: 16, color: Colors.black54),
-                              const SizedBox(width: 8),
-                              Text(
-                                _getMonthLabel(),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                            ],
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.pink))
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top Card
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        InkWell(
-                          onTap: () => _changeMonth(1),
-                          child: const Icon(Icons.chevron_right_rounded, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  // Status
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.bar_chart_rounded, color: Colors.grey),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Trạng thái chi tiêu", style: TextStyle(color: Colors.black54, fontSize: 13)),
-                            Text.rich(
-                              const TextSpan(
-                                text: 'Chưa thể đánh giá. ',
-                                style: TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.bold),
-                                children: [
-                                  TextSpan(
-                                    text: 'Tìm hiểu thêm',
-                                    style: TextStyle(color: Colors.pink, fontWeight: FontWeight.normal),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // Month Selector
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () => _changeMonth(-1),
+                                  child: const Icon(
+                                    Icons.chevron_left_rounded,
+                                    color: Colors.black54,
                                   ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Total spend
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.visibility_rounded, size: 16, color: Colors.black54),
-                                const SizedBox(width: 4),
-                                const Text("Tổng chi", style: TextStyle(color: Colors.black54, fontSize: 13)),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _formatCurrency(_totalSpend),
-                              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: const [
-                              Text("Phân tích ", style: TextStyle(fontSize: 12, color: Colors.black87)),
-                              Icon(Icons.chevron_right_rounded, size: 14, color: Colors.black54),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
-                    ),
-                    child: const Center(
-                      child: Text("Thêm giao dịch để nhận đánh giá chính xác", style: TextStyle(color: Colors.black54, fontSize: 13)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Category Details
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text("Chi tiết danh mục", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: _categorySpends.keys.map((cat) {
-                  final int amt = _categorySpends[cat]!;
-                  final int lastAmt = _lastMonthCategorySpends[cat] ?? 0;
-                  final int diff = amt - lastAmt;
-                  final bool isMore = diff >= 0;
-
-                  return Column(
-                    children: [
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: _getCategoryColor(cat).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(_getCategoryIcon(cat), color: _getCategoryColor(cat)),
-                        ),
-                        title: Text(cat, style: const TextStyle(fontWeight: FontWeight.w500)),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(_formatCurrency(amt), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                if (diff != 0 || lastAmt == 0) // showing difference like the image
-                                  Row(
+                                ),
+                                GestureDetector(
+                                  onTap: _showMonthPickerBottomSheet,
+                                  child: Row(
                                     children: [
-                                      Icon(isMore ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, color: isMore ? Colors.red : Colors.green, size: 10),
+                                      const Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 16,
+                                        color: Colors.black54,
+                                      ),
+                                      const SizedBox(width: 8),
                                       Text(
-                                        _formatCurrency(diff.abs()),
-                                        style: TextStyle(color: isMore ? Colors.red : Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                                        _getMonthLabel(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
                                       ),
                                     ],
                                   ),
+                                ),
+                                InkWell(
+                                  onTap: () => _changeMonth(1),
+                                  child: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Colors.black54,
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
-                          ],
+                          ),
+                          const Divider(height: 1),
+                          // Status
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.bar_chart_rounded,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Trạng thái chi tiêu",
+                                      style: TextStyle(
+                                        color: Colors.black54,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text.rich(
+                                      const TextSpan(
+                                        text: 'Chưa thể đánh giá. ',
+                                        style: TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: 'Tìm hiểu thêm',
+                                            style: TextStyle(
+                                              color: Colors.pink,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Total spend
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.visibility_rounded,
+                                          size: 16,
+                                          color: Colors.black54,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                          "Tổng chi",
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      CurrencyFormatter.format(_totalSpend),
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: const [
+                                      Text(
+                                        "Phân tích ",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right_rounded,
+                                        size: 14,
+                                        color: Colors.black54,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(16),
+                                bottomRight: Radius.circular(16),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                "Thêm giao dịch để nhận đánh giá chính xác",
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Category Details
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        "Chi tiết danh mục",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                      if (cat != _categorySpends.keys.last)
-                        Divider(height: 1, indent: 64, color: Colors.grey.shade200),
-                    ],
-                  );
-                }).toList(),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: _categorySpends.keys.map((cat) {
+                          final int amt = _categorySpends[cat]!;
+                          final int lastAmt =
+                              _lastMonthCategorySpends[cat] ?? 0;
+                          final int diff = amt - lastAmt;
+                          final bool isMore = diff >= 0;
+
+                          return Column(
+                            children: [
+                              ListTile(
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: _getCategoryColor(
+                                      cat,
+                                    ).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    _getCategoryIcon(cat),
+                                    color: _getCategoryColor(cat),
+                                  ),
+                                ),
+                                title: Text(
+                                  cat,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          CurrencyFormatter.format(amt),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        if (diff != 0 ||
+                                            lastAmt ==
+                                                0) // showing difference like the image
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                isMore
+                                                    ? Icons.arrow_upward_rounded
+                                                    : Icons
+                                                          .arrow_downward_rounded,
+                                                color: isMore
+                                                    ? Colors.red
+                                                    : Colors.green,
+                                                size: 10,
+                                              ),
+                                              Text(
+                                                CurrencyFormatter.format(
+                                                  diff.abs(),
+                                                ),
+                                                style: TextStyle(
+                                                  color: isMore
+                                                      ? Colors.red
+                                                      : Colors.green,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Colors.black26,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (cat != _categorySpends.keys.last)
+                                Divider(
+                                  height: 1,
+                                  indent: 64,
+                                  color: Colors.grey.shade200,
+                                ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
       ),
     );
   }

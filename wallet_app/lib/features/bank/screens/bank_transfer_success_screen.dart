@@ -41,13 +41,18 @@ class BankTransferSuccessScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: const Text(
           'Kết quả giao dịch',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -56,11 +61,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFE4EE),
-              Color(0xFFFFF0F5),
-              Color(0xFFF5F5F9),
-            ],
+            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
           ),
         ),
         child: Column(
@@ -71,7 +72,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 16),
-                    
+
                     // Success Icon Circle
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -79,21 +80,33 @@ class BankTransferSuccessScreen extends StatelessWidget {
                         color: Colors.green,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 48),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 48,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     const Text(
                       'Giao dịch thành công',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black54),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _formatAmount(amount),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28, color: Colors.black),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        color: Colors.black,
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Detailed receipt
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -107,38 +120,65 @@ class BankTransferSuccessScreen extends StatelessWidget {
                           // Success row
                           Row(
                             children: [
-                              const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 18),
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                color: Colors.blue,
+                                size: 18,
+                              ),
                               const SizedBox(width: 8),
                               const Text(
                                 'Thành công.',
-                                style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          
+
                           _buildRow('Giao dịch', referenceCode),
                           _buildRow('Thời gian thanh toán', paymentTime),
-                          
+
                           const Divider(height: 24),
-                          
+
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                                child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: Colors.pink,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Text(
+                                  'mio',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 8),
                               const Text(
                                 'Biên lai chuyển tiền',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          _buildRow('Người nhận', cardHolderName ?? 'PHAN VAN THONG'),
+                          _buildRow(
+                            'Người nhận',
+                            cardHolderName ?? 'PHAN VAN THONG',
+                          ),
                           _buildRow('Số thẻ/TK', accountNumber),
                           _buildRow('Ngân hàng', bankName),
                           _buildRow('Tin nhắn', note),
@@ -146,10 +186,13 @@ class BankTransferSuccessScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Save template block
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -159,7 +202,10 @@ class BankTransferSuccessScreen extends StatelessWidget {
                           const Expanded(
                             child: Text(
                               'Tạo mẫu chuyển tiền để chuyển nhanh hơn vào lần sau',
-                              style: TextStyle(fontSize: 12, color: Colors.black87),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -168,22 +214,30 @@ class BankTransferSuccessScreen extends StatelessWidget {
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.pink,
                               backgroundColor: Colors.pink.shade50,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
                             ),
                             child: const Text(
                               'Tạo mẫu',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
-            
+
             // Bottom buttons
             Container(
               padding: const EdgeInsets.all(16),
@@ -206,7 +260,10 @@ class BankTransferSuccessScreen extends StatelessWidget {
                           ),
                           child: const Text(
                             'Chia tiền',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -241,7 +298,10 @@ class BankTransferSuccessScreen extends StatelessWidget {
                           ),
                           child: const Text(
                             'Chuyển thêm',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -249,7 +309,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -263,7 +323,10 @@ class BankTransferSuccessScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+          ),
         ],
       ),
     );

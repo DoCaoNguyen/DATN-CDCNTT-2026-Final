@@ -30,10 +30,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
   void initState() {
     super.initState();
     // Add initial greeting
-    _messages.add(ChatMessage(
-      text: "Chào bạn! Mình là Trợ lý Mio 247. Mình có thể giúp gì cho bạn hôm nay?",
-      isUser: false,
-    ));
+    _messages.add(
+      ChatMessage(
+        text:
+            "Chào bạn! Mình là Trợ lý Mio 247. Mình có thể giúp gì cho bạn hôm nay?",
+        isUser: false,
+      ),
+    );
   }
 
   Future<void> _sendMessage() async {
@@ -53,7 +56,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
         Uri.parse('${ApiConfig.baseUrl}/ai/chat'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}', // CustomHttpClient will also inject latest token automatically
+          'Authorization':
+              'Bearer ${widget.token}', // CustomHttpClient will also inject latest token automatically
         },
         body: jsonEncode({'message': text}),
       );
@@ -67,7 +71,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
         _scrollToBottom();
       } else {
         setState(() {
-          _messages.add(ChatMessage(text: "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.", isUser: false));
+          _messages.add(
+            ChatMessage(
+              text:
+                  "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.",
+              isUser: false,
+            ),
+          );
           _isLoading = false;
         });
         _scrollToBottom();
@@ -127,18 +137,26 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.pink.withOpacity(0.4),
+                    color: Colors.pink.withValues(alpha: 0.4),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             const Text(
               "Trợ lý Mio 247",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.black,
+              ),
             ),
           ],
         ),
@@ -179,18 +197,24 @@ class _AiChatScreenState extends State<AiChatScreen> {
         decoration: BoxDecoration(
           color: msg.isUser ? Colors.pink : Colors.white,
           borderRadius: BorderRadius.circular(16).copyWith(
-            bottomRight: msg.isUser ? const Radius.circular(0) : const Radius.circular(16),
-            bottomLeft: msg.isUser ? const Radius.circular(16) : const Radius.circular(0),
+            bottomRight: msg.isUser
+                ? const Radius.circular(0)
+                : const Radius.circular(16),
+            bottomLeft: msg.isUser
+                ? const Radius.circular(16)
+                : const Radius.circular(0),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         child: Text(
           msg.text,
           style: TextStyle(
@@ -209,7 +233,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -229,7 +253,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   decoration: const InputDecoration(
                     hintText: "Nhập tin nhắn...",
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   onSubmitted: (_) => _sendMessage(),
                 ),
@@ -244,7 +271,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   color: Colors.pink,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.send_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ],

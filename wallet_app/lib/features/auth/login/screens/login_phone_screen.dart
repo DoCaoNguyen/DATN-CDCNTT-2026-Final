@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/app_state.dart'; 
+import '../../../../core/utils/app_state.dart';
 import '../widgets/phone_input_field.dart';
-import '../../register/sceens/otp_verification_screen.dart';
+import '../../register/screens/otp_verification_screen.dart';
 import 'login_password_screen.dart';
 
 class LoginPhoneScreen extends StatefulWidget {
@@ -48,7 +48,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: AppColors.primaryPink)),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryPink),
+      ),
     ).then((_) => isDialogClosed = true);
 
     try {
@@ -57,42 +59,46 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'phone': phone
-        }),
+        body: jsonEncode({'phone': phone}),
       );
 
       if (!isDialogClosed && mounted) {
-        Navigator.pop(context); 
+        Navigator.pop(context);
         isDialogClosed = true;
       }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['isExist'] == true) {
-           if (mounted) {
-             Navigator.push(
-               context,
-               MaterialPageRoute(
-                 builder: (context) => LoginPasswordScreen(phoneNumber: phone),
-               ),
-             );
-           }
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => LoginPasswordScreen(phoneNumber: phone),
+              ),
+            );
+          }
         } else {
-           _showConfirmationDialog(phone, lang);
+          _showConfirmationDialog(phone, lang);
         }
       } else {
-         final errorData = jsonDecode(response.body);
-         _showErrorSnackBar(errorData['error'] ?? (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'));
+        final errorData = jsonDecode(response.body);
+        _showErrorSnackBar(
+          errorData['error'] ??
+              (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'),
+        );
       }
-      
     } catch (e) {
       if (!isDialogClosed && mounted) {
         Navigator.pop(context);
         isDialogClosed = true;
       }
-      _showErrorSnackBar(lang == 'VIE' ? 'Không thể kết nối đến Server' : 'Cannot connect to Server');
-      print('Lỗi gọi API: $e');
+      _showErrorSnackBar(
+        lang == 'VIE'
+            ? 'Không thể kết nối đến Server'
+            : 'Cannot connect to Server',
+      );
+      debugPrint('Lỗi gọi API: $e');
     }
   }
 
@@ -102,7 +108,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: AppColors.primaryPink)),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryPink),
+      ),
     ).then((_) => isDialogClosed = true);
 
     try {
@@ -111,14 +119,11 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': '$phone@wallet.com', 
-          'phone': phone
-        }),
+        body: jsonEncode({'email': '$phone@wallet.com', 'phone': phone}),
       );
 
       if (!isDialogClosed && mounted) {
-        Navigator.pop(context); 
+        Navigator.pop(context);
         isDialogClosed = true;
       }
 
@@ -131,23 +136,32 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
             ),
           );
         }
-      } 
-      else if (response.statusCode == 403) {
+      } else if (response.statusCode == 403) {
         final errorData = jsonDecode(response.body);
-        _showLockDialog(errorData['error'] ?? (lang == 'VIE' ? 'Số điện thoại này đang bị khóa. Vui lòng thử lại sau.' : 'This phone number is locked. Please try again later.'));
-      } 
-      else {
+        _showLockDialog(
+          errorData['error'] ??
+              (lang == 'VIE'
+                  ? 'Số điện thoại này đang bị khóa. Vui lòng thử lại sau.'
+                  : 'This phone number is locked. Please try again later.'),
+        );
+      } else {
         final errorData = jsonDecode(response.body);
-        _showErrorSnackBar(errorData['error'] ?? (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'));
+        _showErrorSnackBar(
+          errorData['error'] ??
+              (lang == 'VIE' ? 'Có lỗi xảy ra!' : 'An error occurred!'),
+        );
       }
-      
     } catch (e) {
       if (!isDialogClosed && mounted) {
         Navigator.pop(context);
         isDialogClosed = true;
       }
-      _showErrorSnackBar(lang == 'VIE' ? 'Không thể kết nối đến Server' : 'Cannot connect to Server');
-      print('Lỗi gọi API sendOtp: $e');
+      _showErrorSnackBar(
+        lang == 'VIE'
+            ? 'Không thể kết nối đến Server'
+            : 'Cannot connect to Server',
+      );
+      debugPrint('Lỗi gọi API sendOtp: $e');
     }
   }
 
@@ -171,7 +185,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           backgroundColor: Colors.white,
           elevation: 10,
           child: Padding(
@@ -186,15 +202,19 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                     color: Colors.red.shade50,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lock_outline_rounded, color: Colors.red, size: 48),
+                  child: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: Colors.red,
+                    size: 48,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text(
                   activeLang == 'VIE' ? 'Tài khoản bị khóa' : 'Account Locked',
                   style: const TextStyle(
-                    fontSize: 20, 
-                    fontWeight: FontWeight.bold, 
-                    color: AppColors.textDark
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -202,9 +222,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                   message,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 15, 
-                    color: Colors.grey.shade700, 
-                    height: 1.5
+                    fontSize: 15,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -213,16 +233,22 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context); 
+                      Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryPink,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
                     child: Text(
                       activeLang == 'VIE' ? 'Đã hiểu' : 'Understood',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -237,7 +263,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
   void _showConfirmationDialog(String phone, String activeLang) {
     showDialog(
       context: context,
-      barrierDismissible: false, 
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -258,23 +284,25 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                     child: Container(
                       height: 140,
                       width: double.infinity,
-                      color: Colors.pink.shade50, 
+                      color: Colors.pink.shade50,
                       child: const Center(
                         child: Icon(
-                          Icons.security_rounded, 
+                          Icons.security_rounded,
                           size: 60,
                           color: AppColors.primaryPink,
                         ),
                       ),
                     ),
                   ),
-                  
+
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
                       children: [
                         Text(
-                          activeLang == 'VIE' ? 'Đăng ký với $phone' : 'Register with $phone',
+                          activeLang == 'VIE'
+                              ? 'Đăng ký với $phone'
+                              : 'Register with $phone',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -284,9 +312,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          activeLang == 'VIE' 
-                            ? 'Mã xác thực để đăng ký đã được gửi về số điện thoại trên qua tin nhắn SMS.'
-                            : 'The verification code for registration has been sent to the above phone number via SMS.',
+                          activeLang == 'VIE'
+                              ? 'Mã xác thực để đăng ký đã được gửi về số điện thoại trên qua tin nhắn SMS.'
+                              : 'The verification code for registration has been sent to the above phone number via SMS.',
                           style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.textDark,
@@ -295,13 +323,13 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
-                        
+
                         Row(
                           children: [
                             Expanded(
                               child: TextButton(
                                 onPressed: () {
-                                  Navigator.pop(context); 
+                                  Navigator.pop(context);
                                 },
                                 child: Text(
                                   activeLang == 'VIE' ? 'Đổi SĐT' : 'Change',
@@ -317,7 +345,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pop(context); 
+                                  Navigator.pop(context);
                                   _sendOtpForRegistration(phone, activeLang);
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -325,7 +353,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   elevation: 0,
                                 ),
                                 child: Text(
@@ -345,7 +375,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                   ),
                 ],
               ),
-              
+
               Positioned(
                 top: -10,
                 right: -10,
@@ -387,7 +417,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, 
+      canPop: false,
       child: ValueListenableBuilder<String>(
         valueListenable: AppState.currentLanguage,
         builder: (context, activeLang, child) {
@@ -396,7 +426,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              automaticallyImplyLeading: false, 
+              automaticallyImplyLeading: false,
               title: Text(
                 activeLang == 'VIE' ? 'Nhập SĐT' : 'Enter Phone',
                 style: const TextStyle(
@@ -416,7 +446,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                   child: Container(
                     height: 200,
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
+                      color: Colors.green.withValues(alpha: 0.2),
                     ),
                   ),
                 ),
@@ -439,18 +469,24 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                   ),
                                   children: [
                                     TextSpan(
-                                      text: activeLang == 'VIE' ? 'Số điện thoại ' : 'Phone number ',
+                                      text: activeLang == 'VIE'
+                                          ? 'Số điện thoại '
+                                          : 'Phone number ',
                                       // ĐÃ SỬA: ĐỒNG BỘ FONT CURSIVE SIZE 34
                                       style: const TextStyle(
                                         color: AppColors.primaryPink,
                                         fontStyle: FontStyle.italic,
                                         fontSize: 34,
-                                        fontFamily: 'cursive', 
+                                        fontFamily: 'cursive',
                                       ),
                                     ),
                                     TextSpan(
-                                      text: activeLang == 'VIE' ? 'của bạn' : 'of yours',
-                                      style: const TextStyle(color: AppColors.textDark),
+                                      text: activeLang == 'VIE'
+                                          ? 'của bạn'
+                                          : 'of yours',
+                                      style: const TextStyle(
+                                        color: AppColors.textDark,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -466,14 +502,21 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.error_outline_rounded, color: Colors.red, size: 16),
+                                    const Icon(
+                                      Icons.error_outline_rounded,
+                                      color: Colors.red,
+                                      size: 16,
+                                    ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        activeLang == 'VIE' 
+                                        activeLang == 'VIE'
                                             ? 'Số điện thoại bạn vừa nhập không hợp lệ. Vui lòng kiểm tra lại'
                                             : 'The phone number you entered is invalid. Please check again.',
-                                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -493,8 +536,8 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                const Expanded(child: SizedBox()), 
-                                
+                                const Expanded(child: SizedBox()),
+
                                 Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -502,7 +545,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                     border: Border.all(color: AppColors.border),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -516,7 +561,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                     ],
                                   ),
                                 ),
-                                
+
                                 Expanded(
                                   child: Align(
                                     alignment: Alignment.bottomRight,
@@ -539,10 +584,14 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                           ),
                                           child: Text(
-                                            activeLang == 'VIE' ? 'Hỗ trợ' : 'Support',
+                                            activeLang == 'VIE'
+                                                ? 'Hỗ trợ'
+                                                : 'Support',
                                             style: const TextStyle(
                                               color: AppColors.primaryPink,
                                               fontSize: 12,
@@ -588,7 +637,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -598,7 +647,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       onTap: () {
         AppState.currentLanguage.value = text;
       },
-      behavior: HitTestBehavior.opaque, 
+      behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(

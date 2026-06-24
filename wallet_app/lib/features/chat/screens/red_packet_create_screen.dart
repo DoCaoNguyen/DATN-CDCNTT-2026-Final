@@ -23,8 +23,12 @@ class RedPacketCreateScreen extends StatefulWidget {
 class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
   final _client = CustomHttpClient();
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _countController = TextEditingController(text: '1');
-  final TextEditingController _messageController = TextEditingController(text: 'Cung hỉ phát tài');
+  final TextEditingController _countController = TextEditingController(
+    text: '1',
+  );
+  final TextEditingController _messageController = TextEditingController(
+    text: 'Cung hỉ phát tài',
+  );
 
   bool _isRandom = false; // false = EQUAL, true = RANDOM
   bool _isLoading = false;
@@ -48,7 +52,10 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
       return;
     }
     if (amount / count < 1000) {
-      SnackbarUtils.showError(context, 'Trung bình mỗi người nhận tối thiểu 1000đ');
+      SnackbarUtils.showError(
+        context,
+        'Trung bình mỗi người nhận tối thiểu 1000đ',
+      );
       return;
     }
 
@@ -65,7 +72,9 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
           'total_amount': amount,
           'total_count': count,
           'type': _isRandom ? 'RANDOM' : 'EQUAL',
-          'message': _messageController.text.isEmpty ? 'Cung hỉ phát tài' : _messageController.text,
+          'message': _messageController.text.isEmpty
+              ? 'Cung hỉ phát tài'
+              : _messageController.text,
         }),
       );
 
@@ -78,7 +87,10 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
         if (widget.counterpartyPhone == null) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => ContactSelectorScreen(token: widget.token, redPacketId: rpId)),
+            MaterialPageRoute(
+              builder: (_) =>
+                  ContactSelectorScreen(token: widget.token, redPacketId: rpId),
+            ),
           );
         } else {
           Navigator.pop(context, rpId);
@@ -100,7 +112,10 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFE53935), // Màu đỏ may mắn
         elevation: 0,
-        title: const Text('Phát Lì Xì', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Phát Lì Xì',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -119,14 +134,20 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
               ),
               child: Row(
                 children: [
-                  const Text('Số phong bì', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text(
+                    'Số phong bì',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: TextField(
                       controller: _countController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.end,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Nhập số lượng',
@@ -141,9 +162,9 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Lựa chọn chia tiền
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -153,8 +174,13 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _isRandom ? 'Chia tiền ngẫu nhiên' : 'Chia tiền bằng nhau',
-                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      _isRandom
+                          ? 'Chia tiền ngẫu nhiên'
+                          : 'Chia tiền bằng nhau',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -181,14 +207,23 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
               ),
               child: Row(
                 children: [
-                  Text(_isRandom ? 'Tổng tiền' : 'Số tiền mỗi bao', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text(
+                    _isRandom ? 'Tổng tiền' : 'Số tiền mỗi bao',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: TextField(
                       controller: _amountController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.end,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: '0',
@@ -200,8 +235,14 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
                           if (number != null) {
                             setState(() {
                               _amountController.value = TextEditingValue(
-                                text: NumberFormat('#,###').format(number).replaceAll(',', '.'),
-                                selection: TextSelection.collapsed(offset: NumberFormat('#,###').format(number).replaceAll(',', '.').length),
+                                text: NumberFormat(
+                                  '#,###',
+                                ).format(number).replaceAll(',', '.'),
+                                selection: TextSelection.collapsed(
+                                  offset: NumberFormat(
+                                    '#,###',
+                                  ).format(number).replaceAll(',', '.').length,
+                                ),
                               );
                             });
                           }
@@ -236,16 +277,13 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
                 ),
               ),
             ),
-
           ],
         ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-          ),
+          decoration: BoxDecoration(color: const Color(0xFFF3F4F6)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -255,12 +293,17 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
                   final amount = int.tryParse(amountStr) ?? 0;
                   final count = int.tryParse(_countController.text) ?? 1;
                   final total = _isRandom ? amount : amount * count;
-                  
+
                   return Text(
-                    total == 0 ? '0 đ' : '${NumberFormat('#,###').format(total).replaceAll(',', '.')} đ',
-                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                    total == 0
+                        ? '0 đ'
+                        : '${NumberFormat('#,###').format(total).replaceAll(',', '.')} đ',
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),
                   );
-                }
+                },
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -270,11 +313,27 @@ class _RedPacketCreateScreenState extends State<RedPacketCreateScreen> {
                   onPressed: _isLoading ? null : _createRedPacket,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE53935),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Nhét tiền vào Bao lì xì', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Nhét tiền vào Bao lì xì',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ],

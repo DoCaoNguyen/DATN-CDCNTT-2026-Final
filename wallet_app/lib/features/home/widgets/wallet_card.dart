@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/currency_formatter.dart';
 
 class WalletCard extends StatefulWidget {
   final String activeLang;
@@ -39,7 +40,11 @@ class _WalletCardState extends State<WalletCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -58,20 +63,38 @@ class _WalletCardState extends State<WalletCard> {
                         }
                       },
                       child: Icon(
-                        _isBalanceVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                        size: 16, color: Colors.grey,
+                        _isBalanceVisible
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
+                        size: 16,
+                        color: Colors.grey,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text(widget.activeLang == 'VIE' ? "Ví Mio" : "Mio Wallet", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text(
+                      widget.activeLang == 'VIE' ? "Ví Mio" : "Mio Wallet",
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 widget.isLoading
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.pink))
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.pink,
+                        ),
+                      )
                     : Text(
-                        _isBalanceVisible ? _formatCurrency(widget.balance) : "******",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        _isBalanceVisible
+                            ? CurrencyFormatter.format(widget.balance)
+                            : "******",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
               ],
             ),
@@ -80,9 +103,19 @@ class _WalletCardState extends State<WalletCard> {
           Expanded(
             child: Column(
               children: [
-                Text(widget.activeLang == 'VIE' ? "Ví Trả Sau" : "Postpaid Wallet", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  widget.activeLang == 'VIE' ? "Ví Trả Sau" : "Postpaid Wallet",
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
                 const SizedBox(height: 4),
-                Text(widget.activeLang == 'VIE' ? "Dự phòng 5Tr" : "5M Reserve", style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  widget.activeLang == 'VIE' ? "Dự phòng 5Tr" : "5M Reserve",
+                  style: const TextStyle(
+                    color: Colors.pink,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),

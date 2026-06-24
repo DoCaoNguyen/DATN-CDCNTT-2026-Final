@@ -30,15 +30,15 @@ class _BankListScreenState extends State<BankListScreen> {
 
   Future<void> _fetchLinkedBanks() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getLinkedBanks),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getLinkedBanks));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
           setState(() {
             final banks = data['data'] as List<dynamic>? ?? [];
-            _linkedBankCodes = banks.map((b) => b['bank_code'].toString()).toSet();
+            _linkedBankCodes = banks
+                .map((b) => b['bank_code'].toString())
+                .toSet();
           });
         }
       }
@@ -74,14 +74,54 @@ class _BankListScreenState extends State<BankListScreen> {
   }
 
   final List<Map<String, dynamic>> _popularBanks = [
-    {'name': 'Vietcombank', 'code': 'VCB', 'color': Colors.green, 'icon': Icons.shield_rounded},
-    {'name': 'BIDV', 'code': 'BIDV', 'color': Colors.blue.shade800, 'icon': Icons.account_balance_rounded},
-    {'name': 'VietinBank', 'code': 'ICB', 'color': Colors.blue.shade900, 'icon': Icons.person_rounded},
-    {'name': 'Techcombank', 'code': 'TCB', 'color': Colors.red, 'icon': Icons.change_history_rounded},
-    {'name': 'Agribank', 'code': 'VBA', 'color': Colors.red.shade800, 'icon': Icons.agriculture_rounded},
-    {'name': 'SACOMBANK', 'code': 'STB', 'color': Colors.blue.shade700, 'icon': Icons.star_rounded},
-    {'name': 'ACB', 'code': 'ACB', 'color': Colors.blue, 'icon': Icons.business_rounded},
-    {'name': 'Thẻ quốc tế', 'code': 'VISA', 'color': Colors.orange, 'icon': Icons.credit_card_rounded},
+    {
+      'name': 'Vietcombank',
+      'code': 'VCB',
+      'color': Colors.green,
+      'icon': Icons.shield_rounded,
+    },
+    {
+      'name': 'BIDV',
+      'code': 'BIDV',
+      'color': Colors.blue.shade800,
+      'icon': Icons.account_balance_rounded,
+    },
+    {
+      'name': 'VietinBank',
+      'code': 'ICB',
+      'color': Colors.blue.shade900,
+      'icon': Icons.person_rounded,
+    },
+    {
+      'name': 'Techcombank',
+      'code': 'TCB',
+      'color': Colors.red,
+      'icon': Icons.change_history_rounded,
+    },
+    {
+      'name': 'Agribank',
+      'code': 'VBA',
+      'color': Colors.red.shade800,
+      'icon': Icons.agriculture_rounded,
+    },
+    {
+      'name': 'SACOMBANK',
+      'code': 'STB',
+      'color': Colors.blue.shade700,
+      'icon': Icons.star_rounded,
+    },
+    {
+      'name': 'ACB',
+      'code': 'ACB',
+      'color': Colors.blue,
+      'icon': Icons.business_rounded,
+    },
+    {
+      'name': 'Thẻ quốc tế',
+      'code': 'VISA',
+      'color': Colors.orange,
+      'icon': Icons.credit_card_rounded,
+    },
   ];
 
   final List<Map<String, String>> _allBanks = [
@@ -177,13 +217,18 @@ class _BankListScreenState extends State<BankListScreen> {
         ),
         title: const Text(
           'Liên kết ngân hàng',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () =>
+                Navigator.popUntil(context, (route) => route.isFirst),
           ),
         ],
       ),
@@ -192,7 +237,10 @@ class _BankListScreenState extends State<BankListScreen> {
           // Search bar
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Container(
               height: 44,
               decoration: BoxDecoration(
@@ -216,7 +264,7 @@ class _BankListScreenState extends State<BankListScreen> {
               ),
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -225,7 +273,11 @@ class _BankListScreenState extends State<BankListScreen> {
                   // Popular Banks Grid
                   if (filteredPopular.isNotEmpty) ...[
                     const Padding(
-                      padding: EdgeInsets.only(left: 16.0, top: 16.0, bottom: 8.0),
+                      padding: EdgeInsets.only(
+                        left: 16.0,
+                        top: 16.0,
+                        bottom: 8.0,
+                      ),
                       child: Text(
                         'NGÂN HÀNG PHỔ BIẾN',
                         style: TextStyle(
@@ -241,25 +293,35 @@ class _BankListScreenState extends State<BankListScreen> {
                       child: GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          childAspectRatio: 0.9,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              childAspectRatio: 0.9,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                            ),
                         itemCount: filteredPopular.length,
                         itemBuilder: (context, index) {
                           final bank = filteredPopular[index];
-                          final isLinked = _linkedBankCodes.contains(bank['code']);
+                          final isLinked = _linkedBankCodes.contains(
+                            bank['code'],
+                          );
                           return GestureDetector(
-                            onTap: isLinked ? null : () => _onBankSelected(bank['name'], bank['code']),
+                            onTap: isLinked
+                                ? null
+                                : () => _onBankSelected(
+                                    bank['name'],
+                                    bank['code'],
+                                  ),
                             child: Opacity(
                               opacity: isLinked ? 0.5 : 1.0,
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
+                                  ),
                                 ),
                                 padding: const EdgeInsets.all(8),
                                 child: Column(
@@ -271,14 +333,19 @@ class _BankListScreenState extends State<BankListScreen> {
                                         width: 36,
                                         height: 36,
                                         fit: BoxFit.contain,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            width: 36,
-                                            height: 36,
-                                            color: Colors.grey.shade200,
-                                            child: const Icon(Icons.account_balance_rounded, size: 18, color: Colors.grey),
-                                          );
-                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                width: 36,
+                                                height: 36,
+                                                color: Colors.grey.shade200,
+                                                child: const Icon(
+                                                  Icons.account_balance_rounded,
+                                                  size: 18,
+                                                  color: Colors.grey,
+                                                ),
+                                              );
+                                            },
                                       ),
                                     ),
                                     const SizedBox(height: 6),
@@ -305,7 +372,11 @@ class _BankListScreenState extends State<BankListScreen> {
 
                   // All Banks List
                   const Padding(
-                    padding: EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8.0),
+                    padding: EdgeInsets.only(
+                      left: 16.0,
+                      top: 24.0,
+                      bottom: 8.0,
+                    ),
                     child: Text(
                       'TOÀN BỘ NGÂN HÀNG',
                       style: TextStyle(
@@ -320,7 +391,10 @@ class _BankListScreenState extends State<BankListScreen> {
                   // Open Account Promo
                   if (_searchQuery.isEmpty)
                     Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 6.0,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -333,23 +407,36 @@ class _BankListScreenState extends State<BankListScreen> {
                             color: Colors.blue.shade50,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.account_balance_rounded, color: Colors.blue, size: 20),
+                          child: const Icon(
+                            Icons.account_balance_rounded,
+                            color: Colors.blue,
+                            size: 20,
+                          ),
                         ),
                         title: const Text(
                           'Mở tài khoản ngân hàng',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         subtitle: const Text(
                           'Miễn phí - An toàn bảo mật',
                           style: TextStyle(color: Colors.grey, fontSize: 11),
                         ),
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: () {},
                       ),
                     ),
 
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 6.0,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -359,14 +446,20 @@ class _BankListScreenState extends State<BankListScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: filteredAll.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF0F0F5)),
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1, color: Color(0xFFF0F0F5)),
                       itemBuilder: (context, index) {
                         final bank = filteredAll[index];
-                        final isLinked = _linkedBankCodes.contains(bank['code']);
+                        final isLinked = _linkedBankCodes.contains(
+                          bank['code'],
+                        );
                         return Opacity(
                           opacity: isLinked ? 0.5 : 1.0,
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
                             leading: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
@@ -384,7 +477,12 @@ class _BankListScreenState extends State<BankListScreen> {
                                     ),
                                     alignment: Alignment.center,
                                     child: Text(
-                                      bank['name']!.substring(0, minOf(2, bank['name']!.length)).toUpperCase(),
+                                      bank['name']!
+                                          .substring(
+                                            0,
+                                            minOf(2, bank['name']!.length),
+                                          )
+                                          .toUpperCase(),
                                       style: const TextStyle(
                                         color: Colors.pink,
                                         fontWeight: FontWeight.bold,
@@ -397,12 +495,30 @@ class _BankListScreenState extends State<BankListScreen> {
                             ),
                             title: Text(
                               bank['name']!,
-                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
                             ),
-                            trailing: isLinked 
-                                ? const Text('Đã liên kết', style: TextStyle(color: Colors.grey, fontSize: 12))
-                                : const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
-                            onTap: isLinked ? null : () => _onBankSelected(bank['name']!, bank['code']!),
+                            trailing: isLinked
+                                ? const Text(
+                                    'Đã liên kết',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Colors.grey,
+                                    size: 18,
+                                  ),
+                            onTap: isLinked
+                                ? null
+                                : () => _onBankSelected(
+                                    bank['name']!,
+                                    bank['code']!,
+                                  ),
                           ),
                         );
                       },

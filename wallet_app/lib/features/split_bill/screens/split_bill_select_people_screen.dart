@@ -18,10 +18,13 @@ class SplitBillSelectPeopleScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<SplitBillSelectPeopleScreen> createState() => _SplitBillSelectPeopleScreenState();
+  State<SplitBillSelectPeopleScreen> createState() =>
+      _SplitBillSelectPeopleScreenState();
 }
 
-class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScreen> with SingleTickerProviderStateMixin {
+class _SplitBillSelectPeopleScreenState
+    extends State<SplitBillSelectPeopleScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -65,10 +68,10 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
             _me['shortName'] = 'Tôi';
             _me['id'] = data['id'].toString();
             _me['realPhone'] = data['phone'] ?? '';
-            
+
             if (data['phone'] != null && data['phone'].toString().length >= 4) {
-               String p = data['phone'].toString();
-               _me['phone'] = '•••••••${p.substring(p.length - 3)}';
+              String p = data['phone'].toString();
+              _me['phone'] = '•••••••${p.substring(p.length - 3)}';
             }
           });
         }
@@ -81,9 +84,12 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
   Future<void> _syncContacts() async {
     setState(() => _isLoadingContacts = true);
     try {
-      final PermissionStatus permissionStatus = await Permission.contacts.request();
+      final PermissionStatus permissionStatus = await Permission.contacts
+          .request();
       if (permissionStatus == PermissionStatus.granted) {
-        final contacts = await FlutterContacts.getContacts(withProperties: true);
+        final contacts = await FlutterContacts.getContacts(
+          withProperties: true,
+        );
         final Set<String> phonesSet = {};
 
         for (var contact in contacts) {
@@ -120,7 +126,8 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                   String rawPhone = user['phone'] ?? '';
                   String maskedPhone = rawPhone;
                   if (rawPhone.length >= 4) {
-                    maskedPhone = '•••••••${rawPhone.substring(rawPhone.length - 3)}';
+                    maskedPhone =
+                        '•••••••${rawPhone.substring(rawPhone.length - 3)}';
                   }
 
                   return {
@@ -154,7 +161,7 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
       });
       return;
     }
-    
+
     String cleanQuery = query.toLowerCase();
     setState(() {
       _filteredFriends = _friends.where((friend) {
@@ -195,10 +202,7 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFFFE4E1),
-                Color(0xFFF6F8FB),
-              ],
+              colors: [Color(0xFFFFE4E1), Color(0xFFF6F8FB)],
             ),
           ),
           child: AppBar(
@@ -222,7 +226,10 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                 onPressed: () {},
               ),
               IconButton(
-                icon: const Icon(Icons.headset_mic_rounded, color: Colors.black54),
+                icon: const Icon(
+                  Icons.headset_mic_rounded,
+                  color: Colors.black54,
+                ),
                 onPressed: () {},
               ),
               IconButton(
@@ -286,7 +293,11 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.pink, size: 28),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: Colors.pink,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -295,7 +306,10 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                     children: [
                       Text(
                         "Bạn bè không có Ví Mio?",
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                       SizedBox(height: 2),
                       Text(
@@ -327,7 +341,10 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                     children: [
                       Text(
                         "Danh sách thành viên ($_totalMembers)",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -337,7 +354,11 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                         },
                         child: const Text(
                           "Bỏ chọn tất cả",
-                          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w600, fontSize: 13),
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -349,7 +370,9 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                       scrollDirection: Axis.horizontal,
                       children: [
                         _buildSelectedMemberAvatar(_me, isMe: true),
-                        ..._selectedFriends.map((f) => _buildSelectedMemberAvatar(f)),
+                        ..._selectedFriends.map(
+                          (f) => _buildSelectedMemberAvatar(f),
+                        ),
                       ],
                     ),
                   ),
@@ -372,7 +395,10 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                     padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
                     child: Text(
                       "Đề xuất",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   TabBar(
@@ -390,71 +416,122 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                       controller: _tabController,
                       children: [
                         _isLoadingContacts
-                          ? const Center(child: CircularProgressIndicator(color: Colors.pink))
-                          : ListView.builder(
-                              itemCount: _filteredFriends.length,
-                              itemBuilder: (context, index) {
-                                final friend = _filteredFriends[index];
-                                final isSelected = _selectedFriends.any((f) => f['id'] == friend['id']);
-                                return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                  leading: CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: friend['color'],
-                                    backgroundImage: friend['avatar'] != null ? NetworkImage(friend['avatar']) : null,
-                                    child: friend['avatar'] == null
-                                        ? Text(
-                                            friend['initials'],
-                                            style: const TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold),
-                                          )
-                                        : null,
-                                  ),
-                                  title: Text(friend['name'], style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                  subtitle: friend['phone'].toString().contains('*')
-                                    ? Text.rich(
-                                        TextSpan(
-                                          children: friend['phone'].toString().split('').map((char) {
-                                            if (char == '*') {
-                                              return WidgetSpan(
-                                                alignment: PlaceholderAlignment.middle,
-                                                child: Padding(
-                                                  padding: const EdgeInsets.only(top: 4.0),
-                                                  child: Text(
-                                                    '*',
-                                                    style: const TextStyle(color: Colors.grey, fontSize: 14, fontFamily: 'monospace', letterSpacing: 1.2),
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                            return TextSpan(
-                                              text: char,
-                                              style: const TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'monospace', letterSpacing: 1.2),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      )
-                                    : Text(
-                                        friend['phone'], 
-                                        style: const TextStyle(
-                                          color: Colors.grey, 
-                                          fontSize: 12,
-                                          fontFamily: 'monospace',
-                                          letterSpacing: 1.2,
-                                        )
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.pink,
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _filteredFriends.length,
+                                itemBuilder: (context, index) {
+                                  final friend = _filteredFriends[index];
+                                  final isSelected = _selectedFriends.any(
+                                    (f) => f['id'] == friend['id'],
+                                  );
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 4,
+                                    ),
+                                    leading: CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: friend['color'],
+                                      backgroundImage: friend['avatar'] != null
+                                          ? NetworkImage(friend['avatar'])
+                                          : null,
+                                      child: friend['avatar'] == null
+                                          ? Text(
+                                              friend['initials'],
+                                              style: const TextStyle(
+                                                color: Color(0xFFE91E63),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    title: Text(
+                                      friend['name'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
                                       ),
-                                  trailing: Checkbox(
-                                    value: isSelected,
-                                    activeColor: const Color(0xFFE91E63),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                    onChanged: (val) {
-                                      _toggleSelection(friend);
-                                    },
-                                  ),
-                                  onTap: () => _toggleSelection(friend),
-                                );
-                              },
-                            ),
-                        const Center(child: Text("Không có nhóm nào", style: TextStyle(color: Colors.grey))),
+                                    ),
+                                    subtitle:
+                                        friend['phone'].toString().contains('*')
+                                        ? Text.rich(
+                                            TextSpan(
+                                              children: friend['phone']
+                                                  .toString()
+                                                  .split('')
+                                                  .map((char) {
+                                                    if (char == '*') {
+                                                      return WidgetSpan(
+                                                        alignment:
+                                                            PlaceholderAlignment
+                                                                .middle,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(
+                                                                top: 4.0,
+                                                              ),
+                                                          child: Text(
+                                                            '*',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  fontSize: 14,
+                                                                  fontFamily:
+                                                                      'monospace',
+                                                                  letterSpacing:
+                                                                      1.2,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                    return TextSpan(
+                                                      text: char,
+                                                      style: const TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 12,
+                                                        fontFamily: 'monospace',
+                                                        letterSpacing: 1.2,
+                                                      ),
+                                                    );
+                                                  })
+                                                  .toList(),
+                                            ),
+                                          )
+                                        : Text(
+                                            friend['phone'],
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                              fontFamily: 'monospace',
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                    trailing: Checkbox(
+                                      value: isSelected,
+                                      activeColor: const Color(0xFFE91E63),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      onChanged: (val) {
+                                        _toggleSelection(friend);
+                                      },
+                                    ),
+                                    onTap: () => _toggleSelection(friend),
+                                  );
+                                },
+                              ),
+                        const Center(
+                          child: Text(
+                            "Không có nhóm nào",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -509,7 +586,10 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
     );
   }
 
-  Widget _buildSelectedMemberAvatar(Map<String, dynamic> member, {bool isMe = false}) {
+  Widget _buildSelectedMemberAvatar(
+    Map<String, dynamic> member, {
+    bool isMe = false,
+  }) {
     return Container(
       width: 60,
       margin: const EdgeInsets.only(right: 12),
@@ -520,11 +600,17 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
               CircleAvatar(
                 radius: 24,
                 backgroundColor: member['color'],
-                backgroundImage: member['avatar'] != null ? NetworkImage(member['avatar']) : null,
+                backgroundImage: member['avatar'] != null
+                    ? NetworkImage(member['avatar'])
+                    : null,
                 child: member['avatar'] == null
                     ? Text(
                         member['initials'],
-                        style: const TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          color: Color(0xFFE91E63),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       )
                     : null,
               ),
@@ -542,7 +628,11 @@ class _SplitBillSelectPeopleScreenState extends State<SplitBillSelectPeopleScree
                         color: Colors.black87,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close_rounded, color: Colors.white, size: 12),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                        size: 12,
+                      ),
                     ),
                   ),
                 ),

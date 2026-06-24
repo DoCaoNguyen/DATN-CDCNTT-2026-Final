@@ -73,7 +73,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -113,23 +113,17 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Details
                     _buildDetailRow(
-                      'Dịch vụ/ Cửa hàng', 
-                      isDeposit ? 'Nạp tiền vào ví' : 'Rút tiền về ngân hàng'
+                      'Dịch vụ/ Cửa hàng',
+                      isDeposit ? 'Nạp tiền vào ví' : 'Rút tiền về ngân hàng',
                     ),
-                    _buildDetailRowWithChevron(
-                      'Giao dịch', 
-                      referenceCode
-                    ),
-                    _buildDetailRow(
-                      'Thời gian thanh toán', 
-                      paymentTime
-                    ),
-                    
+                    _buildDetailRowWithChevron('Giao dịch', referenceCode),
+                    _buildDetailRow('Thời gian thanh toán', paymentTime),
+
                     const SizedBox(height: 24),
-                    
+
                     // Buttons
                     _buildActionButtons(context),
                   ],
@@ -139,14 +133,18 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
 
               // Quản lý chi tiêu
               _buildSpendingManagementCard(),
-              
+
               if (!isDeposit) ...[
                 const SizedBox(height: 16),
                 _buildSecurityAlertCard(),
                 const SizedBox(height: 20),
                 const Text(
                   'Có thể bạn quan tâm',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _buildPromotionBanner(),
@@ -168,7 +166,11 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 14),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -192,7 +194,11 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFFE91E63), size: 16),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFFE91E63),
+                size: 16,
+              ),
             ],
           ),
         ],
@@ -256,20 +262,12 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
     if (isDeposit) {
       // Deposit: Left = newTransaction, Right = homeButton
       return Row(
-        children: [
-          newTransactionButton,
-          const SizedBox(width: 12),
-          homeButton,
-        ],
+        children: [newTransactionButton, const SizedBox(width: 12), homeButton],
       );
     } else {
       // Withdrawal: Left = homeButton, Right = newTransaction
       return Row(
-        children: [
-          homeButton,
-          const SizedBox(width: 12),
-          newTransactionButton,
-        ],
+        children: [homeButton, const SizedBox(width: 12), newTransactionButton],
       );
     }
   }
@@ -282,7 +280,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -293,20 +291,32 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.receipt_long_rounded, color: Colors.teal, size: 20),
+              const Icon(
+                Icons.receipt_long_rounded,
+                color: Colors.teal,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               const Text(
                 'Quản lý chi tiêu',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               const Spacer(),
-              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
             ],
           ),
           const SizedBox(height: 12),
           const Text(
             'Báo cáo chi tiêu được tạo tự động',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -325,7 +335,11 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
             ),
             child: const Text(
               'Xem báo cáo ngay',
-              style: TextStyle(color: Color(0xFFE91E63), fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFE91E63),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -341,7 +355,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -358,12 +372,20 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
               children: [
                 const Text(
                   'Bạn ngủ, A.I thức canh tiền',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   'A.I Tự động giữ lại giao dịch bất thường, để bạn kiểm soát.',
-                  style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -373,9 +395,12 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
             onPressed: () {},
             child: const Text(
               'Xem ngay',
-              style: TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFE91E63),
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -391,7 +416,10 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: Opacity(opacity: 0.1, child: Container(color: Colors.black)),
+              child: Opacity(
+                opacity: 0.1,
+                child: Container(color: Colors.black),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -399,14 +427,32 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(4)),
-                    child: const Text('01/06 - 30/06', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '01/06 - 30/06',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     "Dùng Ví Trả Sau\nHoàn tiền 50%*",
-                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, height: 1.2),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -422,11 +468,23 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE91E63),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                 ),
                 onPressed: () {},
-                child: const Text('Trả sau ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                child: const Text(
+                  'Trả sau ngay',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ),
           ],

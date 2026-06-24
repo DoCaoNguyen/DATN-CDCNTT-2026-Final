@@ -57,6 +57,14 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use('/api/v1', masterRouter);
 
+// 404 Handler trả về JSON
+app.use((req, res, next) => {
+    res.status(404).json({ success: false, error_code: 'NOT_FOUND', message: 'API route not found' });
+});
+
+const errorHandler = require('./src/middlewares/error.middleware');
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
     console.log(`Server Node.js đang chạy tại cổng ${PORT}`);
