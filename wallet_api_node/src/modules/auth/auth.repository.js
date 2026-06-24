@@ -143,6 +143,17 @@ const authRepository = {
         `, [userId]);
     },
 
+    incrementTokenVersion: async userId => {
+        const result = await pool.query(`
+            UPDATE users
+            SET token_version = token_version + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            RETURNING token_version
+        `, [userId]);
+        return Number(result.rows[0]?.token_version || 0);
+    },
+
     saveRefreshToken: async (client, data) => {
         const id = uuidv7();
         await client.query(`

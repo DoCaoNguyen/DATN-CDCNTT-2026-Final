@@ -9,9 +9,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   - name: Auth
- *     description: Dang ky, dang nhap, token va bao mat tai khoan
- *   - name: Auth Compatibility
- *     description: Endpoint tuong thich luong OTP cua ung dung Mobile hien tai
+ *     description: Dang ky, dang nhap, token, OTP Mobile va bao mat tai khoan
  * components:
  *   schemas:
  *     AuthError:
@@ -131,6 +129,18 @@ const router = express.Router();
  *         remember_me:
  *           type: boolean
  *           default: false
+ *     MobileLoginRequest:
+ *       type: object
+ *       required: [identifier, password]
+ *       properties:
+ *         identifier:
+ *           type: string
+ *           description: So dien thoai hoac email cua tai khoan Mobile
+ *           example: "0900000001"
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: "123456"
  *     RefreshTokenRequest:
  *       type: object
  *       required: [refresh_token]
@@ -238,16 +248,8 @@ const authLimiter = rateLimit({
  *                   type: string
  *       400:
  *         description: Du lieu hoac password khong hop le
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  *       409:
  *         description: Phone, email hoac username da ton tai
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  *       429:
  *         description: Vuot rate limit
  *       500:
@@ -259,15 +261,17 @@ router.post('/register', authLimiter, authController.register);
  * @swagger
  * /api/v1/auth/login:
  *   post:
- *     summary: Dang nhap Mobile, Admin Web hoac Merchant Portal
- *     description: login_id ho tro username, email hoac phone. Token tra ve chua roles va permissions.
+ *     summary: Dang nhap tai khoan
+ *     description: Web/Admin/Merchant Portal dung login_id. Mobile dung identifier de giu luong dang nhap cua ung dung vi.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LoginRequest'
+ *             oneOf:
+ *               - $ref: '#/components/schemas/LoginRequest'
+ *               - $ref: '#/components/schemas/MobileLoginRequest'
  *     responses:
  *       200:
  *         description: Dang nhap thanh cong
@@ -294,23 +298,11 @@ router.post('/register', authLimiter, authController.register);
  *                 trace_id:
  *                   type: string
  *       400:
- *         description: Thieu login_id hoac password
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
+ *         description: Thieu thong tin dang nhap
  *       401:
  *         description: Sai thong tin dang nhap
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  *       403:
- *         description: Tai khoan bi khoa
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
+ *         description: Tai khoan bi khoa hoac chua kich hoat
  *       429:
  *         description: Vuot rate limit
  */
@@ -347,33 +339,8 @@ router.post('/login', authLimiter, authController.login);
  *                   type: string
  *       401:
  *         description: Refresh token khong hop le, het han hoac bi reuse
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  */
 router.post('/refresh-token', authController.refreshToken);
-
-/**
- * @swagger
- * /api/v1/auth/refresh:
- *   post:
- *     summary: Alias refresh token theo FRS
- *     deprecated: true
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RefreshTokenRequest'
- *     responses:
- *       200:
- *         description: Token pair moi
- *       401:
- *         description: Refresh token khong hop le
- */
-router.post('/refresh', authController.refreshToken);
 
 /**
  * @swagger
@@ -438,10 +405,6 @@ router.post('/forgot-password', authLimiter, authController.forgotPassword);
  *         description: Dat lai mat khau thanh cong va revoke session cu
  *       400:
  *         description: Reset token hoac password khong hop le
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  *       429:
  *         description: Vuot rate limit
  */
@@ -466,10 +429,6 @@ router.post('/reset-password', authLimiter, authController.resetPassword);
  *         description: Dang xuat thanh cong
  *       401:
  *         description: Access token hoac refresh token khong hop le
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  */
 router.post('/logout', authenticateJwt, authController.logout);
 
@@ -492,10 +451,6 @@ router.post('/logout', authenticateJwt, authController.logout);
  *         description: Doi mat khau thanh cong va revoke refresh token cu
  *       400:
  *         description: Mat khau hien tai sai hoac mat khau moi khong hop le
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthError'
  *       401:
  *         description: Access token khong hop le
  */
@@ -533,15 +488,14 @@ router.post('/change-password', authenticateJwt, authController.changePassword);
  */
 router.get('/me', authenticateJwt, authController.me);
 
-// Compatibility endpoints for the current mobile registration flow.
+// Mobile OTP registration and password recovery endpoints.
 
 /**
  * @swagger
  * /api/v1/auth/check-phone:
  *   post:
- *     summary: Kiem tra phone da dang ky
- *     deprecated: true
- *     tags: [Auth Compatibility]
+ *     summary: Mobile kiem tra so dien thoai da dang ky
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -561,16 +515,9 @@ router.get('/me', authenticateJwt, authController.me);
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     is_exist:
- *                       type: boolean
  *                 isExist:
  *                   type: boolean
- *                   description: Field cu ma Flutter dang su dung
+ *                   description: true neu so dien thoai da ton tai
  */
 router.post('/check-phone', authController.checkPhone);
 
@@ -578,9 +525,8 @@ router.post('/check-phone', authController.checkPhone);
  * @swagger
  * /api/v1/auth/send-otp:
  *   post:
- *     summary: Gui OTP dang ky qua Twilio Verify
- *     deprecated: true
- *     tags: [Auth Compatibility]
+ *     summary: Mobile gui OTP dang ky qua Twilio Verify
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -610,9 +556,8 @@ router.post('/send-otp', authLimiter, authController.sendOtp);
  * @swagger
  * /api/v1/auth/verify-otp:
  *   post:
- *     summary: Xac minh OTP va cap registration token
- *     deprecated: true
- *     tags: [Auth Compatibility]
+ *     summary: Mobile xac minh OTP va cap registration token
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -634,13 +579,10 @@ router.post('/send-otp', authLimiter, authController.sendOtp);
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     register_token:
- *                       type: string
+ *                 message:
+ *                   type: string
+ *                 register_token:
+ *                   type: string
  *       400:
  *         description: OTP sai, het han hoac khong ton tai
  *       403:
@@ -652,9 +594,8 @@ router.post('/verify-otp', authLimiter, authController.verifyOtp);
  * @swagger
  * /api/v1/auth/set-password:
  *   post:
- *     summary: Hoan tat dang ky tu registration token
- *     deprecated: true
- *     tags: [Auth Compatibility]
+ *     summary: Mobile hoan tat dang ky tu registration token
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -668,7 +609,7 @@ router.post('/verify-otp', authLimiter, authController.verifyOtp);
  *               password:
  *                 type: string
  *                 format: password
- *                 minLength: 8
+ *                 description: Mat khau/PIN do ung dung Mobile gui len trong buoc hoan tat dang ky
  *               full_name:
  *                 type: string
  *     responses:
@@ -685,9 +626,8 @@ router.post('/set-password', authLimiter, authController.setPassword);
  * @swagger
  * /api/v1/auth/forgot-password-otp:
  *   post:
- *     summary: Alias quen mat khau cua Mobile cu
- *     deprecated: true
- *     tags: [Auth Compatibility]
+ *     summary: Mobile gui OTP quen mat khau
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -702,6 +642,6 @@ router.post('/set-password', authLimiter, authController.setPassword);
  *       200:
  *         description: Yeu cau reset duoc tiep nhan
  */
-router.post('/forgot-password-otp', authLimiter, authController.forgotPassword);
+router.post('/forgot-password-otp', authLimiter, authController.forgotPasswordOtp);
 
 module.exports = router;
