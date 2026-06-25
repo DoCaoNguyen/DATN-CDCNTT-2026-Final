@@ -11,38 +11,26 @@ const authLimiter = rateLimit({
     message: { error: 'Bạn thao tác quá nhanh, vui lòng thử lại sau 15 phút.' }
 });
 
+// --- OTP & Kiểm tra ---
 router.post('/check-phone', authController.checkPhone);
-
-router.post('/register', authLimiter, authController.register);
-
-router.post('/login', authLimiter, authController.login);
-
-router.post('/set-password', authController.setPassword);
-
-router.post('/forgot-password-otp', authController.forgotPasswordOtp);
-
-router.post('/reset-password', authController.resetPassword);
-
-router.post('/forgot-password', authLimiter, authController.forgotPassword);
-
-router.post('/reset-password', authLimiter, authController.resetPassword);
-
-router.post('/logout', authenticateJwt, authController.logout);
-
-router.post('/change-password', authenticateJwt, authController.changePassword);
-
-router.get('/me', authenticateJwt, authController.me);
-
-// Mobile OTP registration and password recovery endpoints.
-
-router.post('/check-phone', authController.checkPhone);
-
 router.post('/send-otp', authLimiter, authController.sendOtp);
-
 router.post('/verify-otp', authLimiter, authController.verifyOtp);
 
+// --- Tính năng Authentication cốt lõi ---
+router.post('/register', authLimiter, authController.register);
+router.post('/login', authLimiter, authController.login);
+router.post('/logout', authenticateJwt, authController.logout);
+
+// --- Quản lý Mật khẩu ---
+router.post('/forgot-password', authLimiter, authController.forgotPassword);
+router.post('/reset-password', authLimiter, authController.resetPassword);
+router.post('/change-password', authenticateJwt, authController.changePassword);
+
+// --- Chức năng riêng cho Mobile OTP ---
+router.post('/forgot-password-otp', authLimiter, authController.forgotPasswordOtp);
 router.post('/set-password', authLimiter, authController.setPassword);
 
-router.post('/forgot-password-otp', authLimiter, authController.forgotPasswordOtp);
+// --- Lấy thông tin Cá nhân ---
+router.get('/me', authenticateJwt, authController.me);
 
 module.exports = router;
