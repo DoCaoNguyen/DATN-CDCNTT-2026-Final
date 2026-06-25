@@ -20,6 +20,46 @@ const { requirePermission } = require('../../../middlewares/auth.middleware');
 const transactionsController = require('./transactions.controller');
 const notImplemented = require('../../../utils/notImplemented');
 
-// TODO: Di chuyển routes từ admin.routes.js (L515-563, L761-763)
+/**
+ * @swagger
+ * /api/v1/admin/transactions:
+ *   get:
+ *     summary: Admin xem toan bo giao dich
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Transactions
+ * /api/v1/admin/transactions/{id}:
+ *   get:
+ *     summary: Admin xem chi tiet giao dich
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Transaction detail
+ * /api/v1/admin/ledger-entries:
+ *   get:
+ *     summary: Admin tra cuu ledger entries
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Ledger entries
+ * /api/v1/admin/transactions/reconcile:
+ *   post:
+ *     summary: Admin chay doi soat ledger
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reconcile result
+ */
+
+
 
 module.exports = router;

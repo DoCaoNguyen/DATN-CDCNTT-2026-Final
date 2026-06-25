@@ -14,6 +14,64 @@ const router = express.Router();
 const dashboardController = require('./dashboard.controller');
 const notImplemented = require('../../../utils/notImplemented');
 
-// TODO: Di chuyển routes từ admin.routes.js (L866-871)
+/**
+ * @swagger
+ * /api/v1/admin/dashboard/kpis:
+ *   get:
+ *     summary: Admin dashboard KPIs
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard KPIs
+ * /api/v1/admin/dashboard/transactions-chart:
+ *   get:
+ *     summary: Admin bieu do giao dich
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Transaction chart
+ * /api/v1/admin/dashboard/success-rate:
+ *   get:
+ *     summary: Admin ty le thanh cong
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success rate
+ * /api/v1/admin/dashboard/top-merchants:
+ *   get:
+ *     summary: Admin top merchant
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Top merchants
+ * /api/v1/admin/dashboard/recent-activities:
+ *   get:
+ *     summary: Admin hoat dong gan day
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Recent activities
+ * /api/v1/admin/dashboard/alerts:
+ *   get:
+ *     summary: Admin canh bao he thong
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: System alerts
+ */
+
+
 
 module.exports = router;

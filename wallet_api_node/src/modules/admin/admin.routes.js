@@ -4,30 +4,21 @@ const { authenticateJwt, requireAdmin, requirePermission } = require('../../midd
 const adminController = require('./admin.controller');
 const notImplemented = require('../../utils/notImplemented');
 
+/**
+ * @swagger
+ * tags:
+ *   name: Admin
+ *   description: Admin quan tri user, wallet, merchant, payment, transaction, refund, webhook, dashboard, report, setting va audit
+ */
+
 router.use(authenticateJwt, requireAdmin);
 
-router.get('/users', requirePermission('admin.users.manage'), adminController.listUsers);
-router.post('/users', requirePermission('admin.users.manage'), adminController.createUser);
-router.get('/users/:id', requirePermission('admin.users.manage'), adminController.getUserDetail);
-router.patch('/users/:id', requirePermission('admin.users.manage'), adminController.updateUser);
-router.get('/users/:id/wallet', requirePermission('admin.users.manage', 'wallets.read'), adminController.getUserWallet);
-router.post('/users/:id/actions/lock', requirePermission('admin.users.manage'), adminController.lockUser);
-router.post('/users/:id/actions/unlock', requirePermission('admin.users.manage'), adminController.unlockUser);
-router.post('/users/:id/actions/reset-password', requirePermission('admin.users.manage'), adminController.resetUserPassword);
-router.get('/users/:id/audit-logs', requirePermission('audit_logs.read'), adminController.getUserAuditLogs);
+router.use('/', require('./users/users.routes'));
 
-router.get('/roles', notImplemented('GET /admin/roles'));
-router.post('/roles', notImplemented('POST /admin/roles'));
-router.get('/roles/:id', notImplemented('GET /admin/roles/{id}'));
-router.patch('/roles/:id', notImplemented('PATCH /admin/roles/{id}'));
-router.get('/permissions', notImplemented('GET /admin/permissions'));
+router.use('/permissions', require('./roles/permissions.routes'));
+router.use('/roles', require('./roles/roles.routes'));
 
-router.get('/wallets', requirePermission('wallets.read'), adminController.listWallets);
-router.get('/wallets/:wallet_id', requirePermission('wallets.read'), adminController.getWalletDetail);
-router.get('/wallets/:wallet_id/summary', requirePermission('wallets.read'), adminController.getWalletSummary);
-router.get('/wallets/:wallet_id/ledger', requirePermission('wallets.read'), adminController.getWalletLedger);
-router.post('/wallets/:wallet_id/actions/lock', requirePermission('wallets.lock'), adminController.lockWallet);
-router.post('/wallets/:wallet_id/actions/unlock', requirePermission('wallets.lock'), adminController.unlockWallet);
+router.use('/wallets', require('./wallets/wallets.routes'));
 
 router.get('/topups', notImplemented('GET /admin/topups'));
 router.get('/topups/:id', notImplemented('GET /admin/topups/{id}'));
@@ -39,13 +30,7 @@ router.get('/transactions/:id', notImplemented('GET /admin/transactions/{id}'));
 router.get('/ledger-entries', notImplemented('GET /admin/ledger-entries'));
 router.post('/transactions/reconcile', notImplemented('POST /admin/transactions/reconcile'));
 
-router.get('/merchants', notImplemented('GET /admin/merchants'));
-router.get('/merchants/:id', notImplemented('GET /admin/merchants/{id}'));
-router.post('/merchants/:id/actions/approve', notImplemented('POST /admin/merchants/{id}/actions/approve'));
-router.post('/merchants/:id/actions/reject', notImplemented('POST /admin/merchants/{id}/actions/reject'));
-router.post('/merchants/:id/actions/suspend', notImplemented('POST /admin/merchants/{id}/actions/suspend'));
-router.post('/merchants/:id/actions/activate', notImplemented('POST /admin/merchants/{id}/actions/activate'));
-router.get('/merchants/:id/api-keys', notImplemented('GET /admin/merchants/{id}/api-keys'));
+router.use('/merchants', require('./merchants/merchants.routes'));
 
 router.get('/payment-orders', notImplemented('GET /admin/payment-orders'));
 router.get('/payment-orders/:id', notImplemented('GET /admin/payment-orders/{id}'));
