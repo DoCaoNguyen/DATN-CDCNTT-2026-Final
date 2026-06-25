@@ -36,24 +36,105 @@ const merchantsValidator = require('./merchants.validator');
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Merchants
+ *   post:
+ *     summary: Admin dang ky merchant
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [merchant_code, merchant_name, phone, email]
+ *             properties:
+ *               merchant_code: { type: string }
+ *               merchant_name: { type: string }
+ *               phone: { type: string }
+ *               email: { type: string }
+ *               callback:
+ *                 type: object
+ *                 properties:
+ *                   default_callback_url: { type: string }
+ *                   default_redirect_url: { type: string }
+ *     responses:
+ *       201:
+ *         description: Merchant created
  * /api/v1/admin/merchants/{id}:
  *   get:
  *     summary: Admin xem chi tiet merchant
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: Merchant detail
+ *   patch:
+ *     summary: Admin cap nhat thong tin merchant va cau hinh callback
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               merchant_name: { type: string }
+ *               phone: { type: string }
+ *               email: { type: string }
+ *               callback:
+ *                 type: object
+ *                 properties:
+ *                   default_callback_url: { type: string }
+ *                   default_redirect_url: { type: string }
+ *     responses:
+ *       200:
+ *         description: Merchant updated
  * /api/v1/admin/merchants/{id}/actions/approve:
  *   post:
  *     summary: Admin duyet merchant
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason: { type: string }
  *     responses:
  *       200:
  *         description: Merchant approved
@@ -63,6 +144,20 @@ const merchantsValidator = require('./merchants.validator');
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason: { type: string }
  *     responses:
  *       200:
  *         description: Merchant rejected
@@ -72,6 +167,20 @@ const merchantsValidator = require('./merchants.validator');
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason: { type: string }
  *     responses:
  *       200:
  *         description: Merchant suspended
@@ -81,6 +190,19 @@ const merchantsValidator = require('./merchants.validator');
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason: { type: string }
  *     responses:
  *       200:
  *         description: Merchant activated
@@ -90,9 +212,82 @@ const merchantsValidator = require('./merchants.validator');
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: Merchant API keys
+ *   post:
+ *     summary: Admin cap API Key cho merchant
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [key_name, environment]
+ *             properties:
+ *               key_name: { type: string }
+ *               environment: { type: string, enum: [SANDBOX, PRODUCTION] }
+ *     responses:
+ *       201:
+ *         description: API Key created
+ * /api/v1/admin/merchants/{id}/api-keys/{keyId}/actions/rotate:
+ *   post:
+ *     summary: Admin rotate API Key
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: keyId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: API Key rotated
+ * /api/v1/admin/merchants/{id}/api-keys/{keyId}/actions/revoke:
+ *   post:
+ *     summary: Admin thu hoi API Key
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: keyId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason: { type: string }
+ *     responses:
+ *       200:
+ *         description: API Key revoked
  */
 
 

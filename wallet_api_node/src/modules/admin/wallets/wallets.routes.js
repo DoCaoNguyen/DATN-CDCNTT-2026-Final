@@ -153,11 +153,11 @@ const walletsValidator = require('./wallets.validator');
  */
 
 
-router.get('/', requirePermission('wallets.read'), walletsController.listWallets);
-router.get('/:id', requirePermission('wallets.read'), walletsValidator.validateIdParam, walletsController.getWalletDetail);
-router.get('/:id/summary', requirePermission('wallets.read'), walletsValidator.validateIdParam, walletsController.getWalletSummary);
-router.get('/:id/ledger', requirePermission('wallets.read'), walletsValidator.validateIdParam, walletsController.getWalletLedger);
-router.post('/:id/actions/lock', requirePermission('wallets.lock'), walletsValidator.validateIdParam, walletsValidator.validateReason, walletsController.lockWallet);
-router.post('/:id/actions/unlock', requirePermission('wallets.lock'), walletsValidator.validateIdParam, walletsValidator.validateReason, walletsController.unlockWallet);
+router.get('/', requirePermission('admin.wallets.read'), walletsController.listWallets);
+router.get('/:id', requirePermission('admin.wallets.read'), walletsValidator.validateIdParam, walletsController.getWalletDetail);
+router.get('/:id/summary', requirePermission('admin.wallets.read'), walletsValidator.validateIdParam, walletsController.getWalletSummary);
+router.get('/:id/ledger', requirePermission('admin.wallets.read'), walletsValidator.validateIdParam, walletsController.getWalletLedger);
+router.post('/:id/actions/lock', requirePermission('admin.wallets.lock'), walletsValidator.validateIdParam, walletsValidator.validateReason, walletsController.lockWallet);
+router.post('/:id/actions/unlock', requirePermission('admin.wallets.lock'), walletsValidator.validateIdParam, walletsValidator.validateReason, walletsController.unlockWallet);
 
 module.exports = router;

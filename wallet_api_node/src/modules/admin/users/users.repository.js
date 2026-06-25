@@ -77,13 +77,17 @@ const usersRepository = {
         return mapUserRow(result.rows[0]);
     },
 
-    // Không SELECT * để tránh lộ password_hash vào audit log
     findUserRawById: async (userId) => {
         const result = await pool.query(
-            `SELECT id, user_type, full_name, username, email, phone, status,
-                    failed_login_attempts, locked_until, is_kyc_verified, token_version,
-                    created_at, updated_at
-             FROM users WHERE id = $1`,
+            `SELECT u.id, u.user_type, u.full_name, u.username, u.email, u.phone, u.status,
+                    u.failed_login_attempts, u.locked_until, u.is_kyc_verified, u.token_version,
+                    u.created_at, u.updated_at,
+                    COALESCE(ARRAY_AGG(DISTINCT r.code) FILTER (WHERE r.code IS NOT NULL), '{}') AS roles
+             FROM users u
+             LEFT JOIN user_roles ur ON ur.user_id = u.id
+             LEFT JOIN roles r ON r.id = ur.role_id
+             WHERE u.id = $1
+             GROUP BY u.id`,
             [userId]
         );
         return result.rows[0];
@@ -132,7 +136,29 @@ const usersRepository = {
         return result.rowCount > 0;
     },
 
-    updateUser: async (userId, updates) => {
+    replaceRolesByCodes: async (client, userId, roleCodes) => {
+        await client.query(`DELETE FROM user_roles WHERE user_id = $1`, [userId]);
+        if (!roleCodes || roleCodes.length === 0) return true;
+
+        let inserted = 0;
+        for (const code of roleCodes) {
+            const result = await client.query(`
+                INSERT INTO user_roles (user_id, role_id)
+                SELECT $1, id
+                FROM roles
+                WHERE code = $2 AND is_active = true
+                RETURNING role_id
+            `, [userId, code]);
+            if (result.rowCount > 0) inserted++;
+        }
+        return inserted > 0;
+    },
+
+    incrementTokenVersion: async (client, userId) => {
+        await client.query(`UPDATE users SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
+    },
+
+    updateUser: async (clientOrPool, userId, updates) => {
         const fields = [];
         const params = [];
         const allowed = {
@@ -140,20 +166,26 @@ const usersRepository = {
             username: 'username',
             email: 'email',
             phone: 'phone',
-            is_kyc_verified: 'is_kyc_verified'
+            is_kyc_verified: 'is_kyc_verified',
+            user_type: 'user_type'
         };
 
         Object.entries(allowed).forEach(([inputKey, column]) => {
             if (Object.prototype.hasOwnProperty.call(updates, inputKey)) {
-                params.push(updates[inputKey]);
-                fields.push(`${column} = $${params.length}`);
+                if (inputKey === 'user_type') {
+                    params.push(updates[inputKey]);
+                    fields.push(`${column} = $${params.length}::user_type`);
+                } else {
+                    params.push(updates[inputKey]);
+                    fields.push(`${column} = $${params.length}`);
+                }
             }
         });
 
         if (fields.length === 0) return null;
         params.push(userId);
 
-        const result = await pool.query(`
+        const result = await clientOrPool.query(`
             UPDATE users
             SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
             WHERE id = $${params.length}

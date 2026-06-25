@@ -5,6 +5,15 @@ const authService = require('../../auth/auth.service');
 const auditLogService = require('../../system/audit_log.service');
 const { ensureWriteAccess, sanitizeUserInput, normalizeOptional, isSuperAdmin, SYSTEM_ROLES, withTransaction, writeAuditLog } = require('../_shared');
 
+function deriveUserType(roleCodes) {
+    if (!roleCodes || roleCodes.length === 0) return 'USER';
+    if (roleCodes.includes('SUPER_ADMIN')) return 'SUPER_ADMIN';
+    if (roleCodes.includes('ADMIN')) return 'ADMIN';
+    if (roleCodes.includes('SUPPORT_STAFF')) return 'SUPPORT_STAFF';
+    if (roleCodes.includes('MERCHANT_OWNER') || roleCodes.includes('MERCHANT_STAFF')) return 'MERCHANT_USER';
+    return 'USER';
+}
+
 const usersService = {
     listUsers: async (query) => {
         return usersRepository.listUsers({
@@ -34,6 +43,8 @@ const usersService = {
         if (conflict) throw new Error('User_Conflict');
 
         const passwordHash = await bcrypt.hash(data.password, 10);
+        const roleCodes = Array.isArray(data.roleCodes) ? data.roleCodes : (data.roleCode ? [data.roleCode] : ['USER']);
+        const derivedUserType = deriveUserType(roleCodes);
 
         const created = await withTransaction(async (client) => {
             const userId = await usersRepository.createUser(client, {
@@ -42,16 +53,17 @@ const usersService = {
                 email: data.email,
                 phone: data.phone,
                 passwordHash,
-                userType: data.userType,
+                userType: derivedUserType,
                 status: data.status
             });
 
-            const roleAssigned = await usersRepository.assignRoleByCode(client, userId, data.roleCode);
-            if (!roleAssigned) throw new Error('Role_Not_Found');
+            const rolesAssigned = await usersRepository.replaceRolesByCodes(client, userId, roleCodes);
+            if (!rolesAssigned) throw new Error('Role_Not_Found');
 
             let walletId = null;
-            if (data.createWallet) {
-                walletId = await walletRepository.create(client, userId);
+            if (data.createWallet !== false) { // Default true for phase 1 admin API
+                const authRepository = require('../../auth/auth.repository');
+                walletId = await authRepository.createWallet(client, userId);
             }
 
             return { userId, walletId };
@@ -63,9 +75,9 @@ const usersService = {
             entityType: 'users',
             entityId: created.userId,
             newData: {
-                user_type: data.userType,
+                user_type: derivedUserType,
+                roles: roleCodes,
                 status: data.status,
-                role_code: data.roleCode,
                 wallet_id: created.walletId
             },
             ipAddress,
@@ -90,7 +102,30 @@ const usersService = {
             updates.is_kyc_verified = Boolean(payload.is_kyc_verified);
         }
 
-        if (Object.keys(updates).length === 0) throw new Error('No_Update_Field');
+        let roleCodes = null;
+        if (payload.role_codes && Array.isArray(payload.role_codes)) {
+            roleCodes = payload.role_codes;
+        } else if (payload.role_code) {
+            roleCodes = [payload.role_code];
+        }
+
+        const isChangingRole = roleCodes !== null;
+        let newType = oldUser.user_type;
+
+        if (isChangingRole) {
+            newType = deriveUserType(roleCodes);
+            updates.user_type = newType;
+            
+            const involvesSystemRole = SYSTEM_ROLES.includes(oldUser.user_type) || SYSTEM_ROLES.includes(newType);
+            if (involvesSystemRole && !isSuperAdmin(actor)) {
+                throw new Error('Super_Admin_Required');
+            }
+            if ((actor.userId || actor.id) === userId) {
+                throw new Error('Cannot_Change_Own_Role');
+            }
+        }
+
+        if (Object.keys(updates).length === 0 && !isChangingRole) throw new Error('No_Update_Field');
 
         const conflict = await usersRepository.checkUserConflict({
             username: updates.username,
@@ -100,15 +135,28 @@ const usersService = {
         });
         if (conflict) throw new Error('User_Conflict');
 
-        const updated = await usersRepository.updateUser(userId, updates);
+        const updated = await withTransaction(async (client) => {
+            let updatedUser = oldUser;
+            if (Object.keys(updates).length > 0) {
+                updatedUser = await usersRepository.updateUser(client, userId, updates);
+            }
+            
+            if (isChangingRole) {
+                const roleAssigned = await usersRepository.replaceRolesByCodes(client, userId, roleCodes);
+                if (!roleAssigned) throw new Error('Role_Not_Found');
+                await usersRepository.incrementTokenVersion(client, userId);
+                updatedUser.token_version += 1;
+            }
+            return updatedUser;
+        });
 
         await writeAuditLog({
             actorId: actor.userId || actor.id,
             action: 'admin.user_updated',
             entityType: 'users',
             entityId: userId,
-            oldData: oldUser,
-            newData: updated,
+            oldData: { ...oldUser },
+            newData: { ...updated, roles: isChangingRole ? roleCodes : oldUser.roles },
             ipAddress,
             userAgent
         });

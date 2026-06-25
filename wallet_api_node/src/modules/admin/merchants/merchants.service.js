@@ -222,7 +222,14 @@ const merchantsService = {
         ensureUuid(id, 'Invalid_Merchant_Id');
         const merchant = await merchantsRepository.findMerchantById(id);
         if (!merchant) throw new Error('Merchant_Not_Found');
-        return merchant;
+
+        const callbackConfig = await merchantsRepository.findCallbackConfig(id);
+        if (callbackConfig) delete callbackConfig.webhook_secret_hash; // Không trả về secret hash ra ngoài
+
+        return {
+            merchant,
+            callback_config: callbackConfig || null
+        };
     },
 
     approveMerchant: async (id, reason, actor) => {

@@ -145,79 +145,32 @@ const authService = {
             throw new Error('Invalid_Credentials');
         }
 
-        // Lưu tạm vào DB với OTP là 'TW_VFY' (Twilio Verify)
-        await otpRepository.upsertOtp(phone, null, 'TW_VFY', 'FORGOT_PASSWORD');
-
-        // Gửi bằng Twilio Verify Service do user cung cấp
-        const result = await sendOTP(phone);
-        if (!result.success) {
-            throw new Error(`OTP_Send_Failed: ${result.message}`);
-        }
-
-        return true;
-    },
-
-
-    verifyOtp: async (phone, otp) => {
-
-        const record = await otpRepository.findByPhone(phone);
-        if (!record) throw new Error('OTP_Not_Found');
-
-        if (record.locked_until && new Date(record.locked_until) > new Date()) {
-            throw new Error('Account_Locked');
-        }
-
-        // Sử dụng Twilio Verify do user cung cấp
-        const twilioResult = await verifyOTP(phone, otp);
-
-        if (!twilioResult.valid) {
-            const newAttempts = record.failed_attempts + 1;
-            
-            if (newAttempts >= 5) {
-                await otpRepository.lockAccount(phone, newAttempts, 30);
-                throw new Error('Account_Locked_Now');
-            } else {
-                await otpRepository.updateAttempts(phone, newAttempts);
-                const err = new Error('OTP_Invalid');
-                err.remainingAttempts = 5 - newAttempts;
-                throw err; 
+        if (user.locked_until) {
+            if (new Date(user.locked_until) > new Date()) {
+                throw new Error('Account_Locked');
             }
+            await authRepository.markLoginSuccess(user.id);
+            user.failed_login_attempts = 0;
+            user.locked_until = null;
         }
 
-        const registerToken = jwt.sign(
-            { email: record.email, phone: phone },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' }
-        );
-
-        await otpRepository.deleteByPhone(phone);
-
-        return registerToken;
-    },
-
-    registerUserAndWallet: async (registerToken, password) => {
-        const decoded = jwt.verify(registerToken, process.env.JWT_SECRET);
-        const { email, phone } = decoded;
-
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            const saltRounds = 10;
-            const passwordHash = await bcrypt.hash(password, saltRounds);
-
-            const newUserId = await authRepository.create(client, null, phone, passwordHash);
-            await walletRepository.create(client, newUserId, phone);
-
-            await client.query('COMMIT');
-            return newUserId;
-        } catch (error) {
-            await client.query('ROLLBACK');
+        const passwordMatches = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatches) {
+            const attempts = Number(user.failed_login_attempts || 0) + 1;
+            await authRepository.updateFailedLogin(user.id, attempts, attempts >= MAX_FAILED_LOGIN ? LOCK_MINUTES : 0);
+            const error = new Error(attempts >= MAX_FAILED_LOGIN ? 'Account_Locked_Now' : 'Invalid_Credentials');
+            error.remainingAttempts = Math.max(MAX_FAILED_LOGIN - attempts, 0);
             throw error;
         }
 
-        await authRepository.markLoginSuccess(user.id);
-        user.failed_login_attempts = 0;
-        user.locked_until = null;
+        if (user.status !== 'ACTIVE') throw new Error('Account_Inactive');
+
+        if (Number(user.failed_login_attempts || 0) > 0 || user.locked_until) {
+            await authRepository.markLoginSuccess(user.id);
+            user.failed_login_attempts = 0;
+            user.locked_until = null;
+        }
+
         const context = await authRepository.getRolesAndPermissions(user.id);
         const tokens = await authRepository.withTransaction(client =>
             issueTokenPair(user, context, { rememberMe, ipAddress, userAgent, client })

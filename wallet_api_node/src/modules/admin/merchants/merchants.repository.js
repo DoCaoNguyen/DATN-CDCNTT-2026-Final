@@ -78,13 +78,15 @@ const merchantsRepository = {
     },
 
     createMerchant: async (merchantData, client = pool) => {
-        const { merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status = 'PENDING' } = merchantData;
+        const { merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status = 'PENDING_REVIEW' } = merchantData;
+        const { v7: uuidv7 } = require('uuid');
+        const newId = uuidv7();
         const query = `
-            INSERT INTO merchants (merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO merchants (id, merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
         `;
-        const params = [merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status];
+        const params = [newId, merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status];
         const res = await client.query(query, params);
         return res.rows[0];
     },
@@ -122,12 +124,15 @@ const merchantsRepository = {
     },
 
     createCallbackConfig: async (merchantId, data, client = pool) => {
+        const { v7: uuidv7 } = require('uuid');
+        const newId = uuidv7();
         const query = `
-            INSERT INTO merchant_callback_configs (merchant_id, default_callback_url, default_redirect_url, webhook_secret_hash, callback_enabled, retry_enabled)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO merchant_callback_configs (id, merchant_id, default_callback_url, default_redirect_url, webhook_secret_hash, callback_enabled, retry_enabled)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
         `;
         const params = [
+            newId,
             merchantId, 
             data.default_callback_url || '', 
             data.default_redirect_url || null, 
@@ -166,12 +171,14 @@ const merchantsRepository = {
     },
 
     createApiKey: async (merchantId, keyName, apiKey, apiSecretHash, environment, client = pool) => {
+        const { v7: uuidv7 } = require('uuid');
+        const newId = uuidv7();
         const query = `
-            INSERT INTO merchant_api_keys (merchant_id, key_name, api_key, api_secret_hash, environment, status)
-            VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
+            INSERT INTO merchant_api_keys (id, merchant_id, key_name, api_key, api_secret_hash, environment, status)
+            VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')
             RETURNING id, key_name, api_key, environment, status, created_at
         `;
-        const res = await client.query(query, [merchantId, keyName, apiKey, apiSecretHash, environment]);
+        const res = await client.query(query, [newId, merchantId, keyName, apiKey, apiSecretHash, environment]);
         return res.rows[0];
     },
 

@@ -63,6 +63,11 @@ const notImplemented = require('../../../utils/notImplemented');
  *               password:
  *                 type: string
  *                 example: Password@123
+ *               role_codes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["USER"]
  *     responses:
  *       201:
  *         description: User created
@@ -82,7 +87,7 @@ const notImplemented = require('../../../utils/notImplemented');
  *       200:
  *         description: User detail
  *   patch:
- *     summary: Admin cap nhat user
+ *     summary: Admin cap nhat user (Roles)
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -109,6 +114,11 @@ const notImplemented = require('../../../utils/notImplemented');
  *                 type: string
  *               is_kyc_verified:
  *                 type: boolean
+ *               role_codes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Danh sach Ma Role de gan cho user (Super Admin moi duoc phep doi sang cac Role he thong)
  *     responses:
  *       200:
  *         description: User updated
@@ -251,14 +261,14 @@ const notImplemented = require('../../../utils/notImplemented');
  */
 
 
-router.get('/users', requirePermission('admin.users.manage'), usersController.listUsers);
-router.post('/users', requirePermission('admin.users.manage'), usersValidator.validateCreateUser, usersController.createUser);
-router.get('/users/:id', requirePermission('admin.users.manage'), usersValidator.validateIdParam, usersController.getUserDetail);
-router.patch('/users/:id', requirePermission('admin.users.manage'), usersValidator.validateIdParam, usersController.updateUser);
-router.get('/users/:id/wallet', requirePermission('admin.users.manage', 'wallets.read'), usersValidator.validateIdParam, usersController.getUserWallet);
-router.post('/users/:id/actions/lock', requirePermission('admin.users.manage'), usersValidator.validateIdParam, usersValidator.validateReason, usersController.lockUser);
-router.post('/users/:id/actions/unlock', requirePermission('admin.users.manage'), usersValidator.validateIdParam, usersValidator.validateReason, usersController.unlockUser);
-router.post('/users/:id/actions/reset-password', requirePermission('admin.users.manage'), usersValidator.validateIdParam, usersValidator.validateResetPassword, usersController.resetUserPassword);
-router.get('/users/:id/audit-logs', requirePermission('audit_logs.read'), usersValidator.validateIdParam, usersController.getUserAuditLogs);
+router.get('/users', requirePermission('admin.users.read'), usersController.listUsers);
+router.post('/users', requirePermission('admin.users.create'), usersValidator.validateCreateUser, usersController.createUser);
+router.get('/users/:id', requirePermission('admin.users.read'), usersValidator.validateIdParam, usersController.getUserDetail);
+router.patch('/users/:id', requirePermission('admin.users.update'), usersValidator.validateIdParam, usersController.updateUser);
+router.get('/users/:id/wallet', requirePermission('admin.wallets.read'), usersValidator.validateIdParam, usersController.getUserWallet);
+router.post('/users/:id/actions/lock', requirePermission('admin.users.lock'), usersValidator.validateIdParam, usersValidator.validateReason, usersController.lockUser);
+router.post('/users/:id/actions/unlock', requirePermission('admin.users.lock'), usersValidator.validateIdParam, usersValidator.validateReason, usersController.unlockUser);
+router.post('/users/:id/actions/reset-password', requirePermission('admin.users.reset_password'), usersValidator.validateIdParam, usersValidator.validateResetPassword, usersController.resetUserPassword);
+router.get('/users/:id/audit-logs', requirePermission('admin.audit_logs.read'), usersValidator.validateIdParam, usersController.getUserAuditLogs);
 
 module.exports = router;
