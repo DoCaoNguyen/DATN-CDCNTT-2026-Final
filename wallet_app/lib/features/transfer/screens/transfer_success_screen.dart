@@ -69,11 +69,7 @@ class TransferSuccessScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFE4EE),
-              Color(0xFFFFF0F5),
-              Color(0xFFF5F5F9),
-            ],
+            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
           ),
         ),
         child: SingleChildScrollView(
@@ -119,15 +115,22 @@ class TransferSuccessScreen extends StatelessWidget {
               // Thông báo người nhận tiền
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9).withOpacity(0.6),
+                  color: const Color(0xFFE8F5E9).withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFC8E6C9), width: 1),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: Color(0xFF4CAF50), size: 20),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFF4CAF50),
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -162,7 +165,11 @@ class TransferSuccessScreen extends StatelessWidget {
                           fontSize: 15,
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded, color: Color(0xFFE91E63), size: 16),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFFE91E63),
+                        size: 16,
+                      ),
                     ],
                   ),
                 ],
@@ -195,7 +202,7 @@ class TransferSuccessScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -239,7 +246,10 @@ class TransferSuccessScreen extends StatelessWidget {
                             ],
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(20),
@@ -255,7 +265,11 @@ class TransferSuccessScreen extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(width: 4),
-                                Icon(Icons.share_rounded, size: 14, color: Colors.black87),
+                                Icon(
+                                  Icons.share_rounded,
+                                  size: 14,
+                                  color: Colors.black87,
+                                ),
                               ],
                             ),
                           ),
@@ -373,7 +387,11 @@ class TransferSuccessScreen extends StatelessWidget {
                                 ),
                               ),
                               const Spacer(),
-                              Icon(Icons.chat_bubble_outline_rounded, size: 16, color: Colors.blue.shade700),
+                              Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 16,
+                                color: Colors.blue.shade700,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -391,7 +409,12 @@ class TransferSuccessScreen extends StatelessWidget {
 
                     // Các nút thao tác
                     Padding(
-                      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0, top: 8.0),
+                      padding: const EdgeInsets.only(
+                        left: 16.0,
+                        right: 16.0,
+                        bottom: 20.0,
+                        top: 8.0,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
@@ -436,7 +459,7 @@ class TransferSuccessScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -446,24 +469,48 @@ class TransferSuccessScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.account_balance_wallet_rounded, color: Colors.teal, size: 20),
+                        const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: Colors.teal,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Quản lý chi tiêu',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
-                        const Icon(Icons.visibility_rounded, size: 16, color: Colors.grey),
+                        const Icon(
+                          Icons.visibility_rounded,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Row(
                             children: [
-                              Text('Giải trí', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                              Icon(Icons.arrow_drop_down_rounded, size: 16, color: Colors.black87),
+                              Text(
+                                'Giải trí',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_drop_down_rounded,
+                                size: 16,
+                                color: Colors.black87,
+                              ),
                             ],
                           ),
                         ),
@@ -473,22 +520,35 @@ class TransferSuccessScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50.withOpacity(0.4),
+                        color: Colors.blue.shade50.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.format_quote_rounded, color: Colors.blue, size: 20),
+                          const Icon(
+                            Icons.format_quote_rounded,
+                            color: Colors.blue,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: const TextStyle(color: Colors.black87, fontSize: 13),
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 13,
+                                ),
                                 children: [
-                                  const TextSpan(text: 'Tháng 6 biến động, Thống đã chi bao tiền? Liệu đã tới '),
+                                  const TextSpan(
+                                    text:
+                                        'Tháng 6 biến động, Thống đã chi bao tiền? Liệu đã tới ',
+                                  ),
                                   TextSpan(
                                     text: '5.000.000đ?',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade700,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -500,7 +560,8 @@ class TransferSuccessScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => TransactionHistoryScreen(token: token),
+                                  builder: (_) =>
+                                      TransactionHistoryScreen(token: token),
                                 ),
                               );
                             },

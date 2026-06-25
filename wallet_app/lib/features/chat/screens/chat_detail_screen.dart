@@ -7,6 +7,8 @@ import '../../../core/services/socket_service.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
 import 'red_packet_create_screen.dart';
 import '../widgets/red_packet_dialog.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String token;
@@ -37,7 +39,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void initState() {
     super.initState();
     _fetchChatHistory();
-    
+
     _chatController.addListener(() {
       setState(() {
         _isTyping = _chatController.text.isNotEmpty;
@@ -65,7 +67,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> _fetchChatHistory() async {
     try {
-      final response = await _client.get(Uri.parse(ApiConfig.getChatHistory(widget.counterpartyPhone)));
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getChatHistory(widget.counterpartyPhone)),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
@@ -83,17 +87,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  String _formatDateTime(String? isoString) {
-    if (isoString == null) return '';
-    final date = DateTime.parse(isoString).toLocal();
-    return DateFormat('dd MMM, HH:mm').format(date).replaceAll('MMM', 'thg ${date.month.toString().padLeft(2, '0')}');
-  }
-
-  String _formatCurrency(String amount) {
-    final number = double.tryParse(amount) ?? 0;
-    return NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(number);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,19 +97,29 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           _buildAddFriendBanner(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Colors.pink))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.pink),
+                  )
                 : _messages.isEmpty
-                    ? const Center(child: Text("Chưa có giao dịch nào", style: TextStyle(color: Colors.grey)))
-                    : ListView.builder(
-                        controller: _scrollController,
-                        reverse: true,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final msg = _messages[index];
-                          return _buildMessageBubble(msg);
-                        },
-                      ),
+                ? const Center(
+                    child: Text(
+                      "Chưa có giao dịch nào",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[index];
+                      return _buildMessageBubble(msg);
+                    },
+                  ),
           ),
           _buildChatInputArea(),
           _buildBottomActionRow(context),
@@ -139,24 +142,48 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             backgroundColor: Colors.pink.shade100,
             radius: 18,
             child: Text(
-              widget.counterpartyName.isNotEmpty ? widget.counterpartyName[0].toUpperCase() : 'U',
-              style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.bold),
+              widget.counterpartyName.isNotEmpty
+                  ? widget.counterpartyName[0].toUpperCase()
+                  : 'U',
+              style: const TextStyle(
+                color: Colors.pink,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.counterpartyName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-              const Text('Người lạ', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                widget.counterpartyName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const Text(
+                'Người lạ',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ],
       ),
       actions: [
-        IconButton(icon: const Icon(Icons.grid_view_rounded, color: Colors.black87), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.black87), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.home_rounded, color: Colors.black87), onPressed: () {}),
+        IconButton(
+          icon: const Icon(Icons.grid_view_rounded, color: Colors.black87),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.black87),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: const Icon(Icons.home_rounded, color: Colors.black87),
+          onPressed: () {},
+        ),
       ],
     );
   }
@@ -171,7 +198,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Kết bạn để trò chuyện dễ dàng hơn', style: TextStyle(fontSize: 13)),
+          const Text(
+            'Kết bạn để trò chuyện dễ dàng hơn',
+            style: TextStyle(fontSize: 13),
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -180,12 +210,23 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 14),
+                Icon(
+                  Icons.person_add_alt_1_rounded,
+                  color: Colors.white,
+                  size: 14,
+                ),
                 SizedBox(width: 4),
-                Text('Kết bạn', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  'Kết bạn',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -194,50 +235,89 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget _buildMessageBubble(dynamic msg) {
     final isReceived = msg['direction'] == 'RECEIVE';
     final isText = msg['message_type'] == 'TEXT';
-    final amountFormatted = _formatCurrency(msg['amount'].toString());
-    final dateFormatted = _formatDateTime(msg['created_at']);
-    final timeOnly = msg['created_at'] != null ? DateFormat('HH:mm').format(DateTime.parse(msg['created_at']).toLocal()) : '';
+    final amountFormatted = CurrencyFormatter.format(msg['amount'].toString());
+    final dateFormatted = DateFormatter.format(msg['created_at']);
+    final timeOnly = msg['created_at'] != null
+        ? DateFormat(
+            'HH:mm',
+          ).format(DateTime.parse(msg['created_at']).toLocal())
+        : '';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
-        crossAxisAlignment: isReceived ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        crossAxisAlignment: isReceived
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.end,
         children: [
           Center(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text(dateFormatted, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              child: Text(
+                dateFormatted,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ),
           ),
           Row(
-            mainAxisAlignment: isReceived ? MainAxisAlignment.start : MainAxisAlignment.end,
-            crossAxisAlignment: isText ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+            mainAxisAlignment: isReceived
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.end,
+            crossAxisAlignment: isText
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.end,
             children: [
               if (isReceived)
                 CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.grey.shade300,
-                  child: Text(widget.counterpartyName.isNotEmpty ? widget.counterpartyName[0].toUpperCase() : 'U', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  child: Text(
+                    widget.counterpartyName.isNotEmpty
+                        ? widget.counterpartyName[0].toUpperCase()
+                        : 'U',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               if (isReceived) const SizedBox(width: 8),
-              
-              if (isText) 
+
+              if (isText)
                 // Bong bóng chữ thuần túy
                 Container(
                   constraints: const BoxConstraints(maxWidth: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isReceived ? Colors.white : Colors.pink.shade50,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isReceived ? Colors.grey.shade300 : Colors.pink.shade100),
+                    border: Border.all(
+                      color: isReceived
+                          ? Colors.grey.shade300
+                          : Colors.pink.shade100,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Flexible(child: Text(msg['note'] ?? '', style: const TextStyle(fontSize: 15, color: Colors.black87))),
+                      Flexible(
+                        child: Text(
+                          msg['note'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Text(timeOnly, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                      Text(
+                        timeOnly,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                 )
@@ -250,7 +330,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     final isExhausted = rpInfo['status'] == 'EXHAUSTED';
 
                     String title = 'Lì Xì';
-                    String subTitle = isReceived ? 'Bấm để giật lì xì' : 'Bạn đã gửi lì xì';
+                    String subTitle = isReceived
+                        ? 'Bấm để giật lì xì'
+                        : 'Bạn đã gửi lì xì';
                     IconData iconData = Icons.money_rounded;
                     Color bubbleColor = Colors.red.shade600;
                     Color iconColor = Colors.amber;
@@ -296,13 +378,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Text(
+                                          title,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
                                         const SizedBox(height: 2),
                                         Text(
                                           subTitle,
-                                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -312,28 +407,46 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             ),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 6,
+                                horizontal: 12,
                               ),
-                              child: const Text('Mio Lì Xì', style: TextStyle(color: Colors.white, fontSize: 10)),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: const BorderRadius.only(
+                                  bottomLeft: Radius.circular(12),
+                                  bottomRight: Radius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Mio Lì Xì',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
                     );
-                  }
+                  },
                 )
-              else 
+              else
                 // Bong bóng giao dịch tiền
                 Container(
                   constraints: const BoxConstraints(maxWidth: 250),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isReceived ? const Color(0xFFE8F5E9) : const Color(0xFFF5F5F5),
+                    color: isReceived
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isReceived ? Colors.green.shade200 : Colors.grey.shade300),
+                    border: Border.all(
+                      color: isReceived
+                          ? Colors.green.shade200
+                          : Colors.grey.shade300,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,22 +456,67 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(isReceived ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: isReceived ? Colors.green : Colors.grey, size: 14),
+                              Icon(
+                                isReceived
+                                    ? Icons.arrow_downward_rounded
+                                    : Icons.arrow_upward_rounded,
+                                color: isReceived ? Colors.green : Colors.grey,
+                                size: 14,
+                              ),
                               const SizedBox(width: 4),
-                              Text(isReceived ? 'Đã nhận' : 'Đã chuyển', style: TextStyle(color: isReceived ? Colors.green : Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+                              Text(
+                                isReceived ? 'Đã nhận' : 'Đã chuyển',
+                                style: TextStyle(
+                                  color: isReceived
+                                      ? Colors.green
+                                      : Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
-                          Text(timeOnly, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text(
+                            timeOnly,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(amountFormatted, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      Text(
+                        amountFormatted,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(isReceived ? 'Nhận tiền qua Mio' : 'Chuyển tiền qua Mio', style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                      if (msg['note'] != null && msg['note'].toString().isNotEmpty && msg['message_type'] != 'RED_PACKET')
+                      Text(
+                        isReceived
+                            ? 'Nhận tiền qua Mio'
+                            : 'Chuyển tiền qua Mio',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      if (msg['note'] != null &&
+                          msg['note'].toString().isNotEmpty &&
+                          msg['message_type'] != 'RED_PACKET')
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text('"${msg['note']}"', style: const TextStyle(fontSize: 13, color: Colors.black54, fontStyle: FontStyle.italic)),
+                          child: Text(
+                            '"${msg['note']}"',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -403,7 +561,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       ),
                     ),
                   ),
-                  Icon(Icons.emoji_emotions_rounded, color: Colors.grey.shade600, size: 20),
+                  Icon(
+                    Icons.emoji_emotions_rounded,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
                 ],
               ),
             ),
@@ -413,7 +575,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             GestureDetector(
               onTap: () {
                 if (_chatController.text.trim().isNotEmpty) {
-                  SocketService().sendMessage(widget.counterpartyPhone, _chatController.text.trim());
+                  SocketService().sendMessage(
+                    widget.counterpartyPhone,
+                    _chatController.text.trim(),
+                  );
                   _chatController.clear();
                 }
               },
@@ -446,12 +611,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       receiverPhone: widget.counterpartyPhone,
                     ),
                   ),
-                ).then((_) => _fetchChatHistory()); // Cập nhật lại list sau khi chuyển tiền
+                ).then(
+                  (_) => _fetchChatHistory(),
+                ); // Cập nhật lại list sau khi chuyển tiền
               },
-              child: _buildActionBtn(Icons.currency_exchange_rounded, 'Chuyển tiền', Colors.red),
+              child: _buildActionBtn(
+                Icons.currency_exchange_rounded,
+                'Chuyển tiền',
+                Colors.red,
+              ),
             ),
-            _buildActionBtn(Icons.chat_bubble_outline_rounded, 'Nhắc trả tiền', Colors.pink),
-            _buildActionBtn(Icons.card_giftcard_rounded, 'Gửi thiệp', Colors.pinkAccent),
+            _buildActionBtn(
+              Icons.chat_bubble_outline_rounded,
+              'Nhắc trả tiền',
+              Colors.pink,
+            ),
+            _buildActionBtn(
+              Icons.card_giftcard_rounded,
+              'Gửi thiệp',
+              Colors.pinkAccent,
+            ),
             GestureDetector(
               onTap: () async {
                 final result = await Navigator.push(
@@ -463,17 +642,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ),
                   ),
                 );
-                
+
                 if (result != null) {
                   // result là redPacketId
                   SocketService().sendMessage(
-                    widget.counterpartyPhone, 
+                    widget.counterpartyPhone,
                     result, // content = redPacketId
-                    messageType: 'RED_PACKET'
+                    messageType: 'RED_PACKET',
                   );
                 }
               },
-              child: _buildActionBtn(Icons.money_rounded, 'Lì xì', Colors.redAccent),
+              child: _buildActionBtn(
+                Icons.money_rounded,
+                'Lì xì',
+                Colors.redAccent,
+              ),
             ),
           ],
         ),
@@ -487,13 +670,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 20),
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.black87),
+        ),
       ],
     );
   }

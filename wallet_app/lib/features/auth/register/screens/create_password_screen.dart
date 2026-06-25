@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
-import '../../login/sceens/login_phone_screen.dart';
+import '../../login/screens/login_phone_screen.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
@@ -25,10 +25,11 @@ class CreatePasswordScreen extends StatefulWidget {
 
 class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController(); 
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _isButtonEnabled = false;
-  bool _isLoading = false; 
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -39,9 +40,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 
   void _validateInputs() {
     setState(() {
-      _isButtonEnabled = _passwordController.text.length == 6 &&
-                         _confirmPasswordController.text.length == 6 &&
-                         _passwordController.text == _confirmPasswordController.text;
+      _isButtonEnabled =
+          _passwordController.text.length == 6 &&
+          _confirmPasswordController.text.length == 6 &&
+          _passwordController.text == _confirmPasswordController.text;
     });
   }
 
@@ -65,7 +67,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'register_token': widget.registerToken,
-          'password': newPassword
+          'password': newPassword,
         }),
       );
 
@@ -76,18 +78,22 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        SnackbarUtils.showSuccess(context, 'Tạo tài khoản và Ví thành công! Vui lòng đăng nhập.');
+        SnackbarUtils.showSuccess(
+          context,
+          'Tạo tài khoản và Ví thành công! Vui lòng đăng nhập.',
+        );
 
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => LoginPhoneScreen(initialPhoneNumber: widget.phoneNumber),
+            builder: (context) =>
+                LoginPhoneScreen(initialPhoneNumber: widget.phoneNumber),
           ),
           (route) => false,
         );
-        
       } else {
-        String errorMsg = responseData['error'] ?? 'Có lỗi xảy ra, vui lòng thử lại';
+        String errorMsg =
+            responseData['error'] ?? 'Có lỗi xảy ra, vui lòng thử lại';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
@@ -97,7 +103,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi kết nối máy chủ. Vui lòng thử lại!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Lỗi kết nối máy chủ. Vui lòng thử lại!'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -108,7 +117,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       valueListenable: AppState.currentLanguage,
       builder: (context, activeLang, child) {
         return Scaffold(
-          backgroundColor: Colors.white, // Chuyển nền tổng thành trắng để gradient nổi bật hơn
+          backgroundColor: Colors
+              .white, // Chuyển nền tổng thành trắng để gradient nổi bật hơn
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -125,9 +135,16 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 1.5,
+                      ),
                     ),
-                    child: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark, size: 20),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: AppColors.textDark,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -144,7 +161,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
             titleSpacing: 12,
           ),
           // Bọc body để AppBar đè lên phần nền Gradient
-          extendBodyBehindAppBar: true, 
+          extendBodyBehindAppBar: true,
           body: Stack(
             children: [
               // 1. HIỆU ỨNG GRADIENT XANH NHẠT Ở TRÊN CÙNG
@@ -160,7 +177,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         const Color(0xFFD6F0FF), // Màu xanh dương nhạt ở đỉnh
-                        Colors.white.withOpacity(0.0), // Mờ dần thành trong suốt ở dưới
+                        Colors.white.withValues(
+                          alpha: 0.0,
+                        ), // Mờ dần thành trong suốt ở dưới
                       ],
                     ),
                   ),
@@ -175,11 +194,11 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.2),
+                    color: Colors.green.withValues(alpha: 0.2),
                   ),
                 ),
               ),
-              
+
               // 3. NỘI DUNG CHÍNH
               SafeArea(
                 child: Column(
@@ -193,14 +212,19 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 20),
-                              
+
                               // CHỮ "TẠO MẬT KHẨU" MÀU HỒNG & IN NGHIÊNG
                               RichText(
                                 text: TextSpan(
-                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   children: [
                                     TextSpan(
-                                      text: activeLang == 'VIE' ? 'Tạo mật khẩu ' : 'Create password ',
+                                      text: activeLang == 'VIE'
+                                          ? 'Tạo mật khẩu '
+                                          : 'Create password ',
                                       style: const TextStyle(
                                         color: AppColors.primaryPink,
                                         fontStyle: FontStyle.italic,
@@ -209,61 +233,86 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: activeLang == 'VIE' ? 'của bạn' : 'setup',
-                                      style: const TextStyle(color: AppColors.textDark),
+                                      text: activeLang == 'VIE'
+                                          ? 'của bạn'
+                                          : 'setup',
+                                      style: const TextStyle(
+                                        color: AppColors.textDark,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 8),
-                              
+
                               RichText(
                                 text: TextSpan(
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textDark,
+                                  ),
                                   children: [
                                     TextSpan(
-                                      text: activeLang == 'VIE' ? 'Số ví: ' : 'Wallet number: ',
+                                      text: activeLang == 'VIE'
+                                          ? 'Số ví: '
+                                          : 'Wallet number: ',
                                     ),
                                     TextSpan(
                                       text: widget.phoneNumber,
                                       style: const TextStyle(
-                                        color: AppColors.primaryPink, 
+                                        color: AppColors.primaryPink,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 30),
-                              
+
                               // Ô NHẬP MẬT KHẨU
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 child: TextField(
                                   controller: _passwordController,
-                                  obscureText: true, 
+                                  obscureText: true,
                                   keyboardType: TextInputType.number,
-                                  maxLength: 6, 
-                                  style: const TextStyle(fontSize: 18, letterSpacing: 8.0, fontWeight: FontWeight.bold),
+                                  maxLength: 6,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    letterSpacing: 8.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                    hintText: activeLang == 'VIE' ? 'Tạo mật khẩu 6 số' : 'Create 6-digit password',
-                                    hintStyle: const TextStyle(fontSize: 16, letterSpacing: 0, color: Colors.grey, fontWeight: FontWeight.normal),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 16,
+                                    ),
+                                    hintText: activeLang == 'VIE'
+                                        ? 'Tạo mật khẩu 6 số'
+                                        : 'Create 6-digit password',
+                                    hintStyle: const TextStyle(
+                                      fontSize: 16,
+                                      letterSpacing: 0,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                     border: InputBorder.none,
-                                    counterText: '', 
+                                    counterText: '',
                                   ),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
                                   ],
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 16),
 
                               // Ô XÁC NHẬN MẬT KHẨU
@@ -271,20 +320,36 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 child: TextField(
                                   controller: _confirmPasswordController,
-                                  obscureText: true, 
+                                  obscureText: true,
                                   keyboardType: TextInputType.number,
-                                  maxLength: 6, 
-                                  style: const TextStyle(fontSize: 18, letterSpacing: 8.0, fontWeight: FontWeight.bold),
+                                  maxLength: 6,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    letterSpacing: 8.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                    hintText: activeLang == 'VIE' ? 'Xác nhận mật khẩu' : 'Confirm password',
-                                    hintStyle: const TextStyle(fontSize: 16, letterSpacing: 0, color: Colors.grey, fontWeight: FontWeight.normal),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 16,
+                                    ),
+                                    hintText: activeLang == 'VIE'
+                                        ? 'Xác nhận mật khẩu'
+                                        : 'Confirm password',
+                                    hintStyle: const TextStyle(
+                                      fontSize: 16,
+                                      letterSpacing: 0,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                     border: InputBorder.none,
-                                    counterText: '', 
+                                    counterText: '',
                                   ),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
@@ -292,13 +357,20 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 ),
                               ),
 
-                              if (_confirmPasswordController.text.length == 6 && 
-                                  _passwordController.text != _confirmPasswordController.text)
+                              if (_confirmPasswordController.text.length == 6 &&
+                                  _passwordController.text !=
+                                      _confirmPasswordController.text)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Text(
-                                    activeLang == 'VIE' ? 'Mật khẩu không khớp' : 'Passwords do not match',
-                                    style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w500),
+                                    activeLang == 'VIE'
+                                        ? 'Mật khẩu không khớp'
+                                        : 'Passwords do not match',
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -306,9 +378,12 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                         ),
                       ),
                     ),
-                    
+
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 16.0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -317,11 +392,18 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                               const CircleAvatar(
                                 radius: 24,
                                 backgroundColor: Colors.white,
-                                child: Icon(Icons.support_agent_rounded, color: AppColors.primaryPink, size: 28),
+                                child: Icon(
+                                  Icons.support_agent_rounded,
+                                  color: AppColors.primaryPink,
+                                  size: 28,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(10),
@@ -334,7 +416,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              )
+                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -342,26 +424,40 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: (_isButtonEnabled && !_isLoading) ? _submitPassword : null,
+                              onPressed: (_isButtonEnabled && !_isLoading)
+                                  ? _submitPassword
+                                  : null,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: _isButtonEnabled ? AppColors.primaryPink : const Color(0xFFE0E0E0),
-                                disabledBackgroundColor: const Color(0xFFE0E0E0),
+                                backgroundColor: _isButtonEnabled
+                                    ? AppColors.primaryPink
+                                    : const Color(0xFFE0E0E0),
+                                disabledBackgroundColor: const Color(
+                                  0xFFE0E0E0,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 elevation: 0,
                               ),
-                              child: _isLoading 
+                              child: _isLoading
                                   ? const SizedBox(
-                                      width: 20, height: 20, 
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : Text(
-                                      activeLang == 'VIE' ? 'Xác nhận' : 'Confirm',
+                                      activeLang == 'VIE'
+                                          ? 'Xác nhận'
+                                          : 'Confirm',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: _isButtonEnabled ? Colors.white : AppColors.textLight,
+                                        color: _isButtonEnabled
+                                            ? Colors.white
+                                            : AppColors.textLight,
                                       ),
                                     ),
                             ),

@@ -24,13 +24,15 @@ class SplitBillInputAmountScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<SplitBillInputAmountScreen> createState() => _SplitBillInputAmountScreenState();
+  State<SplitBillInputAmountScreen> createState() =>
+      _SplitBillInputAmountScreenState();
 }
 
-class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen> {
+class _SplitBillInputAmountScreenState
+    extends State<SplitBillInputAmountScreen> {
   final TextEditingController _amountController = TextEditingController();
   final NumberFormat _formatter = NumberFormat('#,###', 'vi_VN');
-  
+
   double _amount = 0;
 
   @override
@@ -38,7 +40,8 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
     super.initState();
     // Initialize with transaction amount if available
     if (widget.transactionData['amount'] != null) {
-      double txAmount = double.tryParse(widget.transactionData['amount'].toString()) ?? 0;
+      double txAmount =
+          double.tryParse(widget.transactionData['amount'].toString()) ?? 0;
       if (txAmount > 0) {
         _amount = txAmount;
         _amountController.text = _formatter.format(_amount);
@@ -60,9 +63,14 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
     });
 
     try {
-      var request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}/ai/scan-receipt'));
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConfig.baseUrl}/ai/scan-receipt'),
+      );
       request.headers['Authorization'] = 'Bearer ${widget.token}';
-      request.files.add(await http.MultipartFile.fromPath('image', pickedFile.path));
+      request.files.add(
+        await http.MultipartFile.fromPath('image', pickedFile.path),
+      );
 
       final client = CustomHttpClient();
       var response = await client.send(request);
@@ -70,15 +78,22 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
       var data = jsonDecode(responseData);
 
       if (response.statusCode == 200) {
-        final double total = double.tryParse(data['data']['totalAmount'].toString()) ?? 0;
+        final double total =
+            double.tryParse(data['data']['totalAmount'].toString()) ?? 0;
         if (total > 0) {
           _onAmountChanged(total.toInt().toString());
           SnackbarUtils.showSuccess(context, 'Đã quét thành công hóa đơn!');
         } else {
-          SnackbarUtils.showError(context, 'Không tìm thấy tổng tiền trên hóa đơn.');
+          SnackbarUtils.showError(
+            context,
+            'Không tìm thấy tổng tiền trên hóa đơn.',
+          );
         }
       } else {
-        SnackbarUtils.showError(context, data['error'] ?? 'Lỗi khi quét hóa đơn');
+        SnackbarUtils.showError(
+          context,
+          data['error'] ?? 'Lỗi khi quét hóa đơn',
+        );
       }
     } catch (e) {
       SnackbarUtils.showError(context, 'Có lỗi xảy ra: $e');
@@ -105,13 +120,13 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
       _amountController.clear();
       return;
     }
-    
+
     double? val = double.tryParse(cleanVal);
     if (val != null) {
       setState(() {
         _amount = val;
       });
-      
+
       String formatted = _formatter.format(val);
       _amountController.value = TextEditingValue(
         text: formatted,
@@ -131,10 +146,7 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFFFE4E1),
-                Colors.white,
-              ],
+              colors: [Color(0xFFFFE4E1), Colors.white],
             ),
           ),
           child: AppBar(
@@ -178,10 +190,7 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
                   const SizedBox(height: 60),
                   const Text(
                     "Nhập số tiền",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -192,7 +201,9 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
                           controller: _amountController,
                           autofocus: true,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           onChanged: _onAmountChanged,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
@@ -241,8 +252,18 @@ class _SplitBillInputAmountScreenState extends State<SplitBillInputAmountScreen>
                   else
                     TextButton.icon(
                       onPressed: _scanReceipt,
-                      icon: const Icon(Icons.document_scanner_rounded, color: Colors.pink),
-                      label: const Text('Quét hóa đơn bằng AI', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 16)),
+                      icon: const Icon(
+                        Icons.document_scanner_rounded,
+                        color: Colors.pink,
+                      ),
+                      label: const Text(
+                        'Quét hóa đơn bằng AI',
+                        style: TextStyle(
+                          color: Colors.pink,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   const SizedBox(height: 12),
                   if (!_isButtonEnabled && _amount > 0)

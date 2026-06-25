@@ -7,7 +7,11 @@ class SetWalletCodeDialog extends StatefulWidget {
   final String token;
   final Function(String) onSuccess;
 
-  const SetWalletCodeDialog({Key? key, required this.token, required this.onSuccess}) : super(key: key);
+  const SetWalletCodeDialog({
+    Key? key,
+    required this.token,
+    required this.onSuccess,
+  }) : super(key: key);
 
   @override
   State<SetWalletCodeDialog> createState() => _SetWalletCodeDialogState();
@@ -17,7 +21,7 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
   final TextEditingController codeController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final _client = CustomHttpClient();
-  
+
   bool isSubmitting = false;
   String? errorText;
 
@@ -30,7 +34,7 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
 
   Future<void> _submitCode() async {
     if (codeController.text.trim().length != 6) return;
-    
+
     setState(() {
       isSubmitting = true;
       errorText = null;
@@ -39,9 +43,7 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.setWalletCode),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'wallet_code': codeController.text.trim()}),
       );
 
@@ -52,7 +54,8 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
         final data = jsonDecode(response.body);
         setState(() {
           isSubmitting = false;
-          errorText = data['error'] ?? 'Mã PIN này không hợp lệ hoặc đã tồn tại.';
+          errorText =
+              data['error'] ?? 'Mã PIN này không hợp lệ hoặc đã tồn tại.';
           codeController.clear(); // Xóa trắng để người dùng nhập lại
           _focusNode.requestFocus(); // Tự động bật lại bàn phím
         });
@@ -101,7 +104,12 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
       backgroundColor: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.only(top: 12, bottom: 32, left: 24, right: 24),
+        padding: const EdgeInsets.only(
+          top: 12,
+          bottom: 32,
+          left: 24,
+          right: 24,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -119,7 +127,7 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Header: Tiêu đề và nút Đóng (X)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -161,10 +169,11 @@ class _SetWalletCodeDialogState extends State<SetWalletCodeDialog> {
                     },
                   ),
                 ),
-                
+
                 // Giao diện 6 dấu chấm (Đè lên TextField)
                 GestureDetector(
-                  onTap: () => _focusNode.requestFocus(), // Bấm vào để hiện lại bàn phím nếu lỡ tắt
+                  onTap: () => _focusNode
+                      .requestFocus(), // Bấm vào để hiện lại bàn phím nếu lỡ tắt
                   child: Container(
                     color: Colors.white,
                     width: double.infinity,

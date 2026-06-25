@@ -24,7 +24,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
   bool _quickLoginEnabled = true;
   bool _showMoreSecurity = false;
   String _autoLockOption = 'Không';
-  
+
   int _riskCount = 0;
   bool _isLoadingRisk = true;
 
@@ -86,7 +86,8 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -120,7 +121,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -147,10 +148,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                     Text.rich(
                       const TextSpan(
                         text: 'Hoàn thành: ',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
                         children: [
                           TextSpan(
                             text: '5/5',
@@ -172,7 +170,11 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           ),
           const SizedBox(height: 8),
           // Chevron down
-          const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black38, size: 24),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.black38,
+            size: 24,
+          ),
         ],
       ),
     );
@@ -220,13 +222,21 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
               color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.shield_rounded, color: Colors.red, size: 20),
+            child: const Icon(
+              Icons.shield_rounded,
+              color: Colors.red,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text.rich(
               const TextSpan(
-                style: TextStyle(fontSize: 13, color: Colors.black87, height: 1.3),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                  height: 1.3,
+                ),
                 children: [
                   TextSpan(
                     text: 'Tra cứu lừa đảo ',
@@ -293,7 +303,9 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ChangePinScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const ChangePinScreen(),
+                ),
               );
             },
           ),
@@ -310,11 +322,17 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                   const SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.grey,
+                    ),
                   )
                 else if (_riskCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
                       border: Border.all(color: Colors.red.shade200),
@@ -322,25 +340,43 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 14),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.red,
+                          size: 14,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '$_riskCount',
-                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
                   )
                 else
-                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green,
+                    size: 18,
+                  ),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey,
+                  size: 20,
+                ),
               ],
             ),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MalwareScanScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const MalwareScanScreen(),
+                ),
               );
             },
           ),
@@ -354,7 +390,10 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(12),
@@ -400,7 +439,11 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down_rounded, color: Colors.orange, size: 20),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -438,7 +481,11 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_up_rounded, color: Colors.orange, size: 20),
+                    Icon(
+                      Icons.keyboard_arrow_up_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -522,7 +569,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
       leading: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 20, color: iconColor),
@@ -558,7 +605,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
       leading: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 20, color: iconColor),
@@ -571,7 +618,9 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           color: Colors.black87,
         ),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
+      trailing:
+          trailing ??
+          const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
       onTap: onTap,
     );
   }
@@ -589,7 +638,7 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
       leading: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 20, color: iconColor),
@@ -612,13 +661,14 @@ class _LoginSecurityScreenState extends State<LoginSecurityScreen> {
           child: DropdownButton<String>(
             value: value,
             isDense: true,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: Colors.grey,
+            ),
             style: const TextStyle(fontSize: 13, color: Colors.black87),
             items: options.map((opt) {
-              return DropdownMenuItem(
-                value: opt,
-                child: Text(opt),
-              );
+              return DropdownMenuItem(value: opt, child: Text(opt));
             }).toList(),
             onChanged: (val) {
               if (val != null) onChanged(val);

@@ -11,7 +11,8 @@ class ForgotPinFaceAuthScreen extends StatefulWidget {
   const ForgotPinFaceAuthScreen({Key? key}) : super(key: key);
 
   @override
-  State<ForgotPinFaceAuthScreen> createState() => _ForgotPinFaceAuthScreenState();
+  State<ForgotPinFaceAuthScreen> createState() =>
+      _ForgotPinFaceAuthScreenState();
 }
 
 class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
@@ -59,7 +60,9 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
         frontCamera,
         ResolutionPreset.high,
         enableAudio: false,
-        imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+        imageFormatGroup: Platform.isAndroid
+            ? ImageFormatGroup.nv21
+            : ImageFormatGroup.bgra8888,
       );
       await _cameraController!.initialize();
 
@@ -88,7 +91,9 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
           rotation: InputImageRotation.rotation270deg,
-          format: Platform.isAndroid ? InputImageFormat.nv21 : InputImageFormat.bgra8888,
+          format: Platform.isAndroid
+              ? InputImageFormat.nv21
+              : InputImageFormat.bgra8888,
           bytesPerRow: image.planes[0].bytesPerRow,
         ),
       );
@@ -100,7 +105,9 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
           double leftEye = face.leftEyeOpenProbability ?? 1.0;
           double rightEye = face.rightEyeOpenProbability ?? 1.0;
           double headY = face.headEulerAngleY ?? 0.0;
-          double faceRatio = face.boundingBox.width / (image.width < image.height ? image.width : image.height);
+          double faceRatio =
+              face.boundingBox.width /
+              (image.width < image.height ? image.width : image.height);
 
           if (_livenessTask == 0 && faceRatio < 0.45) {
             setState(() => _livenessTask = 1); // Move closer
@@ -115,25 +122,27 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
               _hasBlinked = true;
             } else if (_hasBlinked && leftEye > 0.8 && rightEye > 0.8) {
               setState(() => _livenessTask = 5);
-              
+
               // Liveness success
               await _cameraController?.stopImageStream();
-              
+
               if (mounted) {
                 setState(() {
                   _isScanningFace = false;
                   _isCameraInitialized = false;
                 });
               }
-              
+
               await _cameraController?.dispose();
               _cameraController = null;
-              
+
               // Navigate to Create New PIN
               if (mounted) {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const CreateNewPinScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const CreateNewPinScreen(),
+                  ),
                 );
               }
             }
@@ -149,13 +158,20 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
 
   String _getLivenessInstruction() {
     switch (_livenessTask) {
-      case 0: return "Vui lòng đưa điện thoại RA XA";
-      case 1: return "Vui lòng đưa điện thoại LẠI GẦN";
-      case 2: return "Vui lòng QUAY ĐẦU SANG TRÁI";
-      case 3: return "Vui lòng QUAY ĐẦU SANG PHẢI";
-      case 4: return "Vui lòng CHỚP MẮT";
-      case 5: return "Xác thực thành công!";
-      default: return "Đang phân tích...";
+      case 0:
+        return "Vui lòng đưa điện thoại RA XA";
+      case 1:
+        return "Vui lòng đưa điện thoại LẠI GẦN";
+      case 2:
+        return "Vui lòng QUAY ĐẦU SANG TRÁI";
+      case 3:
+        return "Vui lòng QUAY ĐẦU SANG PHẢI";
+      case 4:
+        return "Vui lòng CHỚP MẮT";
+      case 5:
+        return "Xác thực thành công!";
+      default:
+        return "Đang phân tích...";
     }
   }
 
@@ -179,12 +195,18 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
               height: size.height,
               child: CameraPreview(_cameraController!),
             ),
-            CustomPaint(size: size, painter: CameraOverlayPainter(isSelfie: true)),
+            CustomPaint(
+              size: size,
+              painter: CameraOverlayPainter(isSelfie: true),
+            ),
             SafeArea(
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_rounded,
+                    color: Colors.white,
+                  ),
                   onPressed: () async {
                     setState(() {
                       _isScanningFace = false;
@@ -208,18 +230,29 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
                 children: [
                   const Text(
                     "XÁC THỰC KHUÔN MẶT ĐẶT LẠI PIN",
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.8),
+                      color: Colors.red.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _getLivenessInstruction(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -241,7 +274,11 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
         ),
         title: const Text(
           'Đặt lại mã PIN',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Column(
@@ -254,7 +291,8 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
                     height: 100,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [Color(0xFFFFE4EE), Color(0xFFF5F5F9)],
                       ),
                     ),
@@ -279,10 +317,17 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
                                 height: 100,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.primaryPink, width: 4),
+                                  border: Border.all(
+                                    color: AppColors.primaryPink,
+                                    width: 4,
+                                  ),
                                 ),
                                 child: const Center(
-                                  child: Icon(Icons.face_rounded, size: 60, color: Colors.amber),
+                                  child: Icon(
+                                    Icons.face_rounded,
+                                    size: 60,
+                                    color: Colors.amber,
+                                  ),
                                 ),
                               ),
                               Container(
@@ -291,14 +336,21 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
                                   color: Colors.green,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
-                              )
+                                child: const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 24),
                           const Text(
                             'Xác thực khuôn mặt',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           const Text(
@@ -310,7 +362,9 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
                           const SizedBox(height: 16),
                           _buildCheckItem('Đảm bảo chính xác bạn là chủ Ví'),
                           const SizedBox(height: 12),
-                          _buildCheckItem('Bảo vệ tài khoản của bạn khỏi rủi ro'),
+                          _buildCheckItem(
+                            'Bảo vệ tài khoản của bạn khỏi rủi ro',
+                          ),
                           const SizedBox(height: 16),
                         ],
                       ),
@@ -335,18 +389,31 @@ class _ForgotPinFaceAuthScreenState extends State<ForgotPinFaceAuthScreen> {
                   onPressed: _isLoading ? null : _handleFaceAuth,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isLoading 
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text(
-                      'Xác thực ngay',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Xác thực ngay',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );

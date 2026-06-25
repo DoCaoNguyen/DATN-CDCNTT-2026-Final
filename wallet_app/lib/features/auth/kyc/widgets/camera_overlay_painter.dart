@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class CameraOverlayPainter extends CustomPainter {
   final bool isSelfie;
-  
+
   CameraOverlayPainter({required this.isSelfie});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.7);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.7);
     final screenRect = Rect.fromLTWH(0, 0, size.width, size.height);
     Path cutoutPath = Path();
 

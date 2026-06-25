@@ -7,14 +7,17 @@ import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import 'package:intl/intl.dart';
 import '../../bank/screens/bank_link_screen.dart';
+import '../../../core/utils/currency_formatter.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   final String token;
 
-  const AccountManagementScreen({Key? key, required this.token}) : super(key: key);
+  const AccountManagementScreen({Key? key, required this.token})
+    : super(key: key);
 
   @override
-  State<AccountManagementScreen> createState() => _AccountManagementScreenState();
+  State<AccountManagementScreen> createState() =>
+      _AccountManagementScreenState();
 }
 
 class _AccountManagementScreenState extends State<AccountManagementScreen> {
@@ -45,17 +48,15 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     }
   }
 
-  String _formatCurrency(String amountStr) {
-    final amount = double.tryParse(amountStr) ?? 0;
-    return NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(amount);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Quản lý tài khoản', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Quản lý tài khoản',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.pink.shade50,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -89,16 +90,33 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Số dư khả dụng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'Số dư khả dụng',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               Row(
                 children: [
-                  _isLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(_formatCurrency(_balance), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          CurrencyFormatter.format(_balance),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.visibility_rounded, size: 20, color: Colors.black54),
+                  const Icon(
+                    Icons.visibility_rounded,
+                    size: 20,
+                    color: Colors.black54,
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -112,14 +130,26 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: AppColors.primaryPink, borderRadius: BorderRadius.circular(4)),
-                  child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryPink,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(child: Text('Ví điện tử', style: TextStyle(fontSize: 15))),
-                _isLoading 
-                  ? const SizedBox()
-                  : Text(_formatCurrency(_balance), style: const TextStyle(fontSize: 15)),
+                const Expanded(
+                  child: Text('Ví điện tử', style: TextStyle(fontSize: 15)),
+                ),
+                _isLoading
+                    ? const SizedBox()
+                    : Text(
+                        CurrencyFormatter.format(_balance),
+                        style: const TextStyle(fontSize: 15),
+                      ),
               ],
             ),
           ),
@@ -130,18 +160,28 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BankLinkScreen(token: widget.token)),
+                  MaterialPageRoute(
+                    builder: (context) => BankLinkScreen(token: widget.token),
+                  ),
                 );
               },
               icon: const Icon(Icons.add_rounded, color: Colors.white),
-              label: const Text('Thêm mới tài khoản/thẻ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Thêm mới tài khoản/thẻ',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryPink,
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -153,7 +193,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Tiện ích thêm', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          child: Text(
+            'Tiện ích thêm',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         const SizedBox(height: 12),
         Container(
@@ -178,7 +221,13 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 title: 'Thông tin hạn mức',
                 subtitle: 'Quản lý hạn mức giao dịch và nạp rút',
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => LimitInfoScreen(token: widget.token)));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          LimitInfoScreen(token: widget.token),
+                    ),
+                  );
                 },
               ),
               const Divider(height: 1, indent: 50),
@@ -191,16 +240,28 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
 
-  Widget _buildUtilityItem({required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
+  Widget _buildUtilityItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     return ListTile(
       leading: Icon(icon, color: iconColor, size: 28),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      ),
       trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
       onTap: onTap,
     );

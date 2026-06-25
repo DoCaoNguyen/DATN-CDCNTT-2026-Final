@@ -41,7 +41,9 @@ class PhoneInputField extends StatelessWidget {
           Container(
             width: 1,
             height: 24,
-            color: hasError ? Colors.red.withOpacity(0.5) : AppColors.border,
+            color: hasError
+                ? Colors.red.withValues(alpha: 0.5)
+                : AppColors.border,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -52,9 +54,13 @@ class PhoneInputField extends StatelessWidget {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 // Dịch chữ trong ô nhập theo ngôn ngữ
-                hintText: activeLang == 'VIE' ? 'Số điện thoại' : 'Phone number',
+                hintText: activeLang == 'VIE'
+                    ? 'Số điện thoại'
+                    : 'Phone number',
                 hintStyle: TextStyle(
-                  color: hasError ? Colors.red.withOpacity(0.6) : AppColors.textLight,
+                  color: hasError
+                      ? Colors.red.withValues(alpha: 0.6)
+                      : AppColors.textLight,
                   fontSize: 16,
                 ),
               ),

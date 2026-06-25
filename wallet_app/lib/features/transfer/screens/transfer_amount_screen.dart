@@ -59,12 +59,10 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
     if (value.isEmpty) return '';
     final number = int.tryParse(value.replaceAll('.', ''));
     if (number == null) return '';
-    return number
-        .toString()
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        );
+    return number.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   void _goToConfirmScreen() {
@@ -145,7 +143,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -167,19 +165,29 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                   readOnly: widget.isFixed,
                                   keyboardType: TextInputType.number,
                                   textAlign: TextAlign.center,
-                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   onChanged: (val) {
                                     if (widget.isFixed) return;
                                     final formatted = _formatAmount(val);
                                     _amountController.value = TextEditingValue(
                                       text: formatted,
-                                      selection: TextSelection.collapsed(offset: formatted.length),
+                                      selection: TextSelection.collapsed(
+                                        offset: formatted.length,
+                                      ),
                                     );
                                     setState(() {
-                                      final rawAmount = formatted.replaceAll('.', '');
-                                      final intAmount = int.tryParse(rawAmount) ?? 0;
-                                      if (rawAmount.isNotEmpty && intAmount < 1000) {
-                                        _amountError = 'Số tiền chuyển tối thiểu là 1.000đ';
+                                      final rawAmount = formatted.replaceAll(
+                                        '.',
+                                        '',
+                                      );
+                                      final intAmount =
+                                          int.tryParse(rawAmount) ?? 0;
+                                      if (rawAmount.isNotEmpty &&
+                                          intAmount < 1000) {
+                                        _amountError =
+                                            'Số tiền chuyển tối thiểu là 1.000đ';
                                       } else {
                                         _amountError = null;
                                       }
@@ -201,7 +209,9 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                       bottom: BorderSide(
                                         color: _amountError != null
                                             ? const Color(0xFFD32F2F)
-                                            : (_amountFocusNode.hasFocus ? Colors.pink : Colors.grey.shade300),
+                                            : (_amountFocusNode.hasFocus
+                                                  ? Colors.pink
+                                                  : Colors.grey.shade300),
                                         width: 1.5,
                                       ),
                                     ),
@@ -209,16 +219,21 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Text(
-                                        hasAmount ? _amountController.text : '0',
+                                        hasAmount
+                                            ? _amountController.text
+                                            : '0',
                                         style: TextStyle(
                                           fontSize: 40,
                                           fontWeight: FontWeight.bold,
                                           color: _amountError != null
                                               ? const Color(0xFFD32F2F)
-                                              : (hasAmount ? Colors.black : Colors.grey),
+                                              : (hasAmount
+                                                    ? Colors.black
+                                                    : Colors.grey),
                                         ),
                                       ),
                                       if (_amountFocusNode.hasFocus)
@@ -231,7 +246,9 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                           fontWeight: FontWeight.bold,
                                           color: _amountError != null
                                               ? const Color(0xFFD32F2F)
-                                              : (hasAmount ? Colors.black : Colors.grey),
+                                              : (hasAmount
+                                                    ? Colors.black
+                                                    : Colors.grey),
                                         ),
                                       ),
                                     ],
@@ -243,7 +260,10 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
 
                           if (_amountError != null)
                             Padding(
-                              padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                              padding: const EdgeInsets.only(
+                                top: 4.0,
+                                bottom: 8.0,
+                              ),
                               child: Text(
                                 _amountError!,
                                 textAlign: TextAlign.center,
@@ -262,20 +282,30 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                             controller: _noteController,
                             readOnly: widget.isFixed,
                             decoration: InputDecoration(
-                              hintText: widget.isFixed ? '' : 'Nhập hoặc chọn bên dưới',
-                              hintStyle:
-                                  const TextStyle(color: Colors.grey, fontSize: 14),
+                              hintText: widget.isFixed
+                                  ? ''
+                                  : 'Nhập hoặc chọn bên dưới',
+                              hintStyle: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
                               labelText: 'Lời nhắn',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
                             style: const TextStyle(color: Colors.black),
                           ),
@@ -311,7 +341,9 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -333,8 +365,9 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                       child: ElevatedButton(
                         onPressed: isButtonEnabled ? _goToConfirmScreen : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isButtonEnabled ? Colors.pink : Colors.grey.shade300,
+                          backgroundColor: isButtonEnabled
+                              ? Colors.pink
+                              : Colors.grey.shade300,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -403,7 +436,8 @@ class FlashingCursor extends StatefulWidget {
   State<FlashingCursor> createState() => _FlashingCursorState();
 }
 
-class _FlashingCursorState extends State<FlashingCursor> with SingleTickerProviderStateMixin {
+class _FlashingCursorState extends State<FlashingCursor>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
 
@@ -427,11 +461,7 @@ class _FlashingCursorState extends State<FlashingCursor> with SingleTickerProvid
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _opacity,
-      child: Container(
-        width: 2.0,
-        height: 50.0,
-        color: Colors.pink,
-      ),
+      child: Container(width: 2.0, height: 50.0, color: Colors.pink),
     );
   }
 }

@@ -8,12 +8,16 @@ class AuthInterceptor extends QueuedInterceptor {
   final _storage = const FlutterSecureStorage();
 
   // Global NavigatorKey for navigation and context-aware UI without BuildContext
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   AuthInterceptor(this.dio);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final accessToken = await _storage.read(key: 'access_token');
     if (accessToken != null && accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $accessToken';
@@ -31,18 +35,23 @@ class AuthInterceptor extends QueuedInterceptor {
       final requestPath = err.requestOptions.path;
 
       // Check if the 401 error did NOT originate from the login or refresh-token endpoint
-      if (!requestPath.contains('/auth/refresh-token') && !requestPath.contains('/auth/login')) {
-        
+      if (!requestPath.contains('/auth/refresh-token') &&
+          !requestPath.contains('/auth/login')) {
         // 1. Concurrency Check: Check if another request has already refreshed the token
         final currentToken = await _storage.read(key: 'access_token');
         final requestToken = err.requestOptions.headers['Authorization']
             ?.toString()
             .replaceAll('Bearer ', '');
 
-        if (currentToken != null && currentToken.isNotEmpty && currentToken != requestToken) {
+        if (currentToken != null &&
+            currentToken.isNotEmpty &&
+            currentToken != requestToken) {
           // Token was already updated by a previous request. Retry immediately with the new token.
           try {
-            final response = await _retryRequest(err.requestOptions, currentToken);
+            final response = await _retryRequest(
+              err.requestOptions,
+              currentToken,
+            );
             return handler.resolve(response);
           } catch (e) {
             return handler.next(err);
@@ -55,7 +64,10 @@ class AuthInterceptor extends QueuedInterceptor {
           final newAccessToken = await _storage.read(key: 'access_token');
           if (newAccessToken != null && newAccessToken.isNotEmpty) {
             try {
-              final response = await _retryRequest(err.requestOptions, newAccessToken);
+              final response = await _retryRequest(
+                err.requestOptions,
+                newAccessToken,
+              );
               return handler.resolve(response);
             } catch (e) {
               return handler.next(err);
@@ -112,7 +124,10 @@ class AuthInterceptor extends QueuedInterceptor {
   }
 
   /// Retries the failed request with the new access token.
-  Future<Response> _retryRequest(RequestOptions requestOptions, String newAccessToken) {
+  Future<Response> _retryRequest(
+    RequestOptions requestOptions,
+    String newAccessToken,
+  ) {
     final options = Options(
       method: requestOptions.method,
       headers: Map<String, dynamic>.from(requestOptions.headers)
@@ -134,7 +149,10 @@ class AuthInterceptor extends QueuedInterceptor {
     await _storage.delete(key: 'user_id');
     await _storage.delete(key: 'is_verified');
 
-    navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+    navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      '/login',
+      (route) => false,
+    );
 
     final context = navigatorKey.currentContext;
     if (context != null) {

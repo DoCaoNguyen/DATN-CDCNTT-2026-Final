@@ -18,7 +18,8 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
   int _step = 1;
   final TextEditingController _currentPinController = TextEditingController();
   final TextEditingController _newPinController = TextEditingController();
-  final TextEditingController _confirmNewPinController = TextEditingController();
+  final TextEditingController _confirmNewPinController =
+      TextEditingController();
 
   bool _isCurrentPinObscured = true;
   bool _isNewPinObscured = true;
@@ -44,7 +45,8 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
 
   void _validateStep2() {
     setState(() {
-      _isStep2ButtonEnabled = _newPinController.text.length == 6 &&
+      _isStep2ButtonEnabled =
+          _newPinController.text.length == 6 &&
           _confirmNewPinController.text.length == 6 &&
           _newPinController.text == _confirmNewPinController.text &&
           _newPinController.text != _currentPinController.text;
@@ -92,7 +94,10 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi kết nối máy chủ. Vui lòng thử lại!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Lỗi kết nối máy chủ. Vui lòng thử lại!'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -130,7 +135,10 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi kết nối máy chủ. Vui lòng thử lại!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Lỗi kết nối máy chủ. Vui lòng thử lại!'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -172,7 +180,8 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -205,7 +214,11 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
       children: [
         const Text(
           'Nhập mật khẩu hiện tại',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -228,7 +241,10 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryPink, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryPink,
+                width: 1.5,
+              ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
@@ -248,12 +264,18 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ForgotPinFaceAuthScreen()),
+              MaterialPageRoute(
+                builder: (context) => const ForgotPinFaceAuthScreen(),
+              ),
             );
           },
           child: const Text(
             'Quên mật khẩu?',
-            style: TextStyle(color: Colors.blue, fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: Colors.blue,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
@@ -266,7 +288,11 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
       children: [
         const Text(
           'Nhập mật khẩu mới',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -289,7 +315,10 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryPink, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryPink,
+                width: 1.5,
+              ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
@@ -325,11 +354,16 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryPink, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryPink,
+                width: 1.5,
+              ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                _isConfirmNewPinObscured ? Icons.visibility_off : Icons.visibility,
+                _isConfirmNewPinObscured
+                    ? Icons.visibility_off
+                    : Icons.visibility,
                 color: Colors.grey,
               ),
               onPressed: () {
@@ -346,7 +380,11 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
             padding: EdgeInsets.only(top: 8.0),
             child: Text(
               'Mật khẩu không khớp',
-              style: TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         if (_newPinController.text.length == 6 &&
@@ -355,7 +393,11 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
             padding: EdgeInsets.only(top: 8.0),
             child: Text(
               'Mật khẩu mới không được trùng với mật khẩu hiện tại',
-              style: TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
       ],
@@ -378,16 +420,24 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
               ? (_step == 1 ? _verifyCurrentPin : _changePin)
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isEnabled ? AppColors.primaryPink : const Color(0xFFE0E0E0),
+            backgroundColor: isEnabled
+                ? AppColors.primaryPink
+                : const Color(0xFFE0E0E0),
             disabledBackgroundColor: const Color(0xFFE0E0E0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             elevation: 0,
           ),
           child: _isLoading
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
               : Text(
                   'Tiếp tục',
                   style: TextStyle(

@@ -1,3 +1,4 @@
+const { verifyTransactionSecurity } = require('../../utils/security.util');
 const bcrypt = require('bcrypt');
 const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
@@ -14,46 +15,7 @@ const transactionService = {
 
         
 
-        // Verify based on amount (50,000,000 VND)
-        if (amount < 50000000n) {
-            if (!pin) throw new Error('PIN_Required');
-            if (wallet.pin_locked_until) {
-                const now = new Date();
-                const lockedUntil = new Date(wallet.pin_locked_until);
-                if (now < lockedUntil) {
-                    throw new Error('Wallet_Locked_PIN');
-                } else {
-                    await repo.resetPinAttempts(wallet.id);
-                    wallet.pin_failed_attempts = 0;
-                }
-            }
-            if (!wallet.pin_hash) throw new Error('Wallet_Not_Found');
-            const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
-            if (!isPinMatch) {
-                const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-                if (newAttempts >= 3) {
-                    const lockTime = new Date(Date.now() + 30 * 60000);
-                    await repo.updatePinAttempts(wallet.id, newAttempts, lockTime);
-                    throw new Error('Wallet_Locked_PIN');
-                } else {
-                    await repo.updatePinAttempts(wallet.id, newAttempts, null);
-                    throw new Error(`Wrong_PIN_${3 - newAttempts}`);
-                }
-            }
-            if (wallet.pin_failed_attempts > 0) {
-                await repo.resetPinAttempts(wallet.id);
-            }
-        } else {
-            if (!faceImagePath) throw new Error('Face_Verification_Required');
-            const kycRecord = await repo.getUserKycFaceImage(userId);
-            if (!kycRecord || !kycRecord.face_image) {
-                throw new Error('No_KYC_Record_Found');
-            }
-            const matchResult = await kycService.verifyFaceMatchFacePlusPlus(kycRecord.face_image, faceImagePath);
-            if (!matchResult.faceFound || !matchResult.isMatch) {
-                throw new Error('Face_Verification_Failed');
-            }
-        }
+        await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
         const client = await pool.connect();
         try {
@@ -112,46 +74,7 @@ const transactionService = {
 
         
 
-        // Verify based on amount (50,000,000 VND)
-        if (amount < 50000000n) {
-            if (!pin) throw new Error('PIN_Required');
-            if (wallet.pin_locked_until) {
-                const now = new Date();
-                const lockedUntil = new Date(wallet.pin_locked_until);
-                if (now < lockedUntil) {
-                    throw new Error('Wallet_Locked_PIN');
-                } else {
-                    await repo.resetPinAttempts(wallet.id);
-                    wallet.pin_failed_attempts = 0;
-                }
-            }
-            if (!wallet.pin_hash) throw new Error('Wallet_Not_Found');
-            const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
-            if (!isPinMatch) {
-                const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-                if (newAttempts >= 3) {
-                    const lockTime = new Date(Date.now() + 30 * 60000);
-                    await repo.updatePinAttempts(wallet.id, newAttempts, lockTime);
-                    throw new Error('Wallet_Locked_PIN');
-                } else {
-                    await repo.updatePinAttempts(wallet.id, newAttempts, null);
-                    throw new Error(`Wrong_PIN_${3 - newAttempts}`);
-                }
-            }
-            if (wallet.pin_failed_attempts > 0) {
-                await repo.resetPinAttempts(wallet.id);
-            }
-        } else {
-            if (!faceImagePath) throw new Error('Face_Verification_Required');
-            const kycRecord = await repo.getUserKycFaceImage(userId);
-            if (!kycRecord || !kycRecord.face_image) {
-                throw new Error('No_KYC_Record_Found');
-            }
-            const matchResult = await kycService.verifyFaceMatchFacePlusPlus(kycRecord.face_image, faceImagePath);
-            if (!matchResult.faceFound || !matchResult.isMatch) {
-                throw new Error('Face_Verification_Failed');
-            }
-        }
+        await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
         const client = await pool.connect();
         try {
@@ -213,46 +136,7 @@ const transactionService = {
 
         
 
-        // Verify based on amount (50,000,000 VND)
-        if (amount < 50000000n) {
-            if (!pin) throw new Error('PIN_Required');
-            if (wallet.pin_locked_until) {
-                const now = new Date();
-                const lockedUntil = new Date(wallet.pin_locked_until);
-                if (now < lockedUntil) {
-                    throw new Error('Wallet_Locked_PIN');
-                } else {
-                    await repo.resetPinAttempts(wallet.id);
-                    wallet.pin_failed_attempts = 0;
-                }
-            }
-            if (!wallet.pin_hash) throw new Error('Wallet_Not_Found');
-            const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
-            if (!isPinMatch) {
-                const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-                if (newAttempts >= 3) {
-                    const lockTime = new Date(Date.now() + 30 * 60000);
-                    await repo.updatePinAttempts(wallet.id, newAttempts, lockTime);
-                    throw new Error('Wallet_Locked_PIN');
-                } else {
-                    await repo.updatePinAttempts(wallet.id, newAttempts, null);
-                    throw new Error(`Wrong_PIN_${3 - newAttempts}`);
-                }
-            }
-            if (wallet.pin_failed_attempts > 0) {
-                await repo.resetPinAttempts(wallet.id);
-            }
-        } else {
-            if (!faceImagePath) throw new Error('Face_Verification_Required');
-            const kycRecord = await repo.getUserKycFaceImage(userId);
-            if (!kycRecord || !kycRecord.face_image) {
-                throw new Error('No_KYC_Record_Found');
-            }
-            const matchResult = await kycService.verifyFaceMatchFacePlusPlus(kycRecord.face_image, faceImagePath);
-            if (!matchResult.faceFound || !matchResult.isMatch) {
-                throw new Error('Face_Verification_Failed');
-            }
-        }
+        await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
         const client = await pool.connect();
         try {

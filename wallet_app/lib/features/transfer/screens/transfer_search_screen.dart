@@ -102,13 +102,13 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
 
     String cleanQuery = query.replaceAll(' ', '');
     final isNumeric = RegExp(r'^[0-9]+$').hasMatch(cleanQuery);
-    
+
     if (isNumeric && cleanQuery.length < 10) {
       final localSuggestions = _contactResults.where((user) {
         final phone = user['phone'] as String? ?? '';
         return phone.contains(cleanQuery);
       }).toList();
-      
+
       debugPrint("--- DEBUG ---");
       debugPrint("Query: $cleanQuery");
       debugPrint("isNumeric: $isNumeric");
@@ -141,7 +141,7 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
         });
       }
     } catch (e) {
-      print("Lỗi tìm kiếm: $e");
+      debugPrint("Lỗi tìm kiếm: $e");
     } finally {
       setState(() => _isLoading = false);
     }
@@ -188,7 +188,11 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
               ),
               // Canh chỉnh Icon xóa (X)
               suffixIcon: IconButton(
-                icon: const Icon(Icons.cancel_rounded, color: Colors.grey, size: 16),
+                icon: const Icon(
+                  Icons.cancel_rounded,
+                  color: Colors.grey,
+                  size: 16,
+                ),
                 onPressed: () {
                   _searchController.clear();
                   _onSearchChanged('');

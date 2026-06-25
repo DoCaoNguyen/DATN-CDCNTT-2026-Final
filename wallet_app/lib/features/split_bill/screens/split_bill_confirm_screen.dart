@@ -72,9 +72,9 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
     try {
       final client = CustomHttpClient();
       List<Map<String, dynamic>> members = [];
-      
+
       // Add 'me' to members if active. We can use our own id from token? Wait, widget.me might not have real ID.
-      // Actually widget.me was hardcoded as 'id': 'me'. But on backend, we just need friends, backend handles creator. 
+      // Actually widget.me was hardcoded as 'id': 'me'. But on backend, we just need friends, backend handles creator.
       // Wait, no! My backend logic expects `user_id` for everyone including creator!
       // But we don't have our own ID in `widget.me`. It's hardcoded as 'me'.
       // If we pass 'me', backend might fail parsing to UUID. Let's just exclude 'me' from payload?
@@ -82,10 +82,10 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
       // Wait, I can just fetch our user_id from profile API or from JWT token!
       // Actually, my backend code says: `for (const member of members) { ... }`.
       // I can change backend to automatically insert creator, OR just pass correct ID.
-      // But wait! Since the user_id is UUID now, sending 'me' will fail. 
+      // But wait! Since the user_id is UUID now, sending 'me' will fail.
       // Let's modify the flutter logic to NOT send 'me', and we'll fix the backend to automatically add creator to `split_bill_members` if `_isMeActive`!
       // Let's pass a boolean `include_me: _isMeActive`.
-      
+
       for (var f in _activeFriends) {
         members.add({'user_id': f['id'], 'amount': _splitAmount});
       }
@@ -138,9 +138,9 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi kết nối: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi kết nối: $e')));
       }
     }
   }
@@ -156,10 +156,7 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFFFE4E1),
-                Color(0xFFF6F8FB),
-              ],
+              colors: [Color(0xFFFFE4E1), Color(0xFFF6F8FB)],
             ),
           ),
           child: AppBar(
@@ -211,7 +208,10 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                           children: [
                             const Text(
                               "Tổng tiền",
-                              style: TextStyle(fontSize: 16, color: Colors.black54),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black54,
+                              ),
                             ),
                             Text(
                               "${_formatter.format(widget.totalAmount)}đ",
@@ -260,7 +260,9 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                                       color: Colors.grey.shade200,
                                       borderRadius: BorderRadius.circular(8),
                                       image: DecorationImage(
-                                        image: FileImage(File(_selectedImage!.path)),
+                                        image: FileImage(
+                                          File(_selectedImage!.path),
+                                        ),
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -274,8 +276,15 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                                         },
                                         child: Container(
                                           margin: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                          child: const Icon(Icons.close, size: 10, color: Colors.white),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            size: 10,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -286,7 +295,10 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                                 right: 12,
                                 child: GestureDetector(
                                   onTap: _pickImage,
-                                  child: Icon(Icons.image_outlined, color: Colors.grey.shade600),
+                                  child: Icon(
+                                    Icons.image_outlined,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
                               ),
                             ],
@@ -323,10 +335,13 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                     children: [
                       Text(
                         "Danh sách (${_activeCount})",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Me
                       _buildMemberRow(
                         widget.me,
@@ -338,10 +353,12 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                           }
                         },
                       ),
-                      
+
                       // Friends
                       ...widget.selectedFriends.map((f) {
-                        bool isActive = _activeFriends.any((af) => af['id'] == f['id']);
+                        bool isActive = _activeFriends.any(
+                          (af) => af['id'] == f['id'],
+                        );
                         return _buildMemberRow(
                           f,
                           isActive: isActive,
@@ -352,7 +369,9 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                                 _activeFriends.add(f);
                               } else {
                                 if (_activeCount > 1) {
-                                  _activeFriends.removeWhere((af) => af['id'] == f['id']);
+                                  _activeFriends.removeWhere(
+                                    (af) => af['id'] == f['id'],
+                                  );
                                 }
                               }
                             });
@@ -368,8 +387,10 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
           ),
           if (_isLoading)
             Container(
-              color: Colors.black.withOpacity(0.15),
-              child: const Center(child: CircularProgressIndicator(color: Color(0xFFE91E63))),
+              color: Colors.black.withValues(alpha: 0.15),
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFFE91E63)),
+              ),
             ),
         ],
       ),
@@ -381,7 +402,9 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: (_activeCount > 0 && _activeFriends.isNotEmpty) ? _sendRequest : null,
+              onPressed: (_activeCount > 0 && _activeFriends.isNotEmpty)
+                  ? _sendRequest
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE91E63),
                 disabledBackgroundColor: Colors.grey.shade300,
@@ -418,15 +441,17 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(color: Colors.black87),
-        ),
+        child: Text(text, style: const TextStyle(color: Colors.black87)),
       ),
     );
   }
 
-  Widget _buildMemberRow(Map<String, dynamic> member, {required bool isActive, required double amount, required Function(bool?) onChanged}) {
+  Widget _buildMemberRow(
+    Map<String, dynamic> member, {
+    required bool isActive,
+    required double amount,
+    required Function(bool?) onChanged,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -435,16 +460,23 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
             value: isActive,
             activeColor: const Color(0xFFE91E63),
             onChanged: onChanged,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
           CircleAvatar(
             radius: 20,
             backgroundColor: member['color'] ?? Colors.pink.shade50,
-            backgroundImage: member['avatar'] != null ? NetworkImage(member['avatar']) : null,
+            backgroundImage: member['avatar'] != null
+                ? NetworkImage(member['avatar'])
+                : null,
             child: member['avatar'] == null
                 ? Text(
                     member['initials'] ?? '',
-                    style: const TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Color(0xFFE91E63),
+                      fontWeight: FontWeight.bold,
+                    ),
                   )
                 : null,
           ),
@@ -460,38 +492,51 @@ class _SplitBillConfirmScreenState extends State<SplitBillConfirmScreen> {
                     color: isActive ? Colors.black87 : Colors.grey,
                   ),
                 ),
-                member['phone'] != null && member['phone'].toString().contains('*')
-                  ? Text.rich(
-                      TextSpan(
-                        children: member['phone'].toString().split('').map((char) {
-                          if (char == '*') {
-                            return WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  '*',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 14, fontFamily: 'monospace', letterSpacing: 1.2),
+                member['phone'] != null &&
+                        member['phone'].toString().contains('*')
+                    ? Text.rich(
+                        TextSpan(
+                          children: member['phone'].toString().split('').map((
+                            char,
+                          ) {
+                            if (char == '*') {
+                              return WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text(
+                                    '*',
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                      fontFamily: 'monospace',
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
                                 ),
+                              );
+                            }
+                            return TextSpan(
+                              text: char,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontFamily: 'monospace',
+                                letterSpacing: 1.2,
                               ),
                             );
-                          }
-                          return TextSpan(
-                            text: char,
-                            style: const TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'monospace', letterSpacing: 1.2),
-                          );
-                        }).toList(),
+                          }).toList(),
+                        ),
+                      )
+                    : Text(
+                        member['phone'] ?? '',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    )
-                  : Text(
-                      member['phone'] ?? '',
-                      style: const TextStyle(
-                        color: Colors.grey, 
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                        letterSpacing: 1.2,
-                      ),
-                    ),
               ],
             ),
           ),

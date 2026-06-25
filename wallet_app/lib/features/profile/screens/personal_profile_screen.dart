@@ -59,7 +59,11 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         ),
         title: const Text(
           "Trang cá nhân",
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.black),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: Colors.black,
+          ),
         ),
         actions: [
           IconButton(
@@ -68,7 +72,8 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -84,7 +89,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -96,11 +101,13 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
                       gradient: LinearGradient(
                         colors: [
                           const Color(0xFFFFD4E2),
-                          const Color(0xFFFFBCCF).withOpacity(0.6),
+                          const Color(0xFFFFBCCF).withValues(alpha: 0.6),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -114,7 +121,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           children: [
                             CircleAvatar(
                               radius: 32,
-                              backgroundColor: Colors.white.withOpacity(0.6),
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.6,
+                              ),
                               child: Text(
                                 _getInitials(widget.fullName),
                                 style: const TextStyle(
@@ -193,12 +202,21 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   // Privacy settings button
                   InkWell(
                     onTap: () {},
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(16),
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       child: Row(
                         children: const [
-                          Icon(Icons.lock_outline_rounded, size: 18, color: Colors.black54),
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -210,7 +228,11 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                               ),
                             ),
                           ),
-                          Icon(Icons.chevron_right_rounded, size: 18, color: Colors.black38),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: Colors.black38,
+                          ),
                         ],
                       ),
                     ),
@@ -229,7 +251,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                 border: Border.all(color: Colors.grey.shade100),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -250,7 +272,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                         ),
                       ),
                       Text(
-                        _currentEmail != null && _currentEmail!.isNotEmpty ? "2/2 hoàn thành" : "1/2 hoàn thành",
+                        _currentEmail != null && _currentEmail!.isNotEmpty
+                            ? "2/2 hoàn thành"
+                            : "1/2 hoàn thành",
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -276,10 +300,10 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       icon: Icons.mail_outline_rounded,
                       iconColor: Colors.green.shade300,
                       text: "Xác thực gmail để bảo vệ tài khoản",
-                      isDone: _currentEmail != null && _currentEmail!.isNotEmpty,
+                      isDone:
+                          _currentEmail != null && _currentEmail!.isNotEmpty,
                     ),
                   ),
-
                 ],
               ),
             ),
@@ -346,10 +370,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     "Người dùng này chưa có bài viết nào",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
                   ),
                   const SizedBox(height: 20),
                   OutlinedButton(
@@ -359,7 +380,10 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 10,
+                      ),
                     ),
                     child: const Text(
                       "Xem bảng tin",
@@ -391,7 +415,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: iconColor),
@@ -408,11 +432,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
           ),
         ),
         if (isDone)
-          const Icon(
-            Icons.check_circle_rounded,
-            color: Colors.pink,
-            size: 20,
-          )
+          const Icon(Icons.check_circle_rounded, color: Colors.pink, size: 20)
         else
           Icon(
             Icons.chevron_right_rounded,
@@ -445,9 +465,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         side: BorderSide(
           color: isActive ? Colors.pink.shade200 : Colors.grey.shade300,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
@@ -463,19 +481,25 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: const Text("Xác thực Email"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("Vui lòng nhập địa chỉ email của bạn để nhận mã xác thực OTP."),
+                  const Text(
+                    "Vui lòng nhập địa chỉ email của bạn để nhận mã xác thực OTP.",
+                  ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: "Email",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       prefixIcon: const Icon(Icons.email_rounded),
                     ),
                   ),
@@ -484,12 +508,17 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
               actions: [
                 TextButton(
                   onPressed: isLoading ? null : () => Navigator.pop(context),
-                  child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    "Hủy",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: isLoading
                       ? null
@@ -497,7 +526,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           final email = emailController.text.trim();
                           if (email.isEmpty || !email.contains('@')) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Email không hợp lệ")),
+                              const SnackBar(
+                                content: Text("Email không hợp lệ"),
+                              ),
                             );
                             return;
                           }
@@ -506,17 +537,23 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           try {
                             final client = CustomHttpClient();
                             final response = await client.post(
-                              Uri.parse("${ApiConfig.baseUrl}/users/email/request-otp"),
+                              Uri.parse(
+                                "${ApiConfig.baseUrl}/users/email/request-otp",
+                              ),
                               body: jsonEncode({"email": email}),
                             );
                             setDialogState(() => isLoading = false);
-                            
+
                             if (response.statusCode == 200) {
                               Navigator.pop(context);
                               _showOtpDialog(email);
                             } else {
-                              final error = jsonDecode(response.body)['error'] ?? "Lỗi không xác định";
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+                              final error =
+                                  jsonDecode(response.body)['error'] ??
+                                  "Lỗi không xác định";
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text(error)));
                             }
                           } catch (e) {
                             setDialogState(() => isLoading = false);
@@ -529,9 +566,15 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
-                      : const Text("Xác nhận", style: TextStyle(color: Colors.white)),
+                      : const Text(
+                          "Xác nhận",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ],
             );
@@ -552,22 +595,33 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: const Text("Nhập mã OTP"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Mã OTP gồm 6 chữ số đã được gửi tới:\n$email", textAlign: TextAlign.center),
+                  Text(
+                    "Mã OTP gồm 6 chữ số đã được gửi tới:\n$email",
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: otpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 8,
+                    ),
                     decoration: InputDecoration(
                       counterText: "",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ],
@@ -575,12 +629,17 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
               actions: [
                 TextButton(
                   onPressed: isLoading ? null : () => Navigator.pop(context),
-                  child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    "Hủy",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: isLoading
                       ? null
@@ -588,7 +647,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           final otp = otpController.text.trim();
                           if (otp.length != 6) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Vui lòng nhập đủ 6 số OTP")),
+                              const SnackBar(
+                                content: Text("Vui lòng nhập đủ 6 số OTP"),
+                              ),
                             );
                             return;
                           }
@@ -597,20 +658,32 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           try {
                             final client = CustomHttpClient();
                             final response = await client.post(
-                              Uri.parse("${ApiConfig.baseUrl}/users/email/verify-otp"),
+                              Uri.parse(
+                                "${ApiConfig.baseUrl}/users/email/verify-otp",
+                              ),
                               body: jsonEncode({"email": email, "otp": otp}),
                             );
                             setDialogState(() => isLoading = false);
-                            
+
                             if (response.statusCode == 200) {
                               Navigator.pop(context);
                               setState(() {
                                 _currentEmail = email;
                               });
-                              SnackbarUtils.showSuccess(context, "Xác thực Email thành công!");
+                              SnackbarUtils.showSuccess(
+                                context,
+                                "Xác thực Email thành công!",
+                              );
                             } else {
-                              final error = jsonDecode(response.body)['error'] ?? "Mã OTP không hợp lệ";
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+                              final error =
+                                  jsonDecode(response.body)['error'] ??
+                                  "Mã OTP không hợp lệ";
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(error),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
                             }
                           } catch (e) {
                             setDialogState(() => isLoading = false);
@@ -623,9 +696,15 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
-                      : const Text("Xác nhận", style: TextStyle(color: Colors.white)),
+                      : const Text(
+                          "Xác nhận",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ],
             );
