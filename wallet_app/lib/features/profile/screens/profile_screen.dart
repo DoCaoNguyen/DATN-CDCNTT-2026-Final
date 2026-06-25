@@ -10,7 +10,7 @@ import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
 import 'account_management_screen.dart';
-
+import '../../merchant/screens/merchant_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -576,6 +576,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
+          _buildMoreSettingsItem(
+            icon: Icons.storefront_rounded,
+            title: 'Đối tác kinh doanh',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MerchantScreen(token: widget.token),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
             icon: Icons.help_outline_rounded,
             title: 'Trung tâm trợ giúp',
