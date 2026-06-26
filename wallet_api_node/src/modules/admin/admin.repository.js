@@ -298,7 +298,7 @@ const adminRepository = {
         `, [walletId]);
         return result.rows[0];
     },
-    
+
     resetPasswordByAdmin: async (client, userId, passwordHash) => {
         const result = await client.query(`
             UPDATE users
@@ -441,7 +441,7 @@ const adminRepository = {
                 COUNT(id) FILTER (WHERE status = 'FAILED') AS failed_tx
             FROM ledger_transactions 
         `;
-        
+
         const userQuery = `SELECT COUNT(id) AS total_users FROM users WHERE user_type = 'USER'`;
         const merchantQuery = `SELECT COUNT(id) AS total_merchants FROM merchants`;
         const chartQuery = `
