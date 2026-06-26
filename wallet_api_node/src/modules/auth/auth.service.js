@@ -104,11 +104,13 @@ const authService = {
         const email = normalizeOptional(payload.email);
         const phone = normalizeOptional(payload.phone);
         const password = payload.password;
-        
         if (!fullName || fullName.length < 2 || !phone || !password) throw new Error('Validation_Error');
         if (password !== payload.confirm_password) throw new Error('Password_Confirm_Not_Match');
-        if (!skipPasswordPolicy) validatePassword(password);
-        
+        if (skipPasswordPolicy) {
+            // Mobile legacy flow keeps the old behavior: the Flutter app owns the 6-digit PIN validation.
+        } else {
+            validatePassword(password);
+        }
         if (await authRepository.checkExists(email, phone, username)) throw new Error('User_Conflict');
 
         const passwordHash = await bcrypt.hash(password, 10);
@@ -135,23 +137,23 @@ const authService = {
         return created;
     },
 
-    // --- ĐÂY LÀ HÀM ĐĂNG NHẬP CHUẨN ĐÃ ĐƯỢC KHÔI PHỤC ---
     login: async ({ loginId, password, rememberMe, ipAddress, userAgent }) => {
         if (!loginId || !password) throw new Error('Validation_Error');
-        
         const user = await authRepository.findByLoginId(loginId);
-        
         if (!user) {
             await writeSecurityLog({ event: 'LOGIN_FAILED', login_id: loginId, reason: 'INVALID_CREDENTIALS', ip_address: ipAddress });
             throw new Error('Invalid_Credentials');
         }
 
-        // Kiểm tra xem tài khoản có đang bị khóa do nhập sai nhiều lần không
-        if (user.locked_until && new Date(user.locked_until) > new Date()) {
-            throw new Error('Account_Locked');
+        if (user.locked_until) {
+            if (new Date(user.locked_until) > new Date()) {
+                throw new Error('Account_Locked');
+            }
+            await authRepository.markLoginSuccess(user.id);
+            user.failed_login_attempts = 0;
+            user.locked_until = null;
         }
 
-        // KIỂM TRA MẬT KHẨU
         const passwordMatches = await bcrypt.compare(password, user.password_hash);
         if (!passwordMatches) {
             const attempts = Number(user.failed_login_attempts || 0) + 1;
@@ -163,17 +165,16 @@ const authService = {
 
         if (user.status !== 'ACTIVE') throw new Error('Account_Inactive');
 
-        // Reset lại số lần nhập sai nếu đăng nhập thành công
-        await authRepository.markLoginSuccess(user.id);
-        user.failed_login_attempts = 0;
-        user.locked_until = null;
+        if (Number(user.failed_login_attempts || 0) > 0 || user.locked_until) {
+            await authRepository.markLoginSuccess(user.id);
+            user.failed_login_attempts = 0;
+            user.locked_until = null;
+        }
 
-        // Cấp Token
         const context = await authRepository.getRolesAndPermissions(user.id);
         const tokens = await authRepository.withTransaction(client =>
             issueTokenPair(user, context, { rememberMe, ipAddress, userAgent, client })
         );
-
         await auditLogRepository.create({
             actorType: 'USER',
             actorId: user.id,
@@ -183,7 +184,6 @@ const authService = {
             ipAddress,
             userAgent
         });
-
         return { ...tokens, user: publicUser(user, context) };
     },
 
@@ -318,13 +318,11 @@ const authService = {
         if (!user) throw new Error('User_Not_Found');
         if (!await bcrypt.compare(currentPassword, user.password_hash)) throw new Error('Current_Password_Invalid');
         if (await bcrypt.compare(newPassword, user.password_hash)) throw new Error('Password_Must_Be_Different');
-        
         const passwordHash = await bcrypt.hash(newPassword, 10);
         await authRepository.withTransaction(async client => {
             await authRepository.updatePassword(client, userId, passwordHash);
             await authRepository.revokeAllUserRefreshTokens(client, userId, ipAddress);
         });
-        
         await auditLogRepository.create({
             actorType: 'USER',
             actorId: userId,
@@ -367,7 +365,6 @@ const authService = {
         if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
         const hash = tokenHash(resetToken);
         let userId;
-        
         await authRepository.withTransaction(async client => {
             const reset = await authRepository.findPasswordResetForUpdate(client, hash);
             if (!reset || reset.used_at || new Date(reset.expires_at) <= new Date()) {
@@ -378,7 +375,6 @@ const authService = {
             await authRepository.consumePasswordReset(client, reset.id);
             await authRepository.revokeAllUserRefreshTokens(client, userId, ipAddress);
         });
-        
         await auditLogRepository.create({
             actorType: 'USER',
             actorId: userId,
@@ -416,7 +412,6 @@ const authService = {
         if (!record) throw new Error('OTP_Not_Found');
         if (new Date(record.expired_at) <= new Date()) throw new Error('OTP_Expired');
         if (record.locked_until && new Date(record.locked_until) > new Date()) throw new Error('Account_Locked');
-        
         const verified = await verifyOTP(phone, otp);
         if (!verified.valid) {
             const attempts = Number(record.failed_attempts || 0) + 1;
@@ -429,7 +424,6 @@ const authService = {
             error.remainingAttempts = MAX_FAILED_LOGIN - attempts;
             throw error;
         }
-        
         await otpRepository.deleteByPhone(phone);
         return jwt.sign({
             phone,

@@ -47,7 +47,7 @@ const webhookService = {
                     $inc: { 'metadata.retry_count': 1 },
                     $set: { 'metadata.last_error': lastError }
                 },
-                { new: true } 
+                { returnDocument: 'after' } 
             );
             return {
                 retry_count: updatedLog.metadata.retry_count,

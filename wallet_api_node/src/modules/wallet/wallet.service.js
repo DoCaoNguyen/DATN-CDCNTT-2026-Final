@@ -59,23 +59,25 @@ const walletService = {
                 reason: String(reason).trim()
             });
 
-            await client.query(`
-                INSERT INTO audit_logs
-                    (trace_id, actor_type, actor_id, action, entity_type, entity_id, old_data, new_data, metadata, reason, ip_address, user_agent)
-                VALUES ($1, $2, $3, $4, 'wallets', $5, $6, $7, $8, $9, $10, $11)
-            `, [
-                `trace-wallet-${Date.now()}`,
-                'ADMIN',
-                actorId,
-                'WALLET_LOCKED',
-                walletId,
-                JSON.stringify({ status: wallet.status }),
-                JSON.stringify({ status: updated.status, lock_reason: updated.lock_reason, locked_at: updated.locked_at, locked_by: updated.locked_by }),
-                JSON.stringify({ wallet_no: wallet.wallet_no }),
-                String(reason).trim(),
-                ipAddress || null,
-                userAgent || null
-            ]);
+            const AuditLog = require('../system/models/audit_log.model');
+            try {
+                await AuditLog.create({
+                    trace_id: `trace-wallet-${Date.now()}`,
+                    actor_type: 'ADMIN',
+                    actor_id: actorId,
+                    action: 'WALLET_LOCKED',
+                    entity_type: 'wallets',
+                    entity_id: walletId,
+                    old_data: { status: wallet.status },
+                    new_data: { status: updated.status, lock_reason: updated.lock_reason, locked_at: updated.locked_at, locked_by: updated.locked_by },
+                    metadata: { wallet_no: wallet.wallet_no },
+                    reason: String(reason).trim(),
+                    ip_address: ipAddress || null,
+                    user_agent: userAgent || null
+                });
+            } catch (err) {
+                console.error('[AuditLog] Error writing to MongoDB:', err);
+            }
 
             await client.query('COMMIT');
             return updated;
@@ -100,23 +102,25 @@ const walletService = {
 
             const updated = await walletRepository.unlockByAdmin(client, walletId);
 
-            await client.query(`
-                INSERT INTO audit_logs
-                    (trace_id, actor_type, actor_id, action, entity_type, entity_id, old_data, new_data, metadata, reason, ip_address, user_agent)
-                VALUES ($1, $2, $3, $4, 'wallets', $5, $6, $7, $8, $9, $10, $11)
-            `, [
-                `trace-wallet-${Date.now()}`,
-                'ADMIN',
-                actorId,
-                'WALLET_UNLOCKED',
-                walletId,
-                JSON.stringify({ status: wallet.status, lock_reason: wallet.lock_reason, locked_at: wallet.locked_at, locked_by: wallet.locked_by }),
-                JSON.stringify({ status: updated.status }),
-                JSON.stringify({ wallet_no: wallet.wallet_no, previous_lock_reason: wallet.lock_reason }),
-                String(reason).trim(),
-                ipAddress || null,
-                userAgent || null
-            ]);
+            const AuditLog = require('../system/models/audit_log.model');
+            try {
+                await AuditLog.create({
+                    trace_id: `trace-wallet-${Date.now()}`,
+                    actor_type: 'ADMIN',
+                    actor_id: actorId,
+                    action: 'WALLET_UNLOCKED',
+                    entity_type: 'wallets',
+                    entity_id: walletId,
+                    old_data: { status: wallet.status, lock_reason: wallet.lock_reason, locked_at: wallet.locked_at, locked_by: wallet.locked_by },
+                    new_data: { status: updated.status },
+                    metadata: { wallet_no: wallet.wallet_no, previous_lock_reason: wallet.lock_reason },
+                    reason: String(reason).trim(),
+                    ip_address: ipAddress || null,
+                    user_agent: userAgent || null
+                });
+            } catch (err) {
+                console.error('[AuditLog] Error writing to MongoDB:', err);
+            }
 
             await client.query('COMMIT');
             return updated;

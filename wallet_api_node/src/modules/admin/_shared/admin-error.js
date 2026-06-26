@@ -1,36 +1,4 @@
-/**
- * Admin Shared Helpers
- * 
- * Di chuyển từ admin.controller.js:
- * - getRequestMeta(req)
- * - success(res, data, message, status)
- * - error(res, status, code, message)
- * - handleAdminError(res, err, logPrefix)
- */
-
-function getRequestMeta(req) {
-    return {
-        ipAddress: req.ip || req.connection?.remoteAddress || null,
-        userAgent: req.headers['user-agent'] || null
-    };
-}
-
-function success(res, data, message = 'OK', status = 200) {
-    return res.status(status).json({
-        success: true,
-        code: 'OK',
-        message,
-        data
-    });
-}
-
-function error(res, status, code, message) {
-    return res.status(status).json({
-        success: false,
-        code,
-        error: message
-    });
-}
+const { error } = require('./admin-response');
 
 function handleAdminError(res, err, logPrefix) {
     const mapping = {
@@ -47,12 +15,24 @@ function handleAdminError(res, err, logPrefix) {
         Role_Not_Found: [400, 'VALIDATION_ERROR', 'Role khong ton tai hoac khong hoat dong'],
         User_Not_Found: [404, 'USER_NOT_FOUND', 'Khong tim thay user'],
         Wallet_Not_Found: [404, 'WALLET_NOT_FOUND', 'Khong tim thay vi'],
+        Transaction_Not_Found: [404, 'TRANSACTION_NOT_FOUND', 'Khong tim thay giao dich'],
+        Topup_Not_Found: [404, 'TOPUP_NOT_FOUND', 'Khong tim thay giao dich nap tien'],
+        Transfer_Not_Found: [404, 'TRANSFER_NOT_FOUND', 'Khong tim thay giao dich chuyen khoan'],
         Wallet_Closed: [409, 'WALLET_CLOSED', 'Vi da dong vinh vien'],
         Wallet_Already_Locked: [409, 'WALLET_ALREADY_LOCKED', 'Vi da bi khoa'],
         Wallet_Not_Locked: [409, 'WALLET_NOT_LOCKED', 'Vi khong o trang thai khoa'],
+        Invalid_Merchant_Id: [400, 'VALIDATION_ERROR', 'Merchant ID khong hop le'],
+        Invalid_Key_Id: [400, 'VALIDATION_ERROR', 'API Key ID khong hop le'],
+        Merchant_Not_Found: [404, 'MERCHANT_NOT_FOUND', 'Khong tim thay merchant'],
+        Merchant_Already_Active: [409, 'CONFLICT', 'Merchant hien da o trang thai ACTIVE'],
+        Merchant_Already_Rejected: [409, 'CONFLICT', 'Merchant hien da o trang thai REJECTED'],
+        Merchant_Already_Suspended: [409, 'CONFLICT', 'Merchant hien da o trang thai SUSPENDED'],
+        Api_Key_Not_Found: [404, 'NOT_FOUND', 'Khong tim thay API key'],
+        Api_Key_Already_Revoked: [409, 'CONFLICT', 'API key da bi thu hoi'],
         Admin_Write_Forbidden: [403, 'FORBIDDEN', 'Tai khoan admin hien tai khong co quyen ghi'],
         Super_Admin_Required: [403, 'FORBIDDEN', 'Chi Super Admin duoc thuc hien thao tac nay'],
         Cannot_Lock_Self: [400, 'VALIDATION_ERROR', 'Khong the khoa chinh tai khoan dang dang nhap'],
+        Cannot_Change_Own_Role: [400, 'VALIDATION_ERROR', 'Khong the tu thay doi role cua chinh minh'],
         Reason_Required: [400, 'VALIDATION_ERROR', 'Bat buoc nhap ly do thao tac'],
         No_Update_Field: [400, 'VALIDATION_ERROR', 'Khong co truong cap nhat hop le']
     };
@@ -63,12 +43,7 @@ function handleAdminError(res, err, logPrefix) {
     }
 
     console.error(logPrefix, err);
-    return error(res, 500, 'INTERNAL_SERVER_ERROR', 'Loi he thong');
+    return error(res, 500, 'INTERNAL_SERVER_ERROR', 'Loi he thong: ' + err.message);
 }
 
-module.exports = {
-    getRequestMeta,
-    success,
-    error,
-    handleAdminError
-};
+module.exports = { handleAdminError };

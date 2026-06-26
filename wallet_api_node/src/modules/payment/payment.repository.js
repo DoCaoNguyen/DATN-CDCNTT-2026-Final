@@ -30,12 +30,10 @@ const paymentRepository = {
 
     createUserOrder: async (client, orderCode, amount, description, expiredAt) => {
         const newId = uuidv7();
-        // Since DB requires merchant_id, callback_url, merchant_order_id to be NOT NULL
-        // We'll supply dummy values for them to avoid breaking constraint.
-        // If merchant_id has a foreign key constraint, it might fail. But typically P2P doesn't use it.
+        // Insert NULL for merchant_id, callback_url, and merchant_order_id for P2P transactions
         const query = `
             INSERT INTO payment_orders (id, payment_no, amount, description, status, expired_at, callback_url, merchant_order_id, idempotency_key, merchant_id)
-            VALUES ($1, $2, $3, $4, 'PENDING', $5, '', $2, $1, '00000000-0000-0000-0000-000000000000')
+            VALUES ($1::uuid, $2, $3, $4, 'PENDING', $5, NULL, NULL, $1::varchar, NULL)
             RETURNING id;
         `;
         const result = await client.query(query, [newId, orderCode, amount, description, expiredAt]);

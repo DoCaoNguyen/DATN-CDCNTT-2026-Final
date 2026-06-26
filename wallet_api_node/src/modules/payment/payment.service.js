@@ -109,13 +109,14 @@ const paymentService = {
                     if (merchantWallet) {
                         // TÍNH PHÍ MDR TỪ CẤU HÌNH
                         let feeAmount = 0n;
-                        let netAmount = order.amount;
+                        const orderAmountBig = BigInt(order.amount);
+                        let netAmount = orderAmountBig;
                         const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
                         
                         if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
                             const mdrRateFloat = parseFloat(feeConfig.fee_value);
-                            feeAmount = BigInt(Math.round(Number(order.amount) * mdrRateFloat));
-                            netAmount = order.amount - feeAmount;
+                            feeAmount = BigInt(Math.round(Number(orderAmountBig) * mdrRateFloat));
+                            netAmount = orderAmountBig - feeAmount;
                         }
 
                         const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantWallet.id);
@@ -134,6 +135,9 @@ const paymentService = {
                             // GHI LOG VÀO MONGODB
                             const SystemLog = require('../system/models/system_log.model');
                             SystemLog.create({
+                                service_name: 'PaymentService',
+                                log_level: 'INFO',
+                                message: 'Thu phí MDR từ merchant',
                                 action: 'COLLECT_MDR_FEE',
                                 entity_type: 'PAYMENT_TRANSACTION',
                                 entity_id: paymentTxId,

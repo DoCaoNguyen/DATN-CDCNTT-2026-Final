@@ -4,6 +4,10 @@ const redisConnection = require('../../config/redis');
 // Create the webhook queue
 const webhookQueue = new Queue('webhookQueue', { connection: redisConnection });
 
+webhookQueue.on('error', (err) => {
+    // Chặn spam unhandled error khi Redis tắt
+});
+
 const webhookPublisher = {
     /**
      * Publish a webhook event to the queue.
