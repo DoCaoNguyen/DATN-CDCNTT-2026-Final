@@ -162,12 +162,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: const TextField(
+              textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm',
                 hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
                 prefixIcon: Icon(Icons.search_rounded, color: Colors.grey, size: 20),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 10),
+                contentPadding: EdgeInsets.zero,
               ),
             ),
           )
@@ -178,12 +179,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildTabs() {
     return Container(
+      width: double.infinity,
       color: const Color(0xFFFFF0F5),
-      padding: const EdgeInsets.only(bottom: 12, left: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
+            const SizedBox(width: 16),
             _buildTabItem('Tất cả', isActive: true),
             const SizedBox(width: 8),
             _buildTabItem('Cá nhân'),
@@ -191,6 +194,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             _buildTabItem('Nhóm'),
             const SizedBox(width: 8),
             _buildTabItem('Tin nhắn chờ'),
+            const SizedBox(width: 16),
           ],
         ),
       ),

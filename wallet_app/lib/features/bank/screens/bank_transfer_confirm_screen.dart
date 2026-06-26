@@ -114,7 +114,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
   }
 
   void _handleConfirmClick() {
-    if (_parsedAmount < 50000000) {
+    if (_parsedAmount < 30000000) {
       // PIN verification
       _showPinBottomSheet();
     } else {

@@ -170,7 +170,11 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                   onChanged: (val) {
                                     if (widget.isFixed) return;
-                                    final formatted = _formatAmount(val);
+                                    String cleanVal = val.replaceAll(RegExp(r'[^0-9]'), '');
+                                    if (cleanVal.length > 8) {
+                                      cleanVal = cleanVal.substring(0, 8);
+                                    }
+                                    final formatted = _formatAmount(cleanVal);
                                     _amountController.value = TextEditingValue(
                                       text: formatted,
                                       selection: TextSelection.collapsed(offset: formatted.length),
@@ -180,6 +184,8 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                       final intAmount = int.tryParse(rawAmount) ?? 0;
                                       if (rawAmount.isNotEmpty && intAmount < 1000) {
                                         _amountError = 'Số tiền chuyển tối thiểu là 1.000đ';
+                                      } else if (intAmount > 50000000) {
+                                        _amountError = 'Số tiền chuyển tối đa là 50.000.000đ/ngày';
                                       } else {
                                         _amountError = null;
                                       }

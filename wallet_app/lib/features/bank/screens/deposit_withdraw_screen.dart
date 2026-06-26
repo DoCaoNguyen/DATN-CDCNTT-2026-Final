@@ -52,6 +52,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   int _livenessTask = 0;
   bool _hasBlinked = false;
   bool _isProcessingFrame = false;
+  String? _amountError;
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         if (mounted) {
           setState(() {
             _mioBalance = _formatAmountValue(rawBalance);
+            _validateAmount(_amountController.text);
           });
         }
       }
@@ -117,12 +119,44 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
     return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
   }
 
+  void _validateAmount(String val) {
+    String clean = val.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.isEmpty) {
+      setState(() => _amountError = null);
+      return;
+    }
+    final parsed = int.tryParse(clean) ?? 0;
+    final isDeposit = _activeTab == 0;
+    setState(() {
+       if (parsed < 10000) {
+          _amountError = 'Số tiền ${isDeposit ? 'nạp' : 'rút'} tối thiểu là 10.000đ';
+       } else if (parsed > 50000000) {
+          _amountError = 'Số tiền ${isDeposit ? 'nạp' : 'rút'} tối đa là 50.000.000đ/ngày';
+       } else {
+          if (!isDeposit) {
+             int currentBalance = int.tryParse(_mioBalance.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+             if (parsed > currentBalance) {
+                _amountError = 'Số dư không đủ để thực hiện giao dịch này';
+             } else {
+                _amountError = null;
+             }
+          } else {
+             _amountError = null;
+          }
+       }
+    });
+  }
+
   void _onAmountChanged(String val) {
     // Keep numbers only
     String clean = val.replaceAll(RegExp(r'[^0-9]'), '');
     if (clean.isEmpty) {
       _amountController.text = "";
+      setState(() => _amountError = null);
       return;
+    }
+    if (clean.length > 8) {
+      clean = clean.substring(0, 8); // Giới hạn độ dài số lượng chữ số
     }
     final number = int.tryParse(clean);
     if (number != null) {
@@ -131,12 +165,14 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         text: formatted,
         selection: TextSelection.collapsed(offset: formatted.length - 1),
       );
+      _validateAmount(clean);
     }
   }
 
   void _selectQuickAmount(int amount) {
     setState(() {
       _amountController.text = _formatAmountValue(amount.toString());
+      _validateAmount(amount.toString());
     });
   }
 
@@ -420,10 +456,30 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
       return;
     }
 
+    final isDeposit = _activeTab == 0;
+    
+    if (amountVal < 10000) {
+      _showErrorSnackBar("Số tiền ${isDeposit ? 'nạp' : 'rút'} tối thiểu là 10.000đ");
+      return;
+    }
+    
+    if (amountVal > 50000000) {
+      _showErrorSnackBar("Số tiền ${isDeposit ? 'nạp' : 'rút'} vượt quá hạn mức 50.000.000đ/ngày");
+      return;
+    }
+
+    if (!isDeposit) {
+      int currentBalance = int.tryParse(_mioBalance.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      if (amountVal > currentBalance) {
+        _showErrorSnackBar("Số dư không đủ để thực hiện giao dịch này");
+        return;
+      }
+    }
+
     // Generate unique 12-digit transaction reference on the app side
     _currentTxRefCode = _generateRefCode();
 
-    if (amountVal < 50000000) {
+    if (amountVal < 30000000) {
       // PIN verification
       _showPinBottomSheet();
     } else {
@@ -727,7 +783,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: _amountError != null ? Colors.red : Colors.grey.shade300),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -740,7 +796,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                         controller: _amountController,
                         onChanged: _onAmountChanged,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: _amountError != null ? Colors.red : Colors.black),
                         decoration: const InputDecoration(
                           hintText: '0đ',
                           border: InputBorder.none,
@@ -750,6 +806,14 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                     ],
                   ),
                 ),
+                if (_amountError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 4),
+                    child: Text(
+                      _amountError!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
                 const SizedBox(height: 16),
 
                 // Quick selector buttons
@@ -839,13 +903,9 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                   backgroundColor: Colors.pink,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {
-                  if (_parsedAmount > 0) {
-                    setState(() => _isConfirming = true);
-                  } else {
-                    _showErrorSnackBar("Vui lòng nhập số tiền");
-                  }
-                },
+                onPressed: (_amountError == null && _parsedAmount > 0) ? () {
+                  setState(() => _isConfirming = true);
+                } : null,
                 child: Text(
                   isDeposit ? 'Nạp tiền' : 'Rút tiền',
                   style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),

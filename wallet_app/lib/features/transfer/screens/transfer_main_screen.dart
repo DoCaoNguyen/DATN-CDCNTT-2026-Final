@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_search_screen.dart'; 
+import 'transfer_amount_screen.dart';
 import '../../bank/screens/bank_transfer_input_screen.dart';
 import '../../chat/screens/chat_list_screen.dart';
 import '../../split_bill/screens/split_bill_management_screen.dart';
@@ -27,11 +28,34 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
   final _client = CustomHttpClient();
   List<dynamic> _linkedBanks = [];
   bool _isLoadingBanks = true;
+  List<dynamic> _recentContacts = [];
 
   @override
   void initState() {
     super.initState();
     _fetchLinkedBanks();
+    _fetchRecentContacts();
+  }
+
+  Future<void> _fetchRecentContacts() async {
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getChatList),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] && data['data'] != null) {
+          if (mounted) {
+            setState(() {
+              _recentContacts = (data['data'] as List).take(10).toList();
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching recent contacts: $e");
+    }
   }
 
   Future<void> _fetchLinkedBanks() async {
@@ -329,6 +353,8 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
   // 3. PHẦN CHỌN CHUYỂN NHANH
   // ==========================================
   Widget _buildQuickTransferSection() {
+    if (_recentContacts.isEmpty) return const SizedBox.shrink();
+
     return Container(
       margin: const EdgeInsets.only(top: 8),
       color: Colors.white,
@@ -341,28 +367,34 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: Text('Chọn chuyển nhanh', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 8),
-          _buildQuickTransferUser(
-            avatarColor: Colors.brown.shade200, 
-            initials: 'HT', 
-            name: 'Hoàng Tính'
-          ),
-          const Divider(height: 1, indent: 70),
-          _buildQuickTransferUser(
-            avatarColor: Colors.purple.shade100, 
-            initials: 'V', 
-            name: 'Vinh'
-          ),
+          ..._recentContacts.map((contact) {
+            final name = contact['counterparty_name'] ?? 'Người lạ';
+            final phone = contact['counterparty_phone'] ?? '';
+            final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+            return Column(
+              children: [
+                _buildQuickTransferUser(
+                  avatarColor: Colors.purple.shade100,
+                  initials: initials,
+                  name: name,
+                  phone: phone,
+                ),
+                if (_recentContacts.last != contact)
+                  const Divider(height: 1, indent: 70),
+              ],
+            );
+          }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildQuickTransferUser({required Color avatarColor, required String initials, required String name}) {
+  Widget _buildQuickTransferUser({required Color avatarColor, required String initials, required String name, required String phone}) {
     return ListTile(
       leading: Stack(
         children: [
           CircleAvatar(
-            radius: 24,
+            radius: 20,
             backgroundColor: avatarColor,
             child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
@@ -382,8 +414,19 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         ],
       ),
       title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-      trailing: const Icon(Icons.history_rounded, color: Colors.grey),
-      onTap: () {},
+      trailing: const Icon(Icons.history, color: Colors.grey),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TransferAmountScreen(
+              token: widget.token,
+              receiverName: name,
+              receiverPhone: phone,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -617,19 +660,22 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
       child: SafeArea(
         top: false,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildBottomNavItem(Icons.currency_exchange_rounded, 'Chuyển tiền', isActive: true),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => ChatListScreen(token: widget.token)),
-                );
-              },
-              child: _buildBottomNavItem(Icons.chat_bubble_outline_rounded, 'Chuyển qua Chat'),
+            Expanded(
+              child: _buildBottomNavItem(Icons.currency_exchange_rounded, 'Chuyển tiền', isActive: true),
             ),
-            _buildBottomNavItem(Icons.person_outline_rounded, 'Tôi'),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => ChatListScreen(token: widget.token)),
+                  );
+                },
+                child: _buildBottomNavItem(Icons.chat_bubble_outline_rounded, 'Chuyển qua Chat'),
+              ),
+            ),
           ],
         ),
       ),

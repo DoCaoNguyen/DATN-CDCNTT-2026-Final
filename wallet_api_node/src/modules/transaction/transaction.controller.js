@@ -12,7 +12,12 @@ const transactionController = {
         let bigAmount;
         try {
             bigAmount = BigInt(amount);
-            if (bigAmount <= 0n) throw new Error();
+            if (bigAmount < 10000n) {
+                return res.status(400).json({ error: 'Số tiền tối thiểu là 10.000đ' });
+            }
+            if (bigAmount > 50000000n) {
+                return res.status(400).json({ error: 'Số tiền vượt quá hạn mức 50.000.000đ/ngày' });
+            }
         } catch (e) {
             return res.status(400).json({ error: 'Số tiền không hợp lệ' });
         }
@@ -30,11 +35,12 @@ const transactionController = {
                 'Wallet_Locked_PIN': 'Tài khoản tạm khóa trong 30 phút do nhập sai mã PIN quá 3 lần.',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn hoặc bạn chưa thiết lập mã PIN',
                 'PIN_Required': 'Vui lòng cung cấp mã PIN',
-                'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 50 triệu trở lên',
+                'Face_Verification_Required': 'Yêu cầu hình ảnh quét khuôn mặt cho giao dịch từ 30 triệu trở lên',
                 'No_KYC_Record_Found': 'Không tìm thấy dữ liệu khuôn mặt KYC để đối chiếu. Vui lòng hoàn tất KYC.',
                 'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
                 'Bank_Insufficient_Balance': 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.',
-                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.'
+                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.',
+                'Daily_Limit_Exceeded': 'Giao dịch vượt quá hạn mức 50.000.000đ/ngày.'
               };
 
             if (errorMap[error.message]) {
@@ -58,7 +64,12 @@ const transactionController = {
         let bigAmount;
         try {
             bigAmount = BigInt(amount);
-            if (bigAmount <= 0n) throw new Error();
+            if (bigAmount < 10000n) {
+                return res.status(400).json({ error: 'Số tiền tối thiểu là 10.000đ' });
+            }
+            if (bigAmount > 50000000n) {
+                return res.status(400).json({ error: 'Số tiền vượt quá hạn mức 50.000.000đ/ngày' });
+            }
         } catch (e) {
             return res.status(400).json({ error: 'Số tiền không hợp lệ' });
         }
@@ -81,7 +92,9 @@ const transactionController = {
                 'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
                 'Insufficient_Balance': 'Số dư trong ví không đủ để rút số tiền này.',
                 'Bank_Insufficient_Balance': 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.',
-                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.'
+                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.',
+                'Monthly_Limit_Exceeded': 'Giao dịch vượt quá hạn mức 100.000.000đ/tháng.',
+                'Daily_Limit_Exceeded': 'Giao dịch vượt quá hạn mức 50.000.000đ/ngày.'
             };
 
             if (errorMap[error.message]) {
@@ -105,7 +118,12 @@ const transactionController = {
         let bigAmount;
         try {
             bigAmount = BigInt(amount);
-            if (bigAmount <= 0n) throw new Error();
+            if (bigAmount < 1000n) {
+                return res.status(400).json({ error: 'Số tiền tối thiểu là 1.000đ' });
+            }
+            if (bigAmount > 50000000n) {
+                return res.status(400).json({ error: 'Số tiền vượt quá hạn mức 50.000.000đ/ngày' });
+            }
         } catch (e) {
             return res.status(400).json({ error: 'Số tiền không hợp lệ' });
         }
@@ -137,7 +155,8 @@ const transactionController = {
                 'Face_Verification_Failed': 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.',
                 'Insufficient_Balance': 'Số dư trong ví không đủ để thực hiện giao dịch này.',
                 'Bank_Insufficient_Balance': 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.',
-                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.'
+                'Bank_Maintenance': 'Ngân hàng từ chối: Hệ thống đang bảo trì.',
+                'Monthly_Limit_Exceeded': 'Giao dịch vượt quá hạn mức 100.000.000đ/tháng.'
             };
 
             if (errorMap[error.message]) {
@@ -161,7 +180,12 @@ const transactionController = {
         let bigAmount;
         try {
             bigAmount = BigInt(amount);
-            if (bigAmount <= 0n) throw new Error();
+            if (bigAmount < 1000n) {
+                return res.status(400).json({ error: 'Số tiền tối thiểu là 1.000đ' });
+            }
+            if (bigAmount > 50000000n) {
+                return res.status(400).json({ error: 'Số tiền vượt quá hạn mức 50.000.000đ/ngày' });
+            }
         } catch (e) {
             return res.status(400).json({ error: 'Số tiền không hợp lệ' });
         }
@@ -181,7 +205,8 @@ const transactionController = {
                 'Receiver_Wallet_Not_Found': 'Không tìm thấy ví người nhận (Sai SĐT/Email)',
                 'Self_Transfer_Not_Allowed': 'Không thể tự chuyển tiền cho chính mình',
                 'Insufficient_Balance': 'Số dư trong ví không đủ',
-                'Receiver_Not_KYC': 'Người nhận chưa xác thực danh tính (KYC). Giao dịch bị từ chối!'
+                'Receiver_Not_KYC': 'Người nhận chưa xác thực danh tính (KYC). Giao dịch bị từ chối!',
+                'Monthly_Limit_Exceeded': 'Giao dịch vượt quá hạn mức 100.000.000đ/tháng.'
             };
             
             if (errorMap[error.message]) {

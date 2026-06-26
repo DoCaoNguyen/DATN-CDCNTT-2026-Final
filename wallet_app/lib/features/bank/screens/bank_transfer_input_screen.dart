@@ -170,6 +170,9 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
       setState(() {});
       return;
     }
+    if (clean.length > 8) {
+      clean = clean.substring(0, 8);
+    }
     final number = int.tryParse(clean);
     if (number != null) {
       String formatted = _formatAmountValue(clean);
@@ -201,6 +204,9 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
     if (amt < 1000) {
       return "Số tiền chuyển tối thiểu là 1.000đ";
     }
+    if (amt > 50000000) {
+      return "Số tiền chuyển tối đa là 50.000.000đ/ngày";
+    }
     if (amt > _rawBalanceInt) {
       return "Số dư ví không đủ (Số dư hiện tại: $_mioBalance)";
     }
@@ -219,7 +225,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
   bool get _isValid {
     final text = _accountController.text.trim();
     final isAccountValid = widget.prefilledAccountNumber != null || (text.length >= 8 && text.length <= 19);
-    return isAccountValid && _parsedAmount >= 1000 && _parsedAmount <= _rawBalanceInt;
+    return isAccountValid && _parsedAmount >= 1000 && _parsedAmount <= 50000000 && _parsedAmount <= _rawBalanceInt;
   }
 
   void _onContinue() {
