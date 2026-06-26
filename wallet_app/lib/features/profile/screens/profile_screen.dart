@@ -571,11 +571,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildMoreSettingsSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
+      child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
         children: [
           _buildMoreSettingsItem(
             icon: Icons.storefront_rounded,
@@ -618,6 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Divider(height: 1, color: Color(0xFFF5F5F5)),
           _buildLogoutSwitchAccountRow(),
         ],
+      ),
       ),
     );
   }

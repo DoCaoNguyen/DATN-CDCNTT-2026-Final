@@ -497,7 +497,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                   _buildCodeBlock("Headers:\n  x-api-key: <API_KEY>\n  Content-Type: application/json"),
                   const SizedBox(height: 20),
                   _buildGuideSection("2. Tạo Link Thanh Toán", "Gọi API POST để tạo một phiên thanh toán mới cho khách hàng."),
-                  _buildCodeBlock("POST ${ApiConfig.baseUrl}/payment-links\n\n{\n  \"amount\": 50000,\n  \"description\": \"Thanh toan don hang #123\",\n  \"merchant_order_id\": \"123\"\n}"),
+                  _buildCodeBlock("POST ${ApiConfig.baseUrl}/payment/create\n\n{\n  \"amount\": 50000,\n  \"description\": \"Thanh toan don hang #123\",\n  \"merchant_order_id\": \"123\"\n}"),
                   const SizedBox(height: 20),
                   _buildGuideSection("3. Nhận Webhook", "Sau khi khách hàng thanh toán thành công, hệ thống sẽ gửi một POST request về Callback URL của bạn."),
                   _buildCodeBlock("POST <Webhook URL>\n\n{\n  \"merchant_order_id\": \"123\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 50000,\n  \"signature\": \"...\"\n}"),
