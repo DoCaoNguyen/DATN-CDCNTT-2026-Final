@@ -14,6 +14,7 @@ import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import 'deposit_withdraw_success_screen.dart';
 import 'bank_link_screen.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 
 class DepositWithdrawScreen extends StatefulWidget {
   final String token;
