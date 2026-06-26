@@ -240,7 +240,7 @@ const transactionService = {
         }
     },
 
-    transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin) => {
+    transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin, faceImagePath) => {
         const senderWallet = await repo.getWalletForPinCheck(senderUserId);
         
         if (!senderWallet) {
@@ -252,37 +252,7 @@ const transactionService = {
             throw new Error('Monthly_Limit_Exceeded');
         }
 
-        if (senderWallet.pin_locked_until) {
-            const now = new Date();
-            const lockedUntil = new Date(senderWallet.pin_locked_until);
-            if (now < lockedUntil) {
-                throw new Error('Wallet_Locked_PIN');
-            } else {
-                await repo.resetPinAttempts(senderWallet.id);
-                senderWallet.pin_failed_attempts = 0; 
-            }
-        }
-
-        if (!senderWallet.pin_hash) {
-            throw new Error('Sender_Wallet_Not_Found');
-        }
-        const isPinMatch = await bcrypt.compare(pin, senderWallet.pin_hash);
-        if (!isPinMatch) {
-            const newAttempts = (senderWallet.pin_failed_attempts || 0) + 1;
-            
-            if (newAttempts >= 3) {
-                const lockTime = new Date(Date.now() + 30 * 60000);
-                await repo.updatePinAttempts(senderWallet.id, newAttempts, lockTime);
-                throw new Error('Wallet_Locked_PIN');
-            } else {
-                await repo.updatePinAttempts(senderWallet.id, newAttempts, null);
-                throw new Error(`Wrong_PIN_${3 - newAttempts}`);
-            }
-        }
-
-        if (senderWallet.pin_failed_attempts > 0) {
-            await repo.resetPinAttempts(senderWallet.id);
-        }
+        await verifyTransactionSecurity(amount, pin, faceImagePath, senderWallet, senderUserId, repo, kycService);
 
         const receiverWallet = await repo.getWalletByIdentifier(receiverIdentifier);
 
