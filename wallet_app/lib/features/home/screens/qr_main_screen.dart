@@ -240,7 +240,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
               Navigator.pop(ctx);
               Future.delayed(
                 const Duration(milliseconds: 800),
-                () => _isScannerActive = true,
+                () {
+                  _isScannerActive = true;
+                  _scannerController.start();
+                },
               );
             },
             child: const Text('Quét lại', style: TextStyle(color: AppColors.primaryPink)),
@@ -400,7 +403,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
                         Navigator.pop(sheetCtx);
                         Future.delayed(
                           const Duration(milliseconds: 300),
-                          () => _isScannerActive = true,
+                          () {
+                            _isScannerActive = true;
+                            _scannerController.start();
+                          },
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -545,6 +551,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                   onPressed: () {
                     Navigator.pop(ctx);
                     _isScannerActive = true;
+                    _scannerController.start();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPink,
@@ -1185,9 +1192,13 @@ class _QrMainScreenState extends State<QrMainScreen> {
                             );
                             final raw = int.tryParse(formatted.replaceAll('.', '')) ?? 0;
                             setSheetState(() {
-                              sheetAmountError = (formatted.isNotEmpty && raw < 1000)
-                                  ? 'Số tiền tối thiểu 1.000đ'
-                                  : null;
+                              if (formatted.isNotEmpty && raw < 1000) {
+                                sheetAmountError = 'Số tiền tối thiểu 1.000đ';
+                              } else if (formatted.isNotEmpty && raw > 50000000) {
+                                sheetAmountError = 'Số tiền tối đa 50.000.000đ';
+                              } else {
+                                sheetAmountError = null;
+                              }
                             });
                           },
                         ),
