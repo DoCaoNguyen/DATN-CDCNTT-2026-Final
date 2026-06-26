@@ -37,6 +37,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
   File? _idFrontImage;
   File? _idBackImage;
   File? _faceImage;
+  String? _kycSessionId;
 
   final TextEditingController _idNumberController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
@@ -108,44 +109,82 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
 
   Future<void> _confirmPhoto() async {
     setState(() => _isLoading = true);
-    bool isValid = await OcrHelper.validateIdCardQuality(_tempImage!, _currentStep == 1);
-
-    if (!isValid) {
-      setState(() => _isLoading = false);
-      KycDialogs.showWarning(context);
-      return;
-    }
 
     if (_currentStep == 1) {
+      bool isValid = await OcrHelper.validateIdCardQuality(_tempImage!, true);
+      if (!isValid) {
+        setState(() => _isLoading = false);
+        KycDialogs.showWarning(context);
+        return;
+      }
+      
+      // Gọi FPT.AI ngay sau khi chụp xong mặt trước để lấy Data đối soát cho mặt sau
+      bool ocrSuccess = await _processOCRFront(_tempImage!);
+      if (!ocrSuccess) return;
+
       setState(() { _idFrontImage = _tempImage; _currentStep = 2; _tempImage = null; _isPreviewing = false; _isCameraInitialized = false; _isLoading = false; });
       _initializeCamera();
+
     } else if (_currentStep == 2) {
-      setState(() { _idBackImage = _tempImage; _tempImage = null; _isPreviewing = false; _isCameraInitialized = false; });
-      await _processOCRAndCheckConditions();
+      // Đối soát mặt sau bằng dữ liệu OCR của mặt trước
+      bool isValidBack = await OcrHelper.validateIdCardQuality(
+        _tempImage!, false, 
+        expectedId: _idNumberController.text, 
+        expectedName: _fullNameController.text
+      );
+      if (!isValidBack) {
+        setState(() => _isLoading = false);
+        KycDialogs.showWarning(context, message: "Mặt sau không hợp lệ hoặc không khớp với thẻ mặt trước. Vui lòng chụp cho khớp khung hình.");
+        _retakePhoto();
+        return;
+      }
+
+      setState(() { _idBackImage = _tempImage; _tempImage = null; _isPreviewing = false; _isCameraInitialized = false; _isLoading = false; _currentStep = 3; });
     }
   }
 
-  Future<void> _processOCRAndCheckConditions() async {
+  Future<bool> _processOCRFront(File idFrontImage) async {
     try {
-      var data = await OcrHelper.extractInfo(_idFrontImage!);
+      var request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}/kyc/ocr-front'));
+      request.files.add(await http.MultipartFile.fromPath('id_front', idFrontImage.path));
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      var json = jsonDecode(responseData);
+      
+      if (response.statusCode != 200) {
+        setState(() => _isLoading = false);
+        KycDialogs.showError(context, json['error'] ?? "Lỗi phân tích thẻ CCCD", _resetFlow);
+        return false;
+      }
+
+      var ocrData = json['ocr_data'];
+      _kycSessionId = json['session_id'];
+
+      Map<String, String> data = {
+        "id": ocrData['id_number']?.toString() ?? "",
+        "name": ocrData['full_name']?.toString() ?? "",
+        "dob": ocrData['dob']?.toString() ?? "",
+        "gender": ocrData['gender']?.toString() ?? "",
+        "address": ocrData['address']?.toString() ?? ""
+      };
 
       if (data["id"]!.isEmpty || data["dob"]!.isEmpty) {
          setState(() => _isLoading = false);
          KycDialogs.showError(context, "Ảnh bị mờ. Không thể đọc được Số CCCD và Ngày sinh.", _resetFlow);
-         return;
+         return false;
       }
 
-      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/kyc/check-id?id=${data["id"]}'));
-      if (response.statusCode == 200 && jsonDecode(response.body)['is_used'] == true) {
+      final checkResponse = await http.get(Uri.parse('${ApiConfig.baseUrl}/kyc/check-id?id=${data["id"]}'));
+      if (checkResponse.statusCode == 200 && jsonDecode(checkResponse.body)['is_used'] == true) {
         setState(() => _isLoading = false);
         KycDialogs.showError(context, "Số CCCD này đã được sử dụng. Vui lòng liên hệ CSKH.", _resetFlow);
-        return;
+        return false;
       }
 
       if (!OcrHelper.isOver18(data["dob"]!)) {
         setState(() => _isLoading = false);
         KycDialogs.showError(context, "Rất tiếc, bạn phải đủ 18 tuổi để sử dụng dịch vụ.", _resetFlow);
-        return;
+        return false;
       }
 
       final calculatedExpiry = NfcKycService.calculateExpiryDate(data["dob"]!);
@@ -160,7 +199,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
         if (expiryDate.isBefore(todayStart)) {
           setState(() => _isLoading = false);
           KycDialogs.showError(context, "CCCD của bạn đã hết hạn sử dụng. Vui lòng sử dụng thẻ còn hạn.", _resetFlow);
-          return;
+          return false;
         }
       }
       String formattedExpiry = "";
@@ -172,15 +211,14 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
         formattedExpiry = "$dd/$mm/$year";
       }
 
-      setState(() {
-        _idNumberController.text = data["id"]!; _dobController.text = data["dob"]!; _fullNameController.text = data["name"]!;
-        _genderController.text = data["gender"]!; _addressController.text = data["address"]!;
-        _expiryDateController.text = formattedExpiry;
-        _isLoading = false; _currentStep = 3;
-      });
+      _idNumberController.text = data["id"]!; _dobController.text = data["dob"]!; _fullNameController.text = data["name"]!;
+      _genderController.text = data["gender"]!; _addressController.text = data["address"]!;
+      _expiryDateController.text = formattedExpiry;
+      return true;
     } catch (e) {
       setState(() => _isLoading = false);
-      KycDialogs.showError(context, "Lỗi quét dữ liệu: Vui lòng chụp lại ảnh.", _resetFlow);
+      KycDialogs.showError(context, "Lỗi quét dữ liệu: Vui lòng kiểm tra lại mạng hoặc chụp lại ảnh.", _resetFlow);
+      return false;
     }
   }
 
@@ -236,6 +274,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.verifyKyc));
       request.fields['user_id'] = widget.userId;
+      if (_kycSessionId != null) request.fields['session_id'] = _kycSessionId!;
       request.fields['ocr_data'] = jsonEncode({"id_number": _idNumberController.text.trim(), "full_name": _fullNameController.text.trim(), "dob": _dobController.text.trim(), "gender": _genderController.text.trim(), "address": _addressController.text.trim()});
       request.files.add(await http.MultipartFile.fromPath('face_image', _faceImage!.path));
       request.files.add(await http.MultipartFile.fromPath('id_front', _idFrontImage!.path));
@@ -255,10 +294,13 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
   void _resetFlow() {
     Navigator.pop(context);
     setState(() {
-      _currentStep = 1; _faceImage = null; _idFrontImage = null; _idBackImage = null;
-      _tempImage = null; _isPreviewing = false; _livenessTask = 0; _hasBlinked = false;
-      _initializeCamera();
+      _currentStep = 1; _faceImage = null; _idFrontImage = null; _idBackImage = null; _kycSessionId = null;
+      _idNumberController.clear(); _fullNameController.clear(); _dobController.clear();
+      _genderController.clear(); _addressController.clear(); _expiryDateController.clear();
+      _livenessTask = 0; _hasBlinked = false; _nfcResult = null;
+      _isCameraInitialized = false;
     });
+    _initializeCamera();
   }
 
   String getLivenessInstruction() {

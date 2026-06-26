@@ -108,8 +108,30 @@ class OcrConfirmForm extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryPink),
-                onPressed: onSubmit,
-                child: const Text('Thông tin hợp lệ, Đọc chip NFC', style: TextStyle(fontSize: 16, color: Colors.white)),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text("Xác nhận thông tin", style: TextStyle(fontWeight: FontWeight.bold)),
+                      content: const Text("Bạn có chắc chắn các thông tin trên đã chính xác?\n\nLưu ý: Thông tin này sẽ được dùng để định danh tài khoản và không thể tự ý thay đổi sau này.", style: TextStyle(height: 1.5)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text("Kiểm tra lại", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            onSubmit();
+                          },
+                          child: const Text("Đồng ý", style: TextStyle(color: AppColors.primaryPink, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: const Text('Thông tin hợp lệ, Quét khuôn mặt', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             )
           ],

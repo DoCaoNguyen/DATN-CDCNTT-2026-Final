@@ -2,10 +2,17 @@ import 'dart:io';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class OcrHelper {
-  static Future<bool> validateIdCardQuality(File imageFile, bool isFront) async {
-    // Nếu là mặt sau, bỏ qua nhận diện chữ để dễ chụp hơn
-    if (!isFront) return true;
-    
+  static String removeDiacritics(String str) {
+    var withDia = 'áàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ';
+    var withoutDia = 'aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyy';
+    for (int i = 0; i < withDia.length; i++) {
+      str = str.replaceAll(withDia[i], withoutDia[i]);
+      str = str.replaceAll(withDia[i].toUpperCase(), withoutDia[i].toUpperCase());
+    }
+    return str;
+  }
+
+  static Future<bool> validateIdCardQuality(File imageFile, bool isFront, {String? expectedId, String? expectedName}) async {
     try {
       final inputImage = InputImage.fromFile(imageFile);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
@@ -13,12 +20,30 @@ class OcrHelper {
       textRecognizer.close();
 
       String text = recognizedText.text.toUpperCase();
+      if (text.trim().isEmpty) return false;
 
-      if (text.trim().isEmpty || recognizedText.blocks.length < 4) return false;
-      bool hasTop = text.contains("CỘNG HÒA") || text.contains("VIỆT NAM");
-      bool hasTitle = text.contains("CĂN CƯỚC") || text.contains("CÔNG DÂN") || text.contains("CHỨNG MINH");
-      bool hasId = RegExp(r'\d{9,12}').hasMatch(text);
-      return hasTop && hasTitle && hasId;
+      if (isFront) {
+        // Nếu để nguyên thẻ vừa vặn trong khung, ML Kit thường gom chữ lại thành 3-4 blocks.
+        // Cần hạ điều kiện xuống 3 để không bắt người dùng phải đưa camera quá sát (lố khung).
+        if (recognizedText.blocks.length < 3) return false;
+        bool hasId = RegExp(r'\d{9,12}').hasMatch(text);
+        return hasId;
+      } else {
+        if (recognizedText.blocks.length < 2) return false;
+        
+        String cleanText = text.replaceAll(RegExp(r'[\s<]+'), '');
+        
+        if (expectedId != null && expectedId.isNotEmpty) {
+           if (!cleanText.contains(expectedId)) return false;
+        }
+        
+        if (expectedName != null && expectedName.isNotEmpty) {
+           String noDiaName = removeDiacritics(expectedName).toUpperCase().replaceAll(' ', '');
+           if (!cleanText.contains(noDiaName)) return false;
+        }
+        
+        return true;
+      }
     } catch (e) {
       return false;
     }

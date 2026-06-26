@@ -119,4 +119,6 @@ router.post('/verify', upload.fields([
     { name: 'face_image', maxCount: 1 }
 ]), kycController.verifyKYC);
 
+router.post('/ocr-front', upload.single('id_front'), kycController.ocrFront);
+
 module.exports = router;
