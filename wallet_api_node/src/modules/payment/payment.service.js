@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const pool = require('../../config/db');
 const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
+const traceEventService = require('../system/trace_event.service');
 
 const paymentService = {
     createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
@@ -188,6 +189,17 @@ const paymentService = {
             }
 
             await client.query('COMMIT'); 
+
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: order.order_id,
+                event_type: 'PAYMENT',
+                status: 'SUCCESS',
+                amount: order.amount.toString(),
+                actor: userId,
+                event: 'Thanh toán đơn hàng QR'
+            });
 
             // ==========================================
             // 🚀 BẮT ĐẦU BACKGROUND JOBS SAU KHI ĐÃ COMMIT

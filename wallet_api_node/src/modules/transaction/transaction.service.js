@@ -7,6 +7,7 @@ const { emitToUser } = require('../../utils/socket');
 const kycService = require('../kyc/kyc.service');
 const notificationService = require('../notification/notification.service');
 const aiService = require('../ai/ai.service');
+const traceEventService = require('../system/trace_event.service');
 
 const transactionService = {
     deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
@@ -51,6 +52,17 @@ const transactionService = {
             // Gửi Push Notification biến động số dư
             notificationService.sendBalanceChangeNotification(userId, amount, 'DEPOSIT', ledgerTxId).catch(err => {
                 console.error('Lỗi gửi push notification nạp tiền:', err);
+            });
+
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: extRef,
+                event_type: 'DEPOSIT',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: userId,
+                event: 'Nạp tiền từ ngân hàng liên kết'
             });
 
             return { 
@@ -115,6 +127,17 @@ const transactionService = {
                 console.error('Lỗi gửi push notification rút tiền:', err);
             });
 
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: extRef,
+                event_type: 'WITHDRAWAL',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: userId,
+                event: 'Rút tiền về ngân hàng liên kết'
+            });
+
             return { 
                 id: extRef,
                 external_reference: extRef,
@@ -175,6 +198,17 @@ const transactionService = {
             // Gửi Push Notification biến động số dư
             notificationService.sendBalanceChangeNotification(userId, amount, 'WITHDRAWAL', ledgerTxId).catch(err => {
                 console.error('Lỗi gửi push notification chuyển tiền ngân hàng:', err);
+            });
+
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: extRef,
+                event_type: 'BANK_TRANSFER',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: userId,
+                event: `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`
             });
 
             return { 
@@ -355,6 +389,17 @@ const transactionService = {
                     console.error('Lỗi gửi push notification nhận tiền:', err);
                 });
             }
+
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: finalRef,
+                event_type: 'TRANSFER',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: senderUserId,
+                event: note || 'Chuyển tiền qua Ví'
+            });
 
             return { 
                 amount: amount.toString(), 
