@@ -14,7 +14,10 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        
+        const dailyTotal = await repo.getDailyTotal(wallet.id, 'DEPOSIT');
+        if (dailyTotal + amount > 50000000n) {
+            throw new Error('Daily_Limit_Exceeded');
+        }
 
         await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
@@ -84,7 +87,15 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        
+        const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
+        if (monthlyTotal + amount > 100000000n) {
+            throw new Error('Monthly_Limit_Exceeded');
+        }
+
+        const dailyTotal = await repo.getDailyTotal(wallet.id, 'WITHDRAW');
+        if (dailyTotal + amount > 50000000n) {
+            throw new Error('Daily_Limit_Exceeded');
+        }
 
         await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
@@ -157,7 +168,10 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        
+        const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
+        if (monthlyTotal + amount > 100000000n) {
+            throw new Error('Monthly_Limit_Exceeded');
+        }
 
         await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
@@ -180,7 +194,7 @@ const transactionService = {
             const hex = transferId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', transferId, 'WITHDRAWAL', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
             
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
@@ -231,6 +245,11 @@ const transactionService = {
         
         if (!senderWallet) {
             throw new Error('Sender_Wallet_Not_Found');
+        }
+
+        const monthlyTotal = await repo.getMonthlyDebitTotal(senderWallet.id);
+        if (monthlyTotal + amount > 100000000n) {
+            throw new Error('Monthly_Limit_Exceeded');
         }
 
         if (senderWallet.pin_locked_until) {
