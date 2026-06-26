@@ -84,6 +84,10 @@ const paymentController = {
             return res.status(400).json({ error: 'Số tiền không hợp lệ' });
         }
 
+        if (bigAmount > 50000000n) {
+            return res.status(400).json({ error: 'Số tiền tạo mã không được vượt quá 50.000.000đ' });
+        }
+
         try {
             const userRepo = require('../user/user.repository');
             const user = await userRepo.getUserProfile(req.user.userId);
