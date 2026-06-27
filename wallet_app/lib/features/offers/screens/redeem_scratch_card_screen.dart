@@ -37,25 +37,13 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
           ),
           child: const Text(
             'viettel',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, fontStyle: FontStyle.italic),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14, fontStyle: FontStyle.italic),
           ),
         );
       case 'Vinaphone':
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
-              child: const Icon(Icons.wifi, color: Colors.white, size: 10),
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              'vinaphone',
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
-            ),
-          ],
+        return const Text(
+          'vinaphone',
+          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14),
         );
       case 'Mobifone':
         return RichText(
@@ -70,7 +58,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
       case 'Vietnamobile':
         return const Text(
           'Vietnamobile',
-          style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold, fontSize: 12),
+          style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold, fontSize: 14),
         );
       default:
         return const Icon(Icons.sim_card, size: 20, color: Colors.grey);
@@ -160,20 +148,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildProviderLogo(provider),
-                    const SizedBox(width: 8),
-                    Text(
-                      provider,
-                      style: TextStyle(
-                        color: isSelected ? Colors.blue : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
+                child: _buildProviderLogo(provider),
               ),
             );
           }).toList(),
