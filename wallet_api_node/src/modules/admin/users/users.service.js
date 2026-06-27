@@ -31,7 +31,7 @@ const usersService = {
         return user;
     },
 
-    createUser: async ({ actor, payload, ipAddress, userAgent }) => {
+    createCustomer: async ({ actor, payload, ipAddress, userAgent }) => {
         ensureWriteAccess(actor);
         const data = sanitizeUserInput(payload);
 
@@ -42,9 +42,12 @@ const usersService = {
         });
         if (conflict) throw new Error('User_Conflict');
 
-        const passwordHash = await bcrypt.hash(data.password, 10);
-        const roleCodes = Array.isArray(data.roleCodes) ? data.roleCodes : (data.roleCode ? [data.roleCode] : ['USER']);
-        const derivedUserType = deriveUserType(roleCodes);
+        const crypto = require('crypto');
+        const rawPassword = payload.password || crypto.randomBytes(6).toString('hex');
+        const passwordHash = await bcrypt.hash(rawPassword, 10);
+        
+        const derivedUserType = 'USER';
+        const roleCodes = ['USER'];
 
         const created = await withTransaction(async (client) => {
             const userId = await usersRepository.createUser(client, {
@@ -54,37 +57,96 @@ const usersService = {
                 phone: data.phone,
                 passwordHash,
                 userType: derivedUserType,
-                status: data.status
+                status: data.status || 'ACTIVE'
             });
 
             const rolesAssigned = await usersRepository.replaceRolesByCodes(client, userId, roleCodes);
             if (!rolesAssigned) throw new Error('Role_Not_Found');
 
-            let walletId = null;
-            if (data.createWallet !== false) { // Default true for phase 1 admin API
-                const authRepository = require('../../auth/auth.repository');
-                walletId = await authRepository.createWallet(client, userId);
-            }
+            const authRepository = require('../../auth/auth.repository');
+            const walletId = await authRepository.createWallet(client, userId);
 
             return { userId, walletId };
         });
 
         await writeAuditLog({
             actorId: actor.userId || actor.id,
-            action: 'admin.user_created',
+            action: 'admin.customer_created',
             entityType: 'users',
             entityId: created.userId,
             newData: {
                 user_type: derivedUserType,
                 roles: roleCodes,
-                status: data.status,
+                status: data.status || 'ACTIVE',
                 wallet_id: created.walletId
             },
             ipAddress,
             userAgent
         });
 
-        return usersService.getUserDetail(created.userId);
+        const user = await usersService.getUserDetail(created.userId);
+        return { ...user, generated_password: rawPassword };
+    },
+
+    createStaff: async ({ actor, payload, ipAddress, userAgent }) => {
+        ensureWriteAccess(actor);
+        const data = sanitizeUserInput(payload);
+        
+        const roleCodes = Array.isArray(data.roleCodes) ? data.roleCodes : [data.roleCodes];
+        
+        let derivedUserType = 'SUPPORT_STAFF';
+        if (roleCodes.includes('SUPER_ADMIN')) {
+            derivedUserType = 'SUPER_ADMIN';
+            if (!isSuperAdmin(actor)) throw new Error('Super_Admin_Required');
+        } else if (roleCodes.includes('ADMIN')) {
+            derivedUserType = 'ADMIN';
+            if (!isSuperAdmin(actor)) throw new Error('Super_Admin_Required');
+        }
+
+        const conflict = await usersRepository.checkUserConflict({
+            username: data.username,
+            email: data.email,
+            phone: data.phone
+        });
+        if (conflict) throw new Error('User_Conflict');
+
+        const crypto = require('crypto');
+        const rawPassword = payload.password || crypto.randomBytes(6).toString('hex');
+        const passwordHash = await bcrypt.hash(rawPassword, 10);
+
+        const created = await withTransaction(async (client) => {
+            const userId = await usersRepository.createUser(client, {
+                fullName: data.fullName,
+                username: data.username,
+                email: data.email,
+                phone: data.phone,
+                passwordHash,
+                userType: derivedUserType,
+                status: data.status || 'ACTIVE'
+            });
+
+            const rolesAssigned = await usersRepository.replaceRolesByCodes(client, userId, roleCodes);
+            if (!rolesAssigned) throw new Error('Role_Not_Found');
+
+            return { userId };
+        });
+
+        await writeAuditLog({
+            actorId: actor.userId || actor.id,
+            action: 'admin.staff_created',
+            entityType: 'users',
+            entityId: created.userId,
+            newData: {
+                user_type: derivedUserType,
+                roles: roleCodes,
+                status: data.status || 'ACTIVE'
+            },
+            ipAddress,
+            userAgent
+        });
+
+        const user = await usersService.getUserDetail(created.userId);
+        return { ...user, generated_password: rawPassword };
     },
 
     updateUser: async ({ actor, userId, payload, ipAddress, userAgent }) => {

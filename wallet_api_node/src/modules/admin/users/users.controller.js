@@ -11,16 +11,29 @@ const usersController = {
         }
     },
 
-    createUser: async (req, res) => {
+    createCustomer: async (req, res) => {
         try {
-            const result = await usersService.createUser({
+            const result = await usersService.createCustomer({
                 actor: req.user,
                 payload: req.body,
                 ...getRequestMeta(req)
             });
-            return success(res, result, 'Tao user thanh cong', 201);
+            return success(res, result, 'Tao khach hang thanh cong', 201);
         } catch (err) {
-            return handleAdminError(res, err, 'Loi admin create user:');
+            return handleAdminError(res, err, 'Loi admin create customer:');
+        }
+    },
+
+    createStaff: async (req, res) => {
+        try {
+            const result = await usersService.createStaff({
+                actor: req.user,
+                payload: req.body,
+                ...getRequestMeta(req)
+            });
+            return success(res, result, 'Tao nhan vien thanh cong', 201);
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin create staff:');
         }
     },
 

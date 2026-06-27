@@ -12,7 +12,8 @@
  * - getAlerts
  */
 const dashboardService = require('./dashboard.service');
-const { success, handleAdminError } = require('../_shared/admin-error');
+const { success } = require('../_shared/admin-response');
+const { handleAdminError } = require('../_shared/admin-error');
 
 const dashboardController = {
     getDashboardKPIs: async (req, res) => {
@@ -28,6 +29,7 @@ const dashboardController = {
             return res.status(500).json({ success: false, error: err.message });
         }
     }
+    // TODO: Implement các controller khác
 };
 
 module.exports = dashboardController;

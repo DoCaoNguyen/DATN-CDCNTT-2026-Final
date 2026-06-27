@@ -12,7 +12,8 @@ Module này không trực tiếp tạo dòng tiền, nhưng có vai trò giám s
 
 **Phạm vi chính:**
 
-- Quản lý người dùng
+- Quản lý khách hàng (User App)
+- Quản lý nhân viên nội bộ (Staff)
 - Quản lý ví người dùng
 - Quản lý merchant
 - Quản lý payment order
@@ -42,10 +43,10 @@ Module này không trực tiếp tạo dòng tiền, nhưng có vai trò giám s
 
 ---
 
-### FN-ADMIN-01: Quản lý người dùng
+### FN-ADMIN-01: Quản lý khách hàng (User App)
 
 **Mô tả:**  
-Admin xem danh sách user ví điện tử, tra cứu thông tin tài khoản, trạng thái ví và lịch sử giao dịch liên quan.
+Admin quản lý tệp khách hàng sử dụng ví điện tử (loại tài khoản USER). Bao gồm xem danh sách, tra cứu thông tin, tạo mới (tự động sinh ví mặc định), trạng thái ví và lịch sử giao dịch.
 
 **Actor:** Admin, Support Staff
 
@@ -75,6 +76,8 @@ Admin xem danh sách user ví điện tử, tra cứu thông tin tài khoản, t
 **Actions:**
 
 - Xem chi tiết user
+- Tạo user mới (tự động tạo ví mặc định và gán role)
+- Cập nhật thông tin user
 - Khóa tài khoản
 - Mở khóa tài khoản
 - Reset mật khẩu
@@ -91,6 +94,44 @@ Admin xem danh sách user ví điện tử, tra cứu thông tin tài khoản, t
 | BR-03 | Reset mật khẩu phải revoke session cũ |
 | BR-04 | Không thể khóa chính tài khoản admin đang đăng nhập |
 | BR-05 | Mọi thao tác quản trị user phải ghi audit log |
+| BR-06 | Khi tạo user (ví điện tử), hệ thống tự động tạo 1 ví mặc định trong cùng transaction. Nếu lỗi ví thì rollback user. |
+
+---
+
+### FN-ADMIN-01B: Quản lý nhân viên nội bộ (Staff)
+
+**Mô tả:**  
+Admin cấp cao quản lý danh sách tài khoản nội bộ (ADMIN, SUPER_ADMIN, SUPPORT_STAFF) dùng để đăng nhập vào Admin Web.
+
+**Actor:** Super Admin, Admin (có quyền)
+
+**Data fields danh sách:**
+
+| Cột | Mô tả |
+|---|---|
+| User ID | ID nhân viên |
+| Họ tên | full_name |
+| Tên đăng nhập | username/email |
+| Loại tài khoản | ADMIN / SUPPORT_STAFF |
+| Role | Vai trò phân quyền (RBAC) |
+| Trạng thái | ACTIVE / LOCKED |
+
+**Actions:**
+
+- Xem chi tiết nhân viên
+- Tạo nhân viên mới (chỉ định loại tài khoản và Role, KHÔNG tạo ví)
+- Cập nhật thông tin và phân quyền
+- Khóa / Mở khóa tài khoản
+- Reset mật khẩu
+
+**Business rules:**
+
+| # | Rule |
+|---|---|
+| BR-01 | Không tạo ví mặc định cho các loại tài khoản nội bộ. |
+| BR-02 | Tài khoản nhân viên bắt buộc phải có Role để phần quyền (RBAC). |
+| BR-03 | Không thể khóa/xóa chính tài khoản đang đăng nhập. |
+| BR-04 | Mọi thao tác quản lý nhân viên phải ghi audit log. |
 
 ---
 
@@ -378,7 +419,10 @@ Admin kỹ thuật xem log lỗi hệ thống: lỗi payment flow, lỗi webhook
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | GET | `/api/v1/admin/users` | Danh sách user |
+| POST | `/api/v1/admin/customers` | Tạo khách hàng (tự động cấp ví) |
+| POST | `/api/v1/admin/staffs` | Tạo nhân viên nội bộ (gán Role RBAC) |
 | GET | `/api/v1/admin/users/{id}` | Chi tiết user |
+| PATCH | `/api/v1/admin/users/{id}` | Cập nhật thông tin user |
 | POST | `/api/v1/admin/users/{id}/actions/lock` | Khóa user |
 | POST | `/api/v1/admin/users/{id}/actions/unlock` | Mở khóa user |
 | GET | `/api/v1/admin/wallets` | Danh sách ví |
@@ -386,6 +430,7 @@ Admin kỹ thuật xem log lỗi hệ thống: lỗi payment flow, lỗi webhook
 | POST | `/api/v1/admin/wallets/{id}/actions/lock` | Khóa ví |
 | POST | `/api/v1/admin/wallets/{id}/actions/unlock` | Mở khóa ví |
 | GET | `/api/v1/admin/merchants` | Danh sách merchant |
+| POST | `/api/v1/admin/merchants` | Tạo merchant (kèm owner, API key, webhook) |
 | GET | `/api/v1/admin/payment-orders` | Danh sách payment |
 | GET | `/api/v1/admin/transactions` | Danh sách giao dịch |
 | POST | `/api/v1/admin/transactions/reconcile` | Đối soát ledger |
@@ -419,6 +464,10 @@ Admin kỹ thuật xem log lỗi hệ thống: lỗi payment flow, lỗi webhook
 | # | Tiêu chí |
 |---|---|
 | AC-01 | Admin xem được danh sách user |
+| AC-01b | Admin tạo được KHÁCH HÀNG mới thành công (hệ thống tự động cấp ví và role USER) |
+| AC-01c | Admin tạo được NHÂN VIÊN mới thành công (hệ thống gán role RBAC, không cấp ví) |
+| AC-01d | Admin tạo được MERCHANT mới thành công (kèm Merchant Owner, API Key, Webhook) |
+| AC-01e | Admin cập nhật được thông tin user cơ bản |
 | AC-02 | Admin khóa/mở user và ghi audit log |
 | AC-03 | Admin xem được danh sách ví nhưng không sửa được số dư |
 | AC-04 | Admin khóa/mở ví và ghi lý do |

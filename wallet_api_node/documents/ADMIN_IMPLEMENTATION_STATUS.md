@@ -29,7 +29,8 @@
 | # | Method | Endpoint | Chức năng |
 |---|--------|----------|-----------|
 | 1 | GET | `/admin/users` | Danh sách user (có filter: q, status, user_type, page, limit) |
-| 2 | POST | `/admin/users` | Tạo user (tạo kèm ví + gán role) |
+| 2a | POST | `/admin/customers` | Tạo khách hàng (tạo kèm ví mặc định) |
+| 2b | POST | `/admin/staffs` | Tạo nhân viên nội bộ (gán role RBAC, không ví) |
 | 3 | GET | `/admin/users/:id` | Chi tiết user (bao gồm roles, wallet info) |
 | 4 | PATCH | `/admin/users/:id` | Cập nhật user (full_name, username, email, phone, is_kyc_verified) |
 | 5 | GET | `/admin/users/:id/wallet` | Xem ví của user |
@@ -68,6 +69,7 @@
 | # | Method | Endpoint | Chức năng |
 |---|--------|----------|-----------|
 | 1 | GET | `/admin/merchants` | Danh sách merchant |
+| 1b | POST | `/admin/merchants` | Tạo merchant (kèm tạo tài khoản owner, API key, webhook config) |
 | 2 | GET | `/admin/merchants/:id` | Chi tiết merchant |
 | 3 | POST | `/admin/merchants/:id/actions/approve` | Duyệt merchant |
 | 4 | POST | `/admin/merchants/:id/actions/reject` | Từ chối merchant |

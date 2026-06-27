@@ -160,7 +160,8 @@ Phase 1 gồm các nhóm:
 | Method | Endpoint | Mô tả | Auth |
 |---|---|---|---|
 | GET | `/admin/users` | Admin xem danh sách user | Admin |
-| POST | `/admin/users` | Admin tạo user | Admin |
+| POST | `/admin/customers` | Admin tạo khách hàng (tự động cấp ví) | Admin |
+| POST | `/admin/staffs` | Admin tạo nhân viên (không có ví, phân quyền RBAC) | Admin |
 | GET | `/admin/users/{id}` | Admin xem chi tiết user | Admin |
 | PATCH | `/admin/users/{id}` | Admin cập nhật user | Admin |
 | POST | `/admin/users/{id}/actions/lock` | Khóa user | Admin |
@@ -329,6 +330,7 @@ Idempotency-Key: <key>
 | Method | Endpoint | Mô tả | Auth |
 |---|---|---|---|
 | GET | `/admin/merchants` | Danh sách merchant | Admin |
+| POST | `/admin/merchants` | Admin tạo merchant (kèm owner, API key, callback) | Admin |
 | GET | `/admin/merchants/{id}` | Chi tiết merchant | Admin |
 | POST | `/admin/merchants/{id}/actions/approve` | Duyệt merchant | Admin |
 | POST | `/admin/merchants/{id}/actions/reject` | Từ chối merchant | Admin |

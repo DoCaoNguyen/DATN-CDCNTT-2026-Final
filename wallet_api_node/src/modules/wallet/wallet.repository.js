@@ -83,35 +83,6 @@ const walletRepository = {
         return result.rows[0];
     },
 
-    lockByAdmin: async (client, { walletId, actorId, reason }) => {
-        const query = `
-            UPDATE wallets
-            SET status = 'LOCKED',
-                lock_reason = $3,
-                locked_at = CURRENT_TIMESTAMP,
-                locked_by = $2,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = $1
-            RETURNING *
-        `;
-        const result = await client.query(query, [walletId, actorId, reason]);
-        return result.rows[0];
-    },
-
-    unlockByAdmin: async (client, walletId) => {
-        const query = `
-            UPDATE wallets
-            SET status = 'ACTIVE',
-                lock_reason = NULL,
-                locked_at = NULL,
-                locked_by = NULL,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = $1
-            RETURNING *
-        `;
-        const result = await client.query(query, [walletId]);
-        return result.rows[0];
-    },
 
     getUserInfoForQR: async (userId) => {
         const query = `SELECT full_name, phone FROM users WHERE id = $1`;
