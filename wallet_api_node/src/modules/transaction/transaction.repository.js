@@ -258,7 +258,7 @@ const transactionRepository = {
                 lt.description,
                 lt.status,
                 lt.currency,
-                lt.metadata,
+                (SELECT metadata FROM ledger_transactions WHERE id = lt.id) AS metadata,
                 le.created_at,
                 wt.description AS transfer_note,
                 COALESCE(u_sender.full_name, u_payer.full_name, u_rp_creator.full_name) AS sender_name,
