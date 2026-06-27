@@ -29,19 +29,9 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
   Widget _buildProviderLogo(String provider) {
     switch (provider) {
       case 'Viettel':
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'viettel',
-              style: TextStyle(color: Color(0xFFEE0033), fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-            Transform.translate(
-              offset: const Offset(1, -4),
-              child: const Icon(Icons.format_quote_rounded, color: Color(0xFFEE0033), size: 10),
-            ),
-          ],
+        return const Text(
+          'viettel',
+          style: TextStyle(color: Color(0xFFEE0033), fontWeight: FontWeight.bold, fontSize: 14),
         );
       case 'Vinaphone':
         return const Text(
