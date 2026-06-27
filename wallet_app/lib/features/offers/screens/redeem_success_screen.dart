@@ -26,6 +26,14 @@ class RedeemSuccessScreen extends StatelessWidget {
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
   }
 
+  String _formatTransactionId(String txId) {
+    String digitsOnly = txId.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.length > 12) {
+      return digitsOnly.substring(0, 12);
+    }
+    return digitsOnly.padRight(12, '0');
+  }
+
   void _copyToClipboard(BuildContext context, String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -193,7 +201,7 @@ class RedeemSuccessScreen extends StatelessWidget {
                       children: [
                         const Text('Mã giao dịch', style: TextStyle(color: Colors.black54, fontSize: 14)),
                         Text(
-                          transactionId,
+                          _formatTransactionId(transactionId),
                           style: const TextStyle(color: Colors.black54, fontSize: 14),
                         ),
                       ],

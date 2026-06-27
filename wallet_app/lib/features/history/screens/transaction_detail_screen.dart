@@ -182,6 +182,14 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     return fullName;
   }
 
+  String _formatTransactionId(String txId) {
+    String digitsOnly = txId.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.length > 12) {
+      return digitsOnly.substring(0, 12);
+    }
+    return digitsOnly.padRight(12, '0');
+  }
+
   Future<bool> updateTransactionCategory(
     String transId,
     String categoryName,
@@ -228,10 +236,10 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final String entryType = _tx['entry_type'] ?? 'DEBIT';
     final String note =
         _tx['transfer_note'] ?? _tx['description'] ?? 'Giao dịch';
-    final String extRef =
+    final String extRef = _formatTransactionId(
         _tx['external_reference']?.toString() ??
         _tx['transaction_id']?.toString() ??
-        '';
+        '');
     final bool isCredit = entryType == 'CREDIT';
     final String txType = _tx['transaction_type'] ?? 'TRANSFER';
 
