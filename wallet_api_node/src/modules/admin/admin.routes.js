@@ -26,6 +26,8 @@ router.post('/transactions/reconcile', notImplemented('POST /admin/transactions/
 
 router.use('/merchants', require('./merchants/merchants.routes'));
 
+router.use('/kyc', require('./kyc/kyc.routes'));
+
 /**
  * @swagger
  * /api/v1/admin/payment-orders:
