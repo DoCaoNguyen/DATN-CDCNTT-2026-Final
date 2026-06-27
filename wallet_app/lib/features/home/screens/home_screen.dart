@@ -15,6 +15,7 @@ import 'qr_main_screen.dart';
 import 'notification_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../history/screens/transaction_history_screen.dart';
+import '../../offers/screens/offers_screen.dart';
 import '../../../core/services/socket_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/custom_http_client.dart';
@@ -51,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final HomeService _homeService = HomeService();
   int _selectedIndex = 0;
   String _balance = "0";
+  String _loyaltyPoints = "0";
   String? _walletCode;
   bool _isPinSet = false;
   bool _isLoadingBalance = true;
@@ -268,6 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (data != null && mounted) {
       setState(() {
         _balance = data['available_balance']?.toString() ?? "0";
+        _loyaltyPoints = data['loyalty_points']?.toString() ?? "0";
         _walletCode = data['wallet_code'];
         _isPinSet = data['is_pin_set'] ?? false;
         _isLoadingBalance = false;
@@ -498,13 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : _selectedIndex == 1
-              ? Center(
-                  child: Text(
-                    activeLang == 'VIE'
-                        ? 'Trang Ưu đãi (Sắp ra mắt)'
-                        : 'Offers (Coming soon)',
-                  ),
-                )
+              ? OffersScreen(token: widget.token, loyaltyPoints: _loyaltyPoints)
               : _selectedIndex == 2
               ? TransactionHistoryScreen(token: widget.token)
               : ProfileScreen(token: widget.token),
