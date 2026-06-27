@@ -255,7 +255,7 @@ const LoyaltyIntegrationService = {
             const metadata = {
                 provider,
                 faceValue,
-                cardCode,
+                card_code: cardCode,
                 serial,
                 type: 'SCRATCH_CARD'
             };
