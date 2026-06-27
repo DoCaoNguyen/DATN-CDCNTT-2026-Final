@@ -185,7 +185,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
 
                         try {
                           final prefs = await SharedPreferences.getInstance();
-                          final token = prefs.getString('accessToken') ?? '';
+                          final token = prefs.getString('auth_token') ?? '';
                           
                           final offersService = OffersService(token: token);
                           final result = await offersService.redeemScratchCard(_selectedProvider!, _selectedValue!);
