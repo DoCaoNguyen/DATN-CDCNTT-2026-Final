@@ -93,23 +93,23 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
           children: _providers.map((provider) {
             final isSelected = _selectedProvider == provider;
             
-            // Map provider to specific icon
-            IconData iconData;
+            // Map provider to specific image url
+            String imageUrl;
             switch (provider) {
               case 'Viettel':
-                iconData = Icons.cell_tower_rounded;
+                imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Viettel_logo_2021.svg/512px-Viettel_logo_2021.svg.png';
                 break;
               case 'Vinaphone':
-                iconData = Icons.rss_feed_rounded;
+                imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vinaphone_logo.png/512px-Vinaphone_logo.png';
                 break;
               case 'Mobifone':
-                iconData = Icons.network_cell_rounded;
+                imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/MobiFone_logo.svg/512px-MobiFone_logo.svg.png';
                 break;
               case 'Vietnamobile':
-                iconData = Icons.satellite_alt_rounded;
+                imageUrl = 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietnamobile-V.png';
                 break;
               default:
-                iconData = Icons.phone_android_rounded;
+                imageUrl = '';
             }
 
             return GestureDetector(
@@ -131,11 +131,24 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      iconData, 
-                      size: 20, 
-                      color: isSelected ? Colors.blue : Colors.grey,
-                    ),
+                    if (imageUrl.isNotEmpty)
+                      Image.network(
+                        imageUrl,
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.sim_card, 
+                          size: 20, 
+                          color: isSelected ? Colors.blue : Colors.grey,
+                        ),
+                      )
+                    else
+                      Icon(
+                        Icons.sim_card, 
+                        size: 20, 
+                        color: isSelected ? Colors.blue : Colors.grey,
+                      ),
                     const SizedBox(width: 8),
                     Text(
                       provider,
