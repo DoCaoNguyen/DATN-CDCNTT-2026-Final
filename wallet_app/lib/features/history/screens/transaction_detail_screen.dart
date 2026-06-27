@@ -271,6 +271,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     } else if (txType == 'RECEIVE') {
       typeLabelHeader = "NHẬN LÌ XÌ";
       typeLabelText = note;
+    } else if (txType == 'LOYALTY_REDEEM') {
+      typeLabelHeader = "ĐỔI THẺ CÀO";
+      typeLabelText = note.isNotEmpty ? note : "Đổi thẻ cào";
     }
 
     String btnText = "Chuyển thêm";
@@ -282,8 +285,17 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       btnText = "Chia tiền";
     }
 
+    final bool isPoint = _tx['currency'] == 'POINT';
+    final String formattedAmt = isPoint 
+        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+        : CurrencyFormatter.format(amountRaw);
+        
     final String displayAmount =
-        "${isCredit ? '+' : '-'}${CurrencyFormatter.format(amountRaw)}";
+        "${isCredit ? '+' : '-'}$formattedAmt";
+
+    final Map<String, dynamic>? metadata = _tx['metadata'];
+    final String cardCode = metadata?['card_code']?.toString() ?? '';
+    final String serial = metadata?['serial']?.toString() ?? '';
 
     // Receiver info variables moved up
 
@@ -509,9 +521,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 ),
                                 _buildDetailRow(
                                   "Tài khoản/thẻ",
-                                  child: const Text(
-                                    "Ví Mio",
-                                    style: TextStyle(
+                                  child: Text(
+                                    isPoint ? "Số dư Xu" : "Ví Mio",
+                                    style: const TextStyle(
                                       color: Colors.black87,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -527,6 +539,59 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                     ),
                                   ),
                                 ),
+                                if (txType == 'LOYALTY_REDEEM' && cardCode.isNotEmpty) ...[
+                                  _buildDetailRow(
+                                    "Mã thẻ",
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          cardCode,
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Clipboard.setData(ClipboardData(text: cardCode));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Đã sao chép mã thẻ"), duration: Duration(seconds: 1)),
+                                            );
+                                          },
+                                          child: const Icon(Icons.copy, size: 14, color: Colors.blue),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _buildDetailRow(
+                                    "Số Serial",
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          serial,
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Clipboard.setData(ClipboardData(text: serial));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Đã sao chép số Serial"), duration: Duration(seconds: 1)),
+                                            );
+                                          },
+                                          child: const Icon(Icons.copy, size: 14, color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                                 if (note.isNotEmpty && note != 'Giao dịch')
                                   _buildDetailRow(
                                     "Nội dung",
