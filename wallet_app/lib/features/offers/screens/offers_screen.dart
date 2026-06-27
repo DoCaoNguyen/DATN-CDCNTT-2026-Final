@@ -4,11 +4,13 @@ import 'redeem_scratch_card_screen.dart';
 class OffersScreen extends StatelessWidget {
   final String token;
   final String loyaltyPoints;
+  final Future<void> Function() onRefresh;
 
   const OffersScreen({
     Key? key,
     required this.token,
     required this.loyaltyPoints,
+    required this.onRefresh,
   }) : super(key: key);
 
   String _formatNumber(String value) {
@@ -104,63 +106,70 @@ class OffersScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Container(
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
+      body: RefreshIndicator(
+        onRefresh: onRefresh,
+        color: Colors.pink,
+        child: Container(
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Danh mục Ưu đãi',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1.0,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildOfferCategory(
-                      context,
-                      'Đổi Thẻ Cào',
-                      Icons.phone_android_rounded,
-                      Colors.blue,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => RedeemScratchCardScreen(
-                              loyaltyPoints: loyaltyPoints,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Danh mục Ưu đãi',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    childAspectRatio: 1.0,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildOfferCategory(
+                        context,
+                        'Đổi Thẻ Cào',
+                        Icons.phone_android_rounded,
+                        Colors.blue,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RedeemScratchCardScreen(
+                                loyaltyPoints: loyaltyPoints,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildOfferCategory(
-                      context,
-                      'Mã Giảm Giá',
-                      Icons.discount_rounded,
-                      Colors.pink,
-                      () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Sắp ra mắt!')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                          );
+                        },
+                      ),
+                      _buildOfferCategory(
+                        context,
+                        'Mã Giảm Giá',
+                        Icons.discount_rounded,
+                        Colors.pink,
+                        () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Sắp ra mắt!')),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

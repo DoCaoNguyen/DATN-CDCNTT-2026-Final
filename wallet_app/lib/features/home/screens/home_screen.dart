@@ -501,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : _selectedIndex == 1
-              ? OffersScreen(token: widget.token, loyaltyPoints: _loyaltyPoints)
+              ? OffersScreen(token: widget.token, loyaltyPoints: _loyaltyPoints, onRefresh: _fetchBalance)
               : _selectedIndex == 2
               ? TransactionHistoryScreen(token: widget.token)
               : ProfileScreen(token: widget.token),
