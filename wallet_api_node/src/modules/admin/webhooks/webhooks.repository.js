@@ -8,7 +8,7 @@
  * - retryDueWebhooks()
  */
 const pool = require('../../../config/db');
-const { buildPagination } = require('../_shared/admin.pagination');
+const { buildPagination } = require('../_shared/admin-pagination');
 
 const webhooksRepository = {
     // TODO: Implement webhook repository queries

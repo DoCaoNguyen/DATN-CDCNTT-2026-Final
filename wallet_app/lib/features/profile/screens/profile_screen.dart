@@ -4,7 +4,7 @@ import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
-import '../../auth/login/sceens/login_phone_screen.dart';
+import '../../auth/login/screens/login_phone_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';

@@ -7,7 +7,9 @@
  * - getSettingHistory
  */
 const settingsService = require('./settings.service');
-const { getRequestMeta, success, handleAdminError } = require('../_shared/admin.helpers');
+const { getRequestMeta } = require('../_shared/admin-audit');
+const { success } = require('../_shared/admin-response');
+const { handleAdminError } = require('../_shared/admin-error');
 
 const settingsController = {
     // TODO: Implement settings controllers

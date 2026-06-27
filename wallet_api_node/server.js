@@ -43,9 +43,9 @@ app.use(helmet({
 }));
 app.use(cors({
     origin: [
-        'http://localhost:3000', 
+        'http://localhost:3000',
         'http://localhost:5173',
-        'https://admin.yourdomain.com', 
+        'https://admin.yourdomain.com',
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'
     ],
@@ -67,8 +67,8 @@ app.use(morgan('dev')); // Log ra màn hình Console
 app.use(apiLogger);     // Log vào MongoDB
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 phút
-    limit: 100, // Tối đa 100 requests mỗi 15 phút cho 1 IP
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 10000, // Tối đa 10000 requests mỗi 15 phút cho 1 IP (QUẢN LÝ ADMIN)
     message: { error: 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau 15 phút.' },
     standardHeaders: 'draft-7',
     legacyHeaders: false,

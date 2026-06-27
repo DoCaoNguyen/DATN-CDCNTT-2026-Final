@@ -1,15 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_success_screen.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:local_auth/local_auth.dart';
-// ignore: depend_on_referenced_packages
-import 'package:local_auth_android/local_auth_android.dart';
-import '../../auth/forgot_pin/screens/forgot_pin_face_auth_screen.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
+import '../../bank/screens/face_liveness_scanner_screen.dart';
 
 class TransferConfirmScreen extends StatefulWidget {
   final String token;
@@ -43,36 +41,68 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
   }
 
   void _showPinBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PinConfirmBottomSheet(
-        onPinEntered: (pin) async {
-          return await _handleConfirmTransfer(pin);
-        },
-      ),
-    );
+    final String cleanAmount = widget.amount.replaceAll(RegExp(r'[^0-9]'), '');
+    final int amountInt = int.tryParse(cleanAmount) ?? 0;
+
+    if (amountInt >= 30000000) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const FaceLivenessScannerScreen(),
+        ),
+      ).then((faceFile) {
+        if (faceFile != null && faceFile is File) {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => PinConfirmBottomSheet(
+              onPinEntered: (pin) async {
+                return await _handleConfirmTransfer(pin, faceFile);
+              },
+            ),
+          );
+        }
+      });
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => PinConfirmBottomSheet(
+          onPinEntered: (pin) async {
+            return await _handleConfirmTransfer(pin, null);
+          },
+        ),
+      );
+    }
   }
 
-  Future<String?> _handleConfirmTransfer(String pinCode) async {
+  Future<String?> _handleConfirmTransfer(String pinCode, File? faceFile) async {
     try {
       final String cleanAmount = widget.amount.replaceAll(
         RegExp(r'[^0-9]'),
         '',
       );
 
-      final response = await _client.post(
-        Uri.parse(ApiConfig.transfer),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'receiver_identifier': widget.receiverPhone,
-          'amount': cleanAmount,
-          'note': widget.note,
-          'reference_code': _refCode,
-          'pin': pinCode,
-        }),
-      );
+      var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.transfer));
+      request.headers['Authorization'] = 'Bearer ${widget.token}';
+      request.headers['ngrok-skip-browser-warning'] = 'true';
+
+      request.fields['receiver_identifier'] = widget.receiverPhone;
+      request.fields['amount'] = cleanAmount;
+      request.fields['note'] = widget.note;
+      request.fields['reference_code'] = _refCode;
+      request.fields['pin'] = pinCode;
+
+      if (faceFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('face_image', faceFile.path),
+        );
+      }
+
+      var responseStream = await request.send();
+      var response = await http.Response.fromStream(responseStream);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return null;

@@ -175,6 +175,38 @@ const transactionRepository = {
         await pool.query(query, [walletId]);
     },
 
+    getMonthlyDebitTotal: async (walletId) => {
+        const query = `
+            SELECT COALESCE(SUM(le.amount), 0) as total
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
+            WHERE le.wallet_id = $1 
+              AND le.entry_type = 'DEBIT' 
+              AND lt.transaction_type IN ('TRANSFER', 'BANK_TRANSFER')
+              AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+              AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+        `;
+        const result = await pool.query(query, [walletId]);
+        return BigInt(result.rows[0].total);
+    },
+
+    getDailyTotal: async (walletId, type) => {
+        const entryType = type === 'DEPOSIT' ? 'CREDIT' : 'DEBIT';
+        const query = `
+            SELECT COALESCE(SUM(le.amount), 0) as total
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
+            WHERE le.wallet_id = $1 
+              AND le.entry_type = $2
+              AND lt.transaction_type = $3
+              AND EXTRACT(DAY FROM le.created_at) = EXTRACT(DAY FROM CURRENT_DATE)
+              AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+              AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+        `;
+        const result = await pool.query(query, [walletId, entryType, type]);
+        return BigInt(result.rows[0].total);
+    },
+
     getTransactionHistory: async (walletId, limit = 20, offset = 0, filters = {}) => {
         let paramIndex = 1;
         const params = [walletId];

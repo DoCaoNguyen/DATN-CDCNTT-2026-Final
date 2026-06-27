@@ -27,7 +27,7 @@ router.post('/withdraw', upload.single('face_image'), withIdempotency, transacti
 
 router.post('/bank-transfer', upload.single('face_image'), withIdempotency, transactionController.bankTransfer);
 
-router.post('/transfer', withIdempotency, transactionController.transfer);
+router.post('/transfer', upload.single('face_image'), withIdempotency, transactionController.transfer);
 
 router.get('/history', transactionController.getHistory);
 

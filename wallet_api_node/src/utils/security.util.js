@@ -13,8 +13,8 @@ const bcrypt = require('bcrypt');
 async function verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService) {
     if (!wallet) throw new Error('Wallet_Not_Found');
 
-    // Verify based on amount (50,000,000 VND)
-    if (amount < 50000000n) {
+    // Verify based on amount (30,000,000 VND)
+    if (amount < 30000000n) {
         if (!pin) throw new Error('PIN_Required');
         if (wallet.pin_locked_until) {
             const now = new Date();
@@ -48,7 +48,7 @@ async function verifyTransactionSecurity(amount, pin, faceImagePath, wallet, use
         if (!kycRecord || !kycRecord.face_image) {
             throw new Error('No_KYC_Record_Found');
         }
-        const matchResult = await kycService.verifyFaceMatchFacePlusPlus(kycRecord.face_image, faceImagePath);
+        const matchResult = await kycService.verifyFaceMatchFptAi(kycRecord.face_image, faceImagePath);
         if (!matchResult.faceFound || !matchResult.isMatch) {
             throw new Error('Face_Verification_Failed');
         }
