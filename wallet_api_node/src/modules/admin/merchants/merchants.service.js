@@ -20,6 +20,32 @@ const merchantsService = {
             
             // Tạo merchant
             const merchant = await merchantsRepository.createMerchant(data, client);
+
+            // Tạo Merchant Owner user
+            const usersRepository = require('../users/users.repository');
+            const bcrypt = require('bcrypt');
+            const cryptoStr = require('crypto');
+            
+            const rawPassword = cryptoStr.randomBytes(6).toString('hex');
+            const passwordHash = await bcrypt.hash(rawPassword, 10);
+            
+            const userId = await usersRepository.createUser(client, {
+                fullName: data.owner_info.full_name,
+                username: data.owner_info.username,
+                email: data.owner_info.email,
+                phone: data.owner_info.phone,
+                passwordHash,
+                userType: 'MERCHANT_USER',
+                status: 'ACTIVE'
+            });
+
+            await usersRepository.replaceRolesByCodes(client, userId, ['MERCHANT_OWNER']);
+            
+            const crypto = require('crypto');
+            await client.query(`
+                INSERT INTO merchant_users (id, merchant_id, user_id, role_code, is_owner)
+                VALUES ($1, $2, $3, $4, $5)
+            `, [crypto.randomUUID(), merchant.id, userId, 'MERCHANT_OWNER', true]);
             
             // Nếu có data callback thì tạo config
             let callbackConfig = null;
@@ -39,13 +65,13 @@ const merchantsService = {
                 entityType: 'MERCHANT',
                 entityId: merchant.id,
                 oldData: null,
-                newData: { merchant, callbackConfig: sanitizeCallbackConfig(callbackConfig) },
+                newData: { merchant, callbackConfig: sanitizeCallbackConfig(callbackConfig), owner_user_id: userId },
                 ipAddress: actor.ipAddress,
                 userAgent: actor.userAgent
             });
 
             await client.query('COMMIT');
-            return { ...merchant, callback_config: sanitizeCallbackConfig(callbackConfig) };
+            return { ...merchant, callback_config: sanitizeCallbackConfig(callbackConfig), owner_password: rawPassword };
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;

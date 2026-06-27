@@ -14,18 +14,10 @@ const usersValidator = {
         }
     },
 
-    // Bắt buộc: full_name + password + ít nhất 1 trong (email|phone|username)
-    validateCreateUser: (req, res, next) => {
-        const { full_name, password, email, phone, username } = req.body || {};
+    validateCreateCustomer: (req, res, next) => {
+        const { full_name, email, phone, username } = req.body || {};
 
         if (!full_name || !String(full_name).trim()) {
-            return res.status(400).json({
-                success: false,
-                code: 'VALIDATION_ERROR',
-                error: 'Thieu thong tin bat buoc'
-            });
-        }
-        if (!password) {
             return res.status(400).json({
                 success: false,
                 code: 'VALIDATION_ERROR',
@@ -39,13 +31,45 @@ const usersValidator = {
                 error: 'Thieu thong tin bat buoc'
             });
         }
-        if (password.length < 8) {
+        next();
+    },
+
+    validateCreateStaff: (req, res, next) => {
+        const { full_name, email, phone, username, role_codes } = req.body || {};
+
+        if (!full_name || !String(full_name).trim()) {
             return res.status(400).json({
                 success: false,
                 code: 'VALIDATION_ERROR',
-                error: 'Mat khau phai co toi thieu 8 ky tu'
+                error: 'Thieu thong tin bat buoc (full_name)'
             });
         }
+        if (!email && !phone && !username) {
+            return res.status(400).json({
+                success: false,
+                code: 'VALIDATION_ERROR',
+                error: 'Thieu thong tin bat buoc (email/phone/username)'
+            });
+        }
+        if (!role_codes || !Array.isArray(role_codes) || role_codes.length === 0) {
+            return res.status(400).json({
+                success: false,
+                code: 'VALIDATION_ERROR',
+                error: 'role_codes khong hop le hoac bi thieu'
+            });
+        }
+        
+        // Kiểm tra xem role_codes có hợp lệ không
+        const allowedRoles = ['ADMIN', 'SUPPORT_STAFF', 'SUPER_ADMIN'];
+        const isValidRoles = role_codes.every(role => allowedRoles.includes(role));
+        if (!isValidRoles) {
+            return res.status(400).json({
+                success: false,
+                code: 'VALIDATION_ERROR',
+                error: 'Chỉ được phép tạo tài khoản với role: ADMIN, SUPPORT_STAFF, hoặc SUPER_ADMIN'
+            });
+        }
+        
         next();
     },
 

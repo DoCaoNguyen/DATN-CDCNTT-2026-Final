@@ -12,7 +12,8 @@
  * - exportReport
  */
 const reportsService = require('./reports.service');
-const { success, handleAdminError } = require('../_shared');
+const { success } = require('../_shared/admin-response');
+const { handleAdminError } = require('../_shared/admin-error');
 
 const reportsController = {
     getWalletTransactions: async (req, res) => {

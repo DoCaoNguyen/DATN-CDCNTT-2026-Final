@@ -1,5 +1,5 @@
 const pool = require('../../../config/db');
-const { buildPagination } = require('../_shared');
+const { buildPagination } = require('../_shared/admin-pagination');
 
 const reportsRepository = {
     getWalletTransactions: async (params) => {

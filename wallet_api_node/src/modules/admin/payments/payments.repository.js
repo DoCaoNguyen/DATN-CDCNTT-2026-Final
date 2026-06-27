@@ -8,7 +8,7 @@
  * - expireQrPayments()
  */
 const pool = require('../../../config/db');
-const { buildPagination } = require('../_shared/admin.pagination');
+const { buildPagination } = require('../_shared/admin-pagination');
 
 const paymentsRepository = {
     // TODO: Implement payment repository queries

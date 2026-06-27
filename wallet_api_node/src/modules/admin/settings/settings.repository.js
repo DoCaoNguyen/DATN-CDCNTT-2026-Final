@@ -7,7 +7,7 @@
  * - getSettingHistory()
  */
 const pool = require('../../../config/db');
-const { buildPagination } = require('../_shared/admin.pagination');
+const { buildPagination } = require('../_shared/admin-pagination');
 
 const settingsRepository = {
     // TODO: Implement settings repository queries

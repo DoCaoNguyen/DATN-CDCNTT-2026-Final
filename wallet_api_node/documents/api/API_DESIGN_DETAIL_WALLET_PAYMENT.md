@@ -1368,7 +1368,8 @@ COMMIT
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | GET | `/admin/users` | Danh sách user |
-| POST | `/admin/users` | Tạo user |
+| POST | `/admin/customers` | Tạo khách hàng (kèm ví) |
+| POST | `/admin/staffs` | Tạo nhân viên (kèm RBAC role) |
 | GET | `/admin/users/{id}` | Chi tiết user |
 | PATCH | `/admin/users/{id}` | Cập nhật user |
 | POST | `/admin/users/{id}/actions/lock` | Khóa user |
@@ -1380,6 +1381,7 @@ COMMIT
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | GET | `/admin/merchants` | Danh sách merchant |
+| POST | `/admin/merchants` | Tạo merchant (kèm owner, webhook) |
 | GET | `/admin/merchants/{id}` | Chi tiết merchant |
 | POST | `/admin/merchants/{id}/actions/approve` | Duyệt merchant |
 | POST | `/admin/merchants/{id}/actions/reject` | Từ chối |

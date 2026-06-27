@@ -262,7 +262,8 @@ const notImplemented = require('../../../utils/notImplemented');
 
 
 router.get('/users', requirePermission('admin.users.read'), usersController.listUsers);
-router.post('/users', requirePermission('admin.users.create'), usersValidator.validateCreateUser, usersController.createUser);
+router.post('/customers', requirePermission('admin.users.create'), usersValidator.validateCreateCustomer, usersController.createCustomer);
+router.post('/staffs', requirePermission('admin.users.create'), usersValidator.validateCreateStaff, usersController.createStaff);
 router.get('/users/:id', requirePermission('admin.users.read'), usersValidator.validateIdParam, usersController.getUserDetail);
 router.patch('/users/:id', requirePermission('admin.users.update'), usersValidator.validateIdParam, usersController.updateUser);
 router.get('/users/:id/wallet', requirePermission('admin.wallets.read'), usersValidator.validateIdParam, usersController.getUserWallet);

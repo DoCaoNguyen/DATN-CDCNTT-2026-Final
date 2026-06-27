@@ -7,7 +7,8 @@
  * Cấu trúc:
  *   admin/
  *   ├── _shared/          → Code dùng chung (helpers, validators, pagination)
- *   ├── users/            → Quản lý users + roles/permissions
+ *   ├── users/            → Quản lý users
+ *   ├── roles/            → Quản lý roles/permissions
  *   ├── wallets/          → Quản lý ví
  *   ├── merchants/        → Quản lý merchant + API keys
  *   ├── transactions/     → Topups, transfers, refunds, ledger, reconcile
@@ -31,15 +32,17 @@ router.use(authenticateJwt, requireAdmin);
 // ═══════════════════════════════════════════
 // Gom tất cả sub-routes
 // ═══════════════════════════════════════════
-router.use('/',            require('./users/users.routes'));          // /admin/users, /admin/roles, /admin/permissions
+router.use('/',            require('./users/users.routes'));          // /admin/users, /admin/customers, /admin/staffs
+router.use('/roles',       require('./roles/roles.routes'));          // /admin/roles
+router.use('/permissions', require('./roles/permissions.routes'));    // /admin/permissions
 router.use('/',            require('./wallets/wallets.routes'));      // /admin/wallets
 router.use('/',            require('./merchants/merchants.routes'));  // /admin/merchants
-router.use('/',            require('./transactions/transactions.routes')); // /admin/topups, /admin/transfers, /admin/transactions, /admin/refunds, /admin/ledger-entries
+router.use('/',            require('./transactions/transactions.routes')); // /admin/topups, /admin/transfers, /admin/ledger
 router.use('/',            require('./payments/payments.routes'));    // /admin/payment-orders, /admin/qr-payments
 router.use('/',            require('./webhooks/webhooks.routes'));    // /admin/webhooks
-router.use('/dashboard',   require('./dashboard/dashboard.routes')); // /admin/dashboard/*
+router.use('/dashboard',   require('./dashboard/dashboard.routes'));  // /admin/dashboard/*
 router.use('/reports',     require('./reports/reports.routes'));      // /admin/reports/*
 router.use('/',            require('./settings/settings.routes'));    // /admin/settings
-router.use('/',            require('./logs/logs.routes'));            // /admin/audit-logs, /admin/system-logs, /admin/payment-traces
+router.use('/',            require('./logs/logs.routes'));            // /admin/audit-logs, /admin/system-logs
 
 module.exports = router;
