@@ -134,7 +134,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                     if (imageUrl.isNotEmpty)
                       Image.network(
                         imageUrl,
-                        width: 24,
+                        width: 60,
                         height: 24,
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => Icon(
