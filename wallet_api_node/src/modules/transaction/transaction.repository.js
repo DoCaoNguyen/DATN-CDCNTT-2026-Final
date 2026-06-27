@@ -63,14 +63,14 @@ const transactionRepository = {
         return BigInt(result.rows[0].available_balance);
     },
 
-    createLedgerTransaction: async (client, type, sourceId, sourceType, description, amount) => {
+    createLedgerTransaction: async (client, type, sourceId, sourceType, description, amount, currency = 'VND') => {
         const newId = uuidv7();
         const transactionNo = 'TRX' + Date.now().toString().slice(-8) + Math.floor(1000 + Math.random() * 9000).toString();
         const query = `
-            INSERT INTO ledger_transactions (id, transaction_no, transaction_type, source_id, source_type, status, description, amount, completed_at)
-            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', $6, $7, CURRENT_TIMESTAMP) RETURNING id;
+            INSERT INTO ledger_transactions (id, transaction_no, transaction_type, source_id, source_type, status, description, amount, currency, completed_at)
+            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', $6, $7, $8, CURRENT_TIMESTAMP) RETURNING id;
         `;
-        const result = await client.query(query, [newId, transactionNo, type, sourceId, sourceType, description, amount.toString()]);
+        const result = await client.query(query, [newId, transactionNo, type, sourceId, sourceType, description, amount.toString(), currency]);
         return result.rows[0].id;
     },
 

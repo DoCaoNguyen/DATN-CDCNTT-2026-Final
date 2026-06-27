@@ -521,6 +521,7 @@ CREATE TABLE IF NOT EXISTS public.wallet_balances
     wallet_id uuid NOT NULL,
     available_balance bigint NOT NULL DEFAULT 0,
     locked_balance bigint NOT NULL DEFAULT 0,
+    loyalty_points bigint NOT NULL DEFAULT 0,
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT wallet_balances_pkey PRIMARY KEY (wallet_id)
 );

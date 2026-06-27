@@ -37,32 +37,49 @@ const LoyaltyIntegrationService = {
     executeLoyaltyApiCall: async (userId, paymentTransactionId, amount, logId, isRetry = false) => {
         let client;
         try {
-            // Lấy loyalty_member_id của user
             client = await pool.connect();
-            const userRes = await client.query('SELECT loyalty_member_id FROM users WHERE id = $1', [userId]);
-            const loyaltyMemberId = userRes.rows[0]?.loyalty_member_id || userId; // Dùng userId nếu chưa có
+            await client.query('BEGIN');
 
-            // Gọi API Loyalty
-            // Giả lập axios request
-            let earnedPoints = 0;
-            
-            // NOTE: Đây là đoạn Mock API Call do chưa có hệ thống Loyalty thật
-            // Nếu có URL thật, thay bằng axios.post(LOYALTY_API_URL, payload);
-            try {
-                // const response = await axios.post(LOYALTY_API_URL, {
-                //     member_id: loyaltyMemberId,
-                //     transaction_id: paymentTransactionId,
-                //     amount: amount
-                // });
-                // earnedPoints = response.data.earned_points;
-
-                // Giả lập trả về thành công sau 1 giây
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                // Giả lập tỷ lệ 1000 VND = 1 điểm
-                earnedPoints = Math.floor(amount / 1000); 
-            } catch (apiError) {
-                throw new Error('Loyalty API failed');
+            const walletRes = await client.query('SELECT w.id, wb.loyalty_points FROM wallets w JOIN wallet_balances wb ON w.id = wb.wallet_id WHERE w.user_id = $1 FOR UPDATE', [userId]);
+            if (walletRes.rows.length === 0) {
+                throw new Error('Wallet not found');
             }
+            const walletId = walletRes.rows[0].id;
+            const pointsBefore = BigInt(walletRes.rows[0].loyalty_points || 0);
+
+            // Tỷ lệ 100 VND = 1 Xu
+            let earnedPoints = Math.floor(amount / 100); 
+
+            if (earnedPoints > 0) {
+                // Cộng Xu
+                await client.query('UPDATE wallet_balances SET loyalty_points = loyalty_points + $1 WHERE wallet_id = $2', [earnedPoints, walletId]);
+                const pointsAfter = pointsBefore + BigInt(earnedPoints);
+
+                const transactionRepo = require('../transaction/transaction.repository');
+                
+                // Ghi nhận Sổ cái (Ledger) với currency = 'POINT'
+                const ledgerTxId = await transactionRepo.createLedgerTransaction(
+                    client, 
+                    'LOYALTY_EARN', 
+                    paymentTransactionId, 
+                    'PAYMENT_ORDER', 
+                    'Tích Xu từ giao dịch thanh toán', 
+                    earnedPoints,
+                    'POINT'
+                );
+
+                await transactionRepo.createLedgerEntry(
+                    client,
+                    ledgerTxId,
+                    walletId,
+                    'CREDIT',
+                    earnedPoints,
+                    pointsBefore,
+                    pointsAfter
+                );
+            }
+
+            await client.query('COMMIT');
 
             // Thành công -> Cập nhật log
             await LoyaltySyncLog.updateOne(
@@ -74,6 +91,7 @@ const LoyaltyIntegrationService = {
             await LoyaltyIntegrationService.sendPointsNotification(userId, earnedPoints, paymentTransactionId);
 
         } catch (error) {
+            if (client) await client.query('ROLLBACK');
             console.error('[LOYALTY_SYNC] Error syncing points:', error.message);
             
             // Cập nhật trạng thái FAILED
@@ -95,8 +113,8 @@ const LoyaltyIntegrationService = {
     sendPointsNotification: async (userId, earnedPoints, paymentTransactionId) => {
         if (earnedPoints <= 0) return;
 
-        const title = 'Tích điểm thành công!';
-        const body = `Bạn đã được cộng ${earnedPoints} điểm từ giao dịch vừa rồi!`;
+        const title = 'Tích Xu thành công!';
+        const body = `Bạn đã được cộng ${earnedPoints} Xu từ giao dịch vừa rồi!`;
 
         try {
             // 1. Lưu thông báo vào bảng notifications
