@@ -14,7 +14,7 @@ class RedeemScratchCardScreen extends StatefulWidget {
 
 class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
   final List<String> _providers = ['Viettel', 'Vinaphone', 'Mobifone', 'Vietnamobile'];
-  final List<int> _values = [10000, 20000, 30000, 50000, 100000];
+  final List<int> _values = [10000, 20000, 30000, 50000, 100000, 200000];
   
   String? _selectedProvider;
   int? _selectedValue;
@@ -92,6 +92,26 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
           runSpacing: 12,
           children: _providers.map((provider) {
             final isSelected = _selectedProvider == provider;
+            
+            // Map provider to specific icon
+            IconData iconData;
+            switch (provider) {
+              case 'Viettel':
+                iconData = Icons.cell_tower_rounded;
+                break;
+              case 'Vinaphone':
+                iconData = Icons.rss_feed_rounded;
+                break;
+              case 'Mobifone':
+                iconData = Icons.network_cell_rounded;
+                break;
+              case 'Vietnamobile':
+                iconData = Icons.satellite_alt_rounded;
+                break;
+              default:
+                iconData = Icons.phone_android_rounded;
+            }
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -108,12 +128,23 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  provider,
-                  style: TextStyle(
-                    color: isSelected ? Colors.blue : Colors.black87,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      iconData, 
+                      size: 20, 
+                      color: isSelected ? Colors.blue : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      provider,
+                      style: TextStyle(
+                        color: isSelected ? Colors.blue : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
