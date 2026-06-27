@@ -60,23 +60,6 @@ function handleAdminError(res, err, logPrefix) {
 
 const adminController = {
 
-
-    // ==========================================
-    // DASHBOARD CONTROLLER
-    // ==========================================
-    getDashboardKPIs: async (req, res) => {
-        try {
-            const result = await adminService.getDashboardKPIs();
-            return res.status(200).json({ 
-                success: true, 
-                message: 'Lấy dữ liệu Dashboard thành công', 
-                data: result 
-            });
-        } catch (err) {
-            console.error("Lỗi Dashboard:", err);
-            return res.status(500).json({ success: false, error: err.message });
-        }
-    }
 };
 
 module.exports = adminController;

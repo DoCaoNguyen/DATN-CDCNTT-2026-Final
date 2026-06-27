@@ -109,39 +109,11 @@ router.get('/webhooks/:id', notImplemented('GET /admin/webhooks/{id}'));
 router.post('/webhooks/:id/actions/retry', notImplemented('POST /admin/webhooks/{id}/actions/retry'));
 router.post('/webhooks/jobs/retry-due', notImplemented('POST /admin/webhooks/jobs/retry-due'));
 
-/**
- * @swagger
- * /api/v1/admin/dashboard/kpis:
- *   get:
- *     summary: Admin xem Dashboard KPIs
- *     tags: [Admin]
- *     security: [{ bearerAuth: [] }]
- *     responses: { 200: { description: OK } }
- */
-router.get('/dashboard/kpis', adminController.getDashboardKPIs);
-router.get('/dashboard/transactions-chart', notImplemented('GET /admin/dashboard/transactions-chart'));
-router.get('/dashboard/success-rate', notImplemented('GET /admin/dashboard/success-rate'));
-router.get('/dashboard/top-merchants', notImplemented('GET /admin/dashboard/top-merchants'));
-router.get('/dashboard/recent-activities', notImplemented('GET /admin/dashboard/recent-activities'));
-router.get('/dashboard/alerts', notImplemented('GET /admin/dashboard/alerts'));
+// Module Dashboard
+router.use('/dashboard', require('./dashboard/dashboard.routes'));
 
-/**
- * @swagger
- * /api/v1/admin/reports/topups:
- *   get:
- *     summary: Admin xem reports topups
- *     tags: [Admin]
- *     security: [{ bearerAuth: [] }]
- *     responses: { 200: { description: OK } }
- */
-router.get('/reports/topups', notImplemented('GET /admin/reports/topups'));
-router.get('/reports/transfers', notImplemented('GET /admin/reports/transfers'));
-router.get('/reports/payments', notImplemented('GET /admin/reports/payments'));
-router.get('/reports/refunds', notImplemented('GET /admin/reports/refunds'));
-router.get('/reports/merchants', notImplemented('GET /admin/reports/merchants'));
-router.get('/reports/webhooks', notImplemented('GET /admin/reports/webhooks'));
-router.get('/reports/ledger', notImplemented('GET /admin/reports/ledger'));
-router.get('/reports/export', notImplemented('GET /admin/reports/export'));
+// Module Reports
+router.use('/reports', require('./reports/reports.routes'));
 
 /**
  * @swagger
@@ -156,18 +128,7 @@ router.get('/settings', notImplemented('GET /admin/settings'));
 router.patch('/settings/:key', notImplemented('PATCH /admin/settings/{key}'));
 router.get('/settings/history', notImplemented('GET /admin/settings/history'));
 
-/**
- * @swagger
- * /api/v1/admin/audit-logs:
- *   get:
- *     summary: Admin xem audit logs
- *     tags: [Admin]
- *     security: [{ bearerAuth: [] }]
- *     responses: { 200: { description: OK } }
- */
-router.get('/audit-logs', notImplemented('GET /admin/audit-logs'));
-router.get('/audit-logs/:id', notImplemented('GET /admin/audit-logs/{id}'));
-router.get('/system-logs', notImplemented('GET /admin/system-logs'));
-router.get('/payment-traces/:payment_order_id', notImplemented('GET /admin/payment-traces/{payment_order_id}'));
+// Module Logging & Audit
+router.use('/logs', require('./logs/logs.routes'));
 
 module.exports = router;
