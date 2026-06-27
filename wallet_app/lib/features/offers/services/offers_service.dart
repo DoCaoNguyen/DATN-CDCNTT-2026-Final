@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../../core/constants/api_constants.dart';
+import '../../../core/constants/api_config.dart';
 
 class OffersService {
   final String token;
@@ -10,7 +10,7 @@ class OffersService {
   Future<Map<String, dynamic>> redeemScratchCard(String provider, int faceValue) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/payment/loyalty/redeem'),
+        Uri.parse('${ApiConfig.baseUrl}/payment/loyalty/redeem'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
