@@ -25,7 +25,17 @@ const withIdempotency = async (req, res, next) => {
         res.json = function (body) {
             if (res.statusCode >= 200 && res.statusCode < 300) {
                 const requestHash = crypto.createHash('sha256').update(JSON.stringify(req.body)).digest('hex');
-                idempotencyRepo.saveKey(idempotencyKey, requestHash, body)
+                let actorId = '00000000-0000-0000-0000-000000000000';
+                let actorType = 'UNKNOWN';
+                if (req.user && req.user.userId) {
+                    actorId = req.user.userId;
+                    actorType = 'USER';
+                } else if (req.merchant && req.merchant.merchant_id) {
+                    actorId = req.merchant.merchant_id;
+                    actorType = 'MERCHANT';
+                }
+                const requestPath = req.originalUrl;
+                idempotencyRepo.saveKey(idempotencyKey, requestHash, body, actorId, actorType, requestPath)
                     .catch(err => console.error('Lỗi lưu Idempotency Key:', err));
             }
             redis.del(lockKey).catch(() => {});

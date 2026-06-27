@@ -83,6 +83,7 @@ const transactionController = {
         const senderId = req.user.userId;
         
         const { receiver_identifier, amount, note, reference_code, pin } = req.body;
+        const faceImagePath = req.file ? req.file.path : null;
 
         if (!receiver_identifier || !amount || !pin) {
             return res.status(400).json({ error: 'Vui lòng nhập người nhận, số tiền và mã PIN' });
@@ -97,7 +98,7 @@ const transactionController = {
         }
 
         try {
-            const result = await txService.transfer(senderId, receiver_identifier, bigAmount, note, reference_code, pin);
+            const result = await txService.transfer(senderId, receiver_identifier, bigAmount, note, reference_code, pin, faceImagePath);
             return success(req, res, 200, 'Chuyển tiền thành công', result );
         } catch (error) { next(error); }
     },

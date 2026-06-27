@@ -8,10 +8,19 @@
  * - getPaymentTrace
  */
 const logsRepository = require('./logs.repository');
-const { ensureUuid } = require('../_shared/admin.validators');
 
 const logsService = {
-    // TODO: Implement logs service logic
+    getApiLogs: async (query) => {
+        return logsRepository.getApiLogs(query);
+    },
+    
+    getSystemLogs: async (query) => {
+        return logsRepository.getSystemLogs(query);
+    },
+    
+    getPaymentTraces: async (query) => {
+        return logsRepository.getPaymentTraces(query);
+    }
 };
 
 module.exports = logsService;

@@ -102,6 +102,10 @@ webhookWorker.on('failed', (job, err) => {
     console.error(`[WebhookConsumer] Job failed unexpectedly (Job ID: ${job.id}):`, err);
 });
 
+webhookWorker.on('error', (err) => {
+    // Chặn spam unhandled error khi Redis tắt
+});
+
 console.log('[WebhookConsumer] Worker started, listening to webhookQueue...');
 
 module.exports = webhookWorker;

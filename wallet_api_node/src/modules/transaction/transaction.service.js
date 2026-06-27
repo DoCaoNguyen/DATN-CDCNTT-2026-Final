@@ -7,13 +7,17 @@ const { emitToUser } = require('../../utils/socket');
 const kycService = require('../kyc/kyc.service');
 const notificationService = require('../notification/notification.service');
 const aiService = require('../ai/ai.service');
+const traceEventService = require('../system/trace_event.service');
 
 const transactionService = {
     deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        
+        const dailyTotal = await repo.getDailyTotal(wallet.id, 'DEPOSIT');
+        if (dailyTotal + amount > 50000000n) {
+            throw new Error('Daily_Limit_Exceeded');
+        }
 
         await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
@@ -53,6 +57,17 @@ const transactionService = {
                 console.error('Lỗi gửi push notification nạp tiền:', err);
             });
 
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: extRef,
+                event_type: 'DEPOSIT',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: userId,
+                event: 'Nạp tiền từ ngân hàng liên kết'
+            });
+
             return { 
                 id: extRef,
                 external_reference: extRef,
@@ -72,7 +87,15 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        
+        const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
+        if (monthlyTotal + amount > 100000000n) {
+            throw new Error('Monthly_Limit_Exceeded');
+        }
+
+        const dailyTotal = await repo.getDailyTotal(wallet.id, 'WITHDRAW');
+        if (dailyTotal + amount > 50000000n) {
+            throw new Error('Daily_Limit_Exceeded');
+        }
 
         await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
@@ -115,6 +138,17 @@ const transactionService = {
                 console.error('Lỗi gửi push notification rút tiền:', err);
             });
 
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: extRef,
+                event_type: 'WITHDRAWAL',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: userId,
+                event: 'Rút tiền về ngân hàng liên kết'
+            });
+
             return { 
                 id: extRef,
                 external_reference: extRef,
@@ -134,7 +168,10 @@ const transactionService = {
         const wallet = await repo.getWalletForPinCheck(userId);
         if (!wallet) throw new Error('Wallet_Not_Found');
 
-        
+        const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
+        if (monthlyTotal + amount > 100000000n) {
+            throw new Error('Monthly_Limit_Exceeded');
+        }
 
         await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
 
@@ -157,7 +194,7 @@ const transactionService = {
             const hex = transferId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'WITHDRAW', transferId, 'WITHDRAWAL', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
             
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
@@ -177,6 +214,17 @@ const transactionService = {
                 console.error('Lỗi gửi push notification chuyển tiền ngân hàng:', err);
             });
 
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: extRef,
+                event_type: 'BANK_TRANSFER',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: userId,
+                event: `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`
+            });
+
             return { 
                 id: extRef,
                 external_reference: extRef,
@@ -192,44 +240,19 @@ const transactionService = {
         }
     },
 
-    transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin) => {
+    transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin, faceImagePath) => {
         const senderWallet = await repo.getWalletForPinCheck(senderUserId);
         
         if (!senderWallet) {
             throw new Error('Sender_Wallet_Not_Found');
         }
 
-        if (senderWallet.pin_locked_until) {
-            const now = new Date();
-            const lockedUntil = new Date(senderWallet.pin_locked_until);
-            if (now < lockedUntil) {
-                throw new Error('Wallet_Locked_PIN');
-            } else {
-                await repo.resetPinAttempts(senderWallet.id);
-                senderWallet.pin_failed_attempts = 0; 
-            }
+        const monthlyTotal = await repo.getMonthlyDebitTotal(senderWallet.id);
+        if (monthlyTotal + amount > 100000000n) {
+            throw new Error('Monthly_Limit_Exceeded');
         }
 
-        if (!senderWallet.pin_hash) {
-            throw new Error('Sender_Wallet_Not_Found');
-        }
-        const isPinMatch = await bcrypt.compare(pin, senderWallet.pin_hash);
-        if (!isPinMatch) {
-            const newAttempts = (senderWallet.pin_failed_attempts || 0) + 1;
-            
-            if (newAttempts >= 3) {
-                const lockTime = new Date(Date.now() + 30 * 60000);
-                await repo.updatePinAttempts(senderWallet.id, newAttempts, lockTime);
-                throw new Error('Wallet_Locked_PIN');
-            } else {
-                await repo.updatePinAttempts(senderWallet.id, newAttempts, null);
-                throw new Error(`Wrong_PIN_${3 - newAttempts}`);
-            }
-        }
-
-        if (senderWallet.pin_failed_attempts > 0) {
-            await repo.resetPinAttempts(senderWallet.id);
-        }
+        await verifyTransactionSecurity(amount, pin, faceImagePath, senderWallet, senderUserId, repo, kycService);
 
         const receiverWallet = await repo.getWalletByIdentifier(receiverIdentifier);
 
@@ -355,6 +378,17 @@ const transactionService = {
                     console.error('Lỗi gửi push notification nhận tiền:', err);
                 });
             }
+
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: finalRef,
+                event_type: 'TRANSFER',
+                status: 'SUCCESS',
+                amount: amount.toString(),
+                actor: senderUserId,
+                event: note || 'Chuyển tiền qua Ví'
+            });
 
             return { 
                 amount: amount.toString(), 

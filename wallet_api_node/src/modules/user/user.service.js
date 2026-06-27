@@ -16,13 +16,6 @@ const userService = {
         return user;
     },
 
-    getAllUsers: async () => {
-        return await userRepository.getAllUsers();
-    },
-
-    getUserById: async (userId) => {
-        return await userRepository.getUserById(userId);
-    },
 
     requestEmailOtp: async (userId, email) => {
         // Sinh mã OTP 6 số ngẫu nhiên

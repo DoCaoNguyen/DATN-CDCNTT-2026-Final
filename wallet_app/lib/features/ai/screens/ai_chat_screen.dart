@@ -25,10 +25,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
+  int _mioBalance = 0;
 
   @override
   void initState() {
     super.initState();
+    _fetchBalance();
     // Add initial greeting
     _messages.add(
       ChatMessage(
@@ -39,9 +41,91 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
   }
 
+  Future<void> _fetchBalance() async {
+    try {
+      final client = CustomHttpClient();
+      final response = await client.get(
+        Uri.parse('${ApiConfig.baseUrl}/wallet/me'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] && data['data'] != null) {
+          if (mounted) {
+            setState(() {
+              _mioBalance = int.parse(data['data']['balance'].toString());
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching balance: $e");
+    }
+  }
+
+  int _parseAmount(String amountStr) {
+    String cleanStr = amountStr.toLowerCase().replaceAll(',', '').replaceAll('.', '');
+    int multiplier = 1;
+    if (cleanStr.endsWith('k')) {
+      multiplier = 1000;
+      cleanStr = cleanStr.replaceAll('k', '');
+    }
+    return (int.tryParse(cleanStr) ?? 0) * multiplier;
+  }
+
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+
+    // Kiểm tra nhanh local ý định nạp/rút/chuyển tiền
+    final transferMatch = RegExp(r'^(chuyển|ck)\s+([\d\.\,kK]+)', caseSensitive: false).firstMatch(text);
+    final depositMatch = RegExp(r'^nạp\s+([\d\.\,kK]+)', caseSensitive: false).firstMatch(text);
+    final withdrawMatch = RegExp(r'^rút\s+([\d\.\,kK]+)', caseSensitive: false).firstMatch(text);
+
+    int? amount;
+    String? intent;
+
+    if (transferMatch != null) {
+      amount = _parseAmount(transferMatch.group(2)!);
+      intent = 'TRANSFER';
+    } else if (depositMatch != null) {
+      amount = _parseAmount(depositMatch.group(1)!);
+      intent = 'DEPOSIT';
+    } else if (withdrawMatch != null) {
+      amount = _parseAmount(withdrawMatch.group(1)!);
+      intent = 'WITHDRAW';
+    }
+
+    if (amount != null && intent != null) {
+      if (intent == 'TRANSFER') {
+        if (amount < 1000) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số tiền chuyển tối thiểu là 1.000đ'), backgroundColor: Colors.red));
+          return;
+        }
+        if (amount > 50000000) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hạn mức chuyển tiền tối đa là 50.000.000đ/ngày'), backgroundColor: Colors.red));
+          return;
+        }
+        if (amount > _mioBalance) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số dư không đủ để thực hiện giao dịch này'), backgroundColor: Colors.red));
+          return;
+        }
+      } else {
+        // Nạp / Rút
+        if (amount < 10000) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Số tiền ${intent == 'DEPOSIT' ? 'nạp' : 'rút'} tối thiểu là 10.000đ'), backgroundColor: Colors.red));
+          return;
+        }
+        if (amount > 50000000) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Số tiền ${intent == 'DEPOSIT' ? 'nạp' : 'rút'} vượt quá hạn mức 50.000.000đ/ngày'), backgroundColor: Colors.red));
+          return;
+        }
+        if (intent == 'WITHDRAW' && amount > _mioBalance) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số dư không đủ để thực hiện giao dịch này'), backgroundColor: Colors.red));
+          return;
+        }
+      }
+    }
 
     setState(() {
       _messages.add(ChatMessage(text: text, isUser: true));

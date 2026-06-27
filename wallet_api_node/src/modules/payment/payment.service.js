@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const pool = require('../../config/db');
 const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
+const traceEventService = require('../system/trace_event.service');
 
 const paymentService = {
     createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
@@ -108,13 +109,14 @@ const paymentService = {
                     if (merchantWallet) {
                         // TÍNH PHÍ MDR TỪ CẤU HÌNH
                         let feeAmount = 0n;
-                        let netAmount = order.amount;
+                        const orderAmountBig = BigInt(order.amount);
+                        let netAmount = orderAmountBig;
                         const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
                         
                         if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
                             const mdrRateFloat = parseFloat(feeConfig.fee_value);
-                            feeAmount = BigInt(Math.round(Number(order.amount) * mdrRateFloat));
-                            netAmount = order.amount - feeAmount;
+                            feeAmount = BigInt(Math.round(Number(orderAmountBig) * mdrRateFloat));
+                            netAmount = orderAmountBig - feeAmount;
                         }
 
                         const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantWallet.id);
@@ -133,6 +135,9 @@ const paymentService = {
                             // GHI LOG VÀO MONGODB
                             const SystemLog = require('../system/models/system_log.model');
                             SystemLog.create({
+                                service_name: 'PaymentService',
+                                log_level: 'INFO',
+                                message: 'Thu phí MDR từ merchant',
                                 action: 'COLLECT_MDR_FEE',
                                 entity_type: 'PAYMENT_TRANSACTION',
                                 entity_id: paymentTxId,
@@ -184,6 +189,17 @@ const paymentService = {
             }
 
             await client.query('COMMIT'); 
+
+            // [NEW] Ghi log Payment Flow vào MongoDB
+            traceEventService.logEvent({
+                trace_id: ledgerTxId,
+                entity_id: order.order_id,
+                event_type: 'PAYMENT',
+                status: 'SUCCESS',
+                amount: order.amount.toString(),
+                actor: userId,
+                event: 'Thanh toán đơn hàng QR'
+            });
 
             // ==========================================
             // 🚀 BẮT ĐẦU BACKGROUND JOBS SAU KHI ĐÃ COMMIT
