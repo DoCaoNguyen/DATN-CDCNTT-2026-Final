@@ -45,7 +45,8 @@ const LoyaltyIntegrationService = {
                 throw new Error('Wallet not found');
             }
             const walletId = walletRes.rows[0].id;
-            const pointsBefore = BigInt(walletRes.rows[0].loyalty_points || 0);
+            const pointsStr = walletRes.rows[0].loyalty_points || 0;
+            const pointsBefore = BigInt(Math.floor(Number(pointsStr)));
 
             // Tỷ lệ 100 VND = 1 Xu
             let earnedPoints = Math.floor(amount / 100); 
@@ -235,7 +236,8 @@ const LoyaltyIntegrationService = {
             }
             
             const walletId = walletRes.rows[0].id;
-            const currentPoints = BigInt(walletRes.rows[0].loyalty_points || 0);
+            const pointsStr = walletRes.rows[0].loyalty_points || 0;
+            const currentPoints = BigInt(Math.floor(Number(pointsStr)));
             const deductPoints = BigInt(requiredPoints);
 
             if (currentPoints < deductPoints) {
