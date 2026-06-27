@@ -214,6 +214,126 @@ const LoyaltyIntegrationService = {
         } finally {
             if (client) client.release();
         }
+    },
+
+    /**
+     * ===== NEW: Redeem loyalty points for a scratch card =====
+     */
+    redeemPoints: async (userId, provider, faceValue) => {
+        let client;
+        try {
+            const requiredPoints = Math.floor(faceValue * 0.95);
+            if (requiredPoints <= 0) throw new Error('Invalid face value');
+
+            client = await pool.connect();
+            await client.query('BEGIN');
+
+            // Lock wallet balance row
+            const walletRes = await client.query('SELECT w.id, wb.loyalty_points FROM wallets w JOIN wallet_balances wb ON w.id = wb.wallet_id WHERE w.user_id = $1 FOR UPDATE', [userId]);
+            if (walletRes.rows.length === 0) {
+                throw new Error('Wallet_Not_Found');
+            }
+            
+            const walletId = walletRes.rows[0].id;
+            const currentPoints = BigInt(walletRes.rows[0].loyalty_points || 0);
+            const deductPoints = BigInt(requiredPoints);
+
+            if (currentPoints < deductPoints) {
+                throw new Error('Insufficient_Points');
+            }
+
+            // Deduct Points
+            await client.query('UPDATE wallet_balances SET loyalty_points = loyalty_points - $1 WHERE wallet_id = $2', [requiredPoints, walletId]);
+            const pointsAfter = currentPoints - deductPoints;
+
+            // Generate Mock Scratch Card
+            const cardCode = Math.floor(10000000000000 + Math.random() * 90000000000000).toString(); // 14 digits
+            const serial = Math.floor(10000000000 + Math.random() * 90000000000).toString(); // 11 digits
+
+            const metadata = {
+                provider,
+                faceValue,
+                cardCode,
+                serial,
+                type: 'SCRATCH_CARD'
+            };
+
+            const transactionRepo = require('../transaction/transaction.repository');
+            
+            // Create Ledger Transaction
+            const ledgerTxId = await transactionRepo.createLedgerTransaction(
+                client, 
+                'LOYALTY_REDEEM', 
+                null, // no payment_transaction reference needed for redeem
+                'REDEEM_ORDER', 
+                `Đổi thẻ cào ${provider} ${faceValue}đ`, 
+                requiredPoints,
+                'POINT',
+                JSON.stringify(metadata)
+            );
+
+            // Double Entry for Redeem (User loses points, System gains points)
+            await transactionRepo.createLedgerEntry(
+                client,
+                ledgerTxId,
+                walletId,
+                'DEBIT',
+                requiredPoints,
+                currentPoints,
+                pointsAfter
+            );
+
+            await client.query('COMMIT');
+
+            // Send Push Notification
+            const title = 'Đổi thẻ cào thành công!';
+            const body = `Bạn đã đổi thành công thẻ ${provider} ${faceValue}đ. Nhấn để xem mã thẻ.`;
+            
+            try {
+                await notificationRepository.createNotification(
+                    userId,
+                    title,
+                    body,
+                    'LOYALTY_REDEEM',
+                    ledgerTxId
+                );
+
+                const activeTokens = await notificationRepository.getActiveTokensByUserId(userId);
+                if (activeTokens && activeTokens.length > 0) {
+                    const fcmPayload = {
+                        tokens: activeTokens,
+                        data: {
+                            title: title,
+                            body: body,
+                            click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                            type: 'LOYALTY_REDEEM',
+                            ledger_tx_id: String(ledgerTxId),
+                            timestamp: String(Date.now()),
+                        },
+                        android: { priority: 'high' }
+                    };
+                    await admin.messaging().sendEachForMulticast(fcmPayload);
+                }
+            } catch (notifyErr) {
+                console.error('[LOYALTY_REDEEM] Notification error:', notifyErr.message);
+            }
+
+            return {
+                transaction_id: ledgerTxId,
+                provider,
+                faceValue,
+                cardCode,
+                serial,
+                deducted_points: requiredPoints,
+                balance_points: pointsAfter.toString()
+            };
+
+        } catch (error) {
+            if (client) await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            if (client) client.release();
+        }
     }
 };
 

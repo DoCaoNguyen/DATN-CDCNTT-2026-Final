@@ -224,6 +224,40 @@ const paymentController = {
             console.error('Lỗi tra cứu giao dịch thanh toán:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi tra cứu giao dịch' });
         }
+    },
+
+    // ===== NEW: Đổi điểm thưởng Loyalty =====
+    redeemLoyalty: async (req, res) => {
+        const userId = req.user.userId;
+        const { provider, faceValue } = req.body;
+
+        if (!provider || !faceValue) {
+            return res.status(400).json({ error: 'Thiếu thông tin nhà mạng hoặc mệnh giá' });
+        }
+
+        try {
+            const LoyaltyIntegrationService = require('./LoyaltyIntegrationService');
+            const result = await LoyaltyIntegrationService.redeemPoints(userId, provider, parseInt(faceValue, 10));
+
+            res.status(200).json({
+                message: 'Đổi thẻ cào thành công',
+                data: result
+            });
+        } catch (error) {
+            console.error('Lỗi đổi điểm Loyalty:', error);
+            
+            const errorMap = {
+                'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
+                'Insufficient_Points': 'Số dư Xu không đủ để đổi thẻ này',
+                'Invalid face value': 'Mệnh giá không hợp lệ'
+            };
+
+            if (errorMap[error.message]) {
+                return res.status(400).json({ error: errorMap[error.message] });
+            }
+
+            res.status(500).json({ error: 'Lỗi hệ thống khi đổi thẻ' });
+        }
     }
 };
 

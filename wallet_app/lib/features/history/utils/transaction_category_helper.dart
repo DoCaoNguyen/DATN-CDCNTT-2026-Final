@@ -12,6 +12,9 @@ class TransactionCategoryHelper {
     if (tx['transaction_type'] == 'DEPOSIT') {
       return "Nạp tiền";
     }
+    if (tx['transaction_type'] == 'LOYALTY_REDEEM') {
+      return "Đổi thưởng";
+    }
     if (note.contains('ăn') ||
         note.contains('uống') ||
         note.contains('lẩu') ||
@@ -58,6 +61,7 @@ class TransactionCategoryHelper {
       "Làm đẹp",
       "Sức khỏe",
       "Từ thiện",
+      "Đổi thưởng",
     ].contains(tag)) {
       return Colors.pink.shade600;
     }
@@ -90,6 +94,7 @@ class TransactionCategoryHelper {
       "Làm đẹp",
       "Sức khỏe",
       "Từ thiện",
+      "Đổi thưởng",
     ].contains(tag)) {
       return Colors.pink.shade50;
     }
@@ -115,6 +120,9 @@ class TransactionCategoryHelper {
     if (tx['transaction_type'] == 'DEPOSIT') {
       return Icons.account_balance_wallet_rounded;
     }
+    if (tx['transaction_type'] == 'LOYALTY_REDEEM') {
+      return Icons.card_giftcard_rounded;
+    }
     if (tx['entry_type'] == 'CREDIT') {
       return Icons.call_received_rounded;
     }
@@ -124,6 +132,9 @@ class TransactionCategoryHelper {
   static Color getIconColor(dynamic tx) {
     if (tx['transaction_type'] == 'DEPOSIT') {
       return Colors.blue;
+    }
+    if (tx['transaction_type'] == 'LOYALTY_REDEEM') {
+      return Colors.pink;
     }
     if (tx['entry_type'] == 'CREDIT') {
       return Colors.green;

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/offers_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'redeem_success_screen.dart';
 
 class RedeemScratchCardScreen extends StatefulWidget {
   final String loyaltyPoints;
@@ -13,6 +16,7 @@ class RedeemScratchCardScreen extends StatefulWidget {
 }
 
 class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
+  bool _isLoading = false;
   final List<String> _providers = ['Viettel', 'Vinaphone', 'Mobifone', 'Vietnamobile'];
   final List<int> _values = [10000, 20000, 30000, 50000, 100000, 200000];
   
@@ -174,11 +178,41 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Chức năng đổi Xu đang được phát triển!')),
-                        );
+                      onPressed: () async {
+                        Navigator.pop(ctx); // Close dialog
+
+                        setState(() => _isLoading = true);
+
+                        try {
+                          final prefs = await SharedPreferences.getInstance();
+                          final token = prefs.getString('accessToken') ?? '';
+                          
+                          final offersService = OffersService(token: token);
+                          final result = await offersService.redeemScratchCard(_selectedProvider!, _selectedValue!);
+
+                          if (!mounted) return;
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RedeemSuccessScreen(
+                                provider: result['provider'],
+                                faceValue: result['faceValue'],
+                                cardCode: result['cardCode'],
+                                serial: result['serial'],
+                                deductedPoints: result['deducted_points'],
+                                transactionId: result['transaction_id'].toString(),
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+                          );
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pink,
@@ -328,57 +362,68 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Container(
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Số dư Xu:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                    Row(
+      body: Stack(
+        children: [
+          Container(
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.stars, color: Colors.amber, size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatNumber(widget.loyaltyPoints),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber.shade800,
-                          ),
+                        const Text('Số dư Xu:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                        Row(
+                          children: [
+                            const Icon(Icons.stars, color: Colors.amber, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatNumber(widget.loyaltyPoints),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber.shade800,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildProviderSelector(),
+                  const SizedBox(height: 24),
+                  _buildValueSelector(),
+                ],
               ),
-              const SizedBox(height: 24),
-              _buildProviderSelector(),
-              const SizedBox(height: 24),
-              _buildValueSelector(),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.pink),
+              ),
+            ),
+        ],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

@@ -18,4 +18,6 @@ router.post('/request', verifyToken, paymentController.requestMoney);
 
 router.post('/process', verifyToken, withIdempotency, paymentController.processPayment);
 
+router.post('/loyalty/redeem', verifyToken, paymentController.redeemLoyalty);
+
 module.exports = router;
