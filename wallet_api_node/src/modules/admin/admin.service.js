@@ -51,14 +51,6 @@ function ensureUuid(value, errorCode = 'Invalid_Id') {
 
 const adminService = {
 
-
-
-    // ==========================================
-    // DASHBOARD SERVICE
-    // ==========================================
-    getDashboardKPIs: async () => {
-        return adminRepository.getDashboardStats();
-    }
 };
 
 module.exports = adminService;

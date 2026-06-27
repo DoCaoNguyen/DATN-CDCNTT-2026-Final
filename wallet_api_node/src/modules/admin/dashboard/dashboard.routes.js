@@ -72,6 +72,11 @@ const notImplemented = require('../../../utils/notImplemented');
  *         description: System alerts
  */
 
-
+router.get('/kpis', dashboardController.getDashboardKPIs);
+router.get('/transactions-chart', notImplemented('GET /admin/dashboard/transactions-chart'));
+router.get('/success-rate', notImplemented('GET /admin/dashboard/success-rate'));
+router.get('/top-merchants', notImplemented('GET /admin/dashboard/top-merchants'));
+router.get('/recent-activities', notImplemented('GET /admin/dashboard/recent-activities'));
+router.get('/alerts', notImplemented('GET /admin/dashboard/alerts'));
 
 module.exports = router;

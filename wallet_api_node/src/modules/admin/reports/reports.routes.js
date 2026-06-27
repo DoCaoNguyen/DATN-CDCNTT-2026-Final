@@ -92,6 +92,14 @@ const notImplemented = require('../../../utils/notImplemented');
  *         description: Report export file
  */
 
-
+router.get('/wallet-transactions', reportsController.getWalletTransactions);
+router.get('/topups', reportsController.getTopupReport);
+router.get('/transfers', reportsController.getTransferReport);
+router.get('/payments', reportsController.getPaymentReport);
+router.get('/refunds', reportsController.getRefundReport);
+router.get('/merchants', reportsController.getMerchantReport);
+router.get('/webhooks', notImplemented('GET /admin/reports/webhooks'));
+router.get('/ledger', notImplemented('GET /admin/reports/ledger'));
+router.get('/export', reportsController.exportReport);
 
 module.exports = router;

@@ -14,7 +14,9 @@
 const dashboardRepository = require('./dashboard.repository');
 
 const dashboardService = {
-    // TODO: Di chuyển getDashboardKPIs từ admin.service.js
+    getDashboardKPIs: async () => {
+        return dashboardRepository.getDashboardStats();
+    }
 };
 
 module.exports = dashboardService;
