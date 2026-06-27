@@ -26,6 +26,57 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
   }
 
+  Widget _buildProviderLogo(String provider) {
+    switch (provider) {
+      case 'Viettel':
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEE0033),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: const Text(
+            'viettel',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+        );
+      case 'Vinaphone':
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+              child: const Icon(Icons.wifi, color: Colors.white, size: 10),
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              'vinaphone',
+              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ],
+        );
+      case 'Mobifone':
+        return RichText(
+          text: const TextSpan(
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            children: [
+              TextSpan(text: 'mobi', style: TextStyle(color: Colors.blue)),
+              TextSpan(text: 'fone', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        );
+      case 'Vietnamobile':
+        return const Text(
+          'Vietnamobile',
+          style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold, fontSize: 12),
+        );
+      default:
+        return const Icon(Icons.sim_card, size: 20, color: Colors.grey);
+    }
+  }
+
   void _showConfirmDialog() {
     if (_selectedProvider == null || _selectedValue == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,25 +144,6 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
           children: _providers.map((provider) {
             final isSelected = _selectedProvider == provider;
             
-            // Map provider to specific image url
-            String imageUrl;
-            switch (provider) {
-              case 'Viettel':
-                imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Viettel_logo_2021.svg/512px-Viettel_logo_2021.svg.png';
-                break;
-              case 'Vinaphone':
-                imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vinaphone_logo.png/512px-Vinaphone_logo.png';
-                break;
-              case 'Mobifone':
-                imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/MobiFone_logo.svg/512px-MobiFone_logo.svg.png';
-                break;
-              case 'Vietnamobile':
-                imageUrl = 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietnamobile-V.png';
-                break;
-              default:
-                imageUrl = '';
-            }
-
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -131,24 +163,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (imageUrl.isNotEmpty)
-                      Image.network(
-                        imageUrl,
-                        width: 60,
-                        height: 24,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.sim_card, 
-                          size: 20, 
-                          color: isSelected ? Colors.blue : Colors.grey,
-                        ),
-                      )
-                    else
-                      Icon(
-                        Icons.sim_card, 
-                        size: 20, 
-                        color: isSelected ? Colors.blue : Colors.grey,
-                      ),
+                    _buildProviderLogo(provider),
                     const SizedBox(width: 8),
                     Text(
                       provider,
