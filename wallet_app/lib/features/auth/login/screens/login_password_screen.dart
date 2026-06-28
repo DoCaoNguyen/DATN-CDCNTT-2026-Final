@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -90,11 +91,13 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
         bool isVerified = userInfo['is_kyc_verified'] == true;
 
         // Lưu thông tin đăng nhập tự động
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
+        final secureStorage = const FlutterSecureStorage();
+        await secureStorage.write(key: 'access_token', value: token);
         if (refreshToken.isNotEmpty) {
-          await prefs.setString('refresh_token', refreshToken);
+          await secureStorage.write(key: 'refresh_token', value: refreshToken);
         }
+
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', userId);
         await prefs.setBool('is_verified', isVerified);
 

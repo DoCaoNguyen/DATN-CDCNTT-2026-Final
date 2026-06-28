@@ -11,6 +11,7 @@ import '../widgets/wallet_card.dart';
 import '../widgets/services_grid.dart';
 import '../widgets/home_header.dart';
 import '../widgets/home_banners.dart';
+import '../../financial_center/screens/financial_center_screen.dart';
 import 'qr_main_screen.dart';
 import 'notification_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -474,9 +475,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           onToggleVisibility: _fetchBalance,
                         ),
 
-                        FinancialCenterBanner(
-                          activeLang: activeLang,
-                          fullName: _fullName,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FinancialCenterScreen(balance: _balance, token: widget.token),
+                              ),
+                            );
+                          },
+                          child: FinancialCenterBanner(
+                            activeLang: activeLang,
+                            fullName: _fullName,
+                          ),
                         ),
 
                         // Đã thay thế Grid cũ bằng Widget ServicesGrid

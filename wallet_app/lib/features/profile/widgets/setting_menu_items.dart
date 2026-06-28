@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../auth/login/screens/login_phone_screen.dart';
-import '../screens/help_center_screen.dart';
+import '../../chat/screens/help_center_screen.dart';
 
 class SettingMenuItems extends StatelessWidget {
   final VoidCallback onLogout;

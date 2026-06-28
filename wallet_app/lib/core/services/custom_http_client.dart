@@ -1,12 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_config.dart';
 import '../../features/auth/login/screens/login_phone_screen.dart';
+import 'socket_service.dart';
 
 class CustomHttpClient extends http.BaseClient {
   final http.Client _innerClient = http.Client();
+  static const _secureStorage = FlutterSecureStorage();
+  static Completer<bool>? _refreshCompleter;
 
   // Global NavigatorKey dùng để hiển thị Dialog hoặc điều hướng cưỡng bức (Force Navigate) từ xa không cần BuildContext
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -17,9 +22,8 @@ class CustomHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    // 1. Tự động lấy Token từ SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('auth_token');
+    // 1. Tự động lấy Token từ SecureStorage
+    final String? token = await _secureStorage.read(key: 'access_token');
 
     // 2. Tự động đính kèm header Authorization
     if (token != null && token.isNotEmpty) {
@@ -41,29 +45,36 @@ class CustomHttpClient extends http.BaseClient {
         return response;
       }
 
+      // Cơ chế Lock chống Race Condition
+      if (_refreshCompleter != null) {
+        // Có request khác đang refresh token, chờ nó hoàn thành
+        final success = await _refreshCompleter!.future;
+        if (success) {
+          final newToken = await _secureStorage.read(key: 'access_token');
+          return await _retryRequest(request, newToken);
+        } else {
+          return response; // Nếu refresh thất bại, trả về response 401 gốc
+        }
+      }
+
+      // Tạo Lock cho các request khác chờ
+      _refreshCompleter = Completer<bool>();
+
+      // Concurrency check: Kiểm tra xem token đã được cập nhật bởi một request nào đó trước khi ta tạo Lock chưa
+      final currentTokenInStorage = await _secureStorage.read(key: 'access_token');
+      if (currentTokenInStorage != null && currentTokenInStorage != token) {
+        _refreshCompleter!.complete(true);
+        _refreshCompleter = null;
+        return await _retryRequest(request, currentTokenInStorage);
+      }
+
       final refreshSuccess = await _tryRefreshToken();
+      _refreshCompleter!.complete(refreshSuccess);
+      _refreshCompleter = null;
+
       if (refreshSuccess) {
-        final newPrefs = await SharedPreferences.getInstance();
-        final newToken = newPrefs.getString('auth_token');
-
-        final newRequest = http.Request(request.method, request.url);
-        newRequest.headers.addAll(request.headers);
-        if (newToken != null && newToken.isNotEmpty) {
-          newRequest.headers['Authorization'] = 'Bearer $newToken';
-        }
-
-        if (request is http.Request) {
-          newRequest.bodyBytes = request.bodyBytes;
-        } else if (request is http.MultipartRequest) {
-          final multipartReq =
-              http.MultipartRequest(request.method, request.url)
-                ..headers.addAll(newRequest.headers)
-                ..fields.addAll(request.fields)
-                ..files.addAll(request.files);
-          return await _innerClient.send(multipartReq);
-        }
-
-        return await _innerClient.send(newRequest);
+        final newToken = await _secureStorage.read(key: 'access_token');
+        return await _retryRequest(request, newToken);
       } else {
         _handleUnauthorized();
       }
@@ -72,10 +83,29 @@ class CustomHttpClient extends http.BaseClient {
     return response;
   }
 
+  Future<http.StreamedResponse> _retryRequest(http.BaseRequest request, String? newToken) async {
+    final newRequest = http.Request(request.method, request.url);
+    newRequest.headers.addAll(request.headers);
+    if (newToken != null && newToken.isNotEmpty) {
+      newRequest.headers['Authorization'] = 'Bearer $newToken';
+    }
+
+    if (request is http.Request) {
+      newRequest.bodyBytes = request.bodyBytes;
+    } else if (request is http.MultipartRequest) {
+      final multipartReq = http.MultipartRequest(request.method, request.url)
+        ..headers.addAll(newRequest.headers)
+        ..fields.addAll(request.fields)
+        ..files.addAll(request.files);
+      return await _innerClient.send(multipartReq);
+    }
+
+    return await _innerClient.send(newRequest);
+  }
+
   static Future<bool> _tryRefreshToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? refreshToken = prefs.getString('refresh_token');
+      final String? refreshToken = await _secureStorage.read(key: 'refresh_token');
       if (refreshToken == null || refreshToken.isEmpty) return false;
 
       final response = await http.post(
@@ -91,18 +121,22 @@ class CustomHttpClient extends http.BaseClient {
         final responseData = jsonDecode(response.body);
         String newToken =
             responseData['access_token'] ??
-            responseData['data']['access_token'] ??
+            responseData['data']?['access_token'] ??
             '';
         String newRefreshToken =
             responseData['refresh_token'] ??
-            responseData['data']['refresh_token'] ??
+            responseData['data']?['refresh_token'] ??
             '';
 
         if (newToken.isNotEmpty) {
-          await prefs.setString('auth_token', newToken);
+          await _secureStorage.write(key: 'access_token', value: newToken);
           if (newRefreshToken.isNotEmpty) {
-            await prefs.setString('refresh_token', newRefreshToken);
+            await _secureStorage.write(key: 'refresh_token', value: newRefreshToken);
           }
+          
+          // Cập nhật SocketService với token mới
+          SocketService().updateToken(newToken);
+          
           return true;
         }
       }
@@ -119,9 +153,9 @@ class CustomHttpClient extends http.BaseClient {
 
     try {
       // 1. Xóa sạch dữ liệu đăng nhập lưu cục bộ
+      await _secureStorage.delete(key: 'access_token');
+      await _secureStorage.delete(key: 'refresh_token');
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_token');
-      await prefs.remove('refresh_token');
       await prefs.remove('user_id');
       await prefs.remove('is_verified');
 

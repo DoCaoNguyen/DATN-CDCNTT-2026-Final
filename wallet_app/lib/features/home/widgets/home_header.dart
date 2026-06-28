@@ -12,6 +12,7 @@ import '../../chat/screens/chat_list_screen.dart';
 import '../../ai/screens/voice_transfer_dialog.dart';
 import '../services/home_service.dart';
 import '../screens/qr_main_screen.dart';
+import '../../transfer/screens/transfer_search_screen.dart';
 
 class HomeHeader extends StatefulWidget {
   final String activeLang;
@@ -60,6 +61,20 @@ class _HomeHeaderState extends State<HomeHeader> {
               MaterialPageRoute(
                 builder: (context) =>
                     QrMainScreen(token: widget.token, initialIndex: 0),
+              ),
+            );
+          } else if (title == "Ví tiện ích" || title == "Utilities") {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Sorry", style: TextStyle(fontWeight: FontWeight.bold)),
+                content: const Text("Tính năng sắp sửa ra mắt bạn vui lòng quay lại sau nhé!"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("OK", style: TextStyle(color: Colors.pink)),
+                  ),
+                ],
               ),
             );
           } else {
@@ -117,6 +132,15 @@ class _HomeHeaderState extends State<HomeHeader> {
                     ],
                   ),
                   child: TextField(
+                    readOnly: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TransferSearchScreen(token: widget.token),
+                        ),
+                      );
+                    },
                     textAlignVertical: TextAlignVertical.center,
                     decoration: InputDecoration(
                       isDense: true,

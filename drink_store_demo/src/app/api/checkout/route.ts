@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const walletApiUrl = process.env.WALLET_API_URL || 'http://localhost:3000/api/v1/payment/create';
+    const walletApiUrl = process.env.WALLET_API_URL || 'http://localhost:8000/api/v1/payment/create';
 
     const walletRes = await fetch(walletApiUrl, {
       method: 'POST',
