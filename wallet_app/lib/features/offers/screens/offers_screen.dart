@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'redeem_scratch_card_screen.dart';
 
-class OffersScreen extends StatelessWidget {
+class OffersScreen extends StatefulWidget {
   final String token;
   final String loyaltyPoints;
   final Future<void> Function() onRefresh;
@@ -13,6 +13,25 @@ class OffersScreen extends StatelessWidget {
     required this.onRefresh,
   }) : super(key: key);
 
+  @override
+  State<OffersScreen> createState() => _OffersScreenState();
+}
+
+class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   String _formatNumber(String value) {
     final number = int.tryParse(value);
     if (number == null) return "0";
@@ -20,40 +39,71 @@ class OffersScreen extends StatelessWidget {
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
   }
 
-  Widget _buildOfferCategory(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F9),
+      body: RefreshIndicator(
+        onRefresh: widget.onRefresh,
+        color: Colors.pink,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Custom Header & Balance Section
+            SliverToBoxAdapter(
+              child: _buildHeaderSection(),
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+            
+            // TabBar Sticky
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyTabBarDelegate(
+                child: Container(
+                  color: Colors.white,
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: Colors.pink,
+                    indicatorWeight: 3,
+                    labelColor: Colors.pink,
+                    unselectedLabelColor: Colors.grey.shade600,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16),
+                    tabs: const [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.card_giftcard, size: 20),
+                            SizedBox(width: 8),
+                            Text('Sẵn quà'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.monetization_on_outlined, size: 20),
+                            SizedBox(width: 8),
+                            Text('Tích Xu'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: Icon(icon, size: 40, color: color),
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+
+            // TabBarView content
+            SliverFillRemaining(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildTabSanQua(),
+                  _buildTabTichXu(),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -61,118 +111,570 @@ class OffersScreen extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final List<int> cardValues = [10000, 20000, 30000, 50000, 100000];
-
-    return Scaffold(
-      appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFFFE4EE), Color(0xFFFFE4EE)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
+  Widget _buildHeaderSection() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFE3F2FD), Color(0xFFF5F5F9)], // Light blue to very light grey/pinkish
         ),
-        elevation: 0,
-        title: const Text(
-          'Ưu đãi & Đổi Xu',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.amber.shade100,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.stars, color: Colors.amber, size: 20),
-                const SizedBox(width: 6),
-                Text(
-                  _formatNumber(loyaltyPoints),
-                  style: TextStyle(
-                    color: Colors.amber.shade800,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: onRefresh,
-        color: Colors.pink,
-        child: Container(
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
-            ),
-          ),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(
+        children: [
+          // Custom App Bar (Search + Icons)
+          SafeArea(
+            bottom: false,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
                 children: [
-                  const Text(
-                    'Danh mục Ưu đãi',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 12),
+                          Icon(Icons.search, color: Colors.grey.shade500),
+                          const SizedBox(width: 8),
+                          Text('Tìm kiếm ưu đãi...', style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    childAspectRatio: 1.0,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildOfferCategory(
-                        context,
-                        'Đổi Thẻ Cào',
-                        Icons.phone_android_rounded,
-                        Colors.blue,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => RedeemScratchCardScreen(
-                                loyaltyPoints: loyaltyPoints,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildOfferCategory(
-                        context,
-                        'Mã Giảm Giá',
-                        Icons.discount_rounded,
-                        Colors.pink,
-                        () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Sắp ra mắt!')),
-                          );
-                        },
-                      ),
-                    ],
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                    child: const Icon(Icons.notifications_none, color: Colors.black87, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                    child: const Icon(Icons.chat_bubble_outline, color: Colors.black87, size: 20),
                   ),
                 ],
               ),
             ),
           ),
-        ),
+          
+          // Balance Card
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
+                              child: const Icon(Icons.monetization_on, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatNumber(widget.loyaltyPoints),
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.pink.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Lịch sử Xu',
+                            style: TextStyle(color: Colors.pink.shade600, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      '3 xu chưa dùng, đổi trước ngày 30/06',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: Colors.grey.shade200),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.card_giftcard, size: 18, color: Colors.black54),
+                              const SizedBox(width: 8),
+                              const Text('Quà của tôi', style: TextStyle(fontWeight: FontWeight.w500)),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10)),
+                                child: const Text('34', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Container(width: 1, height: 20, color: Colors.grey.shade300),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.qr_code_scanner, size: 18, color: Colors.black54),
+                              const SizedBox(width: 8),
+                              const Text('Nhập mã', style: TextStyle(fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  // ------- TAB SẴN QUÀ -------
+  Widget _buildTabSanQua() {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        // Categories
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCategoryItem(Icons.vibration, 'Lắc ngay\ntrúng quà', Colors.blue),
+                _buildCategoryItem(Icons.account_balance_wallet, 'Hoàn tiền\nmua sắm', Colors.green),
+                _buildCategoryItem(Icons.receipt_long, 'Thanh toán\nhóa đơn', Colors.pink),
+                _buildCategoryItem(Icons.emoji_events, 'Nhiệm vụ\nsăn quà', Colors.purple),
+                _buildCategoryItem(Icons.currency_exchange, 'Chuyển tiền', Colors.orange),
+              ],
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Banner 1
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Container(
+            width: double.infinity,
+            height: 100,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [Colors.orange.shade100, Colors.orange.shade50]),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
+                            children: [
+                              const TextSpan(text: 'Ví Trả Sau - Hoàn tiền '),
+                              TextSpan(text: '50%', style: TextStyle(color: Colors.pink.shade600, fontSize: 20)),
+                            ]
+                          )
+                        ),
+                        const SizedBox(height: 4),
+                        const Text('Tối đa 10K/giao dịch tại 500K+ cửa hàng khắp phố phường.', style: TextStyle(fontSize: 12, color: Colors.black54), maxLines: 2),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.pink.shade200)),
+                      child: Text('Khám phá', style: TextStyle(color: Colors.pink.shade600, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Banner 2
+        Container(
+          color: Colors.yellow.shade50,
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(4)),
+                      child: const Text('Mio Day', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text('xả Xu đón hè\nSăn deal đồng giá cực xịn', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    const Text('Ngày 25 hằng tháng', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.beach_access, size: 60, color: Colors.orangeAccent),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+        
+        // Deals List
+        SizedBox(
+          height: 220,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _buildDealCard('Ví Trả Sau', 'Hoàn 35K', 'Cho đơn từ 35K', 'Thu thập', Colors.pink.shade50, true),
+              _buildDealCard('GS25', 'Ưu đãi 5K', 'Cho đơn từ 30K tại ...', '50', Colors.white, false, originalPrice: '5.000'),
+              _buildDealCard('Hóa đơn', 'Ưu đãi 3K', 'Cho đơn từ 100K', '10', Colors.white, false, originalPrice: '3.000'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+      ],
+    );
+  }
+
+  Widget _buildCategoryItem(IconData icon, String title, Color color) {
+    return Container(
+      width: 80,
+      margin: const EdgeInsets.only(right: 8),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDealCard(String brand, String title, String subtitle, String actionText, Color bgColor, bool isActionButton, {String? originalPrice}) {
+    return Container(
+      width: 150,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 90,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+            ),
+            alignment: Alignment.topRight,
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(4)),
+              child: Text(brand, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 12),
+                if (isActionButton)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.pink),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(actionText, style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.w500, fontSize: 12)),
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Icon(Icons.monetization_on, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      Text(actionText, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 14)),
+                      if (originalPrice != null) ...[
+                        const SizedBox(width: 4),
+                        Text(originalPrice, style: const TextStyle(color: Colors.grey, fontSize: 10, decoration: TextDecoration.lineThrough)),
+                      ]
+                    ],
+                  )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // ------- TAB TÍCH XU -------
+  Widget _buildTabTichXu() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Daily Check-in Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.calendar_today, color: Colors.orange, size: 20),
+                  SizedBox(width: 8),
+                  Text('Điểm danh mỗi ngày nhận quà', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildCheckinDay('Hôm nay', '+50', true, false),
+                    _buildCheckinDay('Ngày 2', '+50', false, false),
+                    _buildCheckinDay('Ngày 3', '???', false, true),
+                    _buildCheckinDay('Ngày 4', '+50', false, false),
+                    _buildCheckinDay('Ngày 5', '???', false, true),
+                    _buildCheckinDay('Ngày 6', '+50', false, false),
+                    _buildCheckinDay('Kết thúc', '', false, false, isEnd: true),
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Info Section
+        const Text('Tìm hiểu về Xu trên Mio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 80,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _buildInfoCard('Tích Xu với\nmọi giao dịch', Colors.orange.shade50, Colors.orange.shade800),
+              _buildInfoCard('Đổi Xu nhận\nưu đãi', Colors.pink.shade50, Colors.pink.shade800),
+              _buildInfoCard('Đổi Xu\nthanh toán', Colors.blue.shade50, Colors.blue.shade800),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Real Deals Section (Đổi Thẻ Cào here)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Đủ Xu đổi liền', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade600),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 220,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RedeemScratchCardScreen(
+                        loyaltyPoints: widget.loyaltyPoints,
+                      ),
+                    ),
+                  );
+                },
+                child: _buildDealCard('Đổi Thẻ Cào', 'Đổi thẻ cào ĐT', 'Mệnh giá 10K - 100K', '10.000', Colors.pink.shade50, false),
+              ),
+              _buildDealCard('Gong Cha', 'Ưu đãi 20K', 'Cho đơn từ 120K', '39', Colors.pink.shade50, false, originalPrice: '20.000'),
+              _buildDealCard('Long Châu', 'Ưu đãi 30K', 'Cho đơn từ 549K', '79', Colors.blue.shade50, false, originalPrice: '30.000'),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        
+        // Tasks Section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.orange.shade50, shape: BoxShape.circle),
+                child: const Icon(Icons.track_changes, color: Colors.orange, size: 28),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Nhiệm vụ Tích Xu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    SizedBox(height: 4),
+                    Text('Nhận 10.000 Xu cực dễ', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade600),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 40),
+      ],
+    );
+  }
+
+  Widget _buildCheckinDay(String dayLabel, String value, bool isToday, bool isGift, {bool isEnd = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12.0),
+      child: Column(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: isToday ? Colors.white : Colors.grey.shade50,
+              shape: BoxShape.circle,
+              border: Border.all(color: isToday ? Colors.green : Colors.grey.shade300, width: isToday ? 2 : 1),
+            ),
+            alignment: Alignment.center,
+            child: isEnd 
+              ? const Icon(Icons.timer_off_outlined, color: Colors.grey, size: 20)
+              : isToday 
+                ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+                : isGift 
+                  ? const Icon(Icons.card_giftcard, color: Colors.pink, size: 20)
+                  : const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
+          ),
+          const SizedBox(height: 4),
+          if (!isEnd) Text(value, style: TextStyle(fontSize: 12, fontWeight: isToday ? FontWeight.bold : FontWeight.normal, color: isToday ? Colors.green : Colors.grey)),
+          const SizedBox(height: 2),
+          Text(dayLabel, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String text, Color bgColor, Color textColor) {
+    return Container(
+      width: 110,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 12)),
+    );
+  }
+}
+
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _StickyTabBarDelegate({required this.child});
+
+  @override
+  double get minExtent => 48.0;
+
+  @override
+  double get maxExtent => 48.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return true;
   }
 }
