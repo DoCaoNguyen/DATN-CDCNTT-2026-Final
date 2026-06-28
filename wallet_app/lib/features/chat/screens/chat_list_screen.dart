@@ -6,6 +6,8 @@ import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../transfer/screens/transfer_main_screen.dart';
 import 'chat_detail_screen.dart';
+import '../../home/screens/home_screen.dart';
+import '../../home/screens/qr_main_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   final String token;
@@ -170,31 +172,69 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ),
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Sorry", style: TextStyle(fontWeight: FontWeight.bold)),
+                          content: const Text("Tính năng sắp sửa ra mắt bạn vui lòng quay lại sau nhé!"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("OK", style: TextStyle(color: Colors.pink)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.grid_view_rounded, size: 20),
                     ),
-                    child: const Icon(Icons.grid_view_rounded, size: 20),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QrMainScreen(token: widget.token, initialIndex: 0),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                     ),
-                    child: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HomeScreen(token: widget.token),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.home_rounded, size: 20),
                     ),
-                    child: const Icon(Icons.home_rounded, size: 20),
                   ),
                 ],
               ),

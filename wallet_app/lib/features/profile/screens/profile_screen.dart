@@ -10,8 +10,9 @@ import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
 import 'account_management_screen.dart';
-import 'help_center_screen.dart';
+import '../../chat/screens/help_center_screen.dart';
 import '../../merchant/screens/merchant_screen.dart';
+import '../../financial_center/screens/financial_center_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -374,7 +375,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisCount: 3,
         childAspectRatio: 1.2,
         children: [
-          _buildUtilityItem(Icons.account_balance_rounded, 'Trung Tâm Tài Chính', Colors.blue),
+          _buildUtilityItem(Icons.account_balance_rounded, 'Trung Tâm Tài Chính', Colors.blue, onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FinancialCenterScreen(balance: "0", token: widget.token),
+              ),
+            );
+          }),
           _buildUtilityItem(Icons.verified_rounded, 'Điểm Mio', AppColors.primaryPink),
           _buildUtilityItem(Icons.receipt_long_rounded, 'Thanh toán', Colors.teal),
           _buildUtilityItem(Icons.card_giftcard_rounded, 'Nhận Ngay 250K', AppColors.primaryPink, badge: 'Mio'),
@@ -385,10 +393,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildUtilityItem(IconData icon, String title, Color color, {String? badge}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+  Widget _buildUtilityItem(IconData icon, String title, Color color, {String? badge, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
         Stack(
           clipBehavior: Clip.none,
           children: [
@@ -418,6 +428,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
       ],
+      ),
     );
   }
 
@@ -593,7 +604,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildMoreSettingsItem(
             icon: Icons.help_outline_rounded,
             title: 'Trung tâm trợ giúp',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HelpCenterScreen(
+                    token: widget.token,
+                    fullName: _fullName,
+                    phone: _phone,
+                  ),
+                ),
+              );
+            },
           ),
           const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
           _buildMoreSettingsItem(
