@@ -13,7 +13,7 @@ const notificationRoutes = require('../modules/notification/notification.routes'
 const splitBillRoutes = require('../modules/split_bill/split_bill.routes');
 const aiRoutes = require('../modules/ai/ai.routes');
 const redPacketRoutes = require('../modules/red_packet/red_packet.routes');
-const adminRoutes = require('../modules/admin/admin.routes');
+const adminRoutes = require('../modules/admin/index');
 const loyaltyRoutes = require('../modules/loyalty/loyalty.routes');
 
 router.use(apiLogger);

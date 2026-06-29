@@ -13,7 +13,7 @@ import '../../ai/screens/voice_transfer_dialog.dart';
 import '../services/home_service.dart';
 import '../screens/qr_main_screen.dart';
 import '../../offers/screens/redeem_scratch_card_screen.dart';
-
+import '../../transfer/screens/transfer_search_screen.dart';
 class HomeHeader extends StatefulWidget {
   final String activeLang;
   final String token;

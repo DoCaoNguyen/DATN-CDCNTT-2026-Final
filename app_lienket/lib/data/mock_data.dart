@@ -1,0 +1,24 @@
+import '../models/product.dart';
+
+final List<Product> mockProducts = [
+  Product(id: 1, name: "Áo Thun Nam Cổ Tròn Cotton 100% Cao Cấp", price: 99000, sold: 1200, imageUrl: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "10%"),
+  Product(id: 2, name: "Tai nghe Bluetooth Không Dây Pin Trâu Âm Bass Chuẩn", price: 150000, sold: 5000, imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "25%"),
+  Product(id: 3, name: "Giày Thể Thao Nam Nữ Kiểu Dáng Trendy Đi Chơi", price: 250000, sold: 800, imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "15%"),
+  Product(id: 4, name: "Đồng Hồ Nam Dây Da Chống Nước Chính Hãng", price: 320000, sold: 2500, imageUrl: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "5%"),
+  Product(id: 5, name: "Ốp Lưng iPhone Đa Dạng Mẫu Mã Chống Sốc", price: 35000, sold: 10000, imageUrl: "https://images.unsplash.com/photo-1601593346740-925612772716?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "50%"),
+  Product(id: 6, name: "Balo Thời Trang Đi Học Đi Làm Phong Cách Hàn Quốc", price: 180000, sold: 450, imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "20%"),
+  Product(id: 7, name: "Sạc Dự Phòng 10000mAh Sạc Nhanh Tiện Lợi", price: 210000, sold: 3000, imageUrl: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "10%"),
+  Product(id: 8, name: "Kính Râm Thời Trang Chống Tia UV Cao Cấp", price: 85000, sold: 900, imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "30%"),
+  Product(id: 9, name: "Bình Giữ Nhiệt Inox 304 An Toàn Giữ Lạnh Cả Ngày", price: 120000, sold: 1500, imageUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "12%"),
+  Product(id: 10, name: "Kem Chống Nắng Dưỡng Da SPF 50+ PA++++", price: 199000, sold: 6000, imageUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "8%"),
+  Product(id: 11, name: "Quần Jean Nam Ống Rộng Cá Tính Trẻ Trung", price: 220000, sold: 1100, imageUrl: "https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "15%"),
+  Product(id: 12, name: "Chuột Máy Tính Không Dây Thiết Kế Công Thái Học", price: 145000, sold: 2200, imageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "22%"),
+  Product(id: 13, name: "Bàn Phím Cơ Gaming LED RGB Đẹp Mắt", price: 450000, sold: 750, imageUrl: "https://images.unsplash.com/photo-1595225476474-87563907a212?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "10%"),
+  Product(id: 14, name: "Son Môi Lì Siêu Mịn Lâu Trôi Màu Sắc Tươi Tắn", price: 135000, sold: 8000, imageUrl: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "18%"),
+  Product(id: 15, name: "Áo Khoác Gió Nam Nữ Chống Nước Chống Bụi", price: 175000, sold: 3500, imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "25%"),
+  Product(id: 16, name: "Váy Nữ Mùa Hè Họa Tiết Hoa Nhí Dễ Thương", price: 160000, sold: 1800, imageUrl: "https://images.unsplash.com/photo-1515372039744-b0f4130b0e25?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "20%"),
+  Product(id: 17, name: "Giày Cao Gót Nữ Công Sở Thanh Lịch Mềm Chân", price: 210000, sold: 950, imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "15%"),
+  Product(id: 18, name: "Thắt Lưng Nam Da Bò Thật Khóa Tự Động Cao Cấp", price: 115000, sold: 2400, imageUrl: "https://images.unsplash.com/photo-1624222247344-550fb60583dc?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "10%"),
+  Product(id: 19, name: "Túi Xách Nữ Công Sở Đeo Chéo Nhỏ Gọn", price: 190000, sold: 1600, imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "30%"),
+  Product(id: 20, name: "Nước Hoa Nam Hương Thơm Lịch Lãm Nam Tính", price: 299000, sold: 500, imageUrl: "https://images.unsplash.com/photo-1523293182086-7651a899a37f?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80", discount: "5%"),
+];
