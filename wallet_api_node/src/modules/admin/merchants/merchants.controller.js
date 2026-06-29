@@ -4,7 +4,7 @@ const { getRequestMeta, success, handleAdminError } = require('../_shared');
 const merchantsController = {
     createMerchant: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.createMerchant(req.body, actor);
             return success(res, result, 'Tao merchant moi thanh cong', 201);
         } catch (err) {
@@ -14,7 +14,7 @@ const merchantsController = {
 
     updateMerchant: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.updateMerchant(req.params.id, req.body, actor);
             return success(res, result, 'Cap nhat thong tin merchant thanh cong');
         } catch (err) {
@@ -43,7 +43,7 @@ const merchantsController = {
 
     approveMerchant: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.approveMerchant(req.params.id, req.body.reason, actor);
             return success(res, result, 'Duyet merchant thanh cong');
         } catch (err) {
@@ -53,7 +53,7 @@ const merchantsController = {
 
     rejectMerchant: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.rejectMerchant(req.params.id, req.body.reason, actor);
             return success(res, result, 'Tu choi merchant thanh cong');
         } catch (err) {
@@ -63,7 +63,7 @@ const merchantsController = {
 
     suspendMerchant: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.suspendMerchant(req.params.id, req.body.reason, actor);
             return success(res, result, 'Dinh chi merchant thanh cong');
         } catch (err) {
@@ -73,7 +73,7 @@ const merchantsController = {
 
     activateMerchant: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.activateMerchant(req.params.id, req.body.reason, actor);
             return success(res, result, 'Kich hoat lai merchant thanh cong');
         } catch (err) {
@@ -92,7 +92,7 @@ const merchantsController = {
 
     createApiKey: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.createApiKey(req.params.id, req.body, actor);
             return success(res, result, 'Tao API key moi thanh cong', 201);
         } catch (err) {
@@ -102,7 +102,7 @@ const merchantsController = {
 
     rotateApiKey: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.rotateApiKey(req.params.id, req.params.keyId, actor);
             return success(res, result, 'Rotate API key thanh cong');
         } catch (err) {
@@ -112,7 +112,7 @@ const merchantsController = {
 
     revokeApiKey: async (req, res) => {
         try {
-            const actor = getRequestMeta(req);
+            const actor = { ...req.user, ...getRequestMeta(req) };
             const result = await merchantsService.revokeApiKey(req.params.id, req.params.keyId, req.body.reason, actor);
             return success(res, result, 'Thu hoi API key thanh cong');
         } catch (err) {
