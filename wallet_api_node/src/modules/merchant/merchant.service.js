@@ -1,52 +1,86 @@
-const merchantRepository = require('./merchant.repository');
 const crypto = require('crypto');
+const merchantRepository = require('./merchant.repository');
+const { writeAuditLog } = require('../admin/_shared');
+
+const generateApiKeySandbox = () => `pk_test_${crypto.randomBytes(12).toString('hex')}`;
+const generateApiSecretSandbox = () => `sk_test_${crypto.randomBytes(24).toString('hex')}`;
+const hashApiSecret = (secret) => {
+    const pepper = process.env.API_SECRET_PEPPER;
+    if (!pepper) throw new Error('System_Config_Error: Missing API_SECRET_PEPPER');
+    return crypto.createHmac('sha256', pepper).update(secret).digest('hex');
+};
 
 const merchantService = {
-    register: async (userId, merchantName, contactPhone, callbackUrl) => {
-        // 1. Kiểm tra User này đã là Merchant chưa
-        const isMerchant = await merchantRepository.checkMerchantExistsByUser(userId);
-        if (isMerchant) {
-            throw new Error('Merchant_Exists');
-        }
-        
-        // 2. Tạo Secret Key (HMAC verification)
-        const secretKey = crypto.randomBytes(32).toString('hex');
-        
-        // 3. Tạo API Key (Prefix mio_live_ + chuỗi ngẫu nhiên)
-        const apiKey = 'mio_' + crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
-        
-        const merchantData = {
-            user_id: userId,
-            merchant_name: merchantName,
-            contact_phone: contactPhone,
-            callback_url: callbackUrl,
-            secret_key: secretKey
-        };
-        
-        // 4. Lưu vào Database
-        const merchantId = await merchantRepository.registerMerchant(merchantData, apiKey);
-        
+    createApiKey: async (merchantId, keyName, userId, ipAddress, userAgent) => {
+        const rawApiKey = generateApiKeySandbox();
+        const rawSecret = generateApiSecretSandbox();
+        const secretHash = hashApiSecret(rawSecret);
+
+        const newKey = await merchantRepository.createApiKey(merchantId, keyName, rawApiKey, secretHash, 'SANDBOX');
+
+        await writeAuditLog({
+            actorId: userId,
+            action: 'merchant.api_key.create',
+            entityType: 'MERCHANT_API_KEY',
+            entityId: newKey.id,
+            oldData: null,
+            newData: { merchant_id: merchantId, key_name: keyName, environment: 'SANDBOX' },
+            ipAddress,
+            userAgent
+        }).catch(err => console.error("Audit log error:", err));
+
         return {
-            merchant_id: merchantId,
-            api_key: apiKey,
-            secret_key: secretKey
+            ...newKey,
+            raw_secret: rawSecret
         };
     },
 
-    getMe: async (userId) => {
-        const merchant = await merchantRepository.getMerchantByUserId(userId);
-        if (!merchant) {
-            throw new Error('Not_A_Merchant');
-        }
-        return merchant;
+    rotateApiKey: async (merchantId, keyId, userId, ipAddress, userAgent) => {
+        const oldKey = await merchantRepository.getApiKeyByIdAndMerchant(keyId, merchantId);
+        if (!oldKey) throw new Error('Api_Key_Not_Found');
+        if (oldKey.status === 'REVOKED') throw new Error('Api_Key_Already_Revoked');
+
+        const rawSecret = generateApiSecretSandbox();
+        const secretHash = hashApiSecret(rawSecret);
+
+        const updatedKey = await merchantRepository.updateApiSecretHash(keyId, secretHash);
+
+        await writeAuditLog({
+            actorId: userId,
+            action: 'merchant.api_key.rotate',
+            entityType: 'MERCHANT_API_KEY',
+            entityId: keyId,
+            oldData: { status: oldKey.status },
+            newData: { rotated: true },
+            ipAddress,
+            userAgent
+        }).catch(err => console.error("Audit log error:", err));
+
+        return {
+            ...updatedKey,
+            raw_secret: rawSecret
+        };
     },
 
-    updateWebhook: async (userId, callbackUrl) => {
-        const merchant = await merchantRepository.getMerchantByUserId(userId);
-        if (!merchant) {
-            throw new Error('Not_A_Merchant');
-        }
-        return await merchantRepository.updateWebhookUrl(merchant.merchant_id, callbackUrl);
+    revokeApiKey: async (merchantId, keyId, reason, userId, ipAddress, userAgent) => {
+        const oldKey = await merchantRepository.getApiKeyByIdAndMerchant(keyId, merchantId);
+        if (!oldKey) throw new Error('Api_Key_Not_Found');
+        if (oldKey.status === 'REVOKED') throw new Error('Api_Key_Already_Revoked');
+
+        await merchantRepository.revokeApiKey(keyId);
+
+        await writeAuditLog({
+            actorId: userId,
+            action: 'merchant.api_key.revoke',
+            entityType: 'MERCHANT_API_KEY',
+            entityId: keyId,
+            oldData: { status: oldKey.status },
+            newData: { status: 'REVOKED', reason: reason || null },
+            ipAddress,
+            userAgent
+        }).catch(err => console.error("Audit log error:", err));
+
+        return true;
     }
 };
 
