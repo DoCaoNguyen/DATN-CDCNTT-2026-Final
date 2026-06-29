@@ -569,7 +569,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         typeLabel = "Chuyển tiền";
       }
     } else if (tx['transaction_type'] == 'PAYMENT') {
-      typeLabel = "Thanh toán ${tx['receiver_name'] ?? ''}";
+      final bool isTopup = (note.toLowerCase().contains('mã thẻ') || 
+        note.toLowerCase().contains('thẻ cào') || 
+        note.toLowerCase().contains('nạp tiền điện thoại') || 
+        note.toLowerCase().contains('nạp gói data'));
+      if (isTopup) {
+        typeLabel = note.isNotEmpty ? note : "Giao dịch nạp tiền";
+      } else {
+        typeLabel = "Thanh toán ${tx['receiver_name'] ?? ''}";
+      }
     }
 
     showModalBottomSheet(
@@ -1344,8 +1352,16 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                       "Nhận tiền từ ${tx['sender_name'] ?? tx['sender_phone'] ?? 'Người dùng'}";
                                 }
                               } else if (tx['transaction_type'] == 'PAYMENT') {
-                                title =
-                                    "Thanh toán tại ${tx['receiver_name'] ?? 'Cửa hàng'}";
+                                final bool isTopup = (note.toLowerCase().contains('mã thẻ') || 
+                                  note.toLowerCase().contains('thẻ cào') || 
+                                  note.toLowerCase().contains('nạp tiền điện thoại') || 
+                                  note.toLowerCase().contains('nạp gói data'));
+                                if (isTopup) {
+                                  title = note.isNotEmpty ? note : "Giao dịch nạp tiền";
+                                } else {
+                                  title =
+                                      "Thanh toán tại ${tx['receiver_name'] ?? 'Cửa hàng'}";
+                                }
                               } else {
                                 title = note;
                               }

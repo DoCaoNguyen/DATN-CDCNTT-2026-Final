@@ -285,7 +285,7 @@ const transactionRepository = {
             LEFT JOIN group_funding_members gfm ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'RECEIVE' AND lt.source_id = gfm.id
             LEFT JOIN group_fundings gf2 ON gfm.group_funding_id = gf2.id
             LEFT JOIN users u_rp_creator ON gf2.creator_user_id = u_rp_creator.id
-            WHERE le.wallet_id = $1${whereExtra}
+            WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT')${whereExtra}
             ORDER BY le.created_at DESC
             LIMIT $${limitParam} OFFSET $${offsetParam};
         `;
@@ -330,7 +330,7 @@ const transactionRepository = {
             LEFT JOIN merchants m ON po.merchant_id = m.id
             LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
             LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
-            WHERE le.wallet_id = $1 AND le.created_at >= CURRENT_DATE - INTERVAL '1 year'
+            WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT') AND le.created_at >= CURRENT_DATE - INTERVAL '1 year'
             ORDER BY le.created_at DESC
             LIMIT 500;
         `;
@@ -366,7 +366,8 @@ const transactionRepository = {
                 COALESCE(SUM(CASE WHEN le.entry_type = 'CREDIT' AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE) THEN le.amount ELSE 0 END), 0) AS total_receive_this_month,
                 COALESCE(SUM(CASE WHEN le.entry_type = 'DEBIT' AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL '1 month') AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE - INTERVAL '1 month') THEN le.amount ELSE 0 END), 0) AS total_spend_last_month
             FROM ledger_entries le
-            WHERE le.wallet_id = $1;
+            JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
+            WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT');
         `;
         const result = await pool.query(query, [walletId]);
         return result.rows[0];
@@ -408,6 +409,7 @@ const transactionRepository = {
             LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
             LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
             WHERE le.wallet_id = $1 
+              AND (lt.currency IS NULL OR lt.currency != 'POINT')
               AND EXTRACT(MONTH FROM le.created_at) = $2 
               AND EXTRACT(YEAR FROM le.created_at) = $3
             ORDER BY le.created_at DESC;

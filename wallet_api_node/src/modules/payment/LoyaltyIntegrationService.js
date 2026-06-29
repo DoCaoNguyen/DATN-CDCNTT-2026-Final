@@ -57,6 +57,7 @@ const LoyaltyIntegrationService = {
                 const pointsAfter = pointsBefore + BigInt(earnedPoints);
 
                 const transactionRepo = require('../transaction/transaction.repository');
+                const loyaltyRepository = require('../loyalty/loyalty.repository');
                 
                 // Ghi nhận Sổ cái (Ledger) với currency = 'POINT'
                 const ledgerTxId = await transactionRepo.createLedgerTransaction(
@@ -78,6 +79,9 @@ const LoyaltyIntegrationService = {
                     pointsBefore,
                     pointsAfter
                 );
+
+                // Add to batches
+                await loyaltyRepository.createBatch(client, walletId, earnedPoints, ledgerTxId, 6);
             }
 
             await client.query('COMMIT');
@@ -243,6 +247,11 @@ const LoyaltyIntegrationService = {
             if (currentPoints < deductPoints) {
                 throw new Error('Insufficient_Points');
             }
+
+            const loyaltyRepository = require('../loyalty/loyalty.repository');
+
+            // Spend points from batches (FIFO)
+            await loyaltyRepository.spendPoints(client, walletId, requiredPoints);
 
             // Deduct Points
             await client.query('UPDATE wallet_balances SET loyalty_points = loyalty_points - $1 WHERE wallet_id = $2', [requiredPoints, walletId]);

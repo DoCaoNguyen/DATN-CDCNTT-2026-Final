@@ -243,6 +243,34 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final bool isCredit = entryType == 'CREDIT';
     final String txType = _tx['transaction_type'] ?? 'TRANSFER';
 
+    final metadataRaw = _tx['metadata'];
+    Map<String, dynamic>? metadata;
+    if (metadataRaw != null) {
+      if (metadataRaw is String) {
+        try {
+          metadata = jsonDecode(metadataRaw);
+        } catch (e) {}
+      } else if (metadataRaw is Map) {
+        metadata = Map<String, dynamic>.from(metadataRaw);
+      }
+    }
+    final bool isCardTopup = metadata != null && metadata.containsKey('card_code');
+    final bool isTopup = txType == 'PAYMENT' && (
+      note.toLowerCase().contains('mã thẻ') || 
+      note.toLowerCase().contains('thẻ cào') || 
+      note.toLowerCase().contains('nạp tiền điện thoại') || 
+      note.toLowerCase().contains('nạp gói data')
+    );
+    
+    String topupShortTitle = "Nạp tiền điện thoại";
+    if (note.toLowerCase().contains('mã thẻ') || note.toLowerCase().contains('thẻ cào')) {
+      topupShortTitle = "Mua thẻ cào";
+    } else if (note.toLowerCase().contains('nạp gói data')) {
+      topupShortTitle = "Nạp data 3G/4G";
+    }
+    final bool isRedPacket = note.toLowerCase().contains('lì xì') || 
+      (_tx['receiver_name'] ?? '').toString().toLowerCase().contains('lì xì');
+
     // Receiver info if transfer or payment
     final String receiverName = _tx['receiver_name'] ?? '';
     final String receiverPhone = _tx['receiver_phone'] ?? '';
@@ -266,8 +294,13 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         typeLabelText = "Chuyển tiền";
       }
     } else if (txType == 'PAYMENT') {
-      typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}";
-      typeLabelText = "Thanh toán $receiverName";
+      if (isTopup) {
+        typeLabelHeader = "MUA THẺ CÀO / NẠP ĐIỆN THOẠI";
+        typeLabelText = note.isNotEmpty ? note : "Giao dịch nạp tiền";
+      } else {
+        typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}".trim();
+        typeLabelText = "Thanh toán ${receiverName.isNotEmpty ? receiverName : 'cửa hàng'}";
+      }
     } else if (txType == 'RECEIVE') {
       typeLabelHeader = "NHẬN LÌ XÌ";
       typeLabelText = note;
@@ -293,7 +326,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final String displayAmount =
         "${isCredit ? '+' : '-'}$formattedAmt";
 
-    final Map<String, dynamic>? metadata = _tx['metadata'];
     final String cardCode = metadata?['card_code']?.toString() ?? '';
     final String serial = metadata?['serial']?.toString() ?? '';
 
@@ -411,20 +443,20 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        txType == 'PAYMENT'
+                                        (txType == 'PAYMENT' && !isTopup)
                                             ? receiverName
-                                            : typeLabelHeader,
+                                            : (isTopup ? topupShortTitle : typeLabelHeader),
                                         style: TextStyle(
-                                          fontSize: txType == 'PAYMENT'
+                                          fontSize: (txType == 'PAYMENT' && !isTopup)
                                               ? 16
                                               : 14,
-                                          fontWeight: txType == 'PAYMENT'
+                                          fontWeight: (txType == 'PAYMENT' && !isTopup)
                                               ? FontWeight.bold
                                               : FontWeight.w600,
-                                          color: txType == 'PAYMENT'
+                                          color: (txType == 'PAYMENT' && !isTopup)
                                               ? Colors.black87
                                               : Colors.grey[600],
-                                          letterSpacing: txType == 'PAYMENT'
+                                          letterSpacing: (txType == 'PAYMENT' && !isTopup)
                                               ? 0
                                               : 0.5,
                                         ),
@@ -539,7 +571,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                     ),
                                   ),
                                 ),
-                                if (txType == 'LOYALTY_REDEEM' && cardCode.isNotEmpty) ...[
+                                if ((txType == 'LOYALTY_REDEEM' || isCardTopup) && cardCode.isNotEmpty) ...[
                                   _buildDetailRow(
                                     "Mã thẻ",
                                     child: Row(
@@ -603,8 +635,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                       ),
                                     ),
                                   ),
-                                _buildDetailRow(
-                                  "Danh mục",
+                                if (!isPoint)
+                                  _buildDetailRow(
+                                    "Danh mục",
                                   child: GestureDetector(
                                     onTap: () {
                                       CategoryBottomSheet.show(
@@ -706,9 +739,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     const SizedBox(height: 16),
 
                     // Receiver/Sender info card
-                    if (txType == 'TRANSFER' ||
+                    if ((txType == 'TRANSFER' ||
                         txType == 'PAYMENT' ||
-                        txType == 'RECEIVE')
+                        txType == 'RECEIVE') && !isTopup && !isCardTopup && !isRedPacket)
                       Container(
                         padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(

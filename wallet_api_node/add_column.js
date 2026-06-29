@@ -1,1 +1,0 @@
-const pool = require('./src/config/db'); pool.query('ALTER TABLE ledger_transactions ADD COLUMN metadata JSONB;').then(() => { console.log('Column added successfully'); process.exit(0); }).catch(e => { console.log('Error or already exists', e.message); process.exit(0); });

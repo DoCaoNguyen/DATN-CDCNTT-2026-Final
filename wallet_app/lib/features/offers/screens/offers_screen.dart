@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'redeem_scratch_card_screen.dart';
+import 'loyalty_history_screen.dart';
+import '../../../core/utils/snackbar_utils.dart';
+import '../services/loyalty_service.dart';
 
 class OffersScreen extends StatefulWidget {
   final String token;
@@ -19,11 +23,80 @@ class OffersScreen extends StatefulWidget {
 
 class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final LoyaltyService _loyaltyService = LoyaltyService();
+  Map<String, dynamic> _summary = {};
+  int _currentStreak = 0;
+  bool _checkedInToday = false;
+  bool _isLoadingCheckin = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final summary = await _loyaltyService.getLoyaltySummary(widget.token);
+    final checkinStatus = await _loyaltyService.getCheckinStatus(widget.token);
+    if (mounted) {
+      setState(() {
+        _summary = summary;
+        _currentStreak = checkinStatus['currentStreak'] ?? 0;
+        _checkedInToday = checkinStatus['checkedInToday'] ?? false;
+        _isLoadingCheckin = false;
+      });
+    }
+  }
+
+  Future<void> _handleCheckin() async {
+    if (_checkedInToday) return;
+
+    setState(() {
+      _isLoadingCheckin = true;
+    });
+
+    final result = await _loyaltyService.checkin(widget.token);
+    if (result['success'] == true) {
+      final data = result['data'];
+      final isGift = data['isGift'] ?? false;
+      final reward = data['rewardPoints'] ?? 50;
+      
+      setState(() {
+        _checkedInToday = true;
+        _currentStreak = data['newStreak'] ?? _currentStreak + 1;
+        _isLoadingCheckin = false;
+      });
+
+      if (isGift) {
+        _showGiftAnimation(reward);
+      } else {
+        if (mounted) {
+          SnackbarUtils.showSuccess(context, 'Điểm danh thành công! +$reward Xu');
+        }
+      }
+      
+      // Refresh balance
+      widget.onRefresh();
+      _fetchData();
+    } else {
+      setState(() {
+        _isLoadingCheckin = false;
+      });
+      if (mounted) {
+        SnackbarUtils.showError(context, result['message'] ?? 'Lỗi điểm danh');
+      }
+    }
+  }
+
+  void _showGiftAnimation(int rewardPoints) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return _GiftBoxAnimationDialog(rewardPoints: rewardPoints);
+      },
+    );
   }
 
   @override
@@ -68,8 +141,8 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                     unselectedLabelColor: Colors.grey.shade600,
                     labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16),
-                    tabs: const [
-                      Tab(
+                    tabs: [
+                      const Tab(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -83,8 +156,13 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.monetization_on_outlined, size: 20),
-                            SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade400, width: 1.5)),
+                              child: const Text('m', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, height: 1, color: Colors.grey)),
+                            ),
+  
+                            const SizedBox(width: 8),
                             Text('Tích Xu'),
                           ],
                         ),
@@ -185,9 +263,9 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(4),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
-                              child: const Icon(Icons.monetization_on, color: Colors.white, size: 20),
+                              child: const Text('m', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1)),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -196,15 +274,28 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                             ),
                           ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.pink.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Lịch sử Xu',
-                            style: TextStyle(color: Colors.pink.shade600, fontWeight: FontWeight.bold, fontSize: 13),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LoyaltyHistoryScreen(
+                                  token: widget.token,
+                                  summary: _summary,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.pink.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Lịch sử Xu',
+                              style: TextStyle(color: Colors.pink.shade600, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
                           ),
                         ),
                       ],
@@ -212,10 +303,19 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
-                      '3 xu chưa dùng, đổi trước ngày 30/06',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                    ),
+                    child: Builder(builder: (context) {
+                      final int expiringPoints = _summary['expiringPoints'] ?? 0;
+                      final String nearestExpiration = _summary['nearestExpiration'] ?? '';
+                      if (expiringPoints > 0 && nearestExpiration.isNotEmpty) {
+                        final DateTime date = DateTime.parse(nearestExpiration);
+                        final formattedDate = DateFormat('dd-MM-yyyy').format(date);
+                        return Text(
+                          '$expiringPoints xu sẽ hết hạn vào $formattedDate',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: Colors.grey.shade200),
@@ -284,7 +384,16 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 _buildCategoryItem(Icons.account_balance_wallet, 'Hoàn tiền\nmua sắm', Colors.green),
                 _buildCategoryItem(Icons.receipt_long, 'Thanh toán\nhóa đơn', Colors.pink),
                 _buildCategoryItem(Icons.emoji_events, 'Nhiệm vụ\nsăn quà', Colors.purple),
-                _buildCategoryItem(Icons.currency_exchange, 'Chuyển tiền', Colors.orange),
+                _buildCategoryItem(Icons.card_giftcard, 'Đổi thẻ cào', Colors.orange, onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RedeemScratchCardScreen(
+                        loyaltyPoints: widget.loyaltyPoints.toString(),
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -392,23 +501,26 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildCategoryItem(IconData icon, String title, Color color) {
-    return Container(
-      width: 80,
-      margin: const EdgeInsets.only(right: 8),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+  Widget _buildCategoryItem(IconData icon, String title, Color color, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        margin: const EdgeInsets.only(right: 8),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 28),
             ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
-        ],
+            const SizedBox(height: 8),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+          ],
+        ),
       ),
     );
   }
@@ -463,7 +575,11 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Icon(Icons.monetization_on, color: Colors.amber, size: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
+                        child: const Text('m', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, height: 1)),
+                      ),
                       const SizedBox(width: 4),
                       Text(actionText, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 14)),
                       if (originalPrice != null) ...[
@@ -507,15 +623,27 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: [
-                    _buildCheckinDay('Hôm nay', '+50', true, false),
-                    _buildCheckinDay('Ngày 2', '+50', false, false),
-                    _buildCheckinDay('Ngày 3', '???', false, true),
-                    _buildCheckinDay('Ngày 4', '+50', false, false),
-                    _buildCheckinDay('Ngày 5', '???', false, true),
-                    _buildCheckinDay('Ngày 6', '+50', false, false),
-                    _buildCheckinDay('Kết thúc', '', false, false, isEnd: true),
-                  ],
+                  children: List.generate(7, (index) {
+                    int dayIndex = index + 1; // 1 to 7
+                    
+                    // Correct logic for check-in days
+                    bool isPast = dayIndex <= _currentStreak;
+                    bool isToday = !_checkedInToday && dayIndex == (_currentStreak + 1);
+                    
+                    bool isGift = dayIndex == 3 || dayIndex == 5 || dayIndex == 7;
+                    
+                    String dayLabel = isToday ? 'Hôm nay' : 'Ngày $dayIndex';
+                    String value = isGift ? '???' : '+50';
+                    
+                    return _buildCheckinDay(
+                      dayLabel, 
+                      value, 
+                      isToday, 
+                      isGift, 
+                      isPast: isPast,
+                      index: index,
+                    );
+                  }),
                 ),
               )
             ],
@@ -612,8 +740,9 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildCheckinDay(String dayLabel, String value, bool isToday, bool isGift, {bool isEnd = false}) {
-    return Padding(
+  Widget _buildCheckinDay(String dayLabel, String value, bool isToday, bool isGift, {bool isPast = false, int index = 0}) {
+    
+    Widget content = Padding(
       padding: const EdgeInsets.only(right: 12.0),
       child: Column(
         children: [
@@ -626,21 +755,35 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               border: Border.all(color: isToday ? Colors.green : Colors.grey.shade300, width: isToday ? 2 : 1),
             ),
             alignment: Alignment.center,
-            child: isEnd 
-              ? const Icon(Icons.timer_off_outlined, color: Colors.grey, size: 20)
-              : isToday 
-                ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
-                : isGift 
-                  ? const Icon(Icons.card_giftcard, color: Colors.pink, size: 20)
-                  : const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
+            child: isPast 
+              ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+              : isGift 
+                ? const Icon(Icons.card_giftcard, color: Colors.pink, size: 20)
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
+                    child: const Text('m', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, height: 1)),
+                  ),
           ),
           const SizedBox(height: 4),
-          if (!isEnd) Text(value, style: TextStyle(fontSize: 12, fontWeight: isToday ? FontWeight.bold : FontWeight.normal, color: isToday ? Colors.green : Colors.grey)),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: isToday ? FontWeight.bold : FontWeight.normal, color: isToday ? Colors.green : Colors.grey)),
           const SizedBox(height: 2),
           Text(dayLabel, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
         ],
       ),
     );
+
+    if (isToday) {
+      return InkWell(
+        onTap: _isLoadingCheckin ? null : _handleCheckin,
+        borderRadius: BorderRadius.circular(12),
+        child: Opacity(
+          opacity: _isLoadingCheckin ? 0.5 : 1.0,
+          child: content,
+        ),
+      );
+    }
+    return content;
   }
 
   Widget _buildInfoCard(String text, Color bgColor, Color textColor) {
@@ -676,5 +819,119 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
     return true;
+  }
+}
+
+class _GiftBoxAnimationDialog extends StatefulWidget {
+  final int rewardPoints;
+
+  const _GiftBoxAnimationDialog({Key? key, required this.rewardPoints}) : super(key: key);
+
+  @override
+  State<_GiftBoxAnimationDialog> createState() => _GiftBoxAnimationDialogState();
+}
+
+class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _shakeAnimation;
+  late Animation<double> _scaleAnimation;
+  bool _isOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
+    
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: 0.1), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -0.1, end: 0.1), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -0.1, end: 0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6)));
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 1.0, curve: Curves.elasticOut))
+    );
+
+    _controller.forward().then((_) {
+      if (mounted) {
+        setState(() {
+          _isOpen = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            if (_isOpen) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Column(
+                          children: [
+                            const Icon(Icons.stars, color: Colors.amber, size: 80),
+                            const SizedBox(height: 16),
+                            Text(
+                              '+${widget.rewardPoints} Xu',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                shadows: [Shadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))]
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.pink,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Nhận quà', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  )
+                ],
+              );
+            }
+
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Transform.rotate(
+                angle: _shakeAnimation.value,
+                child: const Icon(Icons.card_giftcard, color: Colors.pinkAccent, size: 100),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

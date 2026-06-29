@@ -8,6 +8,7 @@ class RedeemSuccessScreen extends StatelessWidget {
   final String serial;
   final int deductedPoints;
   final String transactionId;
+  final bool isMoney;
 
   const RedeemSuccessScreen({
     Key? key,
@@ -17,6 +18,7 @@ class RedeemSuccessScreen extends StatelessWidget {
     required this.serial,
     required this.deductedPoints,
     required this.transactionId,
+    this.isMoney = false,
   }) : super(key: key);
 
   String _formatNumber(String value) {
@@ -67,9 +69,9 @@ class RedeemSuccessScreen extends StatelessWidget {
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
         ),
-        title: const Text(
-          'Đổi thẻ thành công',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: Text(
+          isMoney ? 'Thanh toán thành công' : 'Đổi thẻ thành công',
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -102,8 +104,12 @@ class RedeemSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '- ${_formatNumber(deductedPoints.toString())} Xu',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.pink),
+                '- ${_formatNumber(deductedPoints.toString())} ${isMoney ? 'đ' : 'Xu'}',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.pink,
+                ),
               ),
               const SizedBox(height: 32),
               Container(

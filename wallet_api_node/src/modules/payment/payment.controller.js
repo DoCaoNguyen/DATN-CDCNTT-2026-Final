@@ -258,6 +258,46 @@ const paymentController = {
 
             res.status(500).json({ error: 'Lỗi hệ thống khi đổi thẻ' });
         }
+    },
+
+    // ===== NEW: Nạp tiền điện thoại (Top-up) =====
+    processTopup: async (req, res) => {
+        const userId = req.user.userId;
+        const { type, provider, phone, amount, dataPackageId } = req.body;
+
+        if (!type || !amount) {
+            return res.status(400).json({ error: 'Thiếu thông tin nạp tiền' });
+        }
+
+        try {
+            const TopupService = require('./TopupService');
+            const result = await TopupService.processTopup(userId, {
+                type,
+                provider,
+                phone,
+                amount: parseInt(amount, 10),
+                dataPackageId
+            });
+
+            res.status(200).json({
+                message: 'Giao dịch thành công',
+                data: result
+            });
+        } catch (error) {
+            console.error('Lỗi Nạp tiền điện thoại:', error);
+            
+            const errorMap = {
+                'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
+                'Insufficient_Balance': 'Số dư không đủ để thực hiện giao dịch',
+                'Invalid_Amount': 'Số tiền không hợp lệ'
+            };
+
+            if (errorMap[error.message]) {
+                return res.status(400).json({ error: errorMap[error.message] });
+            }
+
+            res.status(500).json({ error: 'Lỗi hệ thống khi nạp tiền' });
+        }
     }
 };
 

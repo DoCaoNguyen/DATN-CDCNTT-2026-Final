@@ -1,2 +1,0 @@
-const pool = require('./src/config/db'); 
-pool.query('UPDATE ledger_transactions SET metadata = $1 WHERE transaction_type = \'LOYALTY_REDEEM\' AND metadata IS NULL', [JSON.stringify({provider: 'Viettel', faceValue: 20000, card_code: '88889999000011', serial: '10002000300', type: 'SCRATCH_CARD'})]).then(() => {console.log('Fixed metadata'); process.exit(0)}).catch(console.error);
