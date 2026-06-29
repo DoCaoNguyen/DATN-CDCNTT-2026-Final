@@ -11,6 +11,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 const swaggerSpec = require('./src/config/swagger');
 const masterRouter = require('./src/routes');
@@ -37,7 +38,9 @@ app.set('trust proxy', 1); // Cần thiết cho Rate Limit khi deploy
 // ==========================================
 // 2. BẢO MẬT & PHÂN TÍCH BODY (Đặt lên cửa khẩu)
 // ==========================================
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
     origin: [
         'http://localhost:3000',
@@ -52,9 +55,10 @@ app.use(cors({
 app.use(express.json());
 
 // ==========================================
-// 3. TÀI LIỆU API (Bỏ qua ghi log DB cho phần này)
+// 3. TÀI LIỆU API VÀ STATIC FILES
 // ==========================================
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==========================================
 // 4. LOGGING & RATE LIMIT (Chỉ áp dụng cho API thật)
