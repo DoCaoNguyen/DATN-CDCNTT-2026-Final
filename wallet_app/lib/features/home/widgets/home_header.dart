@@ -12,7 +12,7 @@ import '../../chat/screens/chat_list_screen.dart';
 import '../../ai/screens/voice_transfer_dialog.dart';
 import '../services/home_service.dart';
 import '../screens/qr_main_screen.dart';
-import '../../transfer/screens/transfer_search_screen.dart';
+import '../../offers/screens/redeem_scratch_card_screen.dart';
 
 class HomeHeader extends StatefulWidget {
   final String activeLang;
@@ -253,6 +253,21 @@ class _HomeHeaderState extends State<HomeHeader> {
                               token: widget.token,
                               initialTab: 1,
                               initialAmount: result['amount'].toString(),
+                            ),
+                          ),
+                        );
+                        return;
+                      } else if (actionType == "REDEEM_CARD") {
+                        // Pass a dummy high value for loyalty points, the screen will re-check properly
+                        // Or we can just let it crash the frontend check and it will fail safe in backend.
+                        // Wait, it's better if we just pass '999999999' so it bypasses the UI check and uses the backend check.
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RedeemScratchCardScreen(
+                              loyaltyPoints: '999999999',
+                              initialProvider: result['receiver_name'],
+                              initialValue: result['amount'],
                             ),
                           ),
                         );

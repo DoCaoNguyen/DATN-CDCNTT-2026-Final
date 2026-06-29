@@ -26,6 +26,7 @@ const walletRepository = {
                 w.status, 
                 wb.available_balance, 
                 wb.locked_balance,
+                wb.loyalty_points,
                 u.phone,
                 u.pin_hash
             FROM wallets w

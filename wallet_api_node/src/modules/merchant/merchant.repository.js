@@ -36,7 +36,7 @@ const merchantRepository = {
             const mccId = uuidv7();
             await client.query(
                 `INSERT INTO merchant_callback_configs (id, merchant_id, default_callback_url, webhook_secret_hash, callback_enabled) VALUES ($1, $2, $3, $4, true)`,
-                [mccId, merchantId, merchantData.callback_url || null, merchantData.secret_key]
+                [mccId, merchantId, merchantData.callback_url || '', merchantData.secret_key]
             );
 
             // 4. Insert into merchant_api_keys
