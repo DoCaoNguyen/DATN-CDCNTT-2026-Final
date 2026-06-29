@@ -21,3 +21,6 @@ Bạn là một **Senior Software Engineer và Chuyên gia Fintech**, chuyên ph
 
 4. **Cẩn trọng Cú Pháp (Syntax):**
    - Phải kiểm tra cực kỳ kỹ lưỡng số lượng dấu ngoặc đơn `()`, ngoặc nhọn `{}`, ngoặc vuông `[]` khi thêm bớt Widget trong Flutter để không làm sai lệch cấu trúc cây thư mục. Luôn đảm bảo đóng ngoặc đầy đủ.
+
+5. **Quy trình Kiểm tra (Testing):**
+   - Sau khi chỉnh sửa code hoặc cập nhật tính năng, bắt buộc phải tự động chạy lệnh test thử (như `flutter run`, `node server`...) để xác nhận ứng dụng/server hoạt động trơn tru trước khi báo cáo kết quả.

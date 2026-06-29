@@ -37,32 +37,54 @@ const LoyaltyIntegrationService = {
     executeLoyaltyApiCall: async (userId, paymentTransactionId, amount, logId, isRetry = false) => {
         let client;
         try {
-            // Lấy loyalty_member_id của user
             client = await pool.connect();
-            const userRes = await client.query('SELECT loyalty_member_id FROM users WHERE id = $1', [userId]);
-            const loyaltyMemberId = userRes.rows[0]?.loyalty_member_id || userId; // Dùng userId nếu chưa có
+            await client.query('BEGIN');
 
-            // Gọi API Loyalty
-            // Giả lập axios request
-            let earnedPoints = 0;
-            
-            // NOTE: Đây là đoạn Mock API Call do chưa có hệ thống Loyalty thật
-            // Nếu có URL thật, thay bằng axios.post(LOYALTY_API_URL, payload);
-            try {
-                // const response = await axios.post(LOYALTY_API_URL, {
-                //     member_id: loyaltyMemberId,
-                //     transaction_id: paymentTransactionId,
-                //     amount: amount
-                // });
-                // earnedPoints = response.data.earned_points;
-
-                // Giả lập trả về thành công sau 1 giây
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                // Giả lập tỷ lệ 1000 VND = 1 điểm
-                earnedPoints = Math.floor(amount / 1000); 
-            } catch (apiError) {
-                throw new Error('Loyalty API failed');
+            const walletRes = await client.query('SELECT w.id, wb.loyalty_points FROM wallets w JOIN wallet_balances wb ON w.id = wb.wallet_id WHERE w.user_id = $1 FOR UPDATE', [userId]);
+            if (walletRes.rows.length === 0) {
+                throw new Error('Wallet not found');
             }
+            const walletId = walletRes.rows[0].id;
+            const pointsStr = walletRes.rows[0].loyalty_points || 0;
+            const pointsBefore = BigInt(Math.floor(Number(pointsStr)));
+
+            // Tỷ lệ 100 VND = 1 Xu
+            let earnedPoints = Math.floor(amount / 100); 
+
+            if (earnedPoints > 0) {
+                // Cộng Xu
+                await client.query('UPDATE wallet_balances SET loyalty_points = loyalty_points + $1 WHERE wallet_id = $2', [earnedPoints, walletId]);
+                const pointsAfter = pointsBefore + BigInt(earnedPoints);
+
+                const transactionRepo = require('../transaction/transaction.repository');
+                const loyaltyRepository = require('../loyalty/loyalty.repository');
+                
+                // Ghi nhận Sổ cái (Ledger) với currency = 'POINT'
+                const ledgerTxId = await transactionRepo.createLedgerTransaction(
+                    client, 
+                    'LOYALTY_EARN', 
+                    paymentTransactionId, 
+                    'PAYMENT_ORDER', 
+                    'Tích Xu từ giao dịch thanh toán', 
+                    earnedPoints,
+                    'POINT'
+                );
+
+                await transactionRepo.createLedgerEntry(
+                    client,
+                    ledgerTxId,
+                    walletId,
+                    'CREDIT',
+                    earnedPoints,
+                    pointsBefore,
+                    pointsAfter
+                );
+
+                // Add to batches
+                await loyaltyRepository.createBatch(client, walletId, earnedPoints, ledgerTxId, 6);
+            }
+
+            await client.query('COMMIT');
 
             // Thành công -> Cập nhật log
             await LoyaltySyncLog.updateOne(
@@ -74,6 +96,7 @@ const LoyaltyIntegrationService = {
             await LoyaltyIntegrationService.sendPointsNotification(userId, earnedPoints, paymentTransactionId);
 
         } catch (error) {
+            if (client) await client.query('ROLLBACK');
             console.error('[LOYALTY_SYNC] Error syncing points:', error.message);
             
             // Cập nhật trạng thái FAILED
@@ -95,8 +118,8 @@ const LoyaltyIntegrationService = {
     sendPointsNotification: async (userId, earnedPoints, paymentTransactionId) => {
         if (earnedPoints <= 0) return;
 
-        const title = 'Tích điểm thành công!';
-        const body = `Bạn đã được cộng ${earnedPoints} điểm từ giao dịch vừa rồi!`;
+        const title = 'Tích Xu thành công!';
+        const body = `Bạn đã được cộng ${earnedPoints} Xu từ giao dịch vừa rồi!`;
 
         try {
             // 1. Lưu thông báo vào bảng notifications
@@ -193,6 +216,132 @@ const LoyaltyIntegrationService = {
             }
         } catch (error) {
             console.error('[LOYALTY_SYNC_CRON] Error:', error.message);
+        } finally {
+            if (client) client.release();
+        }
+    },
+
+    /**
+     * ===== NEW: Redeem loyalty points for a scratch card =====
+     */
+    redeemPoints: async (userId, provider, faceValue) => {
+        let client;
+        try {
+            const requiredPoints = Math.floor(faceValue * 0.95);
+            if (requiredPoints <= 0) throw new Error('Invalid face value');
+
+            client = await pool.connect();
+            await client.query('BEGIN');
+
+            // Lock wallet balance row
+            const walletRes = await client.query('SELECT w.id, wb.loyalty_points FROM wallets w JOIN wallet_balances wb ON w.id = wb.wallet_id WHERE w.user_id = $1 FOR UPDATE', [userId]);
+            if (walletRes.rows.length === 0) {
+                throw new Error('Wallet_Not_Found');
+            }
+            
+            const walletId = walletRes.rows[0].id;
+            const pointsStr = walletRes.rows[0].loyalty_points || 0;
+            const currentPoints = BigInt(Math.floor(Number(pointsStr)));
+            const deductPoints = BigInt(requiredPoints);
+
+            if (currentPoints < deductPoints) {
+                throw new Error('Insufficient_Points');
+            }
+
+            const loyaltyRepository = require('../loyalty/loyalty.repository');
+
+            // Spend points from batches (FIFO)
+            await loyaltyRepository.spendPoints(client, walletId, requiredPoints);
+
+            // Deduct Points
+            await client.query('UPDATE wallet_balances SET loyalty_points = loyalty_points - $1 WHERE wallet_id = $2', [requiredPoints, walletId]);
+            const pointsAfter = currentPoints - deductPoints;
+
+            // Generate Mock Scratch Card
+            const cardCode = Math.floor(10000000000000 + Math.random() * 90000000000000).toString(); // 14 digits
+            const serial = Math.floor(10000000000 + Math.random() * 90000000000).toString(); // 11 digits
+
+            const metadata = {
+                provider,
+                faceValue,
+                card_code: cardCode,
+                serial,
+                type: 'SCRATCH_CARD'
+            };
+
+            const transactionRepo = require('../transaction/transaction.repository');
+            
+            // Create Ledger Transaction
+            const ledgerTxId = await transactionRepo.createLedgerTransaction(
+                client, 
+                'LOYALTY_REDEEM', 
+                null, // no payment_transaction reference needed for redeem
+                'REDEEM_ORDER', 
+                `Đổi thẻ cào ${provider} ${faceValue}đ`, 
+                requiredPoints,
+                'POINT',
+                JSON.stringify(metadata)
+            );
+
+            // Double Entry for Redeem (User loses points, System gains points)
+            await transactionRepo.createLedgerEntry(
+                client,
+                ledgerTxId,
+                walletId,
+                'DEBIT',
+                requiredPoints,
+                currentPoints,
+                pointsAfter
+            );
+
+            await client.query('COMMIT');
+
+            // Send Push Notification
+            const title = 'Đổi thẻ cào thành công!';
+            const body = `Bạn đã đổi thành công thẻ ${provider} ${faceValue}đ. Nhấn để xem mã thẻ.`;
+            
+            try {
+                await notificationRepository.createNotification(
+                    userId,
+                    title,
+                    body,
+                    'LOYALTY_REDEEM',
+                    ledgerTxId
+                );
+
+                const activeTokens = await notificationRepository.getActiveTokensByUserId(userId);
+                if (activeTokens && activeTokens.length > 0) {
+                    const fcmPayload = {
+                        tokens: activeTokens,
+                        data: {
+                            title: title,
+                            body: body,
+                            click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                            type: 'LOYALTY_REDEEM',
+                            ledger_tx_id: String(ledgerTxId),
+                            timestamp: String(Date.now()),
+                        },
+                        android: { priority: 'high' }
+                    };
+                    await admin.messaging().sendEachForMulticast(fcmPayload);
+                }
+            } catch (notifyErr) {
+                console.error('[LOYALTY_REDEEM] Notification error:', notifyErr.message);
+            }
+
+            return {
+                transaction_id: ledgerTxId,
+                provider,
+                faceValue,
+                cardCode,
+                serial,
+                deducted_points: requiredPoints,
+                balance_points: pointsAfter.toString()
+            };
+
+        } catch (error) {
+            if (client) await client.query('ROLLBACK');
+            throw error;
         } finally {
             if (client) client.release();
         }

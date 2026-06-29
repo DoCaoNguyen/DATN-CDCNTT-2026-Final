@@ -39,13 +39,33 @@ class TransactionHistoryItem extends StatelessWidget {
             "Nhận tiền từ ${tx['sender_name'] ?? tx['sender_phone'] ?? 'Người dùng'}";
       }
     } else if (tx['transaction_type'] == 'PAYMENT') {
-      title = "Thanh toán tại ${tx['receiver_name'] ?? 'Cửa hàng'}";
+      final bool isTopup = (note.toLowerCase().contains('mã thẻ') || 
+        note.toLowerCase().contains('thẻ cào') || 
+        note.toLowerCase().contains('nạp tiền điện thoại') || 
+        note.toLowerCase().contains('nạp gói data'));
+      if (isTopup) {
+        title = note.isNotEmpty ? note : "Giao dịch nạp tiền";
+      } else {
+        final rName = tx['receiver_name'];
+        title = "Thanh toán tại ${rName != null && rName.toString().isNotEmpty ? rName : 'Cửa hàng'}";
+      }
+    } else if (tx['transaction_type'] == 'LOYALTY_REDEEM') {
+      title = note.isNotEmpty ? note : "Đổi thẻ cào";
     } else {
       title = note;
     }
 
     final String tag = TransactionCategoryHelper.determineCategoryTag(tx);
     final bool isCredit = entryType == 'CREDIT';
+    final bool isPoint = tx['currency'] == 'POINT';
+    
+    final String displayAmount = isPoint 
+        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+        : CurrencyFormatter.format(amountRaw);
+        
+    final String displayBalance = isPoint 
+        ? "${CurrencyFormatter.format(balanceAfterRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+        : CurrencyFormatter.format(balanceAfterRaw);
 
     return InkWell(
       onTap: () async {
@@ -132,7 +152,7 @@ class TransactionHistoryItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "${isCredit ? '+' : '-'}${CurrencyFormatter.format(amountRaw)}",
+                  "${isCredit ? '+' : '-'}$displayAmount",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -141,7 +161,7 @@ class TransactionHistoryItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Số dư ví: ${CurrencyFormatter.format(balanceAfterRaw)}",
+                  "Số dư: $displayBalance",
                   style: const TextStyle(color: Colors.grey, fontSize: 11),
                 ),
               ],
