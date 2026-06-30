@@ -427,7 +427,7 @@ const transactionService = {
 
         return history.map(item => {
             let ref = item.external_reference;
-            if (item.transaction_id) {
+            if (!ref && item.transaction_id) {
                 const hex = item.transaction_id.replace(/-/g, '').substring(0, 10);
                 ref = BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
             }

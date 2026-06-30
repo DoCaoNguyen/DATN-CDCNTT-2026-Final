@@ -37,11 +37,11 @@ const merchantsValidator = {
     },
 
     validateCreateMerchant: (req, res, next) => {
-        const { merchant_code, merchant_name, business_type, owner_info } = req.body;
-        if (!merchant_code || !merchant_name || !business_type) {
+        const { merchant_name, business_type, owner_info } = req.body;
+        if (!merchant_name || !business_type) {
             return res.status(400).json({
                 success: false,
-                message: 'merchant_code, merchant_name, business_type are required',
+                message: 'merchant_name, business_type are required',
                 error_code: 'Validation_Error'
             });
         }

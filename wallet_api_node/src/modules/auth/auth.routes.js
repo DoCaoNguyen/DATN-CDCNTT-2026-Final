@@ -7,7 +7,7 @@ const router = express.Router();
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 phút
-    limit: 10, // 10 lần
+    limit: 20, // 10 lần
     message: { error: 'Bạn thao tác quá nhanh, vui lòng thử lại sau 15 phút.' }
 });
 
@@ -29,6 +29,10 @@ router.post('/change-password', authenticateJwt, authController.changePassword);
 // --- Chức năng riêng cho Mobile OTP ---
 router.post('/forgot-password-otp', authLimiter, authController.forgotPasswordOtp);
 router.post('/set-password', authLimiter, authController.setPassword);
+
+// --- Chức năng Twilio Verify OTP ---
+router.post('/verify-phone', authLimiter, authController.verifyPhone);
+router.post('/set-password-after-verify', authLimiter, authController.setPasswordAfterVerify);
 
 // --- Lấy thông tin Cá nhân ---
 router.get('/me', authenticateJwt, authController.me);

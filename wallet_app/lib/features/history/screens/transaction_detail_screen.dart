@@ -182,6 +182,14 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     return fullName;
   }
 
+  String _formatTransactionId(String txId) {
+    String digitsOnly = txId.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.length > 12) {
+      return digitsOnly.substring(0, 12);
+    }
+    return digitsOnly.padRight(12, '0');
+  }
+
   Future<bool> updateTransactionCategory(
     String transId,
     String categoryName,
@@ -228,12 +236,40 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final String entryType = _tx['entry_type'] ?? 'DEBIT';
     final String note =
         _tx['transfer_note'] ?? _tx['description'] ?? 'Giao dịch';
-    final String extRef =
+    final String extRef = _formatTransactionId(
         _tx['external_reference']?.toString() ??
         _tx['transaction_id']?.toString() ??
-        '';
+        '');
     final bool isCredit = entryType == 'CREDIT';
     final String txType = _tx['transaction_type'] ?? 'TRANSFER';
+
+    final metadataRaw = _tx['metadata'];
+    Map<String, dynamic>? metadata;
+    if (metadataRaw != null) {
+      if (metadataRaw is String) {
+        try {
+          metadata = jsonDecode(metadataRaw);
+        } catch (e) {}
+      } else if (metadataRaw is Map) {
+        metadata = Map<String, dynamic>.from(metadataRaw);
+      }
+    }
+    final bool isCardTopup = metadata != null && metadata.containsKey('card_code');
+    final bool isTopup = txType == 'PAYMENT' && (
+      note.toLowerCase().contains('mã thẻ') || 
+      note.toLowerCase().contains('thẻ cào') || 
+      note.toLowerCase().contains('nạp tiền điện thoại') || 
+      note.toLowerCase().contains('nạp gói data')
+    );
+    
+    String topupShortTitle = "Nạp tiền điện thoại";
+    if (note.toLowerCase().contains('mã thẻ') || note.toLowerCase().contains('thẻ cào')) {
+      topupShortTitle = "Mua thẻ cào";
+    } else if (note.toLowerCase().contains('nạp gói data')) {
+      topupShortTitle = "Nạp data 3G/4G";
+    }
+    final bool isRedPacket = note.toLowerCase().contains('lì xì') || 
+      (_tx['receiver_name'] ?? '').toString().toLowerCase().contains('lì xì');
 
     // Receiver info if transfer or payment
     final String receiverName = _tx['receiver_name'] ?? '';
@@ -258,11 +294,19 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         typeLabelText = "Chuyển tiền";
       }
     } else if (txType == 'PAYMENT') {
-      typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}";
-      typeLabelText = "Thanh toán $receiverName";
+      if (isTopup) {
+        typeLabelHeader = "MUA THẺ CÀO / NẠP ĐIỆN THOẠI";
+        typeLabelText = note.isNotEmpty ? note : "Giao dịch nạp tiền";
+      } else {
+        typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}".trim();
+        typeLabelText = "Thanh toán ${receiverName.isNotEmpty ? receiverName : 'cửa hàng'}";
+      }
     } else if (txType == 'RECEIVE') {
       typeLabelHeader = "NHẬN LÌ XÌ";
       typeLabelText = note;
+    } else if (txType == 'LOYALTY_REDEEM') {
+      typeLabelHeader = "ĐỔI THẺ CÀO";
+      typeLabelText = note.isNotEmpty ? note : "Đổi thẻ cào";
     }
 
     String btnText = "Chuyển thêm";
@@ -274,8 +318,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       btnText = "Chia tiền";
     }
 
+    final bool isPoint = _tx['currency'] == 'POINT';
+    final String formattedAmt = isPoint 
+        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+        : CurrencyFormatter.format(amountRaw);
+        
     final String displayAmount =
-        "${isCredit ? '+' : '-'}${CurrencyFormatter.format(amountRaw)}";
+        "${isCredit ? '+' : '-'}$formattedAmt";
+
+    final String cardCode = metadata?['card_code']?.toString() ?? '';
+    final String serial = metadata?['serial']?.toString() ?? '';
 
     // Receiver info variables moved up
 
@@ -391,20 +443,20 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        txType == 'PAYMENT'
+                                        (txType == 'PAYMENT' && !isTopup)
                                             ? receiverName
-                                            : typeLabelHeader,
+                                            : (isTopup ? topupShortTitle : typeLabelHeader),
                                         style: TextStyle(
-                                          fontSize: txType == 'PAYMENT'
+                                          fontSize: (txType == 'PAYMENT' && !isTopup)
                                               ? 16
                                               : 14,
-                                          fontWeight: txType == 'PAYMENT'
+                                          fontWeight: (txType == 'PAYMENT' && !isTopup)
                                               ? FontWeight.bold
                                               : FontWeight.w600,
-                                          color: txType == 'PAYMENT'
+                                          color: (txType == 'PAYMENT' && !isTopup)
                                               ? Colors.black87
                                               : Colors.grey[600],
-                                          letterSpacing: txType == 'PAYMENT'
+                                          letterSpacing: (txType == 'PAYMENT' && !isTopup)
                                               ? 0
                                               : 0.5,
                                         ),
@@ -501,9 +553,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 ),
                                 _buildDetailRow(
                                   "Tài khoản/thẻ",
-                                  child: const Text(
-                                    "Ví Mio",
-                                    style: TextStyle(
+                                  child: Text(
+                                    isPoint ? "Số dư Xu" : "Ví Mio",
+                                    style: const TextStyle(
                                       color: Colors.black87,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -519,6 +571,59 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                     ),
                                   ),
                                 ),
+                                if ((txType == 'LOYALTY_REDEEM' || isCardTopup) && cardCode.isNotEmpty) ...[
+                                  _buildDetailRow(
+                                    "Mã thẻ",
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          cardCode,
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Clipboard.setData(ClipboardData(text: cardCode));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Đã sao chép mã thẻ"), duration: Duration(seconds: 1)),
+                                            );
+                                          },
+                                          child: const Icon(Icons.copy, size: 14, color: Colors.blue),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _buildDetailRow(
+                                    "Số Serial",
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          serial,
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Clipboard.setData(ClipboardData(text: serial));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Đã sao chép số Serial"), duration: Duration(seconds: 1)),
+                                            );
+                                          },
+                                          child: const Icon(Icons.copy, size: 14, color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                                 if (note.isNotEmpty && note != 'Giao dịch')
                                   _buildDetailRow(
                                     "Nội dung",
@@ -530,8 +635,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                       ),
                                     ),
                                   ),
-                                _buildDetailRow(
-                                  "Danh mục",
+                                if (!isPoint)
+                                  _buildDetailRow(
+                                    "Danh mục",
                                   child: GestureDetector(
                                     onTap: () {
                                       CategoryBottomSheet.show(
@@ -633,9 +739,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     const SizedBox(height: 16),
 
                     // Receiver/Sender info card
-                    if (txType == 'TRANSFER' ||
+                    if ((txType == 'TRANSFER' ||
                         txType == 'PAYMENT' ||
-                        txType == 'RECEIVE')
+                        txType == 'RECEIVE') && !isTopup && !isCardTopup && !isRedPacket)
                       Container(
                         padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(

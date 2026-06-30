@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'core/services/notification_service.dart';
 import 'core/constants/app_colors.dart';
 import 'features/auth/login/screens/login_phone_screen.dart';
@@ -44,9 +45,11 @@ void main() async {
     // Xin quyền hiển thị thông báo
     await NotificationService.instance.requestPermissions();
 
-    // Đọc thông tin phiên đăng nhập trước đó từ SharedPreferences
+    // Đọc thông tin phiên đăng nhập trước đó
+    const secureStorage = FlutterSecureStorage();
+    token = await secureStorage.read(key: 'access_token');
+
     final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('auth_token');
     userId = prefs.getString('user_id');
     isVerified = prefs.getBool('is_verified') ?? false;
 

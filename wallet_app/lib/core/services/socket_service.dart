@@ -75,6 +75,18 @@ class SocketService {
     connectSocket(token);
   }
 
+  void updateToken(String newToken) {
+    if (_token == newToken) return;
+    _token = newToken;
+    if (_socket != null) {
+      _socket!.auth = {'token': _token};
+      if (_socket!.connected) {
+        _socket!.disconnect();
+        _socket!.connect();
+      }
+    }
+  }
+
   void disconnect() {
     if (_socket != null) {
       _socket!.disconnect();
