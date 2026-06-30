@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const bcrypt = require('bcrypt');
-const merchantRepository = require('./merchant.repository');
 
 // In-memory store for Auth Codes (Demo purpose only)
 // Trong thực tế sẽ dùng Redis có expire (TTL)

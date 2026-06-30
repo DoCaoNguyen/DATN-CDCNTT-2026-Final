@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/socket_service.dart';
 import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
-import 'account_management_screen.dart';
 import '../../chat/screens/help_center_screen.dart';
 import '../../merchant/screens/merchant_screen.dart';
 import '../../financial_center/screens/financial_center_screen.dart';
@@ -29,11 +28,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _fullName = '';
   String _phone = '';
   String? _email;
+  String _balance = '0';
 
   @override
   void initState() {
     super.initState();
     _fetchProfile();
+    _fetchBalance();
+  }
+
+  Future<void> _fetchBalance() async {
+    try {
+      final response = await _client.get(Uri.parse(ApiConfig.getWalletBalance));
+      if (response.statusCode == 200) {
+        final jsonResp = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _balance = jsonResp['data']['available_balance'] ?? '0';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching balance: $e');
+    }
   }
 
   Future<void> _fetchProfile() async {
@@ -282,8 +299,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AccountManagementScreen(
+                  builder: (context) => FinancialCenterScreen(
+                    balance: _balance,
                     token: widget.token,
+                    initialTabIndex: 1,
                   ),
                 ),
               );

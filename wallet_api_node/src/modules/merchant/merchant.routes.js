@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const merchantController = require('./merchant.controller');
 const { requireMerchantUser } = require('../../middlewares/merchant.middleware');
+const { verifyToken } = require('../../middlewares/auth.middleware');
 
 router.get('/profile', requireMerchantUser, merchantController.getProfile);
 router.patch('/profile/callback', requireMerchantUser, merchantController.updateCallback);
