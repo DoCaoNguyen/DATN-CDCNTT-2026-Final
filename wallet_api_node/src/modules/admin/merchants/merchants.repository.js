@@ -77,6 +77,35 @@ const merchantsRepository = {
         return res.rows.map(mapApiKeyRow);
     },
 
+    generateNextMerchantCode: async (client) => {
+        // 1. Sync if not exists
+        await client.query(`
+            INSERT INTO code_sequences (id, resource_name, prefix, current_value, padding, reset_policy)
+            SELECT gen_random_uuid(), 'MERCHANT', 'MER', COALESCE((
+                SELECT MAX(CAST(SUBSTRING(merchant_code FROM 4) AS INTEGER))
+                FROM merchants
+                WHERE merchant_code ~ '^MER[0-9]{6}$'
+            ), 0), 6, 'NEVER'
+            WHERE NOT EXISTS (SELECT 1 FROM code_sequences WHERE resource_name = 'MERCHANT');
+        `);
+
+        // 2. Increment and return
+        const res = await client.query(`
+            UPDATE code_sequences
+            SET current_value = current_value + 1, updated_at = CURRENT_TIMESTAMP
+            WHERE resource_name = 'MERCHANT'
+            RETURNING prefix || LPAD(current_value::text, padding, '0') AS merchant_code
+        `);
+        return res.rows[0].merchant_code;
+    },
+
+    createMerchantBalance: async (merchantId, client) => {
+        await client.query(`
+            INSERT INTO merchant_balances (merchant_id, available_balance, pending_balance, updated_at)
+            VALUES ($1, 0, 0, CURRENT_TIMESTAMP)
+        `, [merchantId]);
+    },
+
     createMerchant: async (merchantData, client = pool) => {
         const { merchant_code, merchant_name, business_type, representative_name, tax_code, phone, email, address, status = 'PENDING_REVIEW' } = merchantData;
         const { v7: uuidv7 } = require('uuid');
