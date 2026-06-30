@@ -105,11 +105,14 @@ const usersRepository = {
         return result.rows.find(row => row.id !== excludeUserId) || null;
     },
 
-    createUser: async (client, { fullName, username, email, phone, passwordHash, userType, status }) => {
+    createUser: async (client, { fullName, username, email, phone, passwordHash, userType, status, isForceChangePassword, temporaryPasswordExpiresAt }) => {
         const id = uuidv7();
         const result = await client.query(`
-            INSERT INTO users (id, user_type, full_name, username, email, phone, password_hash, status)
-            VALUES ($1, $2::user_type, $3, $4, $5, $6, $7, $8::user_status)
+            INSERT INTO users (
+                id, user_type, full_name, username, email, phone, password_hash, status,
+                is_force_change_password, temporary_password_expires_at
+            )
+            VALUES ($1, $2::user_type, $3, $4, $5, $6, $7, $8::user_status, $9, $10)
             RETURNING id
         `, [
             id,
@@ -119,7 +122,9 @@ const usersRepository = {
             email || null,
             phone || null,
             passwordHash,
-            status || 'ACTIVE'
+            status || 'ACTIVE',
+            isForceChangePassword || false,
+            temporaryPasswordExpiresAt || null
         ]);
         return result.rows[0].id;
     },
