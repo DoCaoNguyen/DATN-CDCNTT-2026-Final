@@ -1,0 +1,4 @@
+wallet_api_node/.env.example
+wallet_api_node/node_modules/
+(Get-PSReadlineOption).HistorySavePath
+wallet_api_node/generate_seed.js

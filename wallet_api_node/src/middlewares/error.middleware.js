@@ -5,6 +5,7 @@ const ERROR_MAPPINGS = {
     'Validation_Error': [400, 'VALIDATION_ERROR', 'Dữ liệu không hợp lệ'],
     'Password_Confirm_Not_Match': [400, 'VALIDATION_ERROR', 'Mật khẩu xác nhận không khớp'],
     'Password_Policy_Invalid': [400, 'VALIDATION_ERROR', 'Mật khẩu phải có ít nhất 8 ký tự'],
+    'PIN_Policy_Invalid': [400, 'VALIDATION_ERROR', 'Mật khẩu phải là đúng 6 chữ số'],
     'User_Conflict': [409, 'CONFLICT', 'Số điện thoại, email hoặc username đã tồn tại'],
     'Email_Phone_Exists': [409, 'CONFLICT', 'Số điện thoại hoặc email đã tồn tại'],
     'Role_Not_Found': [500, 'RBAC_NOT_INITIALIZED', 'Role USER chưa được khởi tạo'],

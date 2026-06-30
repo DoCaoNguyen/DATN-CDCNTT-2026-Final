@@ -1,13 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const merchantController = require('./merchant.controller');
-const verifyToken = require('../../middlewares/auth.middleware');
+const { requireMerchantUser } = require('../../middlewares/merchant.middleware');
 
-router.get('/me', verifyToken, merchantController.getMe);
-
-router.post('/register', verifyToken, merchantController.register);
-
-router.put('/webhook', verifyToken, merchantController.updateWebhook);
+router.get('/profile', requireMerchantUser, merchantController.getProfile);
+router.patch('/profile/callback', requireMerchantUser, merchantController.updateCallback);
+router.get('/api-keys', requireMerchantUser, merchantController.getApiKeys);
+router.post('/api-keys', requireMerchantUser, merchantController.createApiKey);
+router.post('/api-keys/:keyId/actions/rotate-secret', requireMerchantUser, merchantController.rotateApiKey);
+router.post('/api-keys/:keyId/actions/revoke', requireMerchantUser, merchantController.revokeApiKey);
+router.get('/payment-orders', requireMerchantUser, merchantController.getPaymentOrders);
+router.get('/payment-orders/:id', requireMerchantUser, merchantController.getPaymentOrderById);
+router.get('/transactions', requireMerchantUser, merchantController.getTransactions);
+router.get('/transactions/:id', requireMerchantUser, merchantController.getTransactionById);
+router.get('/webhooks', requireMerchantUser, merchantController.getWebhooks);
+router.get('/webhooks/:id', requireMerchantUser, merchantController.getWebhookById);
+router.post('/webhooks/:id/retry', requireMerchantUser, merchantController.retryWebhook);
+router.get('/balance', requireMerchantUser, merchantController.getBalance);
+router.get('/balance/statement', requireMerchantUser, merchantController.getStatement);
 
 // [Thêm mới] API cấp và xác thực Auth_Code
 router.post('/auth-code/generate', verifyToken, merchantController.generateAuthCode);
