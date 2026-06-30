@@ -8,12 +8,14 @@ import '../../../core/utils/snackbar_utils.dart';
 import '../screens/notification_screen.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../bank/screens/deposit_withdraw_screen.dart';
+import '../../transfer/screens/transfer_search_screen.dart';
+
 import '../../chat/screens/chat_list_screen.dart';
 import '../../ai/screens/voice_transfer_dialog.dart';
 import '../services/home_service.dart';
 import '../screens/qr_main_screen.dart';
 import '../../offers/screens/redeem_scratch_card_screen.dart';
-
+import '../../topup/screens/topup_main_screen.dart';
 class HomeHeader extends StatefulWidget {
   final String activeLang;
   final String token;
@@ -257,15 +259,13 @@ class _HomeHeaderState extends State<HomeHeader> {
                           ),
                         );
                         return;
-                      } else if (actionType == "REDEEM_CARD") {
-                        // Pass a dummy high value for loyalty points, the screen will re-check properly
-                        // Or we can just let it crash the frontend check and it will fail safe in backend.
-                        // Wait, it's better if we just pass '999999999' so it bypasses the UI check and uses the backend check.
+                      } else if (actionType == "BUY_CARD" || actionType == "REDEEM_CARD") {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RedeemScratchCardScreen(
-                              loyaltyPoints: '999999999',
+                            builder: (context) => TopupMainScreen(
+                              token: widget.token,
+                              initialTab: 0,
                               initialProvider: result['receiver_name'],
                               initialValue: result['amount'],
                             ),

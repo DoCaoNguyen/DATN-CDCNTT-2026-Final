@@ -42,6 +42,7 @@ const ERROR_MAPPINGS = {
     'Self_Transfer_Not_Allowed': [400, 'SELF_TRANSFER', 'Không thể tự chuyển tiền cho chính mình'],
     'Receiver_Not_KYC': [403, 'RECEIVER_NOT_KYC', 'Người nhận chưa xác thực danh tính (KYC). Giao dịch bị từ chối!'],
     'Invalid_Amount': [400, 'INVALID_AMOUNT', 'Số tiền không hợp lệ'],
+    'Daily_Limit_Exceeded': [400, 'DAILY_LIMIT_EXCEEDED', 'Giao dịch vượt quá hạn mức nạp tiền trong ngày.'],
     
     // Auth Interceptor/Config
     'Auth_Config_Missing': [500, 'SERVER_ERROR', 'Lỗi cấu hình server bảo mật']

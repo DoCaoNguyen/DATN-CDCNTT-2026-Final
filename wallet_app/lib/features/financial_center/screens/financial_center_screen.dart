@@ -288,7 +288,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                       _buildOverviewAssetItem(
                         iconData: Icons.account_balance_wallet,
                         iconColor: Colors.pink,
-                        title: 'Ví MoMo',
+                        title: 'Ví Mio',
                         value: displayBalance,
                         subtitle: '--',
                       ),
@@ -374,7 +374,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     ),
                   ),
                   // account items inside the card
-                  _buildAccountItem(iconData: Icons.account_balance_wallet, iconColor: Colors.pink, title: 'Ví MoMo', value: displayBalance, valueColor: Colors.black87),
+                  _buildAccountItem(iconData: Icons.account_balance_wallet, iconColor: Colors.pink, title: 'Ví Mio', value: displayBalance, valueColor: Colors.black87),
                   if (_isLoading)
                     const Padding(
                       padding: EdgeInsets.all(16.0),

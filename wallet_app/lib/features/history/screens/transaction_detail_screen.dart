@@ -739,9 +739,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     const SizedBox(height: 16),
 
                     // Receiver/Sender info card
-                    if ((txType == 'TRANSFER' ||
-                        txType == 'PAYMENT' ||
-                        txType == 'RECEIVE') && !isTopup && !isCardTopup && !isRedPacket)
+                    if ((txType == 'TRANSFER' || txType == 'RECEIVE') && !isRedPacket)
                       Container(
                         padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(
@@ -756,87 +754,40 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                           ],
                         ),
                         child: Column(
-                          children: txType == 'PAYMENT'
-                              ? [
-                                  _buildDetailRow(
-                                    "Dịch vụ",
-                                    child: Text(
-                                      receiverName,
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  _buildDetailRow(
-                                    "Cửa hàng",
-                                    child: Text(
-                                      receiverName.isNotEmpty
-                                          ? receiverName
-                                                .toUpperCase()
-                                                .replaceAll(' ', '')
-                                          : "STORE",
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  _buildDetailRow(
-                                    "Nội dung",
-                                    child: Text(
-                                      note,
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  _buildDetailRow(
-                                    "Mã đơn hàng",
-                                    child: Text(
-                                      extRef,
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ]
-                              : [
-                                  _buildDetailRow(
-                                    isCredit ? "Tên người gửi" : "Tên Ví Mio",
-                                    child: Text(
-                                      isCredit ? senderName : receiverName,
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  _buildDetailRow(
-                                    "Tên danh bạ",
-                                    child: Text(
-                                      _getShortName(
-                                        isCredit ? senderName : receiverName,
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  _buildDetailRow(
-                                    "Số điện thoại",
-                                    child: Text(
-                                      isCredit ? senderPhone : receiverPhone,
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          children: [
+                            _buildDetailRow(
+                              isCredit ? "Tên người gửi" : "Tên người nhận",
+                              child: Text(
+                                isCredit ? senderName : receiverName,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            _buildDetailRow(
+                              "Tên danh bạ",
+                              child: Text(
+                                _getShortName(
+                                  isCredit ? senderName : receiverName,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            _buildDetailRow(
+                              "Số điện thoại",
+                              child: Text(
+                                isCredit ? senderPhone : receiverPhone,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
