@@ -62,4 +62,8 @@ class ApiConfig {
 
   // --- MERCHANT ENDPOINTS ---
   static const String generateAuthCode = '$baseUrl/merchant/auth-code/generate';
+  // --- AI ENDPOINTS ---
+  static const String chatWithAI = '$baseUrl/ai/chat';
+  static const String scanReceiptAI = '$baseUrl/ai/scan-receipt';
+  static const String askHelpCenter = '$baseUrl/help-center/ask';
 }

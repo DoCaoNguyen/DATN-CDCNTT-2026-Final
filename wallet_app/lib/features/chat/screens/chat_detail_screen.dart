@@ -552,7 +552,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   Expanded(
                     child: TextField(
                       controller: _chatController,
-                      decoration: const InputDecoration(
+                        textCapitalization: TextCapitalization.sentences,
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null,
+                        decoration: const InputDecoration(
                         hintText: 'Nhập tin nhắn',
                         hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
                         border: InputBorder.none,
