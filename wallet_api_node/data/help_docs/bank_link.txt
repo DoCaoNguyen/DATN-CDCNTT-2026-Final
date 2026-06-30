@@ -1,0 +1,13 @@
+Chủ đề: Hướng dẫn liên kết tài khoản ngân hàng vào ví điện tử Mio247.
+Từ khóa phụ: Thêm ngân hàng, liên kết thẻ, thêm thẻ ATM.
+
+Điều kiện: Người dùng phải hoàn tất định danh tài khoản (KYC) mới có thể liên kết ngân hàng.
+
+Các bước thực hiện liên kết ngân hàng:
+Bước 1: Mở ứng dụng Mio247 và đăng nhập vào tài khoản.
+Bước 2: Tại màn hình chính (Trang chủ), chọn biểu tượng "Ví của tôi" hoặc "Quản lý thẻ/tài khoản" ở góc phải màn hình.
+Bước 3: Chọn "Thêm thẻ/tài khoản ngân hàng mới".
+Bước 4: Chọn ngân hàng bạn muốn liên kết từ danh sách.
+Bước 5: Nhập các thông tin yêu cầu bao gồm: Số thẻ/Số tài khoản, Tên chủ thẻ, và Ngày phát hành.
+Bước 6: Nhập mã OTP được gửi về số điện thoại đăng ký ngân hàng để xác nhận.
+Bước 7: Ứng dụng thông báo "Liên kết thành công".

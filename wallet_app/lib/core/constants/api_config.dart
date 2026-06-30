@@ -58,4 +58,9 @@ class ApiConfig {
   static const String createRedPacket = '$baseUrl/red-packet/create';
   static String getRedPacketDetails(String id) => '$baseUrl/red-packet/$id';
   static String claimRedPacket(String id) => '$baseUrl/red-packet/$id/claim';
+
+  // --- AI ENDPOINTS ---
+  static const String chatWithAI = '$baseUrl/ai/chat';
+  static const String scanReceiptAI = '$baseUrl/ai/scan-receipt';
+  static const String askHelpCenter = '$baseUrl/help-center/ask';
 }

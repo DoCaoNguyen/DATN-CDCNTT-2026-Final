@@ -15,6 +15,7 @@ const aiRoutes = require('../modules/ai/ai.routes');
 const redPacketRoutes = require('../modules/red_packet/red_packet.routes');
 const adminRoutes = require('../modules/admin/index');
 const loyaltyRoutes = require('../modules/loyalty/loyalty.routes');
+const aiHelpRoutes = require('../modules/ai_help/aiHelp.routes');
 
 router.use(apiLogger);
 router.use(auditLogger);
@@ -30,6 +31,7 @@ router.use('/ai', aiRoutes);
 router.use('/red-packet', redPacketRoutes);
 router.use('/admin', adminRoutes);
 router.use('/loyalty', loyaltyRoutes);
+router.use('/help-center', aiHelpRoutes);
 
 const merchantRoutes = require('../modules/merchant/merchant.routes');
 router.use('/merchant', merchantRoutes);
