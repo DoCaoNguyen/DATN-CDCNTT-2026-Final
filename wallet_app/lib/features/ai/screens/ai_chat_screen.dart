@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
+import '../../bank/screens/deposit_withdraw_screen.dart';
 
 class AiChatScreen extends StatefulWidget {
   final String token;
@@ -122,6 +123,34 @@ class _AiChatScreenState extends State<AiChatScreen> {
         }
         if (intent == 'WITHDRAW' && amount > _mioBalance) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số dư không đủ để thực hiện giao dịch này'), backgroundColor: Colors.red));
+          return;
+        }
+
+        if (intent == 'DEPOSIT') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DepositWithdrawScreen(
+                token: widget.token,
+                initialTab: 0,
+                initialAmount: amount.toString(),
+              ),
+            ),
+          );
+          _messageController.clear();
+          return;
+        } else if (intent == 'WITHDRAW') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DepositWithdrawScreen(
+                token: widget.token,
+                initialTab: 1,
+                initialAmount: amount.toString(),
+              ),
+            ),
+          );
+          _messageController.clear();
           return;
         }
       }

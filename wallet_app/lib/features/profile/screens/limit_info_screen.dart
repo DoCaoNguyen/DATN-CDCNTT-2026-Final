@@ -65,7 +65,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
             )
           : _limitsData == null
           ? const Center(child: Text('Không thể tải thông tin hạn mức'))
-          : _buildContent(),
+          : RefreshIndicator(
+              onRefresh: _fetchLimits,
+              color: AppColors.primaryPink,
+              child: _buildContent(),
+            ),
     );
   }
 
@@ -96,6 +100,7 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
         .clamp(0.0, 1.0);
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: 16),

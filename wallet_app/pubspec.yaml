@@ -44,6 +44,7 @@ dependencies:
   mobile_scanner: ^7.2.0
   socket_io_client: ^3.1.6
   url_launcher: ^6.3.2
+  app_links: ^6.3.3
   firebase_core: ^4.10.0
   firebase_messaging: ^16.3.0
   flutter_local_notifications: ^20.1.0

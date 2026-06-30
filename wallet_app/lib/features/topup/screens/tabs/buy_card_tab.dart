@@ -6,8 +6,15 @@ import '../../../offers/screens/redeem_success_screen.dart';
 
 class BuyCardTab extends StatefulWidget {
   final String token;
+  final String? initialProvider;
+  final int? initialValue;
 
-  const BuyCardTab({Key? key, required this.token}) : super(key: key);
+  const BuyCardTab({
+    Key? key, 
+    required this.token,
+    this.initialProvider,
+    this.initialValue,
+  }) : super(key: key);
 
   @override
   State<BuyCardTab> createState() => _BuyCardTabState();
@@ -20,6 +27,24 @@ class _BuyCardTabState extends State<BuyCardTab> {
   String? _selectedProvider;
   int? _selectedValue;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialProvider != null && _providers.contains(widget.initialProvider)) {
+      _selectedProvider = widget.initialProvider;
+    }
+    if (widget.initialValue != null && _values.contains(widget.initialValue)) {
+      _selectedValue = widget.initialValue;
+    }
+    
+    // Auto show confirm dialog if both are provided by AI
+    if (_selectedProvider != null && _selectedValue != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showConfirmDialog();
+      });
+    }
+  }
 
   void _showConfirmDialog() {
     if (_selectedProvider == null || _selectedValue == null) {

@@ -8,6 +8,7 @@ import '../../../../core/constants/api_config.dart';
 import 'package:intl/intl.dart';
 import '../../bank/screens/bank_link_screen.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../settings/screens/linked_services_screen.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   final String token;
@@ -199,14 +200,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Material(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
               _buildUtilityItem(
                 icon: Icons.sort_rounded,
                 iconColor: Colors.orange,
@@ -236,11 +237,19 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 iconColor: Colors.pinkAccent,
                 title: 'Dịch vụ liên kết & Hóa đơn định kỳ',
                 subtitle: 'Quản lý dịch vụ liên kết và hóa đơn định kỳ',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LinkedServicesScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
+      ),
       ],
     );
   }

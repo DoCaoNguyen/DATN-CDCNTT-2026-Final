@@ -351,7 +351,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         return null;
       } else {
         final data = jsonDecode(response.body);
-        final String errorMessage = data['error'] ?? "Giao dịch không thành công.";
+        final String errorMessage = data['message'] ?? data['error'] ?? "Giao dịch không thành công.";
 
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa') || errorMessage.contains('PIN')) {
           return errorMessage;
@@ -423,7 +423,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         });
       } else {
         final data = jsonDecode(response.body);
-        final String errorMessage = data['error'] ?? "Xác thực khuôn mặt thất bại.";
+        final String errorMessage = data['message'] ?? data['error'] ?? "Xác thực khuôn mặt thất bại.";
         _showErrorSnackBar(errorMessage);
       }
     } catch (e) {

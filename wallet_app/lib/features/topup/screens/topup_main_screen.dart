@@ -5,13 +5,23 @@ import 'tabs/data_topup_tab.dart';
 
 class TopupMainScreen extends StatelessWidget {
   final String token;
+  final int initialTab;
+  final String? initialProvider;
+  final int? initialValue;
 
-  const TopupMainScreen({Key? key, required this.token}) : super(key: key);
+  const TopupMainScreen({
+    Key? key, 
+    required this.token, 
+    this.initialTab = 0,
+    this.initialProvider,
+    this.initialValue,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
+      initialIndex: initialTab,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F9),
         appBar: AppBar(
@@ -50,7 +60,11 @@ class TopupMainScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            BuyCardTab(token: token),
+            BuyCardTab(
+              token: token,
+              initialProvider: initialProvider,
+              initialValue: initialValue,
+            ),
             PhoneTopupTab(token: token),
             DataTopupTab(token: token),
           ],

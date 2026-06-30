@@ -44,8 +44,14 @@ class _VoiceTransferDialogState extends State<VoiceTransferDialog> {
         final data = jsonDecode(response.body);
         if (mounted) Navigator.pop(context, data['data']);
       } else {
-        if (mounted)
-          Navigator.pop(context, {'error': 'AI không thể phân tích nội dung.'});
+        String errorMsg = 'AI không thể phân tích nội dung.';
+        try {
+          final errorData = jsonDecode(response.body);
+          if (errorData['error'] != null) {
+            errorMsg = errorData['error'];
+          }
+        } catch (_) {}
+        if (mounted) Navigator.pop(context, {'error': errorMsg});
       }
     } catch (e) {
       if (mounted) Navigator.pop(context, {'error': 'Lỗi kết nối máy chủ AI.'});

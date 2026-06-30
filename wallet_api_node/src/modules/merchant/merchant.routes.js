@@ -19,4 +19,11 @@ router.post('/webhooks/:id/retry', requireMerchantUser, merchantController.retry
 router.get('/balance', requireMerchantUser, merchantController.getBalance);
 router.get('/balance/statement', requireMerchantUser, merchantController.getStatement);
 
+// [Thêm mới] API cấp và xác thực Auth_Code
+router.post('/auth-code/generate', verifyToken, merchantController.generateAuthCode);
+router.post('/auth-code/verify', merchantController.verifyAuthCode);
+
+// [Thêm mới] API Ra lệnh trừ tiền tự động (Dùng API Key thay vì token)
+router.post('/charge', merchantController.charge);
+
 module.exports = router;
