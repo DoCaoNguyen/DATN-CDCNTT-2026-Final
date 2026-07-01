@@ -13,7 +13,7 @@ const OrderController = {
             // 1. Lấy thông tin ví đã liên kết của User trên TikTok Shop
             const linkedWallet = await pool.query(
                 `SELECT wallet_account FROM user_linked_wallets 
-                 WHERE user_id = $1 AND wallet_name = 'Mio' LIMIT 1`, 
+                 WHERE user_id = $1 AND wallet_name = 'Mio' AND status = 'ACTIVE' LIMIT 1`, 
                 [user_id]
             );
 
@@ -43,6 +43,15 @@ const OrderController = {
             } catch (mioError) {
                 console.error('Lỗi khi gọi API Ví Mio:', mioError.response?.data || mioError.message);
                 const errorMsg = mioError.response?.data?.error || 'Thanh toán thất bại từ cổng thanh toán';
+                
+                // Nếu lỗi là 403, chứng tỏ ví đã bị hủy liên kết, tự động đồng bộ trạng thái nội bộ
+                if (mioError.response?.status === 403) {
+                    await pool.query(
+                        "UPDATE user_linked_wallets SET status = 'UNLINKED' WHERE user_id = $1 AND wallet_name = 'Mio'", 
+                        [user_id]
+                    );
+                }
+                
                 return res.status(400).json({ success: false, message: errorMsg });
             }
         } catch (error) {

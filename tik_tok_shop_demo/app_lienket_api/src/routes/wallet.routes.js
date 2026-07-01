@@ -4,5 +4,6 @@ const walletController = require('../controllers/wallet.controller');
 
 router.get('/:userId', walletController.getLinkedWallets);
 router.post('/link', walletController.linkWallet);
+router.post('/webhook/unlink', walletController.handleUnlinkWebhook);
 
 module.exports = router;

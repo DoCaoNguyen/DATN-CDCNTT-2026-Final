@@ -80,6 +80,66 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+    
+    // Xử lý deep link khi app đang mở hoặc chạy nền
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+
+    // Cố gắng bắt link nếu app mở lần đầu bằng link
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        // Có độ trễ để đợi MaterialApp khởi tạo xong Navigator
+        Future.delayed(const Duration(seconds: 1), () {
+          _handleDeepLink(initialUri);
+        });
+      }
+    } catch (e) {
+      debugPrint("Lỗi đọc initial deeplink: $e");
+    }
+  }
+
+  String? _lastHandledUri;
+
+  void _handleDeepLink(Uri uri) {
+    final uriString = uri.toString();
+    if (_lastHandledUri == uriString) return; // Bỏ qua nếu là sự kiện trùng lặp
+    _lastHandledUri = uriString;
+
+    // Reset cờ sau 1 giây để cho phép mở lại link ở những lần sau
+    Future.delayed(const Duration(seconds: 1), () {
+      _lastHandledUri = null;
+    });
+
+    if (uri.scheme == 'mio' && uri.host == 'link') {
+      final merchant = uri.queryParameters['merchant'] ?? 'Đối tác';
+      // Mở màn hình xác nhận liên kết
+      CustomHttpClient.navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => WalletLinkConfirmScreen(merchantName: merchant),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Kiểm tra xem người dùng đã đăng nhập chưa

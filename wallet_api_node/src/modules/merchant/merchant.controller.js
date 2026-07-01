@@ -4,12 +4,71 @@ const crypto = require('crypto');
 const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const bcrypt = require('bcrypt');
+const notificationService = require('../notification/notification.service');
 
 // In-memory store for Auth Codes (Demo purpose only)
 // Trong thực tế sẽ dùng Redis có expire (TTL)
 const authCodeMap = new Map();
 
 const merchantController = {
+    register: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const { merchant_name, contact_phone, callback_url } = req.body;
+            
+            if (!merchant_name || !contact_phone) {
+                return res.status(400).json({ error: 'Tên và số điện thoại đối tác là bắt buộc' });
+            }
+
+            const apiKey = crypto.randomBytes(32).toString('hex');
+            const secretKey = crypto.randomBytes(32).toString('hex');
+
+            const merchantData = {
+                merchant_name,
+                contact_phone,
+                callback_url,
+                user_id: userId,
+                secret_key: secretKey
+            };
+
+            const merchantId = await merchantRepository.registerMerchant(merchantData, apiKey);
+
+            res.status(201).json({
+                message: 'Đăng ký Merchant thành công',
+                data: { merchant_id: merchantId, api_key: apiKey, secret_key: secretKey }
+            });
+        } catch (error) {
+            console.error('Lỗi đăng ký merchant:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi đăng ký' });
+        }
+    },
+
+    getMe: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const pool = require('../../config/db');
+            const result = await pool.query(`
+                SELECT merchant_id, role_code, is_owner
+                FROM merchant_users
+                WHERE user_id = $1 AND is_active = true
+                LIMIT 1
+            `, [userId]);
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'Not a merchant' });
+            }
+
+            const { merchant_id, role_code, is_owner } = result.rows[0];
+            const profile = await merchantRepository.getMerchantProfile(merchant_id);
+            if (!profile) return res.status(404).json({ success: false, message: 'Merchant not found' });
+            
+            res.json({ success: true, data: { ...profile, role_code, is_owner } });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
+        }
+    },
+
     getProfile: async (req, res) => {
         try {
             const { merchant_id, role_code, is_owner } = req.merchantContext;
@@ -269,8 +328,17 @@ const merchantController = {
                 return res.status(400).json({ success: false, error: 'Mã xác thực đã hết hạn' });
             }
             
+            // GENERATE BILLING TOKEN
+            const jwt = require('jsonwebtoken');
+            const tokenStr = jwt.sign(
+                { userId: data.userId, phone: data.phone }, 
+                process.env.JWT_SECRET || 'mio_secret_key',
+                { expiresIn: '3650d' } // Token siêu dài hạn (10 năm)
+            );
+            const billing_token = 'tok_mio_' + tokenStr;
+            const masked_phone = '******' + data.phone.slice(-4);
+
             // LƯU LIÊN KẾT VÀO DATABASE
-            
             if (merchant_name && data.userId) {
                 const check = await pool.query('SELECT id FROM user_linked_services WHERE user_id = $1 AND service_name = $2', [data.userId, merchant_name]);
                 if (check.rows.length === 0) {
@@ -284,24 +352,28 @@ const merchantController = {
                     const newId = uuidv7();
                     
                     await pool.query(
-                        'INSERT INTO user_linked_services (id, user_id, service_name, service_icon) VALUES ($1, $2, $3, $4)',
-                        [newId, data.userId, merchant_name, icon]
+                        'INSERT INTO user_linked_services (id, user_id, service_name, service_icon, wallet_token) VALUES ($1, $2, $3, $4, $5)',
+                        [newId, data.userId, merchant_name, icon, billing_token]
+                    );
+                } else {
+                    // Cập nhật lại token, reset hạn mức và bật lại trạng thái ACTIVE
+                    await pool.query(
+                        'UPDATE user_linked_services SET wallet_token = $1, status = $2, limit_per_day = NULL, limit_per_transaction = NULL WHERE id = $3',
+                        [billing_token, 'ACTIVE', check.rows[0].id]
                     );
                 }
+                
+                // Gửi thông báo Push Notification về app Ví Mio
+                notificationService.sendSystemNotification(
+                    data.userId,
+                    'Liên kết thành công 🎉',
+                    `Ví Mio của bạn đã được liên kết với nền tảng ${merchant_name}.`,
+                    'LINK_SUCCESS'
+                ).catch(e => console.error('Lỗi gửi thông báo liên kết:', e));
             }
 
             // THU HỒI NGAY LẬP TỨC ĐỂ CHỐNG REPLAY ATTACK (Mỗi mã chỉ được đổi 1 lần)
             authCodeMap.delete(auth_code);
-            
-            // GENERATE BILLING TOKEN
-            const jwt = require('jsonwebtoken');
-            const tokenStr = jwt.sign(
-                { userId: data.userId, phone: data.phone }, 
-                process.env.JWT_SECRET || 'mio_secret_key',
-                { expiresIn: '3650d' } // Token siêu dài hạn (10 năm)
-            );
-            const billing_token = 'tok_mio_' + tokenStr;
-            const masked_phone = '******' + data.phone.slice(-4);
 
             res.status(200).json({ 
                 success: true, 
@@ -376,7 +448,22 @@ const merchantController = {
             const searchName = merchant.merchant_name.split(' ')[0]; 
             const linkedApp = await merchantRepository.getLinkedService(user_id, searchName);
             
-            if (linkedApp && linkedApp.limit_per_day) {
+            if (!linkedApp || linkedApp.status === 'UNLINKED') {
+                return res.status(403).json({ error: 'Dịch vụ chưa được liên kết hoặc đã bị huỷ liên kết. Không thể thanh toán.' });
+            }
+
+            if (linkedApp.status === 'INACTIVE') {
+                return res.status(400).json({ error: 'Dịch vụ đã bị tạm khóa. Vui lòng mở khóa trên ứng dụng Ví để tiếp tục thanh toán.' });
+            }
+            
+            if (linkedApp.limit_per_transaction) {
+                const txLimit = BigInt(Math.floor(Number(linkedApp.limit_per_transaction)));
+                if (requestAmount > txLimit) {
+                    return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(txLimit).toLocaleString('vi-VN')}đ/lần) của ứng dụng liên kết.` });
+                }
+            }
+            
+            if (linkedApp.limit_per_day) {
                 const appLimit = BigInt(Math.floor(Number(linkedApp.limit_per_day)));
                 const appDailyUsage = await merchantRepository.getDailyUsageForMerchant(wallet_id, merchant.id);
                 

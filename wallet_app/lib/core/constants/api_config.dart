@@ -42,6 +42,9 @@ class ApiConfig {
   static const String processPayment = '$baseUrl/payment/process';
   static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
   static const String getLinkedServices = '$baseUrl/wallet/linked-services';
+  static String updateLinkedServiceLimits(String id) => '$baseUrl/wallet/linked-services/$id/limits';
+  static String unlinkService(String id) => '$baseUrl/wallet/linked-services/$id';
+  static String getLinkedServiceTransactions(String id) => '$baseUrl/wallet/linked-services/$id/transactions';
   static const String linkBank = '$baseUrl/wallet/link-bank';
   static const String verifyPin = '$baseUrl/wallet/verify-pin';
   static const String deposit = '$baseUrl/transaction/deposit';

@@ -131,7 +131,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       } else {
         final errorData = jsonDecode(response.body);
         final String errorMessage =
-            errorData['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại sau.';
+            errorData['message'] ?? errorData['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại sau.';
 
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
           return errorMessage;

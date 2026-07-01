@@ -4,6 +4,9 @@ const merchantController = require('./merchant.controller');
 const { requireMerchantUser } = require('../../middlewares/merchant.middleware');
 const { verifyToken } = require('../../middlewares/auth.middleware');
 
+router.post('/register', verifyToken, merchantController.register);
+router.get('/me', verifyToken, merchantController.getMe);
+
 router.get('/profile', requireMerchantUser, merchantController.getProfile);
 router.patch('/profile/callback', requireMerchantUser, merchantController.updateCallback);
 router.get('/api-keys', requireMerchantUser, merchantController.getApiKeys);

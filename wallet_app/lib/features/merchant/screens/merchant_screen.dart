@@ -6,6 +6,7 @@ import '../../../core/services/custom_http_client.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import '../../../core/widgets/otp_input_widget.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../profile/screens/personal_profile_screen.dart';
 
 class MerchantScreen extends StatefulWidget {
@@ -54,6 +55,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
         _isEmailVerified = _userEmail.isNotEmpty;
         _userFullName = userData['data']['full_name'] ?? '';
         _userPhone = userData['data']['phone'] ?? '';
+        
+        if (_phoneController.text.isEmpty) {
+          _phoneController.text = _userPhone;
+        }
       }
 
       // Fetch Merchant Info
@@ -108,100 +113,148 @@ class _MerchantScreenState extends State<MerchantScreen> {
   }
 
   void _showOtpDialog(String name, String phone, String webhook) {
-    final TextEditingController otpController = TextEditingController();
+    String currentOtp = "";
     bool isVerifying = false;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text("Xác thực OTP", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Mã OTP gồm 6 chữ số đã được gửi tới:\n$_userEmail",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 20),
-                  OtpInputWidget(
-                    length: 6,
-                    onChanged: (val) {
-                      otpController.text = val;
-                    },
-                  ),
-                ],
+          builder: (context, setSheetState) {
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              actions: [
-                TextButton(
-                  onPressed: isVerifying ? null : () => Navigator.pop(context),
-                  child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  onPressed: isVerifying
-                      ? null
-                      : () async {
-                          final otp = otpController.text.trim();
-                          if (otp.length != 6) {
-                            SnackbarUtils.showError(context, "Mã OTP phải gồm 6 số");
-                            return;
-                          }
-
-                          setStateDialog(() => isVerifying = true);
-
-                          try {
-                            final verifyRes = await _client.post(
-                              Uri.parse('${ApiConfig.baseUrl}/users/email/verify-otp'),
-                              headers: {"Content-Type": "application/json"},
-                              body: jsonEncode({"email": _userEmail, "otp": otp}),
-                            );
-
-                            if (verifyRes.statusCode == 200) {
-                              // OTP đúng, tiến hành đăng ký Merchant
-                              final regRes = await _client.post(
-                                Uri.parse('${ApiConfig.baseUrl}/merchant/register'),
-                                headers: {"Content-Type": "application/json"},
-                                body: jsonEncode({
-                                  "merchant_name": name,
-                                  "contact_phone": phone,
-                                  "callback_url": webhook,
-                                }),
-                              );
-
-                              if (regRes.statusCode == 201) {
-                                if (mounted) {
-                                  Navigator.pop(context); // Đóng dialog
-                                  SnackbarUtils.showSuccess(context, "Đăng ký Merchant thành công!");
-                                  _fetchData(); // Load lại dữ liệu
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Xác thực OTP",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Mã OTP gồm 6 chữ số đã được gửi tới:\n$_userEmail",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    OtpInputWidget(
+                      length: 6,
+                      onChanged: (val) {
+                        currentOtp = val;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryPink,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: isVerifying
+                            ? null
+                            : () async {
+                                if (currentOtp.length != 6) {
+                                  SnackbarUtils.showError(context, "Mã OTP phải gồm 6 số");
+                                  return;
                                 }
-                              } else {
-                                final err = jsonDecode(regRes.body)['error'] ?? "Đăng ký thất bại";
-                                if (mounted) SnackbarUtils.showError(context, err);
-                              }
-                            } else {
-                              final err = jsonDecode(verifyRes.body)['error'] ?? "Mã OTP không hợp lệ";
-                              if (mounted) SnackbarUtils.showError(context, err);
-                            }
-                          } catch (e) {
-                            if (mounted) SnackbarUtils.showError(context, "Lỗi kết nối máy chủ");
-                          } finally {
-                            setStateDialog(() => isVerifying = false);
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: isVerifying
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text("Xác nhận", style: TextStyle(color: Colors.white)),
+
+                                setSheetState(() => isVerifying = true);
+
+                                try {
+                                  final verifyRes = await _client.post(
+                                    Uri.parse('${ApiConfig.baseUrl}/users/email/verify-otp'),
+                                    headers: {"Content-Type": "application/json"},
+                                    body: jsonEncode({"email": _userEmail, "otp": currentOtp}),
+                                  );
+
+                                  if (!mounted) return;
+
+                                  if (verifyRes.statusCode == 200) {
+                                    final regRes = await _client.post(
+                                      Uri.parse('${ApiConfig.baseUrl}/merchant/register'),
+                                      headers: {"Content-Type": "application/json"},
+                                      body: jsonEncode({
+                                        "merchant_name": name,
+                                        "contact_phone": phone,
+                                        "callback_url": webhook,
+                                      }),
+                                    );
+                                    
+                                    if (!mounted) return;
+
+                                    if (regRes.statusCode == 201) {
+                                      Navigator.pop(context); // Đóng bottom sheet
+                                      SnackbarUtils.showSuccess(context, "Đăng ký Merchant thành công!");
+                                      _fetchData(); // Load lại dữ liệu
+                                    } else {
+                                      final err = jsonDecode(regRes.body)['error'] ?? "Đăng ký thất bại";
+                                      SnackbarUtils.showError(context, err);
+                                    }
+                                  } else {
+                                    final err = jsonDecode(verifyRes.body)['error'] ?? "Mã OTP không hợp lệ";
+                                    SnackbarUtils.showError(context, err);
+                                  }
+                                } catch (e) {
+                                  if (mounted) SnackbarUtils.showError(context, "Lỗi kết nối máy chủ");
+                                } finally {
+                                  if (mounted) setSheetState(() => isVerifying = false);
+                                }
+                              },
+                        child: isVerifying
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Xác nhận",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );
