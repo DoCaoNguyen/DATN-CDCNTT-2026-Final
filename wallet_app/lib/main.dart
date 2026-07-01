@@ -10,9 +10,7 @@ import 'features/home/screens/home_screen.dart';
 import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
 import 'core/services/network_service.dart';
-import 'package:app_links/app_links.dart';
-import 'dart:async';
-import 'features/auth/screens/wallet_link_confirm_screen.dart';
+import 'core/services/deep_link_service.dart';
 
 import 'package:flutter/services.dart';
 
@@ -47,6 +45,9 @@ void main() async {
 
     // Xin quyền hiển thị thông báo
     await NotificationService.instance.requestPermissions();
+
+    // Khởi tạo DeepLinkService
+    DeepLinkService().initialize();
 
     // Đọc thông tin phiên đăng nhập trước đó
     const secureStorage = FlutterSecureStorage();

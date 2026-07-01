@@ -95,7 +95,6 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildBanner(),
                   const SizedBox(height: 16),
                   
                   _buildSectionTitle('Dịch vụ đã liên kết'),
@@ -116,52 +115,6 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
     );
   }
 
-  Widget _buildBanner() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.pink.shade50, Colors.white],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.pink.shade100, width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.network(
-            'https://cdn-icons-png.flaticon.com/512/1012/1012558.png', 
-            width: 40, height: 40,
-            errorBuilder: (_, __, ___) => const Icon(Icons.phone_android, size: 40, color: Colors.pink),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Chụp màn hình - Gửi phản ánh', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 4),
-                const Text(
-                  'Sử dụng ngay tính năng "Chụp - Phản ánh" để góp ý mọi vấn đề với Mio.',
-                  style: TextStyle(fontSize: 12, color: Colors.black87),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'Xem hướng dẫn',
-                    style: TextStyle(color: Colors.blue.shade600, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                )
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionTitle(String title) {
     return Padding(

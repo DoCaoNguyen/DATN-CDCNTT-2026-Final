@@ -1,0 +1,9 @@
+Chủ đề: Hạn mức và phí rút tiền từ ví Mio247 về tài khoản ngân hàng.
+Từ khóa phụ: Biểu phí rút tiền, tối đa rút bao nhiêu, giới hạn rút tiền.
+
+Quy định về việc rút tiền:
+- Hạn mức rút tiền tối thiểu: 50.000 VNĐ cho mỗi giao dịch.
+- Hạn mức rút tiền tối đa: 20.000.000 VNĐ cho mỗi giao dịch và không quá 50.000.000 VNĐ/ngày.
+- Biểu phí: 
+  + Rút tiền về ngân hàng cùng hệ thống (đã liên kết): Miễn phí 3 giao dịch đầu tiên trong tháng. Từ giao dịch thứ 4, phí là 3.300 VNĐ/giao dịch.
+  + Thời gian nhận tiền: Tiền sẽ về tài khoản ngân hàng ngay lập tức (24/7). Nếu hệ thống ngân hàng bảo trì, thời gian có thể kéo dài từ 2-4 tiếng.
