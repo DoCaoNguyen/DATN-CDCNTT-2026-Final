@@ -110,7 +110,18 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  String? _lastHandledUri;
+
   void _handleDeepLink(Uri uri) {
+    final uriString = uri.toString();
+    if (_lastHandledUri == uriString) return; // Bỏ qua nếu là sự kiện trùng lặp
+    _lastHandledUri = uriString;
+
+    // Reset cờ sau 1 giây để cho phép mở lại link ở những lần sau
+    Future.delayed(const Duration(seconds: 1), () {
+      _lastHandledUri = null;
+    });
+
     if (uri.scheme == 'mio' && uri.host == 'link') {
       final merchant = uri.queryParameters['merchant'] ?? 'Đối tác';
       // Mở màn hình xác nhận liên kết
