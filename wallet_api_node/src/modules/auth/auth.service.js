@@ -382,10 +382,9 @@ const authService = {
             ipAddress,
             userAgent
         });
-        return {
-            accepted: true,
-            ...(process.env.NODE_ENV === 'production' ? {} : { reset_token: rawToken })
-        };
+        // [SECURITY FIX] Luôn chỉ trả { accepted: true }, KHÔNG BAO GIỜ leak reset token trong response
+        // Token chỉ được gửi qua kênh an toàn (SMS/Email)
+        return { accepted: true };
     },
 
     resetPassword: async ({ resetToken, newPassword, confirmNewPassword, ipAddress, userAgent }) => {

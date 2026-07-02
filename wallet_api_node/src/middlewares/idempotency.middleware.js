@@ -4,8 +4,13 @@ const redis = require('../config/redis');
 
 const withIdempotency = async (req, res, next) => {
     const idempotencyKey = req.headers['idempotency-key'];
+    // [SECURITY FIX] Bắt buộc Idempotency-Key cho giao dịch tài chính — chống duplicate transactions
     if (!idempotencyKey) {
-        return next();
+        return res.status(400).json({ 
+            success: false, 
+            error_code: 'IDEMPOTENCY_KEY_REQUIRED', 
+            message: 'Thiếu header Idempotency-Key. Mỗi giao dịch tài chính cần có mã duy nhất để chống trùng lặp.' 
+        });
     }
     try {
         const existingRecord = await idempotencyRepo.findByKey(idempotencyKey);

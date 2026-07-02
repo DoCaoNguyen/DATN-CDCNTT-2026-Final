@@ -3,6 +3,9 @@ const pool = require('../../config/db');
 const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
 const traceEventService = require('../system/trace_event.service');
+// [SECURITY FIX] Import hàm xác thực bảo mật giao dịch (PIN + FaceID)
+const { verifyTransactionSecurity } = require('../../utils/security.util');
+const kycService = require('../kyc/kyc.service');
 
 const paymentService = {
     createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
@@ -53,28 +56,37 @@ const paymentService = {
         }
     },
 
-    processQrPayment: async (userId, qrToken) => {
+    processQrPayment: async (userId, qrToken, pin, faceImagePath) => {
+        // [SECURITY FIX] Xác thực PIN/FaceID TRƯỚC khi bắt đầu giao dịch (giống transfer/deposit)
+        const walletForPin = await txRepo.getWalletForPinCheck(userId);
+        if (!walletForPin) throw new Error('Wallet_Not_Found');
+
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN'); 
 
-            
             const order = await paymentRepo.lockAndGetOrder(client, qrToken);
             
             if (!order) throw new Error('Order_Not_Found');
             if (new Date() > new Date(order.expired_at)) throw new Error('QR_Expired');
             if (order.status !== 'PENDING') throw new Error('Order_Already_Processed');
 
-            
+            // [SECURITY FIX] Xác thực bảo mật theo mức tiền (PIN < 30M, FaceID >= 30M)
+            await verifyTransactionSecurity(order.amount, pin, faceImagePath, walletForPin, userId, txRepo, kycService);
+
             const wallet = await txRepo.getWalletByUserId(userId);
             if (!wallet) throw new Error('Wallet_Not_Found');
 
-            
+            // [SECURITY FIX] Kiểm tra hạn mức thanh toán trong ngày (50 triệu VND)
+            const dailyTotal = await txRepo.getDailyTotal(wallet.id, 'PAYMENT');
+            if (dailyTotal + order.amount > 50000000n) {
+                throw new Error('Daily_Limit_Exceeded');
+            }
+
             const balanceBefore = await txRepo.lockAndGetBalance(client, wallet.id);
             if (balanceBefore < order.amount) throw new Error('Insufficient_Balance');
 
-            
             const balanceAfter = await txRepo.subtractBalance(client, wallet.id, order.amount);
 
             
@@ -284,6 +296,22 @@ const paymentService = {
             const merchantRepo = require('../merchant/merchant.repository');
             const userId = await merchantRepo.findUserByPhone(userPhone);
             if (!userId) throw new Error('Wallet_Not_Found');
+
+            // [SECURITY FIX] Kiểm tra user đã ủy quyền auto-debit cho merchant này chưa
+            const linkCheck = await client.query(`
+                SELECT id, status, limit_per_transaction, limit_per_day
+                FROM user_linked_services
+                WHERE user_id = $1 AND merchant_id = $2 AND status = 'ACTIVE'
+                LIMIT 1
+            `, [userId, merchantId]);
+            if (linkCheck.rows.length === 0) {
+                throw new Error('Auto_Debit_Not_Authorized');
+            }
+            const linkedService = linkCheck.rows[0];
+            // Kiểm tra hạn mức mỗi giao dịch
+            if (linkedService.limit_per_transaction && amount > BigInt(linkedService.limit_per_transaction)) {
+                throw new Error('Auto_Debit_Transaction_Limit_Exceeded');
+            }
 
             // 2. Lấy thông tin Ví của User
             const userWallet = await txRepo.getWalletByUserId(userId);

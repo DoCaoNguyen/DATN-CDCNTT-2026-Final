@@ -59,9 +59,9 @@ const walletController = {
     
             const newWalletCode = await walletService.setWalletCode(userId, cleanCode);
             
+            // [SECURITY FIX] Không trả PIN plaintext trong HTTP response
             res.status(200).json({ 
-                message: 'Tạo mã ví thành công', 
-                wallet_code: newWalletCode 
+                message: 'Tạo mã ví thành công'
             });
 
         } catch (error) {

@@ -36,12 +36,14 @@ const paymentController = {
 
     processPayment: async (req, res) => {
         const userId = req.user.userId; 
-        const { qr_token } = req.body;
+        const { qr_token, pin } = req.body;
+        const faceImagePath = req.file ? req.file.path : null;
 
         if (!qr_token) return res.status(400).json({ error: 'Thiếu mã QR Token' });
 
         try {
-            const result = await paymentService.processQrPayment(userId, qr_token);
+            // Truyền pin + faceImagePath để xác thực bảo mật trước khi trừ tiền
+            const result = await paymentService.processQrPayment(userId, qr_token, pin, faceImagePath);
             res.status(200).json({
                 message: 'Thanh toán thành công',
                 data: result

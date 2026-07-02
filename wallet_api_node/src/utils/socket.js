@@ -6,7 +6,13 @@ let io;
 const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: "*",
+            // [SECURITY FIX] Thay "*" bằng whitelist domain cụ thể (đồng bộ với HTTP CORS)
+            origin: [
+                'http://localhost:3000',
+                'http://localhost:5173',
+                'https://admin.yourdomain.com',
+                'https://merchant.yourdomain.com'
+            ],
             methods: ["GET", "POST"]
         }
     });

@@ -70,7 +70,8 @@ const walletService = {
                 throw new Error('Wallet_Not_Found');
             }
             
-            return pinCode;
+            // [SECURITY FIX] Không trả về PIN gốc (plaintext) trong response
+            return true;
 
         } catch (error) {
             throw error; 
