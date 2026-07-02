@@ -11,7 +11,9 @@ import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
 import 'core/services/network_service.dart';
 import 'core/services/deep_link_service.dart';
-
+import 'dart:async';
+import 'package:app_links/app_links.dart';
+import 'features/auth/screens/wallet_link_confirm_screen.dart';
 import 'package:flutter/services.dart';
 
 void main() async {
