@@ -54,11 +54,19 @@ const usersValidator = {
                 error: 'Thieu thong tin bat buoc (full_name)'
             });
         }
-        if (!email && !phone && !username) {
+        if (!email) {
             return res.status(400).json({
                 success: false,
                 code: 'VALIDATION_ERROR',
-                error: 'Thieu thong tin bat buoc (email/phone/username)'
+                error: 'Email là bắt buộc khi tạo tài khoản nhân viên.'
+            });
+        }
+        
+        if (phone && !/^\d{9,15}$/.test(phone)) {
+            return res.status(400).json({
+                success: false,
+                code: 'VALIDATION_ERROR',
+                error: 'Số điện thoại không hợp lệ (chỉ chứa số, 9-15 ký tự).'
             });
         }
         if (!role_codes || !Array.isArray(role_codes) || role_codes.length === 0) {

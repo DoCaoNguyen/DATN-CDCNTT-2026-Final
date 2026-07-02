@@ -45,6 +45,7 @@ app.use(cors({
     origin: [
         'http://localhost:3000',
         'http://localhost:5173',
+        'http://localhost:5174',
         'https://admin.yourdomain.com',
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'

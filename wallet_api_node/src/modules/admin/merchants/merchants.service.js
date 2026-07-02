@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const merchantsRepository = require('./merchants.repository');
 const { ensureUuid, writeAuditLog, ensureWriteAccess } = require('../_shared');
+const emailService = require('../../../shared/services/email.service');
 
 const generateApiKey = () => `pk_live_${crypto.randomBytes(12).toString('hex')}`;
 const generateApiSecret = () => `sk_live_${crypto.randomBytes(24).toString('hex')}`;
@@ -45,7 +46,8 @@ const merchantsService = {
                     phone: data.owner_info.phone,
                     passwordHash,
                     userType: 'MERCHANT_USER',
-                    status: 'ACTIVE'
+                    status: 'ACTIVE',
+                    isForceChangePassword: true
                 });
 
                 await usersRepository.replaceRolesByCodes(client, userId, ['MERCHANT_OWNER']);
@@ -83,11 +85,28 @@ const merchantsService = {
                 });
 
                 await client.query('COMMIT');
-                return {
+
+                // 6. Gửi email onboarding sau khi commit xong
+                let emailSent = false;
+                if (data.owner_info && data.owner_info.email) {
+                    emailSent = await emailService.sendOnboardingEmail(data.owner_info.email, {
+                        merchantName: merchant.merchant_name,
+                        username: data.owner_info.username,
+                        password: rawPassword
+                    });
+                }
+
+                const responseData = {
                     ...merchant,
                     callback_config: sanitizeCallbackConfig(callbackConfig),
-                    owner_password: rawPassword
+                    email_sent: emailSent
                 };
+
+                if (process.env.RETURN_TEMP_PASSWORD === 'true') {
+                    responseData.owner_password = rawPassword;
+                }
+
+                return responseData;
             } catch (error) {
                 await client.query('ROLLBACK');
                 
@@ -175,6 +194,7 @@ const merchantsService = {
 
         const merchant = await merchantsRepository.findMerchantById(id);
         if (!merchant) throw new Error('Merchant_Not_Found');
+        if (merchant.status !== 'ACTIVE') throw new Error('Merchant_Not_Active');
 
         const rawApiKey = generateApiKey();
         const rawSecret = generateApiSecret();
@@ -209,6 +229,10 @@ const merchantsService = {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+
+            const merchant = await merchantsRepository.findMerchantById(id, client);
+            if (!merchant) throw new Error('Merchant_Not_Found');
+            if (merchant.status !== 'ACTIVE') throw new Error('Merchant_Not_Active');
 
             const oldKey = await merchantsRepository.findApiKeyById(keyId, client);
             if (!oldKey || oldKey.merchant_id !== id) throw new Error('Api_Key_Not_Found');

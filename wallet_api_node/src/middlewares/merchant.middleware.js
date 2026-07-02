@@ -9,7 +9,7 @@ const verifyApiKey = async (req, res, next) => {
 
     try {
         const query = `
-            SELECT m.id AS merchant_id, m.status 
+            SELECT m.id AS merchant_id, m.status AS merchant_status, mak.status AS key_status
             FROM merchant_api_keys mak
             JOIN merchants m ON mak.merchant_id = m.id
             WHERE mak.api_key = $1 AND (mak.expired_at IS NULL OR mak.expired_at > CURRENT_TIMESTAMP)
@@ -17,14 +17,26 @@ const verifyApiKey = async (req, res, next) => {
         const result = await pool.query(query, [apiKey]);
 
         if (result.rows.length === 0) {
-            return res.status(401).json({ error: 'API Key không hợp lệ hoặc đã hết hạn' });
+            return res.status(401).json({ error: 'API Key không tồn tại hoặc đã hết hạn' });
         }
 
-        if (result.rows[0].status !== 'ACTIVE') {
-            return res.status(403).json({ error: 'Tài khoản Merchant đã bị khóa' });
+        const row = result.rows[0];
+
+        if (row.key_status !== 'ACTIVE') {
+            return res.status(401).json({ error: `API Key này đã bị ${row.key_status === 'REVOKED' ? 'thu hồi' : 'vô hiệu hóa'}` });
         }
 
-        req.merchant = result.rows[0];
+        if (row.merchant_status !== 'ACTIVE') {
+            const status = row.merchant_status;
+            let message = 'Tài khoản Merchant của bạn chưa được kích hoạt.';
+            if (status === 'PENDING_REVIEW') message = 'Tài khoản Merchant đang chờ duyệt.';
+            else if (status === 'SUSPENDED') message = 'Tài khoản Merchant đã bị tạm ngưng.';
+            else if (status === 'REJECTED') message = 'Hồ sơ Merchant đã bị từ chối.';
+            else if (status === 'CLOSED') message = 'Tài khoản Merchant đã bị đóng.';
+            return res.status(403).json({ error: message });
+        }
+
+        req.merchant = { merchant_id: row.merchant_id, status: row.merchant_status };
         next();
     } catch (error) {
         console.error('Lỗi xác thực API Key:', error);
@@ -39,9 +51,10 @@ const resolveMerchantContext = async (req, res, next) => {
         const userId = req.user.id;
         
         const result = await pool.query(`
-            SELECT merchant_id, role_code, is_owner, is_active
-            FROM merchant_users
-            WHERE user_id = $1 AND is_active = true
+            SELECT mu.merchant_id, mu.role_code, mu.is_owner, mu.is_active, m.status AS merchant_status
+            FROM merchant_users mu
+            JOIN merchants m ON m.id = mu.merchant_id
+            WHERE mu.user_id = $1 AND mu.is_active = true
             LIMIT 1
         `, [userId]);
 
@@ -57,7 +70,8 @@ const resolveMerchantContext = async (req, res, next) => {
         req.merchantContext = {
             merchant_id: context.merchant_id,
             role_code: context.role_code,
-            is_owner: context.is_owner
+            is_owner: context.is_owner,
+            merchant_status: context.merchant_status
         };
 
         next();
@@ -73,8 +87,33 @@ const resolveMerchantContext = async (req, res, next) => {
 
 const requireMerchantUser = [verifyToken, requireMerchant, resolveMerchantContext];
 
+const requireActiveMerchant = (req, res, next) => {
+    if (req.merchantContext && req.merchantContext.merchant_status !== 'ACTIVE') {
+        const status = req.merchantContext.merchant_status;
+        let message = 'Tài khoản Merchant của bạn chưa được kích hoạt.';
+        
+        if (status === 'PENDING_REVIEW') {
+            message = 'Tài khoản Merchant đang chờ duyệt. Chức năng này chỉ khả dụng khi tài khoản đã được kích hoạt.';
+        } else if (status === 'SUSPENDED') {
+            message = 'Tài khoản Merchant đã bị tạm ngưng. Vui lòng liên hệ hỗ trợ để biết thêm chi tiết.';
+        } else if (status === 'REJECTED') {
+            message = 'Hồ sơ Merchant đã bị từ chối.';
+        } else if (status === 'CLOSED') {
+            message = 'Tài khoản Merchant đã bị đóng.';
+        }
+
+        return res.status(403).json({
+            success: false,
+            error_code: 'MERCHANT_NOT_ACTIVE',
+            message: message
+        });
+    }
+    next();
+};
+
 module.exports = {
     verifyApiKey,
     resolveMerchantContext,
-    requireMerchantUser
+    requireMerchantUser,
+    requireActiveMerchant
 };

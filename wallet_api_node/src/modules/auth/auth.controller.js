@@ -43,7 +43,7 @@ const authController = {
                 });
             }
             const data = await authService.login({
-                loginId: req.body.login_id,
+                loginId: req.body.username || req.body.login_id,
                 password: req.body.password,
                 rememberMe: Boolean(req.body.remember_me),
                 ...requestMeta(req)
@@ -115,15 +115,23 @@ const authController = {
 
     changePassword: async (req, res, next) => {
         try {
+            console.log('[DEBUG] req.body in changePassword:', req.body);
+            const currentPassword = req.body.current_password || req.body.currentPassword || req.body.old_password || req.body.oldPassword;
+            const newPassword = req.body.new_password || req.body.newPassword;
+            const confirmNewPassword = req.body.confirm_new_password || req.body.confirm_password || req.body.confirmNewPassword || req.body.confirmPassword || newPassword;
+
+            console.log('[DEBUG] parsed:', { currentPassword, newPassword, confirmNewPassword });
+
             await authService.changePassword({
                 userId: req.user.userId,
-                currentPassword: req.body.current_password,
-                newPassword: req.body.new_password,
-                confirmNewPassword: req.body.confirm_new_password || req.body.confirm_password,
+                currentPassword,
+                newPassword,
+                confirmNewPassword,
                 ...requestMeta(req)
             });
             return success(req, res, 200, 'Password changed');
         } catch (error) {
+            console.error('[DEBUG] error in changePassword:', error.message);
             return next(error);
         }
     },

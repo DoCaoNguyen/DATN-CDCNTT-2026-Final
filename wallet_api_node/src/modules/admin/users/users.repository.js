@@ -98,7 +98,7 @@ const usersRepository = {
             SELECT id, username, email, phone
             FROM users
             WHERE ($1::text IS NOT NULL AND username = $1)
-               OR ($2::text IS NOT NULL AND email = $2)
+               OR ($2::text IS NOT NULL AND LOWER(email) = LOWER($2))
                OR ($3::text IS NOT NULL AND phone = $3)
         `, [username || null, email || null, phone || null]);
 

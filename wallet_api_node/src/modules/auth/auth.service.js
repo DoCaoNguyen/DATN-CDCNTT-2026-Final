@@ -146,7 +146,8 @@ const authService = {
 
     login: async ({ loginId, password, rememberMe, ipAddress, userAgent }) => {
         if (!loginId || !password) throw new Error('Validation_Error');
-        const user = await authRepository.findByLoginId(loginId);
+        const sanitizedLoginId = String(loginId).trim();
+        const user = await authRepository.findByLoginId(sanitizedLoginId);
         if (!user) {
             await writeSecurityLog({ event: 'LOGIN_FAILED', login_id: loginId, reason: 'INVALID_CREDENTIALS', ip_address: ipAddress });
             throw new Error('Invalid_Credentials');

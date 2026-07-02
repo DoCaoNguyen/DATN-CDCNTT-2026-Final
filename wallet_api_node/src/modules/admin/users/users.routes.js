@@ -80,7 +80,7 @@ const notImplemented = require('../../../utils/notImplemented');
  * /api/v1/admin/staffs:
  *   post:
  *     summary: Admin tao nhan vien
- *     description: Tao nhan vien noi bo, chi dinh role RBAC, khong tu dong tao vi. Super Admin moi duoc tao SUPER_ADMIN/ADMIN.
+ *     description: Tao nhan vien noi bo, chi dinh role RBAC, khong tu dong tao vi. Staff se nhan duoc email onboarding cap mat khau. Super Admin moi duoc tao SUPER_ADMIN/ADMIN.
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -90,7 +90,7 @@ const notImplemented = require('../../../utils/notImplemented');
  *         application/json:
  *           schema:
  *             type: object
- *             required: [full_name, role_codes]
+ *             required: [full_name, email, role_codes]
  *             properties:
  *               full_name:
  *                 type: string
