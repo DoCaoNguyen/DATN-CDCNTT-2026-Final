@@ -23,6 +23,10 @@ class ApiConfig {
   static const String resetPassword = '$baseUrl/auth/reset-password';
   static const String exportTransaction = '$baseUrl/transaction/export';
 
+  // --- WEALTH BAG ENDPOINTS ---
+  static const String wealthBagStatus = '$baseUrl/wealth-bag/status';
+  static const String wealthBagActivate = '$baseUrl/wealth-bag/activate';
+
   // --- KYC ENDPOINTS ---
   static const String verifyKyc = '$baseUrl/kyc/verify';
   static const String getWalletBalance = '$baseUrl/wallet/balance';

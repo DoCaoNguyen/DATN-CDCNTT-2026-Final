@@ -18,7 +18,7 @@
     "@langchain/core": "^1.2.1",
     "@langchain/google-genai": "^2.2.0",
     "@langchain/textsplitters": "^1.0.1",
-    "@supabase/supabase-js": "^2.109.0",
+    "@supabase/supabase-js": "^2.110.0",
     "axios": "^1.16.1",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.78.1",

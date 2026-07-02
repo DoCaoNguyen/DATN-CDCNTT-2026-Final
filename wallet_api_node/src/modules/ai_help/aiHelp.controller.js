@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Khởi tạo Supabase & Gemini
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:8000';
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || 'dummy';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);

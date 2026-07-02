@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/home_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../wealth_bag/services/wealth_bag_service.dart';
+import '../wealth_bag/screens/wealth_bag_screen.dart';
+
 import '../../auth/kyc/screens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
 import '../../../core/constants/api_config.dart';
@@ -53,6 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final HomeService _homeService = HomeService();
   int _selectedIndex = 0;
   String _balance = "0";
+  String _wealthBagBalance = "0";
+  bool _hasWealthBag = false;
   String _loyaltyPoints = "0";
   String? _walletCode;
   bool _isPinSet = false;
@@ -267,13 +272,26 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _isLoadingBalance = false);
       return;
     }
+    
+    // Fetch wallet balance
     final data = await _homeService.fetchBalance(widget.token);
+    
+    // Fetch wealth bag status
+    final WealthBagService wealthBagService = WealthBagService();
+    final wealthBagData = await wealthBagService.getStatus(widget.token);
+    
     if (data != null && mounted) {
       setState(() {
         _balance = data['available_balance']?.toString() ?? "0";
         _loyaltyPoints = data['loyalty_points']?.toString() ?? "0";
         _walletCode = data['wallet_code'];
         _isPinSet = data['is_pin_set'] ?? false;
+        
+        if (wealthBagData != null) {
+          _hasWealthBag = wealthBagData['is_active'] ?? false;
+          _wealthBagBalance = wealthBagData['balance']?.toString() ?? "0";
+        }
+        
         _isLoadingBalance = false;
       });
       if (widget.isVerified && !_isPinSet) {
@@ -283,6 +301,74 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } else {
       if (mounted) setState(() => _isLoadingBalance = false);
+    }
+  }
+
+  void _handleWealthBagTap() async {
+    if (!widget.isVerified) {
+      _showKycDialog();
+      return;
+    }
+    if (!_isPinSet) {
+      _showSetWalletCodeDialog();
+      return;
+    }
+
+    if (_hasWealthBag) {
+      // Navigate directly if already opened
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WealthBagScreen(token: widget.token),
+        ),
+      ).then((_) => _fetchBalance());
+    } else {
+      // First time -> require PIN/Biometric
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => PinConfirmBottomSheet(
+          autoTriggerBiometric: true,
+          onPinEntered: (pin) async {
+            try {
+              final response = await _client.post(
+                Uri.parse(ApiConfig.verifyPin),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({'pin': pin}),
+              );
+
+              if (response.statusCode == 200) {
+                // Activate wealth bag
+                final WealthBagService wealthBagService = WealthBagService();
+                final result = await wealthBagService.activate(widget.token);
+                if (result != null) {
+                  setState(() {
+                    _hasWealthBag = true;
+                  });
+                  if (mounted) {
+                    Navigator.pop(context); // close bottom sheet
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WealthBagScreen(token: widget.token),
+                      ),
+                    ).then((_) => _fetchBalance());
+                  }
+                } else {
+                  return "Lỗi kích hoạt Túi Thần Tài";
+                }
+                return null;
+              } else {
+                final data = jsonDecode(response.body);
+                return data['error'] ?? "Mã PIN không chính xác";
+              }
+            } catch (e) {
+              return "Lỗi kết nối máy chủ";
+            }
+          },
+        ),
+      );
     }
   }
 
@@ -475,7 +561,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           activeLang: activeLang,
                           isLoading: _isLoadingBalance,
                           balance: _balance,
+                          wealthBagBalance: _wealthBagBalance,
                           onToggleVisibility: _fetchBalance,
+                          onWealthBagTap: _handleWealthBagTap,
                         ),
 
                         GestureDetector(
