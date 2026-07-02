@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenAI } = require('@google/genai');
 
 // Khởi tạo Supabase & Gemini (dùng @google/genai mới)
-const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:8000';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || 'dummy';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
