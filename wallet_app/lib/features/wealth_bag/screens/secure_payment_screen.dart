@@ -168,6 +168,10 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
     try {
       final response = await CustomHttpClient().post(
         Uri.parse(ApiConfig.wealthBagDeposit),
+        headers: {
+          'Idempotency-Key': DateTime.now().millisecondsSinceEpoch.toString(),
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode({
           'amount': widget.amount,
           'source': _selectedMethod == 'wallet' ? 'wallet' : 'linked_bank',

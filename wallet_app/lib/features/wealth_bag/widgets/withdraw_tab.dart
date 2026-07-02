@@ -5,6 +5,7 @@ import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
 import 'deposit_tab.dart'; // for CurrencyInputFormatter
 import 'limit_bottom_sheet.dart';
+import '../screens/withdraw_method_screen.dart';
 
 class WithdrawTab extends StatefulWidget {
   const WithdrawTab({super.key});
@@ -87,6 +88,31 @@ class _WithdrawTabState extends State<WithdrawTab> {
 
   bool get _isValid => _rawAmount >= 10000 && _rawAmount <= 50000000 && _rawAmount <= _wealthBagBalance;
 
+  Widget _buildQuickAmount(int amount) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _amountController.text = NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.');
+            _validateAmount();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ',
+            style: const TextStyle(color: Colors.black87, fontSize: 13),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -120,6 +146,7 @@ class _WithdrawTabState extends State<WithdrawTab> {
                       ),
                       const SizedBox(height: 16),
                       TextField(
+                        autofocus: true,
                         controller: _amountController,
                         keyboardType: TextInputType.number,
                         inputFormatters: [CurrencyInputFormatter()],
@@ -185,24 +212,46 @@ class _WithdrawTabState extends State<WithdrawTab> {
             color: Colors.white,
             boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
           ),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isValid ? Colors.deepOrange : Colors.grey.shade300,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _buildQuickAmount(100000),
+                  const SizedBox(width: 8),
+                  _buildQuickAmount(1000000),
+                  const SizedBox(width: 8),
+                  _buildQuickAmount(10000000),
+                ],
               ),
-              onPressed: _isValid ? () {} : null,
-              child: Text(
-                "Tiếp tục",
-                style: TextStyle(
-                  color: _isValid ? Colors.white : Colors.grey,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isValid ? Colors.deepOrange : Colors.grey.shade300,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: _isValid ? () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WithdrawMethodScreen(amount: _rawAmount),
+                      ),
+                    );
+                  } : null,
+                  child: Text(
+                    "Tiếp tục",
+                    style: TextStyle(
+                      color: _isValid ? Colors.white : Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         )
       ],

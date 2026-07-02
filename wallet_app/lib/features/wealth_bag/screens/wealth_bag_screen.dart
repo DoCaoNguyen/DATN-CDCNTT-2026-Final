@@ -6,6 +6,8 @@ import '../../../core/services/custom_http_client.dart';
 import '../services/wealth_bag_service.dart';
 import 'wealth_bag_transaction_screen.dart';
 
+import '../widgets/wealth_bag_history_tab.dart';
+
 class WealthBagScreen extends StatefulWidget {
   final String token;
 
@@ -77,9 +79,9 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Túi Thần Tài",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: Text(
+          _currentIndex == 1 ? "Lịch sử giao dịch" : "Túi Thần Tài",
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -98,7 +100,9 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator()) 
-          : (_isActive ? _buildDashboard() : _buildWelcome()),
+          : (_isActive 
+              ? (_currentIndex == 1 ? const WealthBagHistoryTab() : _buildDashboard()) 
+              : _buildWelcome()),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (idx) => setState(() => _currentIndex = idx),
@@ -116,10 +120,6 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: "Lịch sử",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: "Cộng đồng",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_task),

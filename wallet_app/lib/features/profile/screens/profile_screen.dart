@@ -106,8 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 16),
                 _buildScamTipsSection(),
                 const SizedBox(height: 16),
-                _buildCharitySection(),
-                const SizedBox(height: 16),
+
                 _buildMoreSettingsSection(),
                 _buildFooterSection(),
                 const SizedBox(height: 100), // Space for bottom nav bar
@@ -937,7 +936,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         const SizedBox(height: 16),
         const Text(
-          'Phiên bản 5.9.0 build 50900',
+          'Phiên bản 1.1.0 build 10100',
           style: TextStyle(
             fontSize: 11,
             color: Colors.black38,
