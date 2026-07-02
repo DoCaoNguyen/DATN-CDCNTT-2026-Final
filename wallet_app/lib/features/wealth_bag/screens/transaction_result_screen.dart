@@ -4,8 +4,15 @@ import 'package:intl/intl.dart';
 
 class TransactionResultScreen extends StatelessWidget {
   final int amount;
+  final bool isWithdraw;
+  final String methodName;
 
-  const TransactionResultScreen({super.key, required this.amount});
+  const TransactionResultScreen({
+    super.key, 
+    required this.amount, 
+    this.isWithdraw = false,
+    this.methodName = 'Ví Mio',
+  });
 
   String _formatAmount(int amount) {
     return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ';
@@ -67,9 +74,9 @@ class TransactionResultScreen extends StatelessWidget {
                     child: const Icon(Icons.check_circle, color: Colors.green, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  const Text("Giao dịch thành công", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(isWithdraw ? "Rút tiền thành công" : "Giao dịch thành công", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Text(_formatAmount(amount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                  Text(isWithdraw ? "-${_formatAmount(amount)}" : _formatAmount(amount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
                   const SizedBox(height: 24),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -79,11 +86,17 @@ class TransactionResultScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        _buildInfoRow("Dịch vụ/ Cửa hàng", "Túi Thần Tài"),
-                        const SizedBox(height: 12),
-                        _buildInfoRow("Giao dịch", _generateTransactionId(), valueColor: Colors.pink),
-                        const SizedBox(height: 12),
-                        _buildInfoRow("Thời gian thanh toán", _getCurrentTime()),
+                        if (isWithdraw) ...[
+                          _buildInfoRow("Rút tiền về", methodName),
+                          const SizedBox(height: 12),
+                          _buildInfoRow("Phí giao dịch", "Miễn phí"),
+                        ] else ...[
+                          _buildInfoRow("Dịch vụ/ Cửa hàng", "Túi Thần Tài"),
+                          const SizedBox(height: 12),
+                          _buildInfoRow("Giao dịch", _generateTransactionId(), valueColor: Colors.pink),
+                          const SizedBox(height: 12),
+                          _buildInfoRow("Thời gian thanh toán", _getCurrentTime()),
+                        ],
                       ],
                     ),
                   ),
@@ -111,7 +124,11 @@ class TransactionResultScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             onPressed: () {
-                              Navigator.of(context)..pop()..pop();
+                              if (isWithdraw) {
+                                Navigator.of(context)..pop()..pop()..pop();
+                              } else {
+                                Navigator.of(context)..pop()..pop();
+                              }
                             },
                             child: const Text("Túi Thần Tài", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           ),

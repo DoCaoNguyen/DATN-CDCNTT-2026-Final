@@ -35,12 +35,11 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
         final data = jsonDecode(response.body);
         if (data['data'] != null && data['data']['full_name'] != null) {
           setState(() {
-            _receiverName = "MOMO - TKTH ${data['data']['full_name'].toString().toUpperCase()}";
+            _receiverName = "MIO - TKTH ${data['data']['full_name'].toString().toUpperCase()}";
           });
         }
       }
     } catch (e) {
-      // Bỏ qua lỗi, giữ nguyên tên mặc định
     }
   }
 

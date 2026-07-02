@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const { v7: uuidv7 } = require('uuid');
 
 const wealthBagRepository = {
     getWealthBagStatus: async (userId) => {
@@ -57,14 +58,92 @@ const wealthBagRepository = {
                 throw new Error('Wealth_Bag_Not_Active');
             }
 
+            const updatedBag = bagRes.rows[0];
+            const newId = uuidv7();
+            await client.query(
+                `INSERT INTO wealth_bag_transactions (id, user_id, transaction_type, amount, balance_after, description) 
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [newId, userId, 'DEPOSIT', amount, updatedBag.balance, 'Nạp tiền']
+            );
+
             await client.query('COMMIT');
-            return bagRes.rows[0];
+            return updatedBag;
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
         } finally {
             client.release();
         }
+    },
+
+    withdrawFromWealthBag: async (userId, amount, destination) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const checkBagQuery = 'SELECT balance FROM user_wealth_bags WHERE user_id = $1 FOR UPDATE';
+            const bagRes = await client.query(checkBagQuery, [userId]);
+            
+            if (bagRes.rows.length === 0) {
+                throw new Error('Wealth_Bag_Not_Active');
+            }
+            if (parseFloat(bagRes.rows[0].balance) < parseFloat(amount)) {
+                throw new Error('Insufficient_Wealth_Bag_Balance');
+            }
+
+            const updateBagQuery = `
+                UPDATE user_wealth_bags 
+                SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $2 
+                RETURNING *
+            `;
+            const updatedBag = await client.query(updateBagQuery, [amount, userId]);
+            const bag = updatedBag.rows[0];
+
+            const newId = uuidv7();
+            await client.query(
+                `INSERT INTO wealth_bag_transactions (id, user_id, transaction_type, amount, balance_after, description) 
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [newId, userId, 'WITHDRAW', amount, bag.balance, destination === 'wallet' ? 'Rút tiền về Ví Mio' : 'Rút tiền về Ngân hàng']
+            );
+
+            if (destination === 'wallet') {
+                const walletQuery = 'SELECT id FROM wallets WHERE user_id = $1';
+                const walletRes = await client.query(walletQuery, [userId]);
+                if (walletRes.rows.length === 0) {
+                    throw new Error('Wallet_Not_Found');
+                }
+                const walletId = walletRes.rows[0].id;
+
+                await client.query(
+                    'UPDATE wallet_balances SET available_balance = available_balance + $1 WHERE wallet_id = $2',
+                    [amount, walletId]
+                );
+            }
+
+            await client.query('COMMIT');
+            return bag;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    getWealthBagHistory: async (userId, filters = {}) => {
+        let query = 'SELECT * FROM wealth_bag_transactions WHERE user_id = $1';
+        const params = [userId];
+        
+        if (filters.type && filters.type !== 'ALL') {
+            query += ' AND transaction_type = $2';
+            params.push(filters.type);
+        }
+        
+        query += ' ORDER BY created_at DESC LIMIT 50';
+        
+        const result = await pool.query(query, params);
+        return result.rows;
     },
 };
 

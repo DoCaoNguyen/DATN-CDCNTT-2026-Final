@@ -121,6 +121,51 @@ const wealthBagController = {
             console.error('Error generating QR:', error);
             res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
         }
+    },
+
+    withdraw: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const { amount, destination } = req.body; 
+
+            if (!amount || isNaN(amount) || amount < 1000) {
+                return res.status(400).json({ success: false, message: 'Số tiền không hợp lệ' });
+            }
+
+            const updatedBag = await wealthBagRepository.withdrawFromWealthBag(userId, amount, destination);
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Rút tiền thành công',
+                data: updatedBag
+            });
+        } catch (error) {
+            console.error('Error withdrawing from wealth bag:', error);
+            if (error.message === 'Insufficient_Wealth_Bag_Balance') {
+                return res.status(400).json({ success: false, message: 'Số dư Túi Thần Tài không đủ' });
+            }
+            if (error.message === 'Wealth_Bag_Not_Active') {
+                return res.status(400).json({ success: false, message: 'Túi Thần Tài chưa được kích hoạt' });
+            }
+            res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+        }
+    },
+
+    getHistory: async (req, res) => {
+        try {
+            const userId = req.user.userId;
+            const { type } = req.query; // 'ALL', 'DEPOSIT', 'WITHDRAW', 'PROFIT'
+
+            const history = await wealthBagRepository.getWealthBagHistory(userId, { type });
+
+            return res.status(200).json({
+                success: true,
+                data: history
+            });
+        } catch (error) {
+            console.error('Error fetching wealth bag history:', error);
+            res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+        }
     }
 };
 

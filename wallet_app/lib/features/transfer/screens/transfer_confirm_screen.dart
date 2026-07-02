@@ -88,6 +88,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.transfer));
       request.headers['Authorization'] = 'Bearer ${widget.token}';
       request.headers['ngrok-skip-browser-warning'] = 'true';
+      request.headers['Idempotency-Key'] = _refCode ?? DateTime.now().millisecondsSinceEpoch.toString();
 
       request.fields['receiver_identifier'] = widget.receiverPhone;
       request.fields['amount'] = cleanAmount;

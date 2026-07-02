@@ -10,7 +10,7 @@ class AppVersionFooter extends StatelessWidget {
       children: [
         const SizedBox(height: 16),
         const Text(
-          'Phiên bản 5.9.0 build 50900',
+          'Phiên bản 1.1.0 build 10100',
           style: TextStyle(fontSize: 11, color: Colors.black38),
         ),
         const SizedBox(height: 16),
