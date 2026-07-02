@@ -42,9 +42,6 @@ const paymentController = {
         if (!qr_token) return res.status(400).json({ error: 'Thiếu mã QR Token' });
         if (!pin) return res.status(400).json({ error: 'Vui lòng nhập mã PIN để xác nhận thanh toán' });
 
-        // Lấy file ảnh khuôn mặt nếu có (cho giao dịch >= 30 triệu)
-        const faceImagePath = req.file ? req.file.path : null;
-
         try {
             // Truyền pin + faceImagePath để xác thực bảo mật trước khi trừ tiền
             const result = await paymentService.processQrPayment(userId, qr_token, pin, faceImagePath);
