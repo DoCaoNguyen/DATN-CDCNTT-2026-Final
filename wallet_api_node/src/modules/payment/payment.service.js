@@ -3,6 +3,8 @@ const pool = require('../../config/db');
 const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
 const traceEventService = require('../system/trace_event.service');
+const { verifyTransactionSecurity } = require('../../utils/security.util');
+const kycService = require('../kyc/kyc.service');
 
 const paymentService = {
     createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
@@ -53,7 +55,19 @@ const paymentService = {
         }
     },
 
-    processQrPayment: async (userId, qrToken) => {
+    processQrPayment: async (userId, qrToken, pin, faceImagePath) => {
+        // Xác thực PIN/Face trước khi xử lý thanh toán
+        const wallet = await txRepo.getWalletByUserId(userId);
+        if (!wallet) throw new Error('Wallet_Not_Found');
+
+        // Lấy thông tin đơn hàng để biết số tiền (dùng cho ngưỡng face verification)
+        const previewOrder = await paymentRepo.getOrderByQrToken(qrToken);
+        if (!previewOrder) throw new Error('Order_Not_Found');
+        const orderAmount = BigInt(previewOrder.amount);
+
+        const walletForPin = await txRepo.getWalletForPinCheck(userId);
+        await verifyTransactionSecurity(orderAmount, pin, faceImagePath, walletForPin, userId, txRepo, kycService);
+
         const client = await pool.connect();
 
         try {
@@ -65,10 +79,6 @@ const paymentService = {
             if (!order) throw new Error('Order_Not_Found');
             if (new Date() > new Date(order.expired_at)) throw new Error('QR_Expired');
             if (order.status !== 'PENDING') throw new Error('Order_Already_Processed');
-
-            
-            const wallet = await txRepo.getWalletByUserId(userId);
-            if (!wallet) throw new Error('Wallet_Not_Found');
 
             
             const balanceBefore = await txRepo.lockAndGetBalance(client, wallet.id);

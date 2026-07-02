@@ -57,11 +57,11 @@ const walletController = {
         
         try {
     
-            const newWalletCode = await walletService.setWalletCode(userId, cleanCode);
+            await walletService.setWalletCode(userId, cleanCode);
             
             res.status(200).json({ 
-                message: 'Tạo mã ví thành công', 
-                wallet_code: newWalletCode 
+                success: true,
+                message: 'Tạo mã ví thành công'
             });
 
         } catch (error) {

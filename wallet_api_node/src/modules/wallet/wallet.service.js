@@ -70,7 +70,7 @@ const walletService = {
                 throw new Error('Wallet_Not_Found');
             }
             
-            return pinCode;
+            return true;
 
         } catch (error) {
             throw error; 

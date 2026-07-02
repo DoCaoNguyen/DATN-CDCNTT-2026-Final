@@ -6,7 +6,11 @@ let io;
 const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: "*",
+            origin: [
+                'http://localhost:3000',
+                'http://localhost:8000',
+                'https://nonoily-overinfluential-deegan.ngrok-free.dev'
+            ],
             methods: ["GET", "POST"]
         }
     });

@@ -70,7 +70,7 @@ Câu trả lời của bạn:
 
     // 5. Gửi Prompt cho Gemini để sinh câu trả lời
     const chatResult = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-lite',
+      model: 'gemini-pro-latest',
       contents: prompt,
     });
     const answer = chatResult.text;

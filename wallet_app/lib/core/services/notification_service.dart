@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
@@ -164,9 +166,8 @@ class NotificationService {
       return;
     }
 
-    // Kiểm tra có auth token không
-    final prefs = await SharedPreferences.getInstance();
-    final String? authToken = prefs.getString('auth_token');
+    const secureStorage = FlutterSecureStorage();
+    final authToken = await secureStorage.read(key: 'access_token');
     if (authToken == null || authToken.isEmpty) {
       debugPrint("Không thể gửi Token lên server: Thiếu AuthToken.");
       return;

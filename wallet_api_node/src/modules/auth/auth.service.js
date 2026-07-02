@@ -382,9 +382,9 @@ const authService = {
             ipAddress,
             userAgent
         });
+        // Bỏ lộ reset_token ra response HTTP
         return {
-            accepted: true,
-            ...(process.env.NODE_ENV === 'production' ? {} : { reset_token: rawToken })
+            accepted: true
         };
     },
 

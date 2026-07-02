@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/home_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../wealth_bag/services/wealth_bag_service.dart';
-import '../wealth_bag/screens/wealth_bag_screen.dart';
+import '../../wealth_bag/services/wealth_bag_service.dart';
+import '../../wealth_bag/screens/wealth_bag_screen.dart';
 
 import '../../auth/kyc/screens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
@@ -64,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingBalance = true;
   int _unreadCount = 0;
   String _fullName = "Bạn";
+  bool _isWealthBagAuthenticated = false;
 
   SocketService? _socketService;
   final _client = CustomHttpClient();
@@ -262,9 +263,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatAmountValue(String value) {
-    final number = int.tryParse(value);
-    if (number == null) return "${value}đ";
-    return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+    final amount = double.tryParse(value);
+    if (amount == null) return "${value}đ";
+
+    if (amount == amount.toInt()) {
+      return "${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+    }
+    String formatted = amount.toStringAsFixed(2);
+    while (formatted.endsWith('0') && formatted.contains('.')) {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+    if (formatted.endsWith('.')) {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+    List<String> parts = formatted.split('.');
+    String intPart = parts[0].replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    if (parts.length > 1) return "$intPart,${parts[1]}đ";
+    return "$intPartđ";
   }
 
   Future<void> _fetchBalance() async {
@@ -314,31 +329,35 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    if (_hasWealthBag) {
-      // Navigate directly if already opened
+    if (_isWealthBagAuthenticated && _hasWealthBag) {
+      // Navigate directly if already authenticated in this session
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => WealthBagScreen(token: widget.token),
         ),
       ).then((_) => _fetchBalance());
-    } else {
-      // First time -> require PIN/Biometric
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => PinConfirmBottomSheet(
-          autoTriggerBiometric: true,
-          onPinEntered: (pin) async {
-            try {
-              final response = await _client.post(
-                Uri.parse(ApiConfig.verifyPin),
-                headers: {'Content-Type': 'application/json'},
-                body: jsonEncode({'pin': pin}),
-              );
+      return;
+    }
 
-              if (response.statusCode == 200) {
+    // Require PIN/Biometric authentication
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PinConfirmBottomSheet(
+        autoTriggerBiometric: true,
+        onPinEntered: (pin) async {
+          try {
+            final response = await _client.post(
+              Uri.parse(ApiConfig.verifyPin),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'pin': pin}),
+            );
+
+            if (response.statusCode == 200) {
+              _isWealthBagAuthenticated = true;
+              if (!_hasWealthBag) {
                 // Activate wealth bag
                 final WealthBagService wealthBagService = WealthBagService();
                 final result = await wealthBagService.activate(widget.token);
@@ -358,18 +377,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   return "Lỗi kích hoạt Túi Thần Tài";
                 }
-                return null;
               } else {
-                final data = jsonDecode(response.body);
-                return data['error'] ?? "Mã PIN không chính xác";
+                // Already has wealth bag, just navigate
+                if (mounted) {
+                  Navigator.pop(context); // close bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WealthBagScreen(token: widget.token),
+                    ),
+                  ).then((_) => _fetchBalance());
+                }
               }
-            } catch (e) {
-              return "Lỗi kết nối máy chủ";
+              return null;
+            } else {
+              final data = jsonDecode(response.body);
+              return data['error'] ?? "Mã PIN không chính xác";
             }
-          },
-        ),
-      );
-    }
+          } catch (e) {
+            return "Lỗi kết nối máy chủ";
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _fetchUnreadCount() async {

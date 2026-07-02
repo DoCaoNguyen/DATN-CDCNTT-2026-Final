@@ -3,7 +3,7 @@ class ApiConfig {
   // Dùng 10.0.2.2 cho máy ảo Android
   // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
   static const String baseUrl =
-      'https://batboy-buffalo-backspin.ngrok-free.dev/api/v1';
+      'https://orectic-noctilucent-ronan.ngrok-free.dev/api/v1';
 
   static String get socketUrl {
     final uri = Uri.parse(baseUrl);
@@ -26,6 +26,7 @@ class ApiConfig {
   // --- WEALTH BAG ENDPOINTS ---
   static const String wealthBagStatus = '$baseUrl/wealth-bag/status';
   static const String wealthBagActivate = '$baseUrl/wealth-bag/activate';
+  static const String wealthBagDeposit = '$baseUrl/wealth-bag/deposit';
 
   // --- KYC ENDPOINTS ---
   static const String verifyKyc = '$baseUrl/kyc/verify';

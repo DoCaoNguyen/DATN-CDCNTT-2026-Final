@@ -64,8 +64,9 @@ function errorHandler(err, req, res, next) {
         return failure(req, res, status, code, message);
     }
 
-    // Default error
-    return failure(req, res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống không xác định. Vui lòng thử lại sau.', err.message);
+    // Default error — KHÔNG trả về err.message để tránh lộ thông tin nội bộ
+    console.error('Unhandled error:', err.message, err.stack);
+    return failure(req, res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống không xác định. Vui lòng thử lại sau.');
 }
 
 module.exports = errorHandler;

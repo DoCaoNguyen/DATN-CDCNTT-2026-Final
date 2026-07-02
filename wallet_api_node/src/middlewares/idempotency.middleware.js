@@ -5,7 +5,9 @@ const redis = require('../config/redis');
 const withIdempotency = async (req, res, next) => {
     const idempotencyKey = req.headers['idempotency-key'];
     if (!idempotencyKey) {
-        return next();
+        return res.status(400).json({ 
+            error: 'Thiếu header Idempotency-Key. Bắt buộc cho giao dịch tài chính.' 
+        });
     }
     try {
         const existingRecord = await idempotencyRepo.findByKey(idempotencyKey);

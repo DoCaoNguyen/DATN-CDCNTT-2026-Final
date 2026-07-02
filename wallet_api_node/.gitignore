@@ -3,5 +3,8 @@ node_modules/
 .env
 
 serviceAccountKey.json
+serViceAccountKey.json
+*AccountKey*.json
+*.json.bak
 
 uploads
