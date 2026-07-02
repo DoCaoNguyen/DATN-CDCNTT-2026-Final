@@ -107,7 +107,6 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
                   const SizedBox(height: 24),
                   _buildSectionTitle('Tài khoản/thẻ thanh toán'),
                   _buildPaymentAccounts(),
-                  
                   const SizedBox(height: 40),
                 ],
               ),
@@ -195,7 +194,7 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
                     const Text('Tên gợi nhớ', style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Text('Hạn mức $formattedLimit/ngày', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
-                ),
+                ), 
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,

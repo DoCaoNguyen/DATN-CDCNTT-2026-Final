@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 const { createClient } = require('@supabase/supabase-js');
 const { RecursiveCharacterTextSplitter } = require('@langchain/textsplitters');
 
@@ -15,14 +15,17 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Khởi tạo Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Khởi tạo Gemini API (dùng @google/genai mới)
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Hàm lấy vector embedding từ Gemini API
 async function getEmbedding(text) {
-  const model = genAI.getGenerativeModel({ model: "embedding-001" });
-  const result = await model.embedContent(text);
-  return result.embedding.values;
+  const result = await ai.models.embedContent({
+    model: 'gemini-embedding-001',
+    contents: text,
+    config: { outputDimensionality: 768 },
+  });
+  return result.embeddings[0].values;
 }
 
 async function main() {
@@ -56,9 +59,14 @@ async function main() {
 
   console.log(`Đã tìm thấy ${files.length} file. Đã chia thành ${allChunks.length} đoạn nhỏ (chunks).`);
 
-  // Xóa dữ liệu cũ (tùy chọn - nếu bạn muốn reset lại mỗi lần chạy)
-  // const { error: deleteError } = await supabase.from('help_documents').delete().neq('id', 0);
-  // if(deleteError) console.log("Lỗi xóa dữ liệu cũ:", deleteError);
+  // Xóa dữ liệu cũ trước khi upload mới để tránh trùng lặp
+  console.log('Đang xóa dữ liệu cũ trước khi upload...');
+  const { error: deleteError } = await supabase.from('help_documents').delete().neq('id', 0);
+  if (deleteError) {
+    console.error("Lỗi xóa dữ liệu cũ:", deleteError);
+  } else {
+    console.log('✅ Đã xóa dữ liệu cũ thành công.');
+  }
 
   // Đẩy từng đoạn lên Supabase
   for (let i = 0; i < allChunks.length; i++) {
