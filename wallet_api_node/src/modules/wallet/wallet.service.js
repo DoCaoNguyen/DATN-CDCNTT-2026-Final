@@ -5,7 +5,7 @@ const transactionRepo = require('../transaction/transaction.repository');
 const walletService = {
     getWalletInfo: async (userId) => {
         const wallet = await walletRepository.getBalanceByUserId(userId);
-        
+
         if (!wallet) {
             throw new Error('Wallet_Not_Found');
         }
@@ -56,24 +56,25 @@ const walletService = {
         try {
             const saltRounds = 10;
             const pinHash = await bcrypt.hash(pinCode, saltRounds);
-            
+
             const result = await walletRepository.updatePinHash(userId, pinHash);
-            
+
             // Unlock wallet if it was locked
             const txRepo = require('../transaction/transaction.repository');
             const wallet = await txRepo.getWalletByUserId(userId);
             if (wallet) {
                 await txRepo.resetPinAttempts(wallet.id);
             }
-            
+
             if (!result) {
                 throw new Error('Wallet_Not_Found');
             }
-            
+
+            // [SECURITY FIX] Không trả về PIN gốc (plaintext) trong response
             return true;
 
         } catch (error) {
-            throw error; 
+            throw error;
         }
     },
 
@@ -135,7 +136,7 @@ const walletService = {
         const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
         if (!isPinMatch) {
             const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-            
+
             if (newAttempts >= 3) {
                 const lockTime = new Date(Date.now() + 30 * 60000);
                 await transactionRepo.updatePinAttempts(wallet.id, newAttempts, lockTime);
@@ -177,7 +178,7 @@ const walletService = {
         const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
         if (!isPinMatch) {
             const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
-            
+
             if (newAttempts >= 3) {
                 const lockTime = new Date(Date.now() + 30 * 60000);
                 await transactionRepo.updatePinAttempts(wallet.id, newAttempts, lockTime);

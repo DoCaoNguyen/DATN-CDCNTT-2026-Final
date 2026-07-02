@@ -35,8 +35,9 @@ const paymentController = {
     },
 
     processPayment: async (req, res) => {
-        const userId = req.user.userId; 
+        const userId = req.user.userId;
         const { qr_token, pin } = req.body;
+        const faceImagePath = req.file ? req.file.path : null;
 
         if (!qr_token) return res.status(400).json({ error: 'Thiếu mã QR Token' });
         if (!pin) return res.status(400).json({ error: 'Vui lòng nhập mã PIN để xác nhận thanh toán' });
@@ -45,6 +46,7 @@ const paymentController = {
         const faceImagePath = req.file ? req.file.path : null;
 
         try {
+            // Truyền pin + faceImagePath để xác thực bảo mật trước khi trừ tiền
             const result = await paymentService.processQrPayment(userId, qr_token, pin, faceImagePath);
             res.status(200).json({
                 message: 'Thanh toán thành công',
@@ -259,7 +261,7 @@ const paymentController = {
             });
         } catch (error) {
             console.error('Lỗi đổi điểm Loyalty:', error);
-            
+
             const errorMap = {
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
                 'Insufficient_Points': 'Số dư Xu không đủ để đổi thẻ này',
@@ -299,7 +301,7 @@ const paymentController = {
             });
         } catch (error) {
             console.error('Lỗi Nạp tiền điện thoại:', error);
-            
+
             const errorMap = {
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
                 'Insufficient_Balance': 'Số dư không đủ để thực hiện giao dịch',

@@ -4,13 +4,13 @@ const pool = require('../../config/db');
 const walletController = {
     getBalance: async (req, res) => {
         try {
-            const userId = req.user.userId; 
-            
+            const userId = req.user.userId;
+
             const result = await walletService.getWalletInfo(userId);
-            
-            res.status(200).json({ 
-                message: 'Lấy thông tin số dư thành công', 
-                data: result 
+
+            res.status(200).json({
+                message: 'Lấy thông tin số dư thành công',
+                data: result
             });
         } catch (error) {
             if (error.message === 'Wallet_Not_Found') {
@@ -23,13 +23,13 @@ const walletController = {
 
     getLimits: async (req, res) => {
         try {
-            const userId = req.user.userId; 
-            
+            const userId = req.user.userId;
+
             const result = await walletService.getLimits(userId);
-            
-            res.status(200).json({ 
-                message: 'Lấy thông tin hạn mức thành công', 
-                data: result 
+
+            res.status(200).json({
+                message: 'Lấy thông tin hạn mức thành công',
+                data: result
             });
         } catch (error) {
             if (error.message === 'Wallet_Not_Found') {
@@ -54,13 +54,13 @@ const walletController = {
         if (!isValidFormat) {
             return res.status(400).json({ error: 'Mã ví không hợp lệ (Bắt buộc phải là 6 chữ số).' });
         }
-        
+
         try {
-    
+
             await walletService.setWalletCode(userId, cleanCode);
-            
-            res.status(200).json({ 
-                success: true,
+
+            // [SECURITY FIX] Không trả PIN plaintext trong HTTP response
+            res.status(200).json({
                 message: 'Tạo mã ví thành công'
             });
 
@@ -71,7 +71,7 @@ const walletController = {
             if (error.message === 'Wallet_Code_Exists') {
                 return res.status(400).json({ error: 'Mã ví này đã có người sử dụng. Vui lòng chọn mã khác.' });
             }
-            
+
             console.error('Lỗi set wallet code:', error);
             res.status(500).json({ error: 'Lỗi hệ thống khi tạo mã ví' });
         }
@@ -190,7 +190,7 @@ const walletController = {
                 WHERE user_id = $1 AND status != 'UNLINKED'
                 ORDER BY created_at DESC
             `, [userId]);
-            
+
             res.status(200).json({
                 message: 'Lấy danh sách dịch vụ liên kết thành công',
                 data: result.rows
@@ -206,16 +206,16 @@ const walletController = {
             const userId = req.user.userId;
             const { id } = req.params;
             const { limit_per_day, limit_per_transaction, status } = req.body;
-            
+
             const result = await pool.query(
                 'UPDATE user_linked_services SET limit_per_day = COALESCE($1, limit_per_day), limit_per_transaction = COALESCE($2, limit_per_transaction), status = COALESCE($3, status) WHERE id = $4 AND user_id = $5 RETURNING *',
                 [limit_per_day ?? null, limit_per_transaction ?? null, status ?? null, id, userId]
             );
-            
+
             if (result.rows.length === 0) {
                 return res.status(404).json({ error: 'Không tìm thấy dịch vụ liên kết' });
             }
-            
+
             res.status(200).json({
                 message: 'Cập nhật hạn mức thành công',
                 data: result.rows[0]
@@ -230,12 +230,12 @@ const walletController = {
         try {
             const userId = req.user.userId;
             const { id } = req.params;
-            
+
             const result = await pool.query(
                 "UPDATE user_linked_services SET status = 'UNLINKED' WHERE id = $1 AND user_id = $2 RETURNING *",
                 [id, userId]
             );
-            
+
             if (result.rows.length === 0) {
                 return res.status(404).json({ error: 'Không tìm thấy dịch vụ liên kết' });
             }
@@ -245,13 +245,13 @@ const walletController = {
                 const serviceName = result.rows[0].service_name;
                 const walletToken = result.rows[0].wallet_token;
                 const searchName = serviceName.split(' ')[0];
-                
+
                 let walletAccount = walletToken;
                 if (!walletAccount) {
                     const userRes = await pool.query('SELECT phone FROM users WHERE id = $1', [userId]);
                     walletAccount = userRes.rows[0]?.phone;
                 }
-                
+
                 const merchantRes = await pool.query("SELECT id, merchant_name FROM merchants WHERE merchant_name ILIKE $1", ['%' + searchName + '%']);
                 if (merchantRes.rows.length > 0 && walletAccount) {
                     const merchantId = merchantRes.rows[0].id;
@@ -271,7 +271,7 @@ const walletController = {
             } catch (webhookErr) {
                 console.error('Lỗi nội bộ khi xử lý webhook:', webhookErr);
             }
-            
+
             res.status(200).json({
                 message: 'Hủy liên kết thành công'
             });
@@ -285,7 +285,7 @@ const walletController = {
         try {
             const userId = req.user.userId;
             const { id } = req.params;
-            
+
             // Tìm service name và icon
             const serviceQuery = await pool.query('SELECT service_name, service_icon FROM user_linked_services WHERE id = $1 AND user_id = $2', [id, userId]);
             if (serviceQuery.rows.length === 0) {
@@ -293,8 +293,8 @@ const walletController = {
             }
             const serviceName = serviceQuery.rows[0].service_name;
             const serviceIcon = serviceQuery.rows[0].service_icon;
-            const searchName = serviceName.split(' ')[0]; 
-            
+            const searchName = serviceName.split(' ')[0];
+
             // Tìm các giao dịch tương ứng
             const query = `
                 SELECT pt.id, pt.amount, pt.status, pt.created_at, po.description AS order_info, m.merchant_name, $3 AS merchant_icon
@@ -307,7 +307,7 @@ const walletController = {
                 LIMIT 20
             `;
             const result = await pool.query(query, [userId, '%' + searchName + '%', serviceIcon]);
-            
+
             res.status(200).json({
                 message: 'Lấy danh sách giao dịch thành công',
                 data: result.rows

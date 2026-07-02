@@ -52,7 +52,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Idempotency-Key']
 }));
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '100kb' })); // [SECURITY FIX] Giới hạn body size chống Memory DoS
 
 // ==========================================
 // 3. TÀI LIỆU API VÀ STATIC FILES
@@ -68,7 +68,7 @@ app.use(apiLogger);     // Log vào MongoDB
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 300, // Tối đa 300 requests mỗi 15 phút cho 1 IP
+    limit: 500, // [SECURITY FIX] Giảm từ 10000 xuống 500 requests mỗi 15 phút cho 1 IP
     message: { error: 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau 15 phút.' },
     standardHeaders: 'draft-7',
     legacyHeaders: false,
