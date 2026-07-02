@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../../../core/constants/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/custom_http_client.dart';
+import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DeepLinkPaymentConfirmScreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
     }
   }
 
-  Future<void> _processPayment() async {
+  Future<void> _processPayment(String pin) async {
     setState(() {
       _isProcessing = true;
     });
@@ -65,6 +66,7 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
         Uri.parse(ApiConfig.processPayment),
         body: jsonEncode({
           'qr_token': widget.qrToken,
+          'pin': pin,
         }),
       );
 
@@ -87,6 +89,26 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
         _isProcessing = false;
       });
     }
+  }
+
+  void _showPinAndPay() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (pinSheetCtx) => PinConfirmBottomSheet(
+        onPinEntered: (pin) async {
+          try {
+            if (!mounted) return null;
+            Navigator.pop(pinSheetCtx);
+            await _processPayment(pin);
+            return null;
+          } catch (e) {
+            return "Lỗi kết nối máy chủ";
+          }
+        },
+      ),
+    );
   }
 
   void _showSuccessAndReturn() {
@@ -246,7 +268,7 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _isProcessing ? null : _processPayment,
+                onPressed: _isProcessing ? null : _showPinAndPay,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryPink,
                   foregroundColor: Colors.white,

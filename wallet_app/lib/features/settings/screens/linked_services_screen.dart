@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'linked_service_detail_screen.dart';
 
 class LinkedServicesScreen extends StatefulWidget {
   const LinkedServicesScreen({Key? key}) : super(key: key);
@@ -106,7 +107,6 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
                   const SizedBox(height: 24),
                   _buildSectionTitle('Tài khoản/thẻ thanh toán'),
                   _buildPaymentAccounts(),
-                  
                   const SizedBox(height: 40),
                 ],
               ),
@@ -154,13 +154,25 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
         final formattedLimit = currencyFormatter.format(num.tryParse(limit.toString()) ?? 5000000);
         final iconUrl = item['service_icon'] ?? 'https://cdn-icons-png.flaticon.com/512/2875/2875364.png';
         
-        return Container(
-          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
+        return InkWell(
+          onTap: () async {
+            final shouldRefresh = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LinkedServiceDetailScreen(service: item),
+              ),
+            );
+            if (shouldRefresh == true) {
+              _fetchLinkedServices();
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
           child: Row(
             children: [
               ClipRRect(
@@ -182,7 +194,7 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
                     const Text('Tên gợi nhớ', style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Text('Hạn mức $formattedLimit/ngày', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
-                ),
+                ), 
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -204,8 +216,9 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
               )
             ],
           ),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 

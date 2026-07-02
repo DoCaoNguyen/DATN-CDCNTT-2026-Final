@@ -43,8 +43,15 @@ const ERROR_MAPPINGS = {
     'Self_Transfer_Not_Allowed': [400, 'SELF_TRANSFER', 'Không thể tự chuyển tiền cho chính mình'],
     'Receiver_Not_KYC': [403, 'RECEIVER_NOT_KYC', 'Người nhận chưa xác thực danh tính (KYC). Giao dịch bị từ chối!'],
     'Invalid_Amount': [400, 'INVALID_AMOUNT', 'Số tiền không hợp lệ'],
-    'Daily_Limit_Exceeded': [400, 'DAILY_LIMIT_EXCEEDED', 'Giao dịch vượt quá hạn mức nạp tiền trong ngày.'],
-    
+    'Daily_Limit_Exceeded': [400, 'DAILY_LIMIT_EXCEEDED', 'Giao dịch vượt quá hạn mức trong ngày.'],
+    'Monthly_Limit_Exceeded': [400, 'MONTHLY_LIMIT_EXCEEDED', 'Giao dịch vượt quá hạn mức trong tháng.'],
+
+    // [SECURITY FIX] Error codes mới từ bản vá bảo mật
+    'Auto_Debit_Not_Authorized': [403, 'AUTO_DEBIT_NOT_AUTHORIZED', 'Người dùng chưa ủy quyền thanh toán tự động cho dịch vụ này.'],
+    'Auto_Debit_Transaction_Limit_Exceeded': [400, 'AUTO_DEBIT_LIMIT_EXCEEDED', 'Giao dịch tự động vượt quá hạn mức cho phép.'],
+    'Upload_Invalid_File_Type': [400, 'INVALID_FILE_TYPE', 'Chỉ chấp nhận file ảnh (JPEG, PNG, WebP).'],
+    'PIN_Not_Set': [400, 'PIN_NOT_SET', 'Bạn chưa cài đặt mã PIN cho ví.'],
+
     // Auth Interceptor/Config
     'Auth_Config_Missing': [500, 'SERVER_ERROR', 'Lỗi cấu hình server bảo mật']
 };
@@ -64,8 +71,10 @@ function errorHandler(err, req, res, next) {
         return failure(req, res, status, code, message);
     }
 
-    // Default error
-    return failure(req, res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống không xác định. Vui lòng thử lại sau.', err.message);
+    // [SECURITY FIX] Không trả err.message gốc trong production — tránh lộ cấu trúc DB/query
+    const isProduction = process.env.NODE_ENV === 'production';
+    const debugInfo = isProduction ? undefined : err.message;
+    return failure(req, res, 500, 'INTERNAL_SERVER_ERROR', 'Lỗi hệ thống không xác định. Vui lòng thử lại sau.', debugInfo);
 }
 
 module.exports = errorHandler;

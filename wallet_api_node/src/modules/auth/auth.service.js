@@ -334,7 +334,7 @@ const authService = {
 
     changePassword: async ({ userId, currentPassword, newPassword, confirmNewPassword, ipAddress, userAgent }) => {
         if (newPassword !== confirmNewPassword) throw new Error('Password_Confirm_Not_Match');
-        
+
         const user = await authRepository.findById(userId);
         if (!user) throw new Error('User_Not_Found');
 
@@ -346,7 +346,7 @@ const authService = {
 
         if (!await bcrypt.compare(currentPassword, user.password_hash)) throw new Error('Current_Password_Invalid');
         if (await bcrypt.compare(newPassword, user.password_hash)) throw new Error('Password_Must_Be_Different');
-        
+
         const passwordHash = await bcrypt.hash(newPassword, 10);
         await authRepository.withTransaction(async client => {
             await authRepository.updatePassword(client, userId, passwordHash);
@@ -383,10 +383,9 @@ const authService = {
             ipAddress,
             userAgent
         });
-        return {
-            accepted: true,
-            ...(process.env.NODE_ENV === 'production' ? {} : { reset_token: rawToken })
-        };
+        // [SECURITY FIX] Luôn chỉ trả { accepted: true }, KHÔNG BAO GIỜ leak reset token trong response
+        // Token chỉ được gửi qua kênh an toàn (SMS/Email)
+        return { accepted: true };
     },
 
     resetPassword: async ({ resetToken, newPassword, confirmNewPassword, ipAddress, userAgent }) => {
@@ -509,7 +508,7 @@ const authService = {
         }
 
         const normalizedPhone = twilioVerifyService.formatPhoneForTwilio(phone);
-        
+
         return jwt.sign({
             sub: user.id,
             phone: normalizedPhone,
@@ -538,10 +537,10 @@ const authService = {
         if (!user) throw new Error('User_Not_Found');
 
         const passwordHash = await bcrypt.hash(newPassword, 10);
-        
+
         await authRepository.withTransaction(async client => {
             const status = user.status === 'PENDING_VERIFY' ? 'ACTIVE' : user.status;
-            
+
             await client.query(`
                 UPDATE users
                 SET password_hash = $1,
@@ -552,7 +551,7 @@ const authService = {
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = $3
             `, [passwordHash, status, userId]);
-            
+
             await authRepository.revokeAllUserRefreshTokens(client, userId, null);
         });
     }

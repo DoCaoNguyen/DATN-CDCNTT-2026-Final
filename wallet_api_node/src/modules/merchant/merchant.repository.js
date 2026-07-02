@@ -59,6 +59,10 @@ const merchantRepository = {
             client.release();
         }
     },
+
+    getMerchantProfile: async (merchantId) => {
+        // Hàm này đã được chuyển xuống dưới
+    },
     
     findUserByPhone: async (phone) => {
         const query = 'SELECT id FROM users WHERE phone = $1';
@@ -78,7 +82,7 @@ const merchantRepository = {
     },
 
     getLinkedService: async (userId, serviceName) => {
-        const query = 'SELECT limit_per_day FROM user_linked_services WHERE user_id = $1 AND service_name LIKE $2 LIMIT 1';
+        const query = 'SELECT limit_per_day, limit_per_transaction, status FROM user_linked_services WHERE user_id = $1 AND service_name LIKE $2 LIMIT 1';
         const result = await pool.query(query, [userId, '%' + serviceName + '%']);
         return result.rows.length > 0 ? result.rows[0] : null;
     },
@@ -157,14 +161,18 @@ const merchantRepository = {
 
     getMerchantProfile: async (merchantId) => {
         const query = `
-            SELECT m.id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone, m.email, m.address, m.status,
-                   mcc.default_callback_url, mcc.default_redirect_url, mcc.callback_enabled, mcc.retry_enabled
+            SELECT m.id AS merchant_id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone AS contact_phone, m.email, m.address, m.status,
+                   mcc.default_callback_url AS callback_url, mcc.default_redirect_url, mcc.callback_enabled, mcc.retry_enabled,
+                   k.api_key, k.api_secret_hash AS secret_key
             FROM merchants m
             LEFT JOIN merchant_callback_configs mcc ON m.id = mcc.merchant_id
+            LEFT JOIN merchant_api_keys k ON m.id = k.merchant_id
             WHERE m.id = $1
+            ORDER BY k.created_at DESC
+            LIMIT 1
         `;
         const result = await pool.query(query, [merchantId]);
-        return result.rows[0];
+        return result.rows.length > 0 ? result.rows[0] : null;
     },
 
     updateCallbackConfig: async (merchantId, data) => {
