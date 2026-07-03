@@ -126,6 +126,27 @@ const logsRepository = {
         const total = await db.collection('api_request_logs').countDocuments(query);
         
         return { items, total, page: Number(page), limit: Number(limit) };
+    },
+
+    // ==========================================
+    // 5. WEBHOOK LOGS (Truy vết Webhook)
+    // ==========================================
+    getWebhookLogs: async ({ page = 1, limit = 20, q }) => {
+        const db = mongoose.connection.db;
+        if (!db) throw new Error('Chưa kết nối MongoDB');
+
+        const skip = (Math.max(1, page) - 1) * limit;
+        const query = {}; // Bỏ service_name vì bảng này chỉ chứa webhook log
+        
+        if (q) {
+            query['metadata.transaction_id'] = { $regex: q, $options: 'i' };
+        }
+        
+        const items = await db.collection('webhook_attempt_logs')
+            .find(query).sort({ created_at: -1 }).skip(skip).limit(Number(limit)).toArray();
+        const total = await db.collection('webhook_attempt_logs').countDocuments(query);
+        
+        return { items, total, page: Number(page), limit: Number(limit) };
     }
 };
 
