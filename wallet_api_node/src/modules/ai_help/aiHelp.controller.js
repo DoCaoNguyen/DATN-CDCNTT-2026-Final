@@ -1,6 +1,9 @@
 const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenAI } = require('@google/genai');
 
+// Fix for Node 20 (Supabase requires WebSocket)
+global.WebSocket = require('ws');
+
 // Khởi tạo Supabase & Gemini (dùng @google/genai mới)
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;

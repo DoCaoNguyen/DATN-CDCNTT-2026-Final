@@ -44,7 +44,7 @@ const merchantsController = {
     approveMerchant: async (req, res) => {
         try {
             const actor = { ...req.user, ...getRequestMeta(req) };
-            const result = await merchantsService.approveMerchant(req.params.id, req.body.reason, actor);
+            const result = await merchantsService.approveMerchant(req.params.id, (req.body || {}).reason, actor);
             return success(res, result, 'Duyet merchant thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin approve merchant:');
@@ -54,7 +54,7 @@ const merchantsController = {
     rejectMerchant: async (req, res) => {
         try {
             const actor = { ...req.user, ...getRequestMeta(req) };
-            const result = await merchantsService.rejectMerchant(req.params.id, req.body.reason, actor);
+            const result = await merchantsService.rejectMerchant(req.params.id, (req.body || {}).reason, actor);
             return success(res, result, 'Tu choi merchant thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin reject merchant:');
@@ -64,7 +64,7 @@ const merchantsController = {
     suspendMerchant: async (req, res) => {
         try {
             const actor = { ...req.user, ...getRequestMeta(req) };
-            const result = await merchantsService.suspendMerchant(req.params.id, req.body.reason, actor);
+            const result = await merchantsService.suspendMerchant(req.params.id, (req.body || {}).reason, actor);
             return success(res, result, 'Dinh chi merchant thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin suspend merchant:');
@@ -74,7 +74,7 @@ const merchantsController = {
     activateMerchant: async (req, res) => {
         try {
             const actor = { ...req.user, ...getRequestMeta(req) };
-            const result = await merchantsService.activateMerchant(req.params.id, req.body.reason, actor);
+            const result = await merchantsService.activateMerchant(req.params.id, (req.body || {}).reason, actor);
             return success(res, result, 'Kich hoat lai merchant thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin activate merchant:');
@@ -113,7 +113,7 @@ const merchantsController = {
     revokeApiKey: async (req, res) => {
         try {
             const actor = { ...req.user, ...getRequestMeta(req) };
-            const result = await merchantsService.revokeApiKey(req.params.id, req.params.keyId, req.body.reason, actor);
+            const result = await merchantsService.revokeApiKey(req.params.id, req.params.keyId, (req.body || {}).reason, actor);
             return success(res, result, 'Thu hoi API key thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin revoke merchant API key:');
