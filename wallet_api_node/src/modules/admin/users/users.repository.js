@@ -40,8 +40,19 @@ const usersRepository = {
             where.push(`u.status = $${params.length}::user_status`);
         }
         if (userType) {
-            params.push(userType);
-            where.push(`u.user_type = $${params.length}::user_type`);
+            // Hỗ trợ cả chuỗi đơn ('USER') và chuỗi CSV ('ADMIN,SUPPORT_STAFF')
+            const types = Array.isArray(userType)
+                ? userType
+                : userType.split(',').map(t => t.trim()).filter(Boolean);
+
+            if (types.length === 1) {
+                params.push(types[0]);
+                where.push(`u.user_type = $${params.length}::user_type`);
+            } else if (types.length > 1) {
+                // Dùng ANY với mảng cast để lọc nhiều user_type cùng lúc
+                params.push(types);
+                where.push(`u.user_type = ANY($${params.length}::user_type[])`);
+            }
         }
 
         const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';

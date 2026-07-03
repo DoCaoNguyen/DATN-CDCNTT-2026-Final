@@ -22,16 +22,21 @@ const walletsService = {
 
     getWalletSummary: async (walletId) => {
         const wallet = await walletsService.getWalletDetail(walletId);
+        const stats = await walletsRepository.getWalletStats(walletId);
+        
         return {
             wallet_id: wallet.id,
             wallet_no: wallet.wallet_no,
             currency: wallet.currency,
             status: wallet.status,
             owner: wallet.user,
-            available_balance: wallet.available_balance,
-            locked_balance: wallet.locked_balance,
-            total_balance: wallet.total_balance,
-            balance_updated_at: wallet.balance_updated_at
+            balance: {
+                available_balance: wallet.available_balance,
+                locked_balance: wallet.locked_balance,
+                total_balance: wallet.total_balance,
+            },
+            balance_updated_at: wallet.balance_updated_at,
+            stats: stats
         };
     },
 
