@@ -19,4 +19,12 @@ router.post('/link-bank', walletController.linkBank);
 
 router.post('/verify-pin', walletController.verifyPin);
 
+router.get('/linked-services', walletController.getLinkedServices);
+
+router.patch('/linked-services/:id/limits', walletController.updateLinkedServiceLimits);
+
+router.delete('/linked-services/:id', walletController.unlinkService);
+
+router.get('/linked-services/:id/transactions', walletController.getLinkedServiceTransactions);
+
 module.exports = router;

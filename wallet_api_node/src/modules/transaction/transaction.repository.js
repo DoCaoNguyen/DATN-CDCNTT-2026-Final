@@ -319,7 +319,6 @@ const transactionRepository = {
                 lt.description,
                 lt.status,
                 lt.currency,
-                lt.metadata,
                 le.created_at,
                 wt.description AS transfer_note,
                 COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,

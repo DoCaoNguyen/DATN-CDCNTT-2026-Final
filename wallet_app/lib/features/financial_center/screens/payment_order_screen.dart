@@ -40,7 +40,7 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
       List<Map<String, dynamic>> methods = [
         {
           'id': 'wallet',
-          'name': 'Ví MoMo',
+          'name': 'Ví Mio',
           'iconData': Icons.account_balance_wallet,
           'iconColor': Colors.pink,
           'isEnabled': true,

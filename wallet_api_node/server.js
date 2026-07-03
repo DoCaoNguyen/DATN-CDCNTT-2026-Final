@@ -27,7 +27,7 @@ require('./src/modules/webhook/webhook.consumer');
 
 const app = express();
 const server = http.createServer(app);
-
+const PORT = process.env.PORT || 3000;
 // ==========================================
 // 1. KHỞI TẠO HỆ THỐNG CƠ BẢN
 // ==========================================
@@ -45,6 +45,7 @@ app.use(cors({
     origin: [
         'http://localhost:3000',
         'http://localhost:5173',
+        'http://localhost:5174',
         'https://admin.yourdomain.com',
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'
@@ -52,7 +53,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Idempotency-Key']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' })); // [SECURITY FIX] Giới hạn body size chống Memory DoS
 
 // ==========================================
 // 3. TÀI LIỆU API VÀ STATIC FILES
@@ -68,7 +69,7 @@ app.use(apiLogger);     // Log vào MongoDB
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 10000, // Tối đa 10000 requests mỗi 15 phút cho 1 IP (QUẢN LÝ ADMIN)
+    limit: 500, // [SECURITY FIX] Giảm từ 10000 xuống 500 requests mỗi 15 phút cho 1 IP
     message: { error: 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau 15 phút.' },
     standardHeaders: 'draft-7',
     legacyHeaders: false,
@@ -92,7 +93,6 @@ app.use(errorHandler); // Bắt các lỗi văng ra từ hệ thống
 // ==========================================
 // 7. KHỞI ĐỘNG SERVER
 // ==========================================
-const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
     console.log(`🚀 Server Node.js đang chạy tại cổng ${PORT}`);
 });

@@ -4,6 +4,7 @@ const walletRepository = require('../../wallet/wallet.repository');
 const authService = require('../../auth/auth.service');
 const auditLogService = require('../../system/audit_log.service');
 const { ensureWriteAccess, sanitizeUserInput, normalizeOptional, isSuperAdmin, SYSTEM_ROLES, withTransaction, writeAuditLog } = require('../_shared');
+const { sendStaffOnboardingEmail } = require('../../../shared/services/email.service');
 
 function deriveUserType(roleCodes) {
     if (!roleCodes || roleCodes.length === 0) return 'USER';
@@ -129,6 +130,10 @@ const usersService = {
         ensureWriteAccess(actor);
         const data = sanitizeUserInput(payload);
         
+        if (data.email) data.email = String(data.email).toLowerCase().trim();
+        if (data.phone && !String(data.phone).trim()) data.phone = null;
+        
+
         let roleCodes = [];
         if (data.roleCodes) {
             roleCodes = Array.isArray(data.roleCodes) ? data.roleCodes : [data.roleCodes];
@@ -147,15 +152,34 @@ const usersService = {
             if (!isSuperAdmin(actor)) throw new Error('Super_Admin_Required');
         }
 
+        const crypto = require('crypto');
+        if (!data.username && data.email) {
+            let baseUsername = data.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+            let isUnique = false;
+            let attempt = 0;
+            let finalUsername = baseUsername;
+            
+            while (!isUnique && attempt < 5) {
+                const conflict = await usersRepository.checkUserConflict({ username: finalUsername });
+                if (!conflict) {
+                    isUnique = true;
+                } else {
+                    attempt++;
+                    finalUsername = `${baseUsername}${crypto.randomBytes(2).toString('hex')}`;
+                }
+            }
+            if (!isUnique) throw new Error('Cannot_Generate_Unique_Username');
+            data.username = finalUsername;
+        }
         const conflict = await usersRepository.checkUserConflict({
             username: data.username,
             email: data.email,
-            phone: data.phone
+            phone: data.phone || null
         });
         if (conflict) throw new Error('User_Conflict');
 
-        const crypto = require('crypto');
-        const rawPassword = String(Math.floor(100000 + Math.random() * 900000));
+        const cryptoStr = require('crypto');
+        const rawPassword = cryptoStr.randomBytes(6).toString('hex');
         const passwordHash = await bcrypt.hash(rawPassword, 10);
         
         const isForceChangePassword = true;
@@ -195,7 +219,23 @@ const usersService = {
         });
 
         const user = await usersService.getUserDetail(created.userId);
-        return { ...user, temporary_password: rawPassword };
+        let emailSent = false;
+
+        if (data.email) {
+            emailSent = await sendStaffOnboardingEmail(data.email, {
+                fullName: data.fullName || data.username,
+                username: data.username,
+                password: rawPassword
+            });
+        }
+
+        const responseData = { ...user, email_sent: emailSent };
+        
+        if (process.env.RETURN_TEMP_PASSWORD === 'true') {
+            responseData.temporary_password = rawPassword;
+        }
+        
+        return responseData;
     },
 
     updateUser: async ({ actor, targetUserId, payload, actorId, ipAddress, userAgent }) => {

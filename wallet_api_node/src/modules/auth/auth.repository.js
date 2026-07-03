@@ -78,7 +78,7 @@ const authRepository = {
                    is_kyc_verified, token_version, created_at, updated_at,
                    is_force_change_password, temporary_password_expires_at
             FROM users
-            WHERE username = $1 OR email = $1 OR phone = $1
+            WHERE username = $1 OR LOWER(email) = LOWER($1) OR phone = $1
             LIMIT 1
         `, [loginId]);
         return result.rows[0];

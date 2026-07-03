@@ -45,10 +45,10 @@ const merchantsValidator = {
                 error_code: 'Validation_Error'
             });
         }
-        if (!owner_info || !owner_info.full_name || !owner_info.username || (!owner_info.email && !owner_info.phone)) {
+        if (!owner_info || !owner_info.full_name || !owner_info.username || !owner_info.email) {
              return res.status(400).json({
                 success: false,
-                message: 'owner_info with full_name, username, and email/phone is required',
+                message: 'owner_info with full_name, username, and email is required (email la bat buoc doi voi merchant)',
                 error_code: 'Validation_Error'
             });
         }

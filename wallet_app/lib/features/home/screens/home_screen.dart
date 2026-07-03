@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/home_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../wealth_bag/services/wealth_bag_service.dart';
+import '../../wealth_bag/screens/wealth_bag_screen.dart';
+
 import '../../auth/kyc/screens/kyc_flow_screen.dart';
 import '../../../core/utils/app_state.dart';
 import '../../../core/constants/api_config.dart';
@@ -53,12 +56,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final HomeService _homeService = HomeService();
   int _selectedIndex = 0;
   String _balance = "0";
+  String _wealthBagBalance = "0";
+  bool _hasWealthBag = false;
   String _loyaltyPoints = "0";
   String? _walletCode;
   bool _isPinSet = false;
   bool _isLoadingBalance = true;
   int _unreadCount = 0;
   String _fullName = "Bạn";
+  bool _isWealthBagAuthenticated = false;
 
   SocketService? _socketService;
   final _client = CustomHttpClient();
@@ -257,9 +263,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatAmountValue(String value) {
-    final number = int.tryParse(value);
-    if (number == null) return "${value}đ";
-    return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+    final amount = double.tryParse(value);
+    if (amount == null) return "${value}đ";
+
+    if (amount == amount.toInt()) {
+      return "${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
+    }
+    String formatted = amount.toStringAsFixed(2);
+    while (formatted.endsWith('0') && formatted.contains('.')) {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+    if (formatted.endsWith('.')) {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+    List<String> parts = formatted.split('.');
+    String intPart = parts[0].replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    if (parts.length > 1) return "$intPart,${parts[1]}đ";
+    return "$intPartđ";
   }
 
   Future<void> _fetchBalance() async {
@@ -267,13 +287,26 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _isLoadingBalance = false);
       return;
     }
+    
+    // Fetch wallet balance
     final data = await _homeService.fetchBalance(widget.token);
+    
+    // Fetch wealth bag status
+    final WealthBagService wealthBagService = WealthBagService();
+    final wealthBagData = await wealthBagService.getStatus(widget.token);
+    
     if (data != null && mounted) {
       setState(() {
         _balance = data['available_balance']?.toString() ?? "0";
         _loyaltyPoints = data['loyalty_points']?.toString() ?? "0";
         _walletCode = data['wallet_code'];
         _isPinSet = data['is_pin_set'] ?? false;
+        
+        if (wealthBagData != null) {
+          _hasWealthBag = wealthBagData['is_active'] ?? false;
+          _wealthBagBalance = wealthBagData['balance']?.toString() ?? "0";
+        }
+        
         _isLoadingBalance = false;
       });
       if (widget.isVerified && !_isPinSet) {
@@ -284,6 +317,89 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       if (mounted) setState(() => _isLoadingBalance = false);
     }
+  }
+
+  void _handleWealthBagTap() async {
+    if (!widget.isVerified) {
+      _showKycDialog();
+      return;
+    }
+    if (!_isPinSet) {
+      _showSetWalletCodeDialog();
+      return;
+    }
+
+    if (_isWealthBagAuthenticated && _hasWealthBag) {
+      // Navigate directly if already authenticated in this session
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WealthBagScreen(token: widget.token),
+        ),
+      ).then((_) => _fetchBalance());
+      return;
+    }
+
+    // Require PIN/Biometric authentication
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PinConfirmBottomSheet(
+        autoTriggerBiometric: true,
+        onPinEntered: (pin) async {
+          try {
+            final response = await _client.post(
+              Uri.parse(ApiConfig.verifyPin),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'pin': pin}),
+            );
+
+            if (response.statusCode == 200) {
+              _isWealthBagAuthenticated = true;
+              if (!_hasWealthBag) {
+                // Activate wealth bag
+                final WealthBagService wealthBagService = WealthBagService();
+                final result = await wealthBagService.activate(widget.token);
+                if (result != null) {
+                  setState(() {
+                    _hasWealthBag = true;
+                  });
+                  if (mounted) {
+                    Navigator.pop(context); // close bottom sheet
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WealthBagScreen(token: widget.token),
+                      ),
+                    ).then((_) => _fetchBalance());
+                  }
+                } else {
+                  return "Lỗi kích hoạt Túi Thần Tài";
+                }
+              } else {
+                // Already has wealth bag, just navigate
+                if (mounted) {
+                  Navigator.pop(context); // close bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WealthBagScreen(token: widget.token),
+                    ),
+                  ).then((_) => _fetchBalance());
+                }
+              }
+              return null;
+            } else {
+              final data = jsonDecode(response.body);
+              return data['error'] ?? "Mã PIN không chính xác";
+            }
+          } catch (e) {
+            return "Lỗi kết nối máy chủ";
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _fetchUnreadCount() async {
@@ -475,7 +591,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           activeLang: activeLang,
                           isLoading: _isLoadingBalance,
                           balance: _balance,
+                          wealthBagBalance: _wealthBagBalance,
                           onToggleVisibility: _fetchBalance,
+                          onWealthBagTap: _handleWealthBagTap,
                         ),
 
                         GestureDetector(

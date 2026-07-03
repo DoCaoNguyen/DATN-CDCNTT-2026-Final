@@ -6,7 +6,13 @@ let io;
 const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: "*",
+            // [SECURITY FIX] Thay "*" bằng whitelist domain cụ thể (đồng bộ với HTTP CORS)
+            origin: [
+                'http://localhost:3000',
+                'http://localhost:5173',
+                'https://admin.yourdomain.com',
+                'https://merchant.yourdomain.com'
+            ],
             methods: ["GET", "POST"]
         }
     });
@@ -14,7 +20,7 @@ const initSocket = (server) => {
     // Middleware xác thực socket bằng JWT
     io.use((socket, next) => {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
-        
+
         if (!token) {
             return next(new Error('Authentication error: No token provided'));
         }
@@ -48,7 +54,7 @@ const initSocket = (server) => {
 
                 const messageType = data.messageType || 'TEXT';
                 const msg = await transactionRepository.saveChatMessage(senderWallet.id, receiverWallet.id, data.content, messageType);
-                
+
                 // Format msg để đồng nhất với API
                 const formattedMsg = {
                     id: msg.id,

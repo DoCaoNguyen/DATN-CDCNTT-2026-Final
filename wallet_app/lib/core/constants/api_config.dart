@@ -23,6 +23,13 @@ class ApiConfig {
   static const String resetPassword = '$baseUrl/auth/reset-password';
   static const String exportTransaction = '$baseUrl/transaction/export';
 
+  // --- WEALTH BAG ENDPOINTS ---
+  static const String wealthBagStatus = '$baseUrl/wealth-bag/status';
+  static const String wealthBagActivate = '$baseUrl/wealth-bag/activate';
+  static const String wealthBagDeposit = '$baseUrl/wealth-bag/deposit';
+  static const String wealthBagWithdraw = '$baseUrl/wealth-bag/withdraw';
+  static const String wealthBagHistory = '$baseUrl/wealth-bag/history';
+
   // --- KYC ENDPOINTS ---
   static const String verifyKyc = '$baseUrl/kyc/verify';
   static const String getWalletBalance = '$baseUrl/wallet/balance';
@@ -41,6 +48,10 @@ class ApiConfig {
   static const String paymentPreview = '$baseUrl/payment/preview';
   static const String processPayment = '$baseUrl/payment/process';
   static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
+  static const String getLinkedServices = '$baseUrl/wallet/linked-services';
+  static String updateLinkedServiceLimits(String id) => '$baseUrl/wallet/linked-services/$id/limits';
+  static String unlinkService(String id) => '$baseUrl/wallet/linked-services/$id';
+  static String getLinkedServiceTransactions(String id) => '$baseUrl/wallet/linked-services/$id/transactions';
   static const String linkBank = '$baseUrl/wallet/link-bank';
   static const String verifyPin = '$baseUrl/wallet/verify-pin';
   static const String deposit = '$baseUrl/transaction/deposit';
@@ -58,4 +69,11 @@ class ApiConfig {
   static const String createRedPacket = '$baseUrl/red-packet/create';
   static String getRedPacketDetails(String id) => '$baseUrl/red-packet/$id';
   static String claimRedPacket(String id) => '$baseUrl/red-packet/$id/claim';
+
+  // --- MERCHANT ENDPOINTS ---
+  static const String generateAuthCode = '$baseUrl/merchant/auth-code/generate';
+  // --- AI ENDPOINTS ---
+  static const String chatWithAI = '$baseUrl/ai/chat';
+  static const String scanReceiptAI = '$baseUrl/ai/scan-receipt';
+  static const String askHelpCenter = '$baseUrl/help-center/ask';
 }

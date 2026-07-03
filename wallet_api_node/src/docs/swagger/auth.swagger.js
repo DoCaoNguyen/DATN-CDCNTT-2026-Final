@@ -109,11 +109,11 @@
  *           example: Password@123
  *     LoginRequest:
  *       type: object
- *       required: [login_id, password]
+ *       required: [username, password]
  *       properties:
- *         login_id:
+ *         username:
  *           type: string
- *           description: Username, email hoac so dien thoai
+ *           description: Tên đăng nhập, email hoặc số điện thoại
  *           example: "0900000001"
  *         password:
  *           type: string

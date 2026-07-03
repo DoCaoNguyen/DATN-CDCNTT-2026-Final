@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../financial_center_api/financial_center_api.dart';
 import 'package:intl/intl.dart';
+import 'package:wallet_app/features/bank/screens/bank_list_screen.dart';
+import '../../settings/screens/linked_services_screen.dart';
 import '../../bank/screens/bank_link_screen.dart';
 import 'payment_order_screen.dart';
 import '../widgets/financial_center_appbar_actions.dart';
@@ -11,8 +13,9 @@ import '../widgets/financial_center_appbar_actions.dart';
 class FinancialCenterScreen extends StatefulWidget {
   final String balance;
   final String token;
+  final int initialTabIndex;
 
-  const FinancialCenterScreen({Key? key, required this.balance, required this.token}) : super(key: key);
+  const FinancialCenterScreen({Key? key, required this.balance, required this.token, this.initialTabIndex = 0}) : super(key: key);
 
   @override
   State<FinancialCenterScreen> createState() => _FinancialCenterScreenState();
@@ -20,13 +23,14 @@ class FinancialCenterScreen extends StatefulWidget {
 
 class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
   bool _isBalanceVisible = true;
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   bool _isLoading = true;
   List<dynamic> _linkedBanks = [];
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTabIndex;
     _fetchLinkedBanks();
   }
 
@@ -288,7 +292,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                       _buildOverviewAssetItem(
                         iconData: Icons.account_balance_wallet,
                         iconColor: Colors.pink,
-                        title: 'Ví MoMo',
+                        title: 'Ví Mio',
                         value: displayBalance,
                         subtitle: '--',
                       ),
@@ -374,7 +378,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     ),
                   ),
                   // account items inside the card
-                  _buildAccountItem(iconData: Icons.account_balance_wallet, iconColor: Colors.pink, title: 'Ví MoMo', value: displayBalance, valueColor: Colors.black87),
+                  _buildAccountItem(iconData: Icons.account_balance_wallet, iconColor: Colors.pink, title: 'Ví Mio', value: displayBalance, valueColor: Colors.black87),
                   if (_isLoading)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
@@ -451,7 +455,28 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     },
                   ),
                   _buildDivider(),
-                  _buildUtilityRow(iconData: Icons.credit_score, iconColor: Colors.pink, title: 'Thông tin hạn mức', subtitle: 'Quản lý hạn mức giao dịch và nạp rút'),
+                  _buildUtilityRow(
+                    iconData: Icons.credit_score, 
+                    iconColor: Colors.pink, 
+                    title: 'Thông tin hạn mức', 
+                    subtitle: 'Quản lý hạn mức giao dịch và nạp rút',
+                    onTap: () {},
+                  ),
+                  _buildDivider(),
+                  _buildUtilityRow(
+                    iconData: Icons.receipt_long_rounded, 
+                    iconColor: Colors.pinkAccent, 
+                    title: 'Dịch vụ liên kết & Hóa đơn định kỳ', 
+                    subtitle: 'Quản lý dịch vụ liên kết và hóa đơn định kỳ',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LinkedServicesScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

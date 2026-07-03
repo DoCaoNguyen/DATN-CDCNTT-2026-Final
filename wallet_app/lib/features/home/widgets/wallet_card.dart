@@ -5,14 +5,18 @@ class WalletCard extends StatefulWidget {
   final String activeLang;
   final bool isLoading;
   final String balance;
+  final String wealthBagBalance;
   final VoidCallback? onToggleVisibility;
+  final VoidCallback? onWealthBagTap;
 
   const WalletCard({
     Key? key,
     required this.activeLang,
     required this.isLoading,
     required this.balance,
+    required this.wealthBagBalance,
     this.onToggleVisibility,
+    this.onWealthBagTap,
   }) : super(key: key);
 
   @override
@@ -97,6 +101,46 @@ class _WalletCardState extends State<WalletCard> {
                         ),
                       ),
               ],
+            ),
+          ),
+          Container(width: 1, height: 40, color: Colors.grey.shade300),
+          Expanded(
+            child: GestureDetector(
+              onTap: widget.onWealthBagTap,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag",
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.savings_rounded, color: Colors.orange, size: 14),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  widget.isLoading
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.pink,
+                          ),
+                        )
+                      : Text(
+                          _isBalanceVisible
+                              ? CurrencyFormatter.format(widget.wealthBagBalance)
+                              : "******",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                ],
+              ),
             ),
           ),
           Container(width: 1, height: 40, color: Colors.grey.shade300),

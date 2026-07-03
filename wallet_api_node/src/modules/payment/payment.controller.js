@@ -35,13 +35,16 @@ const paymentController = {
     },
 
     processPayment: async (req, res) => {
-        const userId = req.user.userId; 
-        const { qr_token } = req.body;
+        const userId = req.user.userId;
+        const { qr_token, pin } = req.body;
+        const faceImagePath = req.file ? req.file.path : null;
 
         if (!qr_token) return res.status(400).json({ error: 'Thiếu mã QR Token' });
+        if (!pin) return res.status(400).json({ error: 'Vui lòng nhập mã PIN để xác nhận thanh toán' });
 
         try {
-            const result = await paymentService.processQrPayment(userId, qr_token);
+            // Truyền pin + faceImagePath để xác thực bảo mật trước khi trừ tiền
+            const result = await paymentService.processQrPayment(userId, qr_token, pin, faceImagePath);
             res.status(200).json({
                 message: 'Thanh toán thành công',
                 data: result
@@ -52,8 +55,18 @@ const paymentController = {
                 'QR_Expired': 'Mã QR đã hết hạn, vui lòng tạo lại',
                 'Order_Already_Processed': 'Đơn hàng này đã được thanh toán hoặc đã hủy',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
-                'Insufficient_Balance': 'Số dư trong ví không đủ để thanh toán'
+                'Insufficient_Balance': 'Số dư trong ví không đủ để thanh toán',
+                'PIN_Required': 'Vui lòng nhập mã PIN để xác nhận',
+                'Wallet_Locked_PIN': 'Ví đã bị khóa do nhập sai PIN quá nhiều lần. Vui lòng thử lại sau 30 phút',
+                'Face_Verification_Required': 'Giao dịch trên 30 triệu yêu cầu xác thực khuôn mặt',
+                'Face_Verification_Failed': 'Xác thực khuôn mặt thất bại'
             };
+
+            // Xử lý lỗi sai PIN (Wrong_PIN_1, Wrong_PIN_2)
+            if (error.message && error.message.startsWith('Wrong_PIN_')) {
+                const remaining = error.message.split('_')[2];
+                return res.status(400).json({ error: `Mã PIN không đúng. Bạn còn ${remaining} lần thử` });
+            }
 
             if (errorMap[error.message]) {
                 return res.status(400).json({ error: errorMap[error.message] });
@@ -245,7 +258,7 @@ const paymentController = {
             });
         } catch (error) {
             console.error('Lỗi đổi điểm Loyalty:', error);
-            
+
             const errorMap = {
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
                 'Insufficient_Points': 'Số dư Xu không đủ để đổi thẻ này',
@@ -285,7 +298,7 @@ const paymentController = {
             });
         } catch (error) {
             console.error('Lỗi Nạp tiền điện thoại:', error);
-            
+
             const errorMap = {
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
                 'Insufficient_Balance': 'Số dư không đủ để thực hiện giao dịch',

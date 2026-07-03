@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
+import '../../bank/screens/deposit_withdraw_screen.dart';
 
 class AiChatScreen extends StatefulWidget {
   final String token;
@@ -124,6 +125,34 @@ class _AiChatScreenState extends State<AiChatScreen> {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số dư không đủ để thực hiện giao dịch này'), backgroundColor: Colors.red));
           return;
         }
+
+        if (intent == 'DEPOSIT') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DepositWithdrawScreen(
+                token: widget.token,
+                initialTab: 0,
+                initialAmount: amount.toString(),
+              ),
+            ),
+          );
+          _messageController.clear();
+          return;
+        } else if (intent == 'WITHDRAW') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DepositWithdrawScreen(
+                token: widget.token,
+                initialTab: 1,
+                initialAmount: amount.toString(),
+              ),
+            ),
+          );
+          _messageController.clear();
+          return;
+        }
       }
     }
 
@@ -136,20 +165,51 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
     try {
       final client = CustomHttpClient();
-      final response = await client.post(
-        Uri.parse('${ApiConfig.baseUrl}/ai/chat'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization':
-              'Bearer ${widget.token}', // CustomHttpClient will also inject latest token automatically
-        },
-        body: jsonEncode({'message': text}),
-      );
+      String? aiAnswer;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      // === Bước 1: Ưu tiên hỏi Help Center (RAG từ tài liệu đã training) ===
+      try {
+        final helpResponse = await client.post(
+          Uri.parse(ApiConfig.askHelpCenter),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'question': text}),
+        );
+
+        if (helpResponse.statusCode == 200) {
+          final helpData = jsonDecode(helpResponse.body);
+          final answer = helpData['answer']?.toString() ?? '';
+          // Kiểm tra xem Help Center có trả lời được không
+          if (answer.isNotEmpty && !answer.contains('chưa có thông tin')) {
+            aiAnswer = answer;
+          }
+        }
+      } catch (helpError) {
+        // Help Center lỗi → tiếp tục fallback sang AI tổng quát
+        debugPrint('Help Center error, falling back to general AI: $helpError');
+      }
+
+      // === Bước 2: Fallback sang AI tổng quát nếu Help Center không trả lời được ===
+      if (aiAnswer == null) {
+        final aiResponse = await client.post(
+          Uri.parse(ApiConfig.chatWithAI),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'message': text}),
+        );
+
+        if (aiResponse.statusCode == 200) {
+          final data = jsonDecode(aiResponse.body);
+          aiAnswer = data['data']?.toString() ?? 'Xin lỗi, mình không hiểu câu hỏi.';
+        }
+      }
+
+      // === Hiển thị kết quả ===
+      if (aiAnswer != null) {
         setState(() {
-          _messages.add(ChatMessage(text: data['data'], isUser: false));
+          _messages.add(ChatMessage(text: aiAnswer!, isUser: false));
           _isLoading = false;
         });
         _scrollToBottom();
@@ -157,8 +217,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         setState(() {
           _messages.add(
             ChatMessage(
-              text:
-                  "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.",
+              text: "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.",
               isUser: false,
             ),
           );
@@ -370,16 +429,22 @@ class _AiChatScreenState extends State<AiChatScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            GestureDetector(
-              onTap: _sendMessage,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(
-                  Icons.send_rounded,
-                  color: Colors.grey,
-                  size: 28,
-                ),
-              ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _messageController,
+              builder: (context, value, child) {
+                final hasText = value.text.trim().isNotEmpty;
+                return GestureDetector(
+                  onTap: hasText ? _sendMessage : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Icon(
+                      Icons.send_rounded,
+                      color: hasText ? Colors.pinkAccent : Colors.grey,
+                      size: 28,
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

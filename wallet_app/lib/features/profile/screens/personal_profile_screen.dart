@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/services/custom_http_client.dart';
 import '../../../core/utils/snackbar_utils.dart';
+import '../../../core/widgets/otp_input_widget.dart';
 
 class PersonalProfileScreen extends StatefulWidget {
   final String token;
@@ -585,128 +586,145 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   }
 
   void _showOtpDialog(String email) {
-    final TextEditingController otpController = TextEditingController();
+    String currentOtp = "";
     bool isLoading = false;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          builder: (context, setSheetState) {
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              title: const Text("Nhập mã OTP"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Mã OTP gồm 6 chữ số đã được gửi tới:\n$email",
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: otpController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 8,
-                    ),
-                    decoration: InputDecoration(
-                      counterText: "",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isLoading ? null : () => Navigator.pop(context),
-                  child: const Text(
-                    "Hủy",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Xác thực Email",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                          final otp = otpController.text.trim();
-                          if (otp.length != 6) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Vui lòng nhập đủ 6 số OTP"),
-                              ),
-                            );
-                            return;
-                          }
-
-                          setDialogState(() => isLoading = true);
-                          try {
-                            final client = CustomHttpClient();
-                            final response = await client.post(
-                              Uri.parse(
-                                "${ApiConfig.baseUrl}/users/email/verify-otp",
-                              ),
-                              body: jsonEncode({"email": email, "otp": otp}),
-                            );
-                            setDialogState(() => isLoading = false);
-
-                            if (response.statusCode == 200) {
-                              Navigator.pop(context);
-                              setState(() {
-                                _currentEmail = email;
-                              });
-                              SnackbarUtils.showSuccess(
-                                context,
-                                "Xác thực Email thành công!",
-                              );
-                            } else {
-                              final error =
-                                  jsonDecode(response.body)['error'] ??
-                                  "Mã OTP không hợp lệ";
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(error),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            setDialogState(() => isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Lỗi kết nối: $e")),
-                            );
-                          }
-                        },
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                    const SizedBox(height: 12),
+                    Text(
+                      "Mã OTP gồm 6 chữ số đã được gửi tới:\n$email",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    OtpInputWidget(
+                      length: 6,
+                      onChanged: (val) {
+                        currentOtp = val;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryPink,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        )
-                      : const Text(
-                          "Xác nhận",
-                          style: TextStyle(color: Colors.white),
+                          elevation: 0,
                         ),
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (currentOtp.length != 6) {
+                                  SnackbarUtils.showError(
+                                      context, "Vui lòng nhập đủ 6 số OTP");
+                                  return;
+                                }
+
+                                setSheetState(() => isLoading = true);
+                                try {
+                                  final client = CustomHttpClient();
+                                  final response = await client.post(
+                                    Uri.parse(
+                                      "${ApiConfig.baseUrl}/users/email/verify-otp",
+                                    ),
+                                    body: jsonEncode(
+                                        {"email": email, "otp": currentOtp}),
+                                  );
+                                  
+                                  if (!mounted) return;
+
+                                  if (response.statusCode == 200) {
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      _currentEmail = email;
+                                    });
+                                    SnackbarUtils.showSuccess(
+                                      context,
+                                      "Xác thực Email thành công!",
+                                    );
+                                  } else {
+                                    setSheetState(() => isLoading = false);
+                                    final error =
+                                        jsonDecode(response.body)['error'] ??
+                                            "Mã OTP không hợp lệ";
+                                    SnackbarUtils.showError(context, error);
+                                  }
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  setSheetState(() => isLoading = false);
+                                  SnackbarUtils.showError(
+                                    context,
+                                    "Lỗi kết nối mạng, vui lòng thử lại!",
+                                  );
+                                }
+                              },
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Xác nhận",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );

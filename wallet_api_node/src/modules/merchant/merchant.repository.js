@@ -59,11 +59,64 @@ const merchantRepository = {
             client.release();
         }
     },
+
+    getMerchantProfile: async (merchantId) => {
+        // Hàm này đã được chuyển xuống dưới
+    },
     
     findUserByPhone: async (phone) => {
         const query = 'SELECT id FROM users WHERE phone = $1';
         const result = await pool.query(query, [phone]);
         return result.rows.length > 0 ? result.rows[0].id : null;
+    },
+
+    getWalletIdByPhone: async (phone) => {
+        const query = `
+            SELECT w.id as wallet_id, u.id as user_id 
+            FROM users u 
+            JOIN wallets w ON u.id = w.user_id 
+            WHERE u.phone = $1 LIMIT 1
+        `;
+        const result = await pool.query(query, [phone]);
+        return result.rows.length > 0 ? result.rows[0] : null;
+    },
+
+    getLinkedService: async (userId, serviceName) => {
+        const query = 'SELECT limit_per_day, limit_per_transaction, status FROM user_linked_services WHERE user_id = $1 AND service_name LIKE $2 LIMIT 1';
+        const result = await pool.query(query, [userId, '%' + serviceName + '%']);
+        return result.rows.length > 0 ? result.rows[0] : null;
+    },
+
+    getDailyUsageForMerchant: async (walletId, merchantId) => {
+        const query = `
+            SELECT SUM(pt.amount) as total
+            FROM payment_transactions pt
+            JOIN payment_orders po ON pt.payment_order_id = po.id
+            WHERE pt.payer_wallet_id = $1 
+              AND po.merchant_id = $2 
+              AND pt.created_at >= CURRENT_DATE
+              AND pt.status = 'SUCCESS'
+        `;
+        const result = await pool.query(query, [walletId, merchantId]);
+        return result.rows.length > 0 && result.rows[0].total ? BigInt(result.rows[0].total) : 0n;
+    },
+
+    getUserPinHashByPhone: async (phone) => {
+        const query = 'SELECT pin_hash FROM users WHERE phone = $1 LIMIT 1';
+        const result = await pool.query(query, [phone]);
+        return result.rows.length > 0 ? result.rows[0].pin_hash : null;
+    },
+
+    getMerchantByApiKey: async (apiKey) => {
+        const query = `
+            SELECT m.id, m.merchant_name, mu.user_id as merchant_user_id 
+            FROM merchants m
+            JOIN merchant_api_keys mak ON m.id = mak.merchant_id
+            JOIN merchant_users mu ON m.id = mu.merchant_id
+            WHERE mak.api_key = $1 AND mu.is_owner = true LIMIT 1
+        `;
+        const result = await pool.query(query, [apiKey]);
+        return result.rows.length > 0 ? result.rows[0] : null;
     },
 
     checkMerchantExistsByUser: async (userId) => {
@@ -108,14 +161,18 @@ const merchantRepository = {
 
     getMerchantProfile: async (merchantId) => {
         const query = `
-            SELECT m.id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone, m.email, m.address, m.status,
-                   mcc.default_callback_url, mcc.default_redirect_url, mcc.callback_enabled, mcc.retry_enabled
+            SELECT m.id AS merchant_id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone AS contact_phone, m.email, m.address, m.status,
+                   mcc.default_callback_url AS callback_url, mcc.default_redirect_url, mcc.callback_enabled, mcc.retry_enabled,
+                   k.api_key, k.api_secret_hash AS secret_key
             FROM merchants m
             LEFT JOIN merchant_callback_configs mcc ON m.id = mcc.merchant_id
+            LEFT JOIN merchant_api_keys k ON m.id = k.merchant_id
             WHERE m.id = $1
+            ORDER BY k.created_at DESC
+            LIMIT 1
         `;
         const result = await pool.query(query, [merchantId]);
-        return result.rows[0];
+        return result.rows.length > 0 ? result.rows[0] : null;
     },
 
     updateCallbackConfig: async (merchantId, data) => {

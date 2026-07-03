@@ -318,6 +318,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
+          'Idempotency-Key': _currentTxRefCode ?? DateTime.now().millisecondsSinceEpoch.toString(),
         },
         body: jsonEncode(body),
       );
@@ -351,7 +352,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         return null;
       } else {
         final data = jsonDecode(response.body);
-        final String errorMessage = data['error'] ?? "Giao dịch không thành công.";
+        final String errorMessage = data['message'] ?? data['error'] ?? "Giao dịch không thành công.";
 
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa') || errorMessage.contains('PIN')) {
           return errorMessage;
@@ -382,6 +383,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
 
       var request = http.MultipartRequest('POST', Uri.parse(url));
       request.headers['Authorization'] = 'Bearer ${widget.token}';
+      request.headers['Idempotency-Key'] = _currentTxRefCode ?? DateTime.now().millisecondsSinceEpoch.toString();
       request.fields['amount'] = amountVal.toString();
       request.fields['external_reference'] = _currentTxRefCode ?? '';
       
@@ -423,7 +425,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         });
       } else {
         final data = jsonDecode(response.body);
-        final String errorMessage = data['error'] ?? "Xác thực khuôn mặt thất bại.";
+        final String errorMessage = data['message'] ?? data['error'] ?? "Xác thực khuôn mặt thất bại.";
         _showErrorSnackBar(errorMessage);
       }
     } catch (e) {
@@ -746,34 +748,32 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                         ),
                       ),
                     ),
-                    if (isDeposit) ...[
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.monetization_on_rounded, color: Colors.orange, size: 28),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Túi Thần Tài', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                    Text('Đến 4%/năm', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.w500)),
-                                  ],
-                                ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.monetization_on_rounded, color: Colors.orange, size: 28),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Túi Thần Tài', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  Text('Đến 4%/năm', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.w500)),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),

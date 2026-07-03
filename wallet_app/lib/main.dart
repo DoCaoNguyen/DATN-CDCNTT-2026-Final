@@ -10,7 +10,10 @@ import 'features/home/screens/home_screen.dart';
 import 'core/services/custom_http_client.dart';
 import 'core/services/socket_service.dart';
 import 'core/services/network_service.dart';
-
+import 'core/services/deep_link_service.dart';
+import 'dart:async';
+import 'package:app_links/app_links.dart';
+import 'features/auth/screens/wallet_link_confirm_screen.dart';
 import 'package:flutter/services.dart';
 
 void main() async {
@@ -45,6 +48,9 @@ void main() async {
     // Xin quyền hiển thị thông báo
     await NotificationService.instance.requestPermissions();
 
+    // Khởi tạo DeepLinkService
+    DeepLinkService().initialize();
+
     // Đọc thông tin phiên đăng nhập trước đó
     const secureStorage = FlutterSecureStorage();
     token = await secureStorage.read(key: 'access_token');
@@ -64,7 +70,7 @@ void main() async {
   runApp(MyApp(token: token, userId: userId, isVerified: isVerified));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final String? token;
   final String? userId;
   final bool isVerified;
@@ -72,13 +78,78 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key, this.token, this.userId, required this.isVerified});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+    
+    // Xử lý deep link khi app đang mở hoặc chạy nền
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+
+    // Cố gắng bắt link nếu app mở lần đầu bằng link
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        // Có độ trễ để đợi MaterialApp khởi tạo xong Navigator
+        Future.delayed(const Duration(seconds: 1), () {
+          _handleDeepLink(initialUri);
+        });
+      }
+    } catch (e) {
+      debugPrint("Lỗi đọc initial deeplink: $e");
+    }
+  }
+
+  String? _lastHandledUri;
+
+  void _handleDeepLink(Uri uri) {
+    final uriString = uri.toString();
+    if (_lastHandledUri == uriString) return; // Bỏ qua nếu là sự kiện trùng lặp
+    _lastHandledUri = uriString;
+
+    // Reset cờ sau 1 giây để cho phép mở lại link ở những lần sau
+    Future.delayed(const Duration(seconds: 1), () {
+      _lastHandledUri = null;
+    });
+
+    if (uri.scheme == 'mio' && uri.host == 'link') {
+      final merchant = uri.queryParameters['merchant'] ?? 'Đối tác';
+      // Mở màn hình xác nhận liên kết
+      CustomHttpClient.navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => WalletLinkConfirmScreen(merchantName: merchant),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Kiểm tra xem người dùng đã đăng nhập chưa
     final bool isLoggedIn =
-        token != null &&
-        token!.isNotEmpty &&
-        userId != null &&
-        userId!.isNotEmpty;
+        widget.token != null &&
+        widget.token!.isNotEmpty &&
+        widget.userId != null &&
+        widget.userId!.isNotEmpty;
 
     return MaterialApp(
       navigatorKey: CustomHttpClient.navigatorKey,
@@ -92,7 +163,7 @@ class MyApp extends StatelessWidget {
       ),
       routes: {'/login': (context) => const LoginPhoneScreen()},
       home: isLoggedIn
-          ? HomeScreen(userId: userId!, isVerified: isVerified, token: token!)
+          ? HomeScreen(userId: widget.userId!, isVerified: widget.isVerified, token: widget.token!)
           : const LoginPhoneScreen(),
     );
   }

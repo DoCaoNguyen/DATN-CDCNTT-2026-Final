@@ -4,7 +4,9 @@ const SystemLog = require('../system/models/system_log.model');
 const webhookService = {
     createLog: async (client, merchantId, transactionId, idempotencyKey, payload) => {
         try {
-            const newLog = await SystemLog.create({
+            // 1. [SAFE] Keep the original SystemLog creation just in case mobile/other services rely on it
+            const SystemLog = require('../system/models/system_log.model');
+            const oldLog = await SystemLog.create({
                 service_name: 'WebhookService',
                 log_level: 'INFO',
                 message: 'Webhook dispatched',
@@ -19,6 +21,36 @@ const webhookService = {
                     last_error: null
                 }
             });
+
+            // 2. Lookup payment_order_id from PostgreSQL using transactionId (which is paymentTxId)
+            let paymentOrderId = null;
+            if (transactionId) {
+                const query = `SELECT payment_order_id FROM payment_transactions WHERE id = $1`;
+                const result = await client.query(query, [transactionId]);
+                if (result.rows.length > 0) {
+                    paymentOrderId = result.rows[0].payment_order_id;
+                }
+            }
+
+            // 3. Create the new WebhookAttemptLog for Admin panel
+            const WebhookAttemptLog = require('./models/webhook_attempt_log.model');
+            const newLog = await WebhookAttemptLog.create({
+                old_pg_callback_id: oldLog._id.toString(), // Link them
+                event_id: payload.event_id || `EVT-${Date.now()}`,
+                event_type: payload.event_type || 'PAYMENT_SUCCESS',
+                merchant_id: merchantId,
+                payment_order_id: paymentOrderId || transactionId, // Fallback if lookup fails
+                payment_transaction_id: transactionId,
+                callback_url: payload.callback_url || '',
+                request_body: payload,
+                status: 'PENDING',
+                attempt_no: 0,
+                metadata: {
+                    idempotency_key: idempotencyKey
+                }
+            });
+
+            // We must return newLog ID because webhook.publisher uses it for retry logic!
             return newLog._id.toString();
         } catch (error) {
             console.error('[WebhookLog] Error creating log:', error);
@@ -28,10 +60,11 @@ const webhookService = {
 
     updateLogStatus: async (logId, status, lastError = null) => {
         try {
-            await SystemLog.findByIdAndUpdate(logId, {
+            const WebhookAttemptLog = require('./models/webhook_attempt_log.model');
+            await WebhookAttemptLog.findByIdAndUpdate(logId, {
                 $set: {
-                    'metadata.status': status,
-                    'metadata.last_error': lastError
+                    status: status,
+                    error_message: lastError
                 }
             });
         } catch (error) {
@@ -41,17 +74,18 @@ const webhookService = {
 
     incrementRetry: async (logId, lastError = null) => {
         try {
-            const updatedLog = await SystemLog.findByIdAndUpdate(
+            const WebhookAttemptLog = require('./models/webhook_attempt_log.model');
+            const updatedLog = await WebhookAttemptLog.findByIdAndUpdate(
                 logId,
                 {
-                    $inc: { 'metadata.retry_count': 1 },
-                    $set: { 'metadata.last_error': lastError }
+                    $inc: { attempt_no: 1 },
+                    $set: { error_message: lastError }
                 },
                 { returnDocument: 'after' } 
             );
             return {
-                retry_count: updatedLog.metadata.retry_count,
-                max_retries: updatedLog.metadata.max_retries
+                retry_count: updatedLog.attempt_no,
+                max_retries: 5
             };
         } catch (error) {
             console.error('[WebhookLog] Error incrementing retry:', error);
