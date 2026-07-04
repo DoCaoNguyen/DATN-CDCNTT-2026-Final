@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
+import '../../ai/screens/ai_chat_screen.dart';
 import 'split_bill_select_people_screen.dart';
 
 class SplitBillManagementScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen>
   List<dynamic> _receivables = [];
   List<dynamic> _payables = [];
   final Set<String> _remindedIds = {};
+  bool _showBanner = true;
 
   @override
   void initState() {
@@ -259,17 +261,17 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen>
             actions: [
               IconButton(
                 icon: const Icon(
-                  Icons.star_border_rounded,
-                  color: Colors.black54,
-                ),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(
                   Icons.headset_mic_rounded,
                   color: Colors.black54,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AiChatScreen(token: widget.token),
+                    ),
+                  );
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.home_rounded, color: Colors.black54),
@@ -286,72 +288,80 @@ class _SplitBillManagementScreenState extends State<SplitBillManagementScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Banner
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    shape: BoxShape.circle,
+          if (_showBanner)
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  child: const Icon(
-                    Icons.push_pin_rounded,
-                    color: Colors.blue,
-                    size: 20,
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.push_pin_rounded,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Ghim Chia tiền lên trang chủ để dễ dàng quản lý các yêu cầu chia tiền của bạn!",
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          "Thêm ngay",
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Ghim Chia tiền lên trang chủ để dễ dàng quản lý các yêu cầu chia tiền của bạn!",
                           style: TextStyle(
-                            color: Colors.pink.shade400,
-                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                             fontSize: 13,
+                            height: 1.4,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            "Thêm ngay",
+                            style: TextStyle(
+                              color: Colors.pink.shade400,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.close_rounded,
-                  color: Colors.black54,
-                  size: 18,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showBanner = false;
+                      });
+                    },
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.black54,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // Title
           const Padding(

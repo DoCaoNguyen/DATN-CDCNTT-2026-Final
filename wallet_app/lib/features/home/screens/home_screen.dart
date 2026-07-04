@@ -14,6 +14,7 @@ import '../widgets/wallet_card.dart';
 import '../widgets/services_grid.dart';
 import '../widgets/home_header.dart';
 import '../widgets/home_banners.dart';
+import '../widgets/home_monthly_expense.dart';
 import '../../financial_center/screens/financial_center_screen.dart';
 import 'qr_main_screen.dart';
 import 'notification_screen.dart';
@@ -65,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _unreadCount = 0;
   String _fullName = "Bạn";
   bool _isWealthBagAuthenticated = false;
+  Map<String, dynamic> _meData = {};
 
   SocketService? _socketService;
   final _client = CustomHttpClient();
@@ -418,6 +420,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (name != null && name.trim().isNotEmpty) {
         setState(() {
           _fullName = name.trim().split(' ').last;
+          _meData = data;
+        });
+      } else {
+        setState(() {
+          _meData = data;
         });
       }
     }
@@ -586,44 +593,59 @@ class _HomeScreenState extends State<HomeScreen> {
                           onDepositWithdraw: _handleDepositWithdrawClick,
                         ),
 
-                        // Đã thay thế thẻ ví cũ bằng Widget WalletCard
-                        WalletCard(
-                          activeLang: activeLang,
-                          isLoading: _isLoadingBalance,
-                          balance: _balance,
-                          wealthBagBalance: _wealthBagBalance,
-                          onToggleVisibility: _fetchBalance,
-                          onWealthBagTap: _handleWealthBagTap,
-                        ),
-
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FinancialCenterScreen(balance: _balance, token: widget.token),
-                              ),
-                            );
-                          },
-                          child: FinancialCenterBanner(
+                        // Thẻ Ví và Trung tâm tài chính hợp nhất
+                        Transform.translate(
+                          offset: const Offset(0, -10),
+                          child: WalletCard(
                             activeLang: activeLang,
+                            isLoading: _isLoadingBalance,
+                            balance: _balance,
+                            wealthBagBalance: _wealthBagBalance,
                             fullName: _fullName,
+                            onToggleVisibility: _fetchBalance,
+                            onWealthBagTap: _handleWealthBagTap,
+                            onFinancialCenterTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FinancialCenterScreen(balance: _balance, token: widget.token),
+                                ),
+                              );
+                            },
                           ),
                         ),
 
-                        // Đã thay thế Grid cũ bằng Widget ServicesGrid
-                        ServicesGrid(
-                          activeLang: activeLang,
-                          isVerified: widget.isVerified,
-                          token: widget.token,
-                          isPinSet: _isPinSet,
-                          onRequireKyc: _showKycDialog,
-                          onRequireWalletCode: _showSetWalletCodeDialog,
-                          onRefreshBalance: _fetchBalance,
+                        // Phần Tiện ích, Sự kiện, Đề xuất nằm trong container trắng phía dưới
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFFF5F5F5),
+                                Colors.white,
+                              ],
+                              stops: [0.0, 0.05], // Chuyển màu trong 5% chiều cao đầu tiên
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              ServicesGrid(
+                                activeLang: activeLang,
+                                isVerified: widget.isVerified,
+                                token: widget.token,
+                                isPinSet: _isPinSet,
+                                onRequireKyc: _showKycDialog,
+                                onRequireWalletCode: _showSetWalletCodeDialog,
+                                onRefreshBalance: _fetchBalance,
+                              ),
+                              HomeEventBanner(activeLang: activeLang, token: widget.token, me: _meData),
+                              HomeRecommendations(activeLang: activeLang, token: widget.token, me: _meData),
+                            ],
+                          ),
                         ),
-
-                        HomeEventBanner(activeLang: activeLang),
-                        HomeRecommendations(activeLang: activeLang),
+                        
+                        HomeMonthlyExpense(activeLang: activeLang, token: widget.token),
                         const SizedBox(height: 80),
                       ],
                     ),

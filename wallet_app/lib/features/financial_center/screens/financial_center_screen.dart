@@ -9,6 +9,7 @@ import '../../settings/screens/linked_services_screen.dart';
 import '../../bank/screens/bank_link_screen.dart';
 import 'payment_order_screen.dart';
 import '../widgets/financial_center_appbar_actions.dart';
+import '../../profile/screens/limit_info_screen.dart';
 
 class FinancialCenterScreen extends StatefulWidget {
   final String balance;
@@ -170,41 +171,6 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // Toggle Button (Tài sản / Phải trả)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 60),
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Tài sản',
-                          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Phải trả',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 24),
               const Text(
                 'Tổng tài sản',
@@ -309,21 +275,14 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                               iconData: Icons.account_balance,
                               iconColor: Colors.green,
                               title: bank['bank_name'] ?? 'Ngân hàng',
-                              value: 'Bấm xem số dư',
+                              value: '',
                               valueColor: AppColors.primaryPink,
                               subtitle: '--',
                             ),
                           ],
                         );
                       }).toList(),
-                      _buildDivider(),
-                      _buildOverviewAssetItem(
-                        iconData: Icons.pie_chart,
-                        iconColor: Colors.red,
-                        title: 'Tài sản còn lại',
-                        value: '--',
-                        subtitle: '--',
-                      ),
+
                     ],
                   ),
                 ),
@@ -460,7 +419,14 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     iconColor: Colors.pink, 
                     title: 'Thông tin hạn mức', 
                     subtitle: 'Quản lý hạn mức giao dịch và nạp rút',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LimitInfoScreen(token: widget.token),
+                        ),
+                      );
+                    },
                   ),
                   _buildDivider(),
                   _buildUtilityRow(

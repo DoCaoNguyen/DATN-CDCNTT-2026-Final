@@ -8,15 +8,13 @@ const connectMongoDB = async () => {
             return;
         }
 
-        const dbName = process.env.MONGODB_LOG_DB || 'ewallet_logs';
-        if (!uri.endsWith('/')) {
-            uri += '/';
+        const dbName = process.env.MONGODB_LOG_DB;
+        const options = {};
+        if (dbName) {
+            options.dbName = dbName;
         }
-        uri += dbName;
 
-        await mongoose.connect(uri, {
-            // Mongoose 6+ không cần các tùy chọn useNewUrlParser, useUnifiedTopology nữa
-        });
+        await mongoose.connect(uri, options);
 
         console.log('[MongoDB] Connected to MongoDB successfully.');
     } catch (error) {
