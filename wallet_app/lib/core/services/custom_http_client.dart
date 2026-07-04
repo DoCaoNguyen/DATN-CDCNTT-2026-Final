@@ -140,8 +140,26 @@ class CustomHttpClient extends http.BaseClient {
           return true;
         }
       }
+
+      // [SECURITY] Phát hiện token reuse → xóa token cục bộ ngay lập tức
+      // Đây là dấu hiệu bảo mật nghiêm trọng: có thể kẻ tấn công đã đánh cắp refresh token
+      if (response.statusCode == 401) {
+        try {
+          final errorData = jsonDecode(response.body);
+          final errorCode = errorData['error_code'] ?? '';
+          if (errorCode == 'REFRESH_TOKEN_REUSED') {
+            debugPrint('[SECURITY] Refresh token reuse detected! Xóa token cục bộ ngay.');
+            await _secureStorage.delete(key: 'access_token');
+            await _secureStorage.delete(key: 'refresh_token');
+          }
+        } catch (_) {
+          // Lỗi parse response không ảnh hưởng flow chính
+        }
+      }
+
       return false;
     } catch (e) {
+      debugPrint('[REFRESH_TOKEN] Lỗi khi refresh token: $e');
       return false;
     }
   }

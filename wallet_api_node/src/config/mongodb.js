@@ -8,11 +8,13 @@ const connectMongoDB = async () => {
             return;
         }
 
-        const dbName = process.env.MONGODB_LOG_DB || 'ewallet_logs';
+        const dbName = process.env.MONGODB_LOG_DB;
+        const options = {};
+        if (dbName) {
+            options.dbName = dbName;
+        }
 
-        await mongoose.connect(uri, {
-            dbName: dbName
-        });
+        await mongoose.connect(uri, options);
 
         console.log('[MongoDB] Connected to MongoDB successfully.');
     } catch (error) {

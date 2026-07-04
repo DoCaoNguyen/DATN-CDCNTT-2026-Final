@@ -198,41 +198,6 @@ class TransactionHistoryHeader extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
-          // Savings promo banner
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Text(
-                    "Bạn muốn tiết kiệm tiền hơn?",
-                    style: TextStyle(color: Colors.black87, fontSize: 12),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Tính năng Đặt ngân sách đang được phát triển!",
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    "Đặt ngân sách",
-                    style: TextStyle(
-                      color: Colors.pink,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

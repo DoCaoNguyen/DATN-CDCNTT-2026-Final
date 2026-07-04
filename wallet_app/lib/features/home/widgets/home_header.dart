@@ -112,7 +112,7 @@ class _HomeHeaderState extends State<HomeHeader> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFE0F7FA), Color(0xFFF1F8E9), Colors.white],
+          colors: [Color(0xFFE0F7FA), Color(0xFFF1F8E9)],
         ),
       ),
       padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 20),
@@ -516,11 +516,6 @@ class _HomeHeaderState extends State<HomeHeader> {
                   Icons.qr_code_scanner_rounded,
                   Colors.pink,
                   widget.activeLang == 'VIE' ? "QR Thanh toán" : "QR Pay",
-                ),
-                buildQuickAction(
-                  Icons.apps_rounded,
-                  Colors.pink,
-                  widget.activeLang == 'VIE' ? "Ví tiện ích" : "Utilities",
                 ),
               ],
             ),
