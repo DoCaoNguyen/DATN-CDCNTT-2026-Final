@@ -13,7 +13,7 @@ const merchantsValidator = {
     validateActionReason: (req, res, next) => {
         // reason is required for reject and suspend
         const action = req.path.split('/').pop(); // "approve", "reject", "suspend", "activate", "rotate", "revoke"
-        const reason = req.body.reason;
+        const reason = (req.body || {}).reason;
 
         if (['reject', 'suspend', 'revoke'].includes(action)) {
             if (!reason || typeof reason !== 'string' || reason.trim() === '') {
@@ -56,11 +56,19 @@ const merchantsValidator = {
     },
 
     validateCreateApiKey: (req, res, next) => {
-        const { key_name, environment } = req.body;
+        const body = req.body || {};
+        const { key_name, environment } = body;
         if (!key_name || !environment) {
             return res.status(400).json({
                 success: false,
                 message: 'key_name, environment are required',
+                error_code: 'Validation_Error'
+            });
+        }
+        if (!['SANDBOX', 'LIVE'].includes(environment)) {
+            return res.status(400).json({
+                success: false,
+                message: 'environment must be SANDBOX or LIVE',
                 error_code: 'Validation_Error'
             });
         }

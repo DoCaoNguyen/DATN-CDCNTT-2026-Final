@@ -18,7 +18,10 @@ const merchantsRepository = {
         const total = parseInt(countRes.rows[0].count, 10);
 
         const listQuery = `
-            SELECT id, merchant_code, merchant_name, business_type, email, phone, status, created_at
+            SELECT id, merchant_code, merchant_name, business_type, email, phone, status, created_at,
+                   EXISTS(SELECT 1 FROM merchant_api_keys mak WHERE mak.merchant_id = merchants.id AND mak.status = 'ACTIVE') as has_api_key,
+                   (SELECT default_callback_url FROM merchant_callback_configs mcc WHERE mcc.merchant_id = merchants.id LIMIT 1) as default_callback_url,
+                   (SELECT callback_enabled FROM merchant_callback_configs mcc WHERE mcc.merchant_id = merchants.id LIMIT 1) as callback_enabled
             FROM merchants
             WHERE ${whereClause}
             ORDER BY created_at DESC
@@ -220,7 +223,7 @@ const merchantsRepository = {
     updateApiKeyStatus: async (keyId, status, client = pool) => {
         const query = `
             UPDATE merchant_api_keys
-            SET status = $2, revoked_at = CASE WHEN $2 = 'REVOKED' THEN NOW() ELSE revoked_at END, updated_at = NOW()
+            SET status = $2::api_key_status, revoked_at = CASE WHEN $2::text = 'REVOKED' THEN NOW() ELSE revoked_at END, updated_at = NOW()
             WHERE id = $1
             RETURNING id, key_name, status, revoked_at
         `;
