@@ -20,22 +20,25 @@ const merchantController = {
                 return res.status(400).json({ error: 'Tên và số điện thoại đối tác là bắt buộc' });
             }
 
-            const apiKey = crypto.randomBytes(32).toString('hex');
-            const secretKey = crypto.randomBytes(32).toString('hex');
+            const rawApiKey = `pk_test_${crypto.randomBytes(12).toString('hex')}`;
+            const rawSecret = `sk_test_${crypto.randomBytes(24).toString('hex')}`;
+            
+            const pepper = process.env.API_SECRET_PEPPER || 'mio_pepper';
+            const secretHash = crypto.createHmac('sha256', pepper).update(rawSecret).digest('hex');
 
             const merchantData = {
                 merchant_name,
                 contact_phone,
                 callback_url,
                 user_id: userId,
-                secret_key: secretKey
+                secret_key: secretHash
             };
 
-            const merchantId = await merchantRepository.registerMerchant(merchantData, apiKey);
+            const merchantId = await merchantRepository.registerMerchant(merchantData, rawApiKey);
 
             res.status(201).json({
                 message: 'Đăng ký Merchant thành công',
-                data: { merchant_id: merchantId, api_key: apiKey, secret_key: secretKey }
+                data: { merchant_id: merchantId, api_key: rawApiKey, secret_key: rawSecret }
             });
         } catch (error) {
             console.error('Lỗi đăng ký merchant:', error);
@@ -172,7 +175,7 @@ const merchantController = {
             }
 
             const { keyId } = req.params;
-            const { reason } = req.body;
+            const { reason } = req.body || {};
             const ipAddress = req.ip || req.connection.remoteAddress;
             const userAgent = req.headers['user-agent'];
 
