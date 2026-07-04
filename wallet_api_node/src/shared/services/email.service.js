@@ -8,6 +8,10 @@ const createTransporter = () => {
         auth: {
             user: process.env.MAIL_USER,
             pass: process.env.MAIL_PASS
+        },
+        tls: {
+            // Do not fail on invalid certs (e.g. self-signed in local env)
+            rejectUnauthorized: false
         }
     });
 };

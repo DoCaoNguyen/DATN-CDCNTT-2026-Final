@@ -40,7 +40,11 @@ const merchantService = {
         if (!oldKey) throw new Error('Api_Key_Not_Found');
         if (oldKey.status === 'REVOKED') throw new Error('Api_Key_Already_Revoked');
 
-        const rawSecret = generateApiSecretSandbox();
+        const isLive = oldKey.environment === 'LIVE';
+        const rawSecret = isLive 
+            ? `sk_live_${crypto.randomBytes(24).toString('hex')}`
+            : `sk_test_${crypto.randomBytes(24).toString('hex')}`;
+            
         const secretHash = hashApiSecret(rawSecret);
 
         const updatedKey = await merchantRepository.updateApiSecretHash(keyId, secretHash);

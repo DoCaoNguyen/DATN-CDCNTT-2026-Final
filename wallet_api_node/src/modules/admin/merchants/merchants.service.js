@@ -192,36 +192,49 @@ const merchantsService = {
         ensureWriteAccess(actor);
         ensureUuid(id, 'Invalid_Merchant_Id');
 
-        const merchant = await merchantsRepository.findMerchantById(id);
-        if (!merchant) throw new Error('Merchant_Not_Found');
-        if (merchant.status !== 'ACTIVE') throw new Error('Merchant_Not_Active');
+        const pool = merchantsRepository.getPool();
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
 
-        const existingKeys = await merchantsRepository.getMerchantApiKeys(id);
-        const hasActiveKey = existingKeys.some(k => k.environment === data.environment && k.status === 'ACTIVE');
-        if (hasActiveKey) throw new Error(`Merchant already has an ACTIVE API Key for ${data.environment}`);
+            const merchant = await merchantsRepository.findMerchantById(id);
+            if (!merchant) throw new Error('Merchant_Not_Found');
+            if (merchant.status !== 'ACTIVE') throw new Error('Merchant_Not_Active');
 
-        const rawApiKey = generateApiKey(data.environment);
-        const rawSecret = generateApiSecret(data.environment);
-        const secretHash = hashApiSecret(rawSecret);
+            const existingKeys = await merchantsRepository.getMerchantApiKeys(id);
+            const hasActiveKey = existingKeys.some(k => k.environment === data.environment && k.status === 'ACTIVE');
+            if (hasActiveKey) throw new Error(`Merchant already has an ACTIVE API Key for ${data.environment}`);
 
-        const newKey = await merchantsRepository.createApiKey(id, data.key_name, rawApiKey, secretHash, data.environment);
+            const rawApiKey = generateApiKey(data.environment);
+            const rawSecret = generateApiSecret(data.environment);
+            const secretHash = hashApiSecret(rawSecret);
 
-        await writeAuditLog({
-            actorId: actor.userId,
-            action: 'merchant_api_key.create',
-            entityType: 'MERCHANT_API_KEY',
-            entityId: newKey.id,
-            oldData: null,
-            newData: { merchant_id: id, key_name: data.key_name, environment: data.environment },
-            ipAddress: actor.ipAddress,
-            userAgent: actor.userAgent
-        });
+            const newKey = await merchantsRepository.createApiKey(id, data.key_name, rawApiKey, secretHash, data.environment, client);
 
-        // Trả về duy nhất 1 lần
-        return {
-            ...newKey,
-            raw_secret: rawSecret
-        };
+            await writeAuditLog({
+                actorId: actor.userId,
+                action: 'merchant_api_key.create',
+                entityType: 'MERCHANT_API_KEY',
+                entityId: newKey.id,
+                oldData: null,
+                newData: { merchant_id: id, key_name: data.key_name, environment: data.environment },
+                ipAddress: actor.ipAddress,
+                userAgent: actor.userAgent
+            });
+
+            await client.query('COMMIT');
+            
+            // Trả về duy nhất 1 lần
+            return {
+                ...newKey,
+                raw_secret: rawSecret
+            };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     },
 
     rotateApiKey: async (id, keyId, actor) => {

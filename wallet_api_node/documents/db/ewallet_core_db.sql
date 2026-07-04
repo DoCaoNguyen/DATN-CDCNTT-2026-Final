@@ -1447,6 +1447,12 @@ ALTER TABLE ONLY public.merchant_api_keys
 ALTER TABLE ONLY public.merchant_api_keys
     ADD CONSTRAINT merchant_api_keys_pkey PRIMARY KEY (id);
 
+--
+-- Name: uq_merchant_api_keys_active_env; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX uq_merchant_api_keys_active_env ON public.merchant_api_keys USING btree (merchant_id, environment) WHERE ((status)::text = 'ACTIVE'::text);
+
 
 --
 -- TOC entry 5071 (class 2606 OID 35102)
