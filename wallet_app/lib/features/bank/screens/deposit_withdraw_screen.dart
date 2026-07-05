@@ -719,62 +719,30 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.pink.shade100, width: 1.5),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                              child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500, height: 1)),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                Text(_mioBalance, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                              ],
-                            ),
-                          ],
-                        ),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.pink.shade100, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
+                        child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500, height: 1)),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.monetization_on_rounded, color: Colors.orange, size: 28),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Túi Thần Tài', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                  Text('Đến 4%/năm', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.w500)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                          Text(_mioBalance, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
 

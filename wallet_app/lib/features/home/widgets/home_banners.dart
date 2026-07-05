@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-
+import '../../transfer/screens/transfer_main_screen.dart';
+import '../../bank/screens/bank_transfer_list_screen.dart';
+import '../../split_bill/screens/split_bill_management_screen.dart';
+import '../../topup/screens/topup_main_screen.dart';
 class FinancialCenterBanner extends StatelessWidget {
   final String activeLang;
   final String fullName;
@@ -51,84 +54,116 @@ class FinancialCenterBanner extends StatelessWidget {
 
 class HomeEventBanner extends StatelessWidget {
   final String activeLang;
+  final String token;
+  final Map<String, dynamic> me;
 
-  const HomeEventBanner({Key? key, required this.activeLang}) : super(key: key);
+  const HomeEventBanner({Key? key, required this.activeLang, required this.token, required this.me}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            activeLang == 'VIE' ? "Sự kiện đang diễn ra" : "Ongoing Events",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                activeLang == 'VIE' ? "Sự kiện đang diễn ra" : "Ongoing Events",
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                activeLang == 'VIE' ? "Xem tất cả" : "See all",
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFC62828)),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
-              height: 120,
               width: double.infinity,
-              color: Colors.red,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFC62828), Color(0xFFE53935)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
               child: Stack(
                 children: [
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: 0.2,
-                      child: Container(color: Colors.black),
+                  Positioned(
+                    right: -10,
+                    bottom: -20,
+                    child: Transform.rotate(
+                      angle: -0.2,
+                      child: Icon(
+                        Icons.receipt_long_rounded,
+                        size: 110,
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           activeLang == 'VIE'
-                              ? "Dùng Ví Trả Sau\nHoàn tiền 50%*"
-                              : "Use Postpaid Wallet\n50% Cashback*",
+                              ? "Chia tiền hóa đơn"
+                              : "Split Bill Easily",
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          activeLang == 'VIE'
-                              ? "Tối đa 10k mọi giao dịch từ 1-30/6"
-                              : "Max 10k for all transactions June 1-30",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.6,
+                          child: Text(
+                            activeLang == 'VIE'
+                                ? "Chia tiền hóa đơn giao dịch cho bạn bè khi thanh toán chung."
+                                : "Split your transaction bills with friends easily.",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SplitBillManagementScreen(token: token, me: me),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Text(
+                              activeLang == 'VIE' ? "Khám phá ngay" : "Explore Now",
+                              style: const TextStyle(
+                                color: Color(0xFFC62828),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        activeLang == 'VIE' ? "Khám phá ngay" : "Explore Now",
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -143,74 +178,82 @@ class HomeEventBanner extends StatelessWidget {
 
 class HomeRecommendations extends StatelessWidget {
   final String activeLang;
+  final String token;
+  final Map<String, dynamic> me;
 
-  const HomeRecommendations({Key? key, required this.activeLang})
+  const HomeRecommendations({Key? key, required this.activeLang, required this.token, required this.me})
     : super(key: key);
 
   Widget buildRecommendItem(
+    BuildContext context,
     IconData icon,
     String? badge,
     String title,
     Color color,
+    VoidCallback onTap,
   ) {
-    return Container(
-      width: 80,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        margin: const EdgeInsets.only(right: 12),
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(icon, color: color, size: 28),
                 ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              if (badge != null)
-                Positioned(
-                  top: -8,
-                  left: -5,
-                  right: -5,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      badge,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
+                if (badge != null)
+                  Positioned(
+                    top: -8,
+                    left: -5,
+                    right: -5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 2,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        badge,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11),
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.only(top: 8, bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,40 +273,74 @@ class HomeRecommendations extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 buildRecommendItem(
-                  Icons.campaign_rounded,
-                  activeLang == 'VIE' ? "Từ 220k" : "From 220k",
-                  activeLang == 'VIE'
-                      ? "Loa thông\nbáo chuyển ..."
-                      : "Payment\nSpeaker",
+                  context,
+                  Icons.send_rounded,
+                  null,
+                  activeLang == 'VIE' ? "Chuyển tiền" : "Transfer",
                   Colors.pink,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TransferMainScreen(token: token),
+                    ),
+                  ),
                 ),
                 buildRecommendItem(
-                  Icons.card_giftcard_rounded,
-                  activeLang == 'VIE' ? "Hoàn 50%" : "50% Back",
-                  activeLang == 'VIE'
-                      ? "Ví Trả Sau -\nHoàn 50%"
-                      : "Postpaid -\n50% Back",
-                  Colors.pinkAccent,
-                ),
-                buildRecommendItem(
-                  Icons.sports_esports_rounded,
+                  context,
+                  Icons.account_balance_rounded,
                   null,
-                  activeLang == 'VIE' ? "Mã thẻ Game\nOnline" : "Game\nCards",
+                  activeLang == 'VIE' ? "Ngân hàng" : "Bank",
                   Colors.blue,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BankTransferListScreen(token: token),
+                    ),
+                  ),
                 ),
                 buildRecommendItem(
-                  Icons.account_balance_wallet_rounded,
+                  context,
+                  Icons.pie_chart_rounded,
                   null,
-                  activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag",
+                  activeLang == 'VIE' ? "Chia tiền" : "Split bill",
                   Colors.orange,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SplitBillManagementScreen(token: token, me: me),
+                    ),
+                  ),
                 ),
                 buildRecommendItem(
-                  Icons.electric_bolt_rounded,
+                  context,
+                  Icons.phone_android_rounded,
                   null,
-                  activeLang == 'VIE'
-                      ? "Thanh toán\nđiện"
-                      : "Electricity\nBill",
-                  Colors.yellow.shade700,
+                  activeLang == 'VIE' ? "Nạp ĐT" : "Topup",
+                  Colors.green,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TopupMainScreen(token: token),
+                    ),
+                  ),
+                ),
+                buildRecommendItem(
+                  context,
+                  Icons.redeem_rounded,
+                  null,
+                  activeLang == 'VIE' ? "Lì xì" : "Lucky money",
+                  Colors.red.shade400,
+                  () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          activeLang == 'VIE'
+                              ? "Chức năng đang phát triển"
+                              : "Feature in development",
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

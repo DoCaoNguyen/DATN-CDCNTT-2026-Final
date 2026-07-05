@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../ai/screens/ai_chat_screen.dart';
 
 class TransactionFilterConfig {
   final String time; // "Tất cả", "Tháng 6/2026", ...
@@ -28,8 +29,9 @@ class TransactionFilterConfig {
 
 class TransactionHistoryFilterScreen extends StatefulWidget {
   final TransactionFilterConfig initialConfig;
+  final String token;
 
-  const TransactionHistoryFilterScreen({Key? key, required this.initialConfig})
+  const TransactionHistoryFilterScreen({Key? key, required this.initialConfig, required this.token})
     : super(key: key);
 
   @override
@@ -64,31 +66,6 @@ class _TransactionHistoryFilterScreenState
       "label": "Nạp tiền",
       "icon": Icons.account_balance_wallet_rounded,
       "color": Colors.blue,
-    },
-    {
-      "label": "Chi tiêu sinh hoạt",
-      "icon": Icons.shopping_basket_rounded,
-      "color": Colors.orange,
-    },
-    {
-      "label": "Hóa đơn & Tiện ích",
-      "icon": Icons.receipt_long_rounded,
-      "color": Colors.green,
-    },
-    {
-      "label": "Giải trí & Mua sắm",
-      "icon": Icons.movie_rounded,
-      "color": Colors.pinkAccent,
-    },
-    {
-      "label": "Chi phí phát sinh",
-      "icon": Icons.warning_amber_rounded,
-      "color": Colors.redAccent,
-    },
-    {
-      "label": "Khác",
-      "icon": Icons.more_horiz_rounded,
-      "color": Colors.grey.shade600,
     },
   ];
 
@@ -373,7 +350,14 @@ class _TransactionHistoryFilterScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.headset_mic_rounded, color: Colors.black87),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AiChatScreen(token: widget.token),
+                ),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),

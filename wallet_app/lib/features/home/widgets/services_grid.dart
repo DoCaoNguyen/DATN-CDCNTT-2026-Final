@@ -56,7 +56,6 @@ class ServicesGrid extends StatelessWidget {
     ];
 
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: GridView.builder(
         shrinkWrap: true,
@@ -136,26 +135,8 @@ class ServicesGrid extends StatelessWidget {
                   width: 54,
                   height: 54,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        service['color'].withValues(alpha: 0.2),
-                        service['color'].withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: service['color'].withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: service['color'].withValues(alpha: 0.15),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: service['color'].withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     service['icon'],

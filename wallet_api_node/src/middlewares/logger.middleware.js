@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
-const logRepo = require('../modules/system/log.repository'); 
+const logRepo = require('../modules/system/log.repository');
+
+// Hàm che dấu thông tin nhạy cảm
+function maskSensitiveData(data) {
+    if (!data) return data;
+    if (typeof data !== 'object') return data;
+
+    const masked = Array.isArray(data) ? [...data] : { ...data };
+    const sensitiveKeys = ['password', 'pin', 'otp', 'token', 'cardnumber', 'cvv', 'card_number', 'secret'];
+
+    for (const key of Object.keys(masked)) {
+        if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+            masked[key] = '********';
+        } else if (typeof masked[key] === 'object' && masked[key] !== null) {
+            masked[key] = maskSensitiveData(masked[key]);
+        }
+    }
+    return masked;
+}
 
 const apiLogger = (req, res, next) => {
     const startTime = Date.now();
@@ -13,7 +31,7 @@ const apiLogger = (req, res, next) => {
 
     res.on('finish', async () => {
         const duration = Date.now() - startTime;
-        
+
         let parsedResBody = null;
         try {
             parsedResBody = typeof res.locals.responseBody === 'string' ? JSON.parse(res.locals.responseBody) : res.locals.responseBody;
@@ -40,7 +58,7 @@ const apiLogger = (req, res, next) => {
             const db = mongoose.connection.db;
             if (db) {
                 // Bỏ qua các API gọi lấy Log để tránh bị đệ quy rác dữ liệu
-                if (!apiLogData.path.includes('/admin/logs')) {
+                if (!apiLogData.path.includes('/admin/logs') && !apiLogData.path.includes('/api-docs')) {
                     await db.collection('api_request_logs').insertOne(apiLogData);
                 }
             }
@@ -51,14 +69,14 @@ const apiLogger = (req, res, next) => {
         // 3. GHI SYSTEM LOG (Chỉ áp dụng nếu hệ thống bị sập - lỗi 5xx)
         if (res.statusCode >= 500 && logRepo && logRepo.writeSystemLog) {
             logRepo.writeSystemLog(
-                'API_GATEWAY', 
-                'ERROR', 
-                `API Failed: ${req.method} ${req.originalUrl}`, 
+                'API_GATEWAY',
+                'ERROR',
+                `API Failed: ${req.method} ${req.originalUrl}`,
                 { ...apiLogData, error_details: res.statusMessage }
             ).catch(err => console.error('Lỗi ghi System Log:', err));
         }
     });
-    
+
     next();
 };
 

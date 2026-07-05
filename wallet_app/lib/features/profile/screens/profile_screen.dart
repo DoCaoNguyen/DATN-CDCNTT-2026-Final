@@ -12,6 +12,7 @@ import 'login_security_screen.dart';
 import '../../chat/screens/help_center_screen.dart';
 import '../../merchant/screens/merchant_screen.dart';
 import '../../financial_center/screens/financial_center_screen.dart';
+import '../../home/screens/qr_main_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -103,8 +104,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 16),
                 _buildSectionTitle('Tiện ích'),
                 _buildUtilitiesGrid(),
-                const SizedBox(height: 16),
-                _buildScamTipsSection(),
                 const SizedBox(height: 16),
 
                 _buildMoreSettingsSection(),
@@ -243,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.qr_code_rounded, size: 18, color: Colors.grey),
+                    Icon(Icons.badge_rounded, size: 18, color: Colors.grey),
                     SizedBox(width: 4),
                     Text('Trang cá nhân', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
@@ -254,23 +253,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(width: 1),
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
-                ]
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.card_giftcard_rounded, size: 18, color: AppColors.primaryPink),
-                  SizedBox(width: 4),
-                  Text('Nhận Ngay 250K', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
-                ],
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => QrMainScreen(
+                      token: widget.token,
+                      initialIndex: 1, // Mở tab QR Nhận tiền
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                  ]
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.qr_code_scanner_rounded, size: 18, color: AppColors.primaryPink),
+                    SizedBox(width: 4),
+                    Text('Mã QR của tôi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
           ),
@@ -403,7 +415,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }),
           _buildUtilityItem(Icons.verified_rounded, 'Điểm Mio', AppColors.primaryPink),
           _buildUtilityItem(Icons.receipt_long_rounded, 'Thanh toán', Colors.teal),
-          _buildUtilityItem(Icons.card_giftcard_rounded, 'Nhận Ngay 250K', AppColors.primaryPink, badge: 'Mio'),
           _buildUtilityItem(Icons.attach_money_rounded, 'Quản lý chi tiêu', Colors.teal.shade300),
           _buildUtilityItem(Icons.redeem_rounded, 'Quà của tôi', Colors.pinkAccent),
         ],
@@ -450,102 +461,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildScamTipsSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.shield_rounded, color: AppColors.primaryPink, size: 24),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Bí kíp nhận diện lừa đảo',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Nhận biết kịch bản lừa đảo phổ biến để bảo vệ bản thân',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 180,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildScamCard('Nhận biết lừa đảo\nMua hàng Online', Colors.pink.shade50),
-                _buildScamCard('Cẩn trọng với\nKịch bản mượn tiền', Colors.green.shade50),
-                _buildScamCard('Nhận diện kịch bản\nGiả mạo công an', Colors.red.shade50),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScamCard(String title, Color bgColor) {
-    return Container(
-      width: 130,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.5),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-              ),
-              child: const Center(child: Icon(Icons.security_rounded, size: 40, color: Colors.black26)),
-            ),
-          ),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
-            ),
-            child: const Text(
-              'Tìm hiểu ngay',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.primaryPink, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCharitySection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -553,46 +468,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.favorite_border_rounded, color: AppColors.primaryPink),
-                  const SizedBox(width: 8),
-                  const Text('Máy tính cho em', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 80,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.computer_rounded, color: Colors.black26),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Tặng phòng máy cho học sinh nghèo miền núi: Lập Quỹ Tấm lòng vàng...',
-                  style: TextStyle(fontSize: 13),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

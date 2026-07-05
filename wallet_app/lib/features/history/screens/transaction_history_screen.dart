@@ -42,6 +42,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   int _totalExpenseThisMonth = 0;
   int _totalExpenseLastMonth = 0;
 
+  bool _isBalanceVisible = true;
+
   TransactionFilterConfig _currentFilter = TransactionFilterConfig();
 
   @override
@@ -364,7 +366,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            TransactionHistoryFilterScreen(initialConfig: _currentFilter),
+            TransactionHistoryFilterScreen(initialConfig: _currentFilter, token: widget.token),
       ),
     );
 
@@ -775,14 +777,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 ],
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.visibility_off_rounded,
+                leading: Icon(
+                  _isBalanceVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                   color: Colors.black87,
                 ),
-                title: const Text('Ẩn số dư', style: TextStyle(fontSize: 15)),
+                title: Text(
+                  _isBalanceVisible ? 'Ẩn số dư' : 'Hiện số dư', 
+                  style: const TextStyle(fontSize: 15)
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
-                  // Future implementation
+                  setState(() {
+                    _isBalanceVisible = !_isBalanceVisible;
+                  });
                 },
               ),
               const Divider(height: 1, indent: 56),
@@ -1186,44 +1193,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           ],
                         ),
                       ),
-                      const Divider(height: 1),
-                      // Savings promo banner
-                      Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                "Bạn muốn tiết kiệm tiền hơn?",
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Tính năng Đặt ngân sách đang được phát triển!",
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                "Đặt ngân sách",
-                                style: TextStyle(
-                                  color: Colors.pink,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1377,9 +1346,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                   ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
                                   : "${CurrencyFormatter.format(amountRaw)}";
                                   
+                              final String balanceValue = _isBalanceVisible 
+                                  ? CurrencyFormatter.format(balanceAfterRaw) 
+                                  : '******';
                               final String displayBalance = isPoint 
-                                  ? "Số dư Xu: ${CurrencyFormatter.format(balanceAfterRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
-                                  : "Số dư ví: ${CurrencyFormatter.format(balanceAfterRaw)}";
+                                  ? "Số dư Xu: ${balanceValue.replaceAll('đ', '').replaceAll('₫', '').trim()}${_isBalanceVisible ? ' Xu' : ''}" 
+                                  : "Số dư ví: $balanceValue";
 
                               return InkWell(
                                 onTap: () async {
