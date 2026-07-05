@@ -19,12 +19,15 @@ const withIdempotency = async (req, res, next) => {
         }
 
         // Lock bằng Redis (Chống Concurrency 100 requests cùng lúc)
-        const lockKey = `idempotency_lock:${idempotencyKey}`;
-        const acquired = await redis.setnx(lockKey, 'locked');
-        if (!acquired) {
-            return res.status(409).json({ message: 'Giao dịch đang được xử lý, vui lòng không lặp lại yêu cầu.' });
+        let lockKey = null;
+        if (redis.status === 'ready') {
+            lockKey = `idempotency_lock:${idempotencyKey}`;
+            const acquired = await redis.setnx(lockKey, 'locked');
+            if (!acquired) {
+                return res.status(409).json({ message: 'Giao dịch đang được xử lý, vui lòng không lặp lại yêu cầu.' });
+            }
+            await redis.expire(lockKey, 30);
         }
-        await redis.expire(lockKey, 30);
 
         const originalJson = res.json;
         res.json = function (body) {
@@ -43,7 +46,9 @@ const withIdempotency = async (req, res, next) => {
                 idempotencyRepo.saveKey(idempotencyKey, requestHash, body, actorId, actorType, requestPath)
                     .catch(err => console.error('Lỗi lưu Idempotency Key:', err));
             }
-            redis.del(lockKey).catch(() => { });
+            if (lockKey && redis.status === 'ready') {
+                redis.del(lockKey).catch(() => { });
+            }
             return originalJson.call(this, body);
         };
         next();

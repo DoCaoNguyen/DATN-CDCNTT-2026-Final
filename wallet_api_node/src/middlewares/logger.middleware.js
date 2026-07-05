@@ -4,9 +4,23 @@ const logRepo = require('../modules/system/log.repository');
 const apiLogger = (req, res, next) => {
     const startTime = Date.now();
 
+    // Override res.send to capture response body
+    const originalSend = res.send;
+    res.send = function (body) {
+        res.locals.responseBody = body;
+        return originalSend.apply(this, arguments);
+    };
+
     res.on('finish', async () => {
         const duration = Date.now() - startTime;
         
+        let parsedResBody = null;
+        try {
+            parsedResBody = typeof res.locals.responseBody === 'string' ? JSON.parse(res.locals.responseBody) : res.locals.responseBody;
+        } catch (e) {
+            parsedResBody = res.locals.responseBody;
+        }
+
         // 1. Tạo gói dữ liệu chuẩn Schema MongoDB
         const apiLogData = {
             method: req.method,
@@ -16,7 +30,9 @@ const apiLogger = (req, res, next) => {
             ip_address: req.ip || req.connection?.remoteAddress,
             user_agent: req.headers['user-agent'] || '',
             actor_id: req.user ? String(req.user.userId) : null,
-            created_at: new Date()
+            created_at: new Date(),
+            request: req.body && Object.keys(req.body).length > 0 ? req.body : null,
+            response: parsedResBody
         };
 
         // 2. GHI TRỰC TIẾP VÀO MONGODB (Khỏi lo lỗi thiếu hàm)
