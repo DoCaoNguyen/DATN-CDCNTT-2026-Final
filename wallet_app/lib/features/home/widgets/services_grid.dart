@@ -4,6 +4,7 @@ import '../../bank/screens/bank_transfer_list_screen.dart';
 import '../../split_bill/screens/split_bill_management_screen.dart';
 import '../../chat/screens/red_packet_create_screen.dart';
 import '../../topup/screens/topup_main_screen.dart';
+import '../../online_savings/screens/online_savings_screen.dart';
 
 class ServicesGrid extends StatelessWidget {
   final String activeLang;
@@ -52,6 +53,11 @@ class ServicesGrid extends StatelessWidget {
         'icon': Icons.card_giftcard_rounded,
         'name': activeLang == 'VIE' ? 'Lì xì' : 'Red Packet',
         'color': Colors.red,
+      },
+      {
+        'icon': Icons.savings_rounded,
+        'name': activeLang == 'VIE' ? 'Tiết Kiệm Online' : 'Online Savings',
+        'color': Colors.pinkAccent,
       },
     ];
 
@@ -124,6 +130,14 @@ class ServicesGrid extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => RedPacketCreateScreen(token: token),
+                    ),
+                  );
+                } else if (service['name'].toString().contains('Tiết Kiệm') ||
+                    service['name'].toString().contains('Savings')) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const OnlineSavingsScreen(),
                     ),
                   );
                 }
