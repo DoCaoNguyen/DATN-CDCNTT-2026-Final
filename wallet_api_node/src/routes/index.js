@@ -5,7 +5,7 @@ const authRoutes = require('../modules/auth/auth.routes');
 const transactionRoutes = require('../modules/transaction/transaction.routes');
 const paymentRoutes = require('../modules/payment/payment.routes');
 const kycRoutes = require('../modules/kyc/kyc.routes');
-const apiLogger = require('../middlewares/logger.middleware');
+
 const auditLogger = require('../middlewares/audit.middleware');
 const walletRoutes = require('../modules/wallet/wallet.routes');
 const userRoutes = require('../modules/user/user.routes');
@@ -17,7 +17,7 @@ const adminRoutes = require('../modules/admin/index');
 const loyaltyRoutes = require('../modules/loyalty/loyalty.routes');
 const aiHelpRoutes = require('../modules/ai_help/aiHelp.routes');
 
-router.use(apiLogger);
+
 router.use(auditLogger);
 router.use('/auth', authRoutes);
 router.use('/transaction', transactionRoutes);

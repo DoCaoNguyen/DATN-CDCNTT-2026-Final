@@ -74,6 +74,17 @@ const transactionRepository = {
         return result.rows[0].id;
     },
 
+    createFailedLedgerTransaction: async (type, description, amount, createdBy = null) => {
+        const newId = uuidv7();
+        const transactionNo = 'TRX' + Date.now().toString().slice(-8) + Math.floor(1000 + Math.random() * 9000).toString();
+        const query = `
+            INSERT INTO ledger_transactions (id, transaction_no, transaction_type, status, description, amount, created_by, completed_at)
+            VALUES ($1, $2, $3, 'FAILED', $4, $5, $6, CURRENT_TIMESTAMP) RETURNING id;
+        `;
+        const result = await pool.query(query, [newId, transactionNo, type, description, amount.toString(), createdBy]);
+        return result.rows[0].id;
+    },
+
     createLedgerEntry: async (client, ledgerTransactionId, walletId, type, amount, balanceBefore, balanceAfter, accountType = 'PERSONAL') => {
         const newId = uuidv7();
         const query = `

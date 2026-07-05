@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
-const logRepo = require('../modules/system/log.repository'); 
+const logRepo = require('../modules/system/log.repository');
 
 // Hàm che dấu thông tin nhạy cảm
 function maskSensitiveData(data) {
     if (!data) return data;
     if (typeof data !== 'object') return data;
-    
+
     const masked = Array.isArray(data) ? [...data] : { ...data };
     const sensitiveKeys = ['password', 'pin', 'otp', 'token', 'cardnumber', 'cvv', 'card_number', 'secret'];
 
@@ -22,32 +22,21 @@ function maskSensitiveData(data) {
 const apiLogger = (req, res, next) => {
     const startTime = Date.now();
 
-    // Lấy thông tin Request (Input)
-    const requestData = {
-        body: maskSensitiveData(req.body),
-        query: req.query,
-        params: req.params
-    };
-
-    // Đánh chặn (Intercept) hàm res.send để lấy Response Body (Output)
+    // Override res.send to capture response body
     const originalSend = res.send;
-    let responseBody;
-
     res.send = function (body) {
-        responseBody = body;
-        return originalSend.call(this, body);
+        res.locals.responseBody = body;
+        return originalSend.apply(this, arguments);
     };
 
     res.on('finish', async () => {
         const duration = Date.now() - startTime;
-        
-        let parsedResponse = responseBody;
+
+        let parsedResBody = null;
         try {
-            if (typeof responseBody === 'string') {
-                parsedResponse = JSON.parse(responseBody);
-            }
+            parsedResBody = typeof res.locals.responseBody === 'string' ? JSON.parse(res.locals.responseBody) : res.locals.responseBody;
         } catch (e) {
-            // Giữ nguyên dạng string nếu không phải JSON
+            parsedResBody = res.locals.responseBody;
         }
 
         // 1. Tạo gói dữ liệu chuẩn Schema MongoDB
@@ -59,9 +48,9 @@ const apiLogger = (req, res, next) => {
             ip_address: req.ip || req.connection?.remoteAddress,
             user_agent: req.headers['user-agent'] || '',
             actor_id: req.user ? String(req.user.userId) : null,
-            request_data: requestData, // INPUT
-            response_data: maskSensitiveData(parsedResponse), // OUTPUT
-            created_at: new Date()
+            created_at: new Date(),
+            request: req.body && Object.keys(req.body).length > 0 ? req.body : null,
+            response: parsedResBody
         };
 
         // 2. GHI TRỰC TIẾP VÀO MONGODB (Khỏi lo lỗi thiếu hàm)
@@ -80,14 +69,14 @@ const apiLogger = (req, res, next) => {
         // 3. GHI SYSTEM LOG (Chỉ áp dụng nếu hệ thống bị sập - lỗi 5xx)
         if (res.statusCode >= 500 && logRepo && logRepo.writeSystemLog) {
             logRepo.writeSystemLog(
-                'API_GATEWAY', 
-                'ERROR', 
-                `API Failed: ${req.method} ${req.originalUrl}`, 
+                'API_GATEWAY',
+                'ERROR',
+                `API Failed: ${req.method} ${req.originalUrl}`,
                 { ...apiLogData, error_details: res.statusMessage }
             ).catch(err => console.error('Lỗi ghi System Log:', err));
         }
     });
-    
+
     next();
 };
 
