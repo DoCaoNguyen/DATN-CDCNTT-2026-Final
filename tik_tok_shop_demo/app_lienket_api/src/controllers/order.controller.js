@@ -2,7 +2,6 @@ const pool = require('../config/db');
 const axios = require('axios');
 
 // Thông tin API Key của Merchant TikTok Shop (Vừa tạo ở bước trước)
-const MERCHANT_API_KEY = 'mio_live_jujoiQEqaYiIjpLGWP2IJWJCPTk6irm';
 const MIO_API_URL = process.env.MIO_API_URL || 'http://localhost:3000/api/v1/merchant/charge';
 
 const OrderController = {
@@ -26,7 +25,7 @@ const OrderController = {
             // 2. Ra lệnh trừ tiền qua API của Ví Mio (Server-to-Server)
             try {
                 const response = await axios.post(MIO_API_URL, {
-                    api_key: MERCHANT_API_KEY,
+                    api_key: process.env.MERCHANT_API_KEY,
                     merchant_code: 'MC_TIKTOK',
                     wallet_token: walletAccount, // walletAccount ở đây đang chứa token JWT
                     amount: amount,

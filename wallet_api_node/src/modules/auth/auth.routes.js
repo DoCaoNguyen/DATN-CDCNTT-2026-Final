@@ -7,9 +7,11 @@ const router = express.Router();
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 phút
-    limit: 20, // 10 lần
+    limit: 10, // 10 lần
     message: { error: 'Bạn thao tác quá nhanh, vui lòng thử lại sau 15 phút.' }
 });
+
+
 
 // --- OTP & Kiểm tra ---
 router.post('/check-phone', authController.checkPhone);

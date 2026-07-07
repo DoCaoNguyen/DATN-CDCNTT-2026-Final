@@ -1,10 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 
 class MioPaymentService {
   // Demo API Key. In production, this would be a real key registered via merchant portal
-  static const String merchantApiKey = 'mio_test_key_12345'; // Giả lập key, bạn có thể cần config trên DB
+  static String merchantApiKey = 'mio_test_key_12345'; // Giả lập key, có thể thay đổi trong Cài đặt
+  static String apiSecret = ''; // Dành cho các request cần verify
+  
+  static Future<void> loadConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    merchantApiKey = prefs.getString('api_key') ?? 'mio_test_key_12345';
+    apiSecret = prefs.getString('api_secret') ?? '';
+  }
   static const String baseUrl = ApiConfig.mioApiUrl;
 
   /// Returns the deep link URI string (e.g., mio://pay?token=...)

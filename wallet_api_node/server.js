@@ -78,8 +78,35 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // ==========================================
-// 5. ĐIỀU HƯỚNG ROUTES CHÍNH
+// 5. ĐIỀU HƯỚNG ROUTES CHÍNH & PROXY
 // ==========================================
+const axios = require('axios');
+
+const proxyToPort4000 = async (req, res, prefix) => {
+    try {
+        const url = `http://127.0.0.1:4000${prefix}${req.url}`;
+        const headers = { ...req.headers };
+        delete headers.host;
+        
+        const response = await axios({
+            method: req.method,
+            url: url,
+            data: req.body,
+            headers: headers
+        });
+        res.status(response.status).send(response.data);
+    } catch (error) {
+        if (error.response) {
+            res.status(error.response.status).send(error.response.data);
+        } else {
+            res.status(500).json({ error: error.message });
+        }
+    }
+};
+
+app.use('/api/v1/wallets', (req, res) => proxyToPort4000(req, res, '/api/v1/wallets'));
+app.use('/api/v1/orders', (req, res) => proxyToPort4000(req, res, '/api/v1/orders'));
+
 app.use('/api/v1', masterRouter);
 
 // ==========================================

@@ -62,7 +62,10 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     try {
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/orders/checkout'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
         body: jsonEncode({
           'user_id': 1,
           'amount': widget.amount.toInt(),

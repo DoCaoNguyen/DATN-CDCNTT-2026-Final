@@ -15,8 +15,15 @@ const connectMongoDB = async () => {
         }
 
         await mongoose.connect(uri, options);
-
         console.log('[MongoDB] Connected to MongoDB successfully.');
+        
+        try {
+            await mongoose.connection.collection('webhook_attempt_logs').dropIndex('old_pg_callback_id_1_attempt_no_1');
+            console.log('[MongoDB] Đã xoá index cũ (old_pg_callback_id_1_attempt_no_1) thành công.');
+        } catch (idxErr) {
+            // Ignored if index does not exist
+        }
+
     } catch (error) {
         console.error('[MongoDB] Connection failed:', error);
         // Có thể không cần exit process nếu log chỉ là phụ

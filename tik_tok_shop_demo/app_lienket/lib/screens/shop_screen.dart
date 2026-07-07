@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../models/cart.dart';
 import 'checkout_screen.dart';
 import 'cart_screen.dart';
+import 'settings_screen.dart';
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({Key? key}) : super(key: key);
@@ -32,6 +33,15 @@ class ShopScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.black87),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
           // Cart Icon with Badge
           ValueListenableBuilder<List<Product>>(
             valueListenable: CartProvider.items,

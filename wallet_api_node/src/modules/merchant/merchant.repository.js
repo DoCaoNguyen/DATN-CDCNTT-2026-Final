@@ -8,9 +8,27 @@ const merchantRepository = {
         try {
             await client.query('BEGIN');
             
+            // 0. Generate merchant code using code_sequences
+            await client.query(`
+                INSERT INTO code_sequences (id, resource_name, prefix, current_value, padding, reset_policy)
+                SELECT gen_random_uuid(), 'MERCHANT', 'MER', COALESCE((
+                    SELECT MAX(CAST(SUBSTRING(merchant_code FROM 4) AS INTEGER))
+                    FROM merchants
+                    WHERE merchant_code ~ '^MER[0-9]{6}$'
+                ), 0), 6, 'NEVER'
+                WHERE NOT EXISTS (SELECT 1 FROM code_sequences WHERE resource_name = 'MERCHANT');
+            `);
+
+            const seqRes = await client.query(`
+                UPDATE code_sequences
+                SET current_value = current_value + 1, updated_at = CURRENT_TIMESTAMP
+                WHERE resource_name = 'MERCHANT'
+                RETURNING prefix || LPAD(current_value::text, padding, '0') AS merchant_code
+            `);
+            const merchantCode = seqRes.rows[0].merchant_code;
+
             // 1. Insert into merchants
             const merchantId = uuidv7();
-            const merchantCode = 'MC' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000);
             const merchantQuery = `
                 INSERT INTO merchants (id, merchant_code, merchant_name, phone, status, business_type)
                 VALUES ($1, $2, $3, $4, 'ACTIVE', 'ONLINE')
@@ -28,7 +46,7 @@ const merchantRepository = {
             // 2. Insert into merchant_users
             const muId = uuidv7();
             await client.query(
-                `INSERT INTO merchant_users (id, merchant_id, user_id, is_owner, is_active, role_code) VALUES ($1, $2, $3, true, true, 'ADMIN')`,
+                `INSERT INTO merchant_users (id, merchant_id, user_id, is_owner, is_active, role_code) VALUES ($1, $2, $3, true, true, 'MERCHANT_OWNER')`,
                 [muId, merchantId, merchantData.user_id]
             );
 
@@ -48,6 +66,19 @@ const merchantRepository = {
             const apiKeyValues = [apiKeyId, merchantId, apiKey, merchantData.secret_key];
             
             await client.query(apiKeyQuery, apiKeyValues);
+
+            // 5. Initialize merchant_balances
+            await client.query(`
+                INSERT INTO merchant_balances (merchant_id, available_balance, pending_balance, updated_at)
+                VALUES ($1, 0, 0, CURRENT_TIMESTAMP)
+            `, [merchantId]);
+
+            // 6. Assign global MERCHANT_OWNER role to the user
+            await client.query(`
+                INSERT INTO user_roles (user_id, role_id)
+                SELECT $1, id FROM roles WHERE code = 'MERCHANT_OWNER'
+                ON CONFLICT DO NOTHING
+            `, [merchantData.user_id]);
             
             await client.query('COMMIT');
             return merchantId;

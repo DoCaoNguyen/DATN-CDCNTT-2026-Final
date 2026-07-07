@@ -33,11 +33,14 @@ class DeepLinkService {
     });
 
     // Listen to incoming links
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _processUri(uri);
-    }, onError: (err) {
-      debugPrint('Error listening to deep links: $err');
-    });
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      (uri) {
+        _processUri(uri);
+      },
+      onError: (err) {
+        debugPrint('Error listening to deep links: $err');
+      },
+    );
   }
 
   void _processUri(Uri uri) async {
@@ -56,58 +59,32 @@ class DeepLinkService {
           final prefs = await SharedPreferences.getInstance();
           final userId = prefs.getString('user_id');
 
-          if (accessToken != null && accessToken.isNotEmpty && userId != null && userId.isNotEmpty) {
-             Navigator.push(
-               context,
-               MaterialPageRoute(
-                 builder: (context) => DeepLinkPaymentAuthScreen(
-                   qrToken: token,
-                   amount: amount,
-                   description: description,
-                 ),
-               ),
-             );
+          if (accessToken != null &&
+              accessToken.isNotEmpty &&
+              userId != null &&
+              userId.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DeepLinkPaymentAuthScreen(
+                  qrToken: token,
+                  amount: amount,
+                  description: description,
+                ),
+              ),
+            );
           } else {
-             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Vui lòng đăng nhập để tiếp tục thanh toán')),
-             );
-             Navigator.pushAndRemoveUntil(
-               context,
-               MaterialPageRoute(builder: (context) => const LoginPhoneScreen()),
-               (route) => false,
-             );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Vui lòng đăng nhập để tiếp tục thanh toán'),
+              ),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPhoneScreen()),
+              (route) => false,
+            );
           }
-        }
-      }
-    } else if (uri.scheme == 'mio' && uri.host == 'link') {
-      final merchant = uri.queryParameters['merchant'];
-      
-      final context = CustomHttpClient.navigatorKey.currentContext;
-      if (context != null) {
-        // Check if user is logged in
-        const secureStorage = FlutterSecureStorage();
-        final accessToken = await secureStorage.read(key: 'access_token');
-        final prefs = await SharedPreferences.getInstance();
-        final userId = prefs.getString('user_id');
-
-        if (accessToken != null && accessToken.isNotEmpty && userId != null && userId.isNotEmpty) {
-           Navigator.push(
-             context,
-             MaterialPageRoute(
-               builder: (context) => DeepLinkAccountLinkScreen(
-                 merchantName: merchant ?? 'Đối tác',
-               ),
-             ),
-           );
-        } else {
-           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Vui lòng đăng nhập để liên kết tài khoản')),
-           );
-           Navigator.pushAndRemoveUntil(
-             context,
-             MaterialPageRoute(builder: (context) => const LoginPhoneScreen()),
-             (route) => false,
-           );
         }
       }
     }
