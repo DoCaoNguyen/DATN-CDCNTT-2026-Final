@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/cart.dart';
 import '../config/api_config.dart';
+import '../services/mio_payment_service.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
   final double amount;
@@ -70,6 +71,8 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
           'user_id': 1,
           'amount': widget.amount.toInt(),
           'order_id': widget.orderId,
+          'api_key': MioPaymentService.merchantApiKey,
+          'api_secret': MioPaymentService.apiSecret,
         }),
       );
       

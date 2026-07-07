@@ -7,7 +7,7 @@ const MIO_API_URL = process.env.MIO_API_URL || 'http://localhost:3000/api/v1/mer
 const OrderController = {
     checkout: async (req, res) => {
         try {
-            const { user_id, amount, order_id } = req.body;
+            const { user_id, amount, order_id, api_key } = req.body;
             
             // 1. Lấy thông tin ví đã liên kết của User trên TikTok Shop
             const linkedWallet = await pool.query(
@@ -25,7 +25,7 @@ const OrderController = {
             // 2. Ra lệnh trừ tiền qua API của Ví Mio (Server-to-Server)
             try {
                 const response = await axios.post(MIO_API_URL, {
-                    api_key: process.env.MERCHANT_API_KEY,
+                    api_key: api_key || process.env.MERCHANT_API_KEY,
                     merchant_code: 'MC_TIKTOK',
                     wallet_token: walletAccount, // walletAccount ở đây đang chứa token JWT
                     amount: amount,
