@@ -390,118 +390,117 @@ const merchantController = {
         }
     },
 
-    // ===== NEW: API Ra lệnh trừ tiền tự động (Auto-Debit) =====
+    // ===== API Ra lenh tru tien tu dong (Auto-Debit) =====
+    // Luu y: verifyApiKeyWithSignature middleware da xac thuc api_key + HMAC signature truoc khi vao day
     charge: async (req, res) => {
         try {
-            const { api_key, merchant_code, wallet_token, amount, order_id } = req.body;
-            
-            if (!api_key || !wallet_token || !amount) {
-                return res.status(400).json({ error: 'Thiếu thông tin bắt buộc (api_key, wallet_token, amount)' });
+            const { wallet_token, amount, order_id } = req.body;
+            // merchant_id da duoc middleware gan vao req.merchant
+            const { merchant_id } = req.merchant;
+
+            if (!wallet_token || !amount) {
+                return res.status(400).json({ error: 'Thieu thong tin bat buoc (wallet_token, amount)' });
             }
 
-            // Bỏ hardcode AUTO_DEBIT_LIMIT ở đây, sẽ check phía dưới sau khi có thông tin ví.
-
-            // Giải mã Token Ủy Quyền
+            // Giai ma Token Uy Quyen
             let wallet_account = '';
             if (wallet_token && wallet_token.startsWith('tok_mio_')) {
                 try {
                     const jwt = require('jsonwebtoken');
                     const decoded = jwt.verify(
-                        wallet_token.replace('tok_mio_', ''), 
+                        wallet_token.replace('tok_mio_', ''),
                         process.env.JWT_SECRET || 'mio_secret_key'
                     );
                     wallet_account = decoded.phone;
                 } catch (err) {
-                    return res.status(401).json({ error: 'Token uỷ quyền không hợp lệ hoặc đã hết hạn' });
+                    return res.status(401).json({ error: 'Token uy quyen khong hop le hoac da het han' });
                 }
             } else {
-                return res.status(400).json({ error: 'Yêu cầu Token uỷ quyền hợp lệ' });
+                return res.status(400).json({ error: 'Yeu cau Token uy quyen hop le (tok_mio_...)' });
             }
 
-            // 0. KHÔNG CẦN XÁC THỰC BẢO MẬT (Luồng Auto-Debit hoàn toàn)
-            // Lấy token ủy quyền (wallet_account) là đủ để xác định user.
-            // Bỏ qua check PIN hoặc Biometric để giao dịch mượt mà như Grab/Ví Mio.
-
-            // 1. Xác thực Merchant bằng api_key
-            const merchant = await merchantRepository.getMerchantByApiKey(api_key);
+            // Lay thong tin merchant de check han muc
+            const merchant = await merchantRepository.getMerchantByMerchantId(merchant_id);
             if (!merchant) {
-                return res.status(401).json({ error: 'Xác thực Merchant thất bại' });
+                return res.status(404).json({ error: 'Khong tim thay Merchant' });
             }
 
-            // 1.5 KIỂM TRA HẠN MỨC GIAO DỊCH (Database-Driven)
+            // Kiem tra han muc giao dich
             const walletRepo = require('../wallet/wallet.repository');
             const walletInfo = await merchantRepository.getWalletIdByPhone(wallet_account);
             if (!walletInfo) {
-                return res.status(404).json({ error: 'Không tìm thấy ví liên kết với số điện thoại này' });
+                return res.status(404).json({ error: 'Khong tim thay vi lien ket voi so dien thoai nay' });
             }
             const { wallet_id, user_id } = walletInfo;
 
-            // a. Kiểm tra hạn mức chung của Ví trong ngày
+            // Han muc chung cua Vi trong ngay
             const { limits, usage } = await walletRepo.getLimitsAndUsage(wallet_id);
-            const globalLimit = BigInt(Math.floor(Number(limits.daily_transaction_limit || 50000000)));
-            const globalUsage = BigInt(Math.floor(Number(usage.daily_transaction_usage || 0)));
+            const globalLimit   = BigInt(Math.floor(Number(limits.daily_transaction_limit || 50000000)));
+            const globalUsage   = BigInt(Math.floor(Number(usage.daily_transaction_usage || 0)));
             const requestAmount = BigInt(Math.floor(Number(amount)));
-            
+
             if (globalUsage + requestAmount > globalLimit) {
-                return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức giao dịch tối đa trong ngày của Ví Mio (${Number(globalLimit).toLocaleString('vi-VN')}đ).` });
+                return res.status(400).json({
+                    error: `Vuot qua han muc giao dich toi da trong ngay cua Vi Mio (${Number(globalLimit).toLocaleString('vi-VN')}d).`
+                });
             }
 
-            // b. Kiểm tra hạn mức riêng của App Liên Kết (Auto-Debit Limit)
-            // Tìm tên dịch vụ gốc (VD: 'TikTok Shop VN' -> lấy 'TikTok')
-            const searchName = merchant.merchant_name.split(' ')[0]; 
+            // Han muc rieng cua App Lien Ket
+            const searchName = merchant.merchant_name.split(' ')[0];
             const linkedApp = await merchantRepository.getLinkedService(user_id, searchName);
-            
-            if (!linkedApp || linkedApp.status === 'UNLINKED') {
-                return res.status(403).json({ error: 'Dịch vụ chưa được liên kết hoặc đã bị huỷ liên kết. Không thể thanh toán.' });
-            }
 
-            if (linkedApp.status === 'INACTIVE') {
-                return res.status(400).json({ error: 'Dịch vụ đã bị tạm khóa. Vui lòng mở khóa trên ứng dụng Ví để tiếp tục thanh toán.' });
+            if (!linkedApp || linkedApp.status === 'UNLINKED') {
+                return res.status(403).json({ error: 'Dich vu chua duoc lien ket hoac da bi huy. Khong the thanh toan.' });
             }
-            
+            if (linkedApp.status === 'INACTIVE') {
+                return res.status(400).json({ error: 'Dich vu da bi tam khoa. Vui long mo khoa tren ung dung Vi.' });
+            }
             if (linkedApp.limit_per_transaction) {
                 const txLimit = BigInt(Math.floor(Number(linkedApp.limit_per_transaction)));
                 if (requestAmount > txLimit) {
-                    return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(txLimit).toLocaleString('vi-VN')}đ/lần) của ứng dụng liên kết.` });
+                    return res.status(400).json({
+                        error: `Vuot qua han muc thanh toan tu dong (${Number(txLimit).toLocaleString('vi-VN')}d/lan).`
+                    });
                 }
             }
-            
             if (linkedApp.limit_per_day) {
                 const appLimit = BigInt(Math.floor(Number(linkedApp.limit_per_day)));
                 const appDailyUsage = await merchantRepository.getDailyUsageForMerchant(wallet_id, merchant.id);
-                
                 if (appDailyUsage + requestAmount > appLimit) {
-                    return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(appLimit).toLocaleString('vi-VN')}đ/ngày) của ứng dụng liên kết. Bạn đã tiêu ${Number(appDailyUsage).toLocaleString('vi-VN')}đ hôm nay.` });
+                    return res.status(400).json({
+                        error: `Vuot qua han muc thanh toan tu dong (${Number(appLimit).toLocaleString('vi-VN')}d/ngay).`
+                    });
                 }
             }
 
-            // 2. Xử lý thanh toán Auto Debit
+            // Xu ly thanh toan Auto Debit
             const paymentService = require('../payment/payment.service');
             const result = await paymentService.processAutoDebit(
                 merchant.merchant_user_id,
                 merchant.id,
-                wallet_account, 
-                amount, 
+                wallet_account,
+                amount,
                 order_id || 'AUTO_' + Date.now()
             );
 
-            res.status(200).json({ 
-                success: true, 
-                message: 'Thanh toán thành công',
+            res.status(200).json({
+                success: true,
+                message: 'Thanh toan thanh cong',
                 data: result
             });
 
         } catch (error) {
-            console.error('Lỗi Auto-Debit Charge:', error);
+            console.error('Loi Auto-Debit Charge:', error);
             if (error.message === 'Wallet_Not_Found') {
-                return res.status(404).json({ error: 'Không tìm thấy ví liên kết với số điện thoại này' });
+                return res.status(404).json({ error: 'Khong tim thay vi lien ket' });
             }
             if (error.message === 'Insufficient_Balance') {
-                return res.status(400).json({ error: 'Số dư không đủ để thanh toán' });
+                return res.status(400).json({ error: 'So du khong du de thanh toan' });
             }
-            res.status(500).json({ error: 'Lỗi hệ thống khi thanh toán tự động' });
+            res.status(500).json({ error: 'Loi he thong khi thanh toan tu dong' });
         }
     }
+
 };
 
 module.exports = merchantController;

@@ -2,14 +2,10 @@ const crypto = require('crypto');
 const merchantsRepository = require('./merchants.repository');
 const { ensureUuid, writeAuditLog, ensureWriteAccess } = require('../_shared');
 const emailService = require('../../../shared/services/email.service');
+const { encryptApiSecret } = require('../../../shared/utils/api-secret.util');
 
 const generateApiKey = (env) => env === 'SANDBOX' ? `pk_test_${crypto.randomBytes(12).toString('hex')}` : `pk_live_${crypto.randomBytes(12).toString('hex')}`;
 const generateApiSecret = (env) => env === 'SANDBOX' ? `sk_test_${crypto.randomBytes(24).toString('hex')}` : `sk_live_${crypto.randomBytes(24).toString('hex')}`;
-const hashApiSecret = (secret) => {
-    const pepper = process.env.API_SECRET_PEPPER;
-    if (!pepper) throw new Error('System_Config_Error: Missing API_SECRET_PEPPER');
-    return crypto.createHmac('sha256', pepper).update(secret).digest('hex');
-};
 
 const merchantsService = {
     createMerchant: async (data, actor) => {
@@ -207,9 +203,9 @@ const merchantsService = {
 
             const rawApiKey = generateApiKey(data.environment);
             const rawSecret = generateApiSecret(data.environment);
-            const secretHash = hashApiSecret(rawSecret);
+            const secretEncrypted = encryptApiSecret(rawSecret);
 
-            const newKey = await merchantsRepository.createApiKey(id, data.key_name, rawApiKey, secretHash, data.environment, client);
+            const newKey = await merchantsRepository.createApiKey(id, data.key_name, rawApiKey, secretEncrypted, data.environment, client);
 
             await writeAuditLog({
                 actorId: actor.userId,
@@ -261,9 +257,9 @@ const merchantsService = {
             // Tạo key mới
             const rawApiKey = generateApiKey(oldKey.environment);
             const rawSecret = generateApiSecret(oldKey.environment);
-            const secretHash = hashApiSecret(rawSecret);
+            const secretEncrypted = encryptApiSecret(rawSecret);
 
-            const newKey = await merchantsRepository.createApiKey(id, oldKey.key_name, rawApiKey, secretHash, oldKey.environment, client);
+            const newKey = await merchantsRepository.createApiKey(id, oldKey.key_name, rawApiKey, secretEncrypted, oldKey.environment, client);
 
             await writeAuditLog({
                 actorId: actor.userId,

@@ -74,13 +74,25 @@ const transactionRepository = {
         return result.rows[0].id;
     },
 
-    createLedgerEntry: async (client, ledgerTransactionId, walletId, type, amount, balanceBefore, balanceAfter, accountType = 'PERSONAL') => {
+    createFailedLedgerTransaction: async (type, description, amount, createdBy = null) => {
         const newId = uuidv7();
+        const transactionNo = 'TRX' + Date.now().toString().slice(-8) + Math.floor(1000 + Math.random() * 9000).toString();
+        const query = `
+            INSERT INTO ledger_transactions (id, transaction_no, transaction_type, status, description, amount, created_by, completed_at)
+            VALUES ($1, $2, $3, 'FAILED', $4, $5, $6, CURRENT_TIMESTAMP) RETURNING id;
+        `;
+        const result = await pool.query(query, [newId, transactionNo, type, description, amount.toString(), createdBy]);
+        return result.rows[0].id;
+    },
+
+    createLedgerEntry: async (client, ledgerTransactionId, walletId, type, amount, balanceBefore, balanceAfter, accountType = 'USER_WALLET') => {
+        const newId = uuidv7();
+        const mappedAccountType = accountType === 'PERSONAL' ? 'USER_WALLET' : accountType;
         const query = `
             INSERT INTO ledger_entries (id, ledger_transaction_id, wallet_id, entry_type, amount, balance_before, balance_after, account_type)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
         `;
-        await client.query(query, [newId, ledgerTransactionId, walletId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), accountType]);
+        await client.query(query, [newId, ledgerTransactionId, walletId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), mappedAccountType]);
         return newId;
     },
 

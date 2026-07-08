@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -16,6 +16,8 @@ export default function CheckoutPage() {
   const [status, setStatus] = useState<string>('PENDING');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  const orderCreatedRef = useRef(false);
 
   // Bước 1: Gọi API tạo đơn hàng và lấy mã QR
   useEffect(() => {
@@ -24,6 +26,9 @@ export default function CheckoutPage() {
       setLoading(false);
       return;
     }
+
+    if (orderCreatedRef.current) return;
+    orderCreatedRef.current = true;
 
     const createOrder = async () => {
       try {
@@ -57,7 +62,7 @@ export default function CheckoutPage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/order/${orderId}`);
+        const res = await fetch(`/api/order/${orderId}`, { cache: 'no-store' });
         const data = await res.json();
         if (data.status === 'PAID') {
           setStatus('PAID');
@@ -125,5 +130,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="container"><div className="checkout-container"><div style={{ margin: '3rem 0' }}><div className="spinner"></div><p style={{ marginTop: '1rem' }}>Đang tải...</p></div></div></div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

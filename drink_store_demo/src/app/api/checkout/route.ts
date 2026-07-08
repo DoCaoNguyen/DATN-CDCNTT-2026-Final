@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Tạo đơn hàng trong DB nội bộ (trạng thái PENDING)
+    // 1. Tao don hang trong DB noi bo (trang thai PENDING)
     const merchantOrderId = `STORE_ORD_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const insertRes = await query(
       'INSERT INTO store_orders (product_name, amount, merchant_order_id) VALUES ($1, $2, $3) RETURNING id',
@@ -17,42 +17,40 @@ export async function POST(req: NextRequest) {
     );
     const orderId = insertRes.rows[0].id;
 
-    // 2. Gọi API của Ví Điện Tử để tạo QRCode Thanh toán (Merchant API)
-    // Cần API_KEY hợp lệ. Ta sẽ sử dụng biến môi trường.
-    // Nếu API_KEY chưa có, app demo vẫn chạy giả lập hoặc báo lỗi tùy config.
     const apiKey = process.env.MERCHANT_API_KEY;
     if (!apiKey) {
-      // Dummy demo mode nếu chưa config API KEY (ví dụ cho mục đích test UI)
-      console.warn("WARNING: MERCHANT_API_KEY is missing. Using fake QR token.");
-      return NextResponse.json({
-        orderId,
-        qrToken: 'FAKE_QR_TOKEN_FOR_TESTING'
-      });
+      console.warn('WARNING: MERCHANT_API_KEY chua duoc cau hinh.');
+      return NextResponse.json({ error: 'Chua cau hinh MERCHANT_API_KEY trong .env.local' }, { status: 500 });
     }
 
-    const walletApiUrl = process.env.WALLET_API_URL || 'http://localhost:8000/api/v1/payment/create';
+    // 2. Goi Ví Mio API tao Payment Order (QR Code flow)
+    // Endpoint nay chi can X-Api-Key (public key), khong can HMAC signature
+    const walletApiBase = process.env.WALLET_API_URL || 'http://localhost:8000/api/v1';
+    const walletApiUrl = `${walletApiBase}/payment/create`;
+
+    const callbackUrl = process.env.CALLBACK_URL || 'http://localhost:3001/api/webhook';
 
     const walletRes = await fetch(walletApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey
+        'X-Api-Key': apiKey,
       },
       body: JSON.stringify({
         amount: amount,
-        description: `Thanh toán: ${productName}`,
-        merchant_order_id: merchantOrderId
-      })
+        description: `Thanh toan: ${productName}`,
+        merchant_order_id: merchantOrderId,
+        callback_url: callbackUrl,
+      }),
     });
 
     const data = await walletRes.json();
     if (!walletRes.ok) {
-      throw new Error(data.error || 'Failed to create payment link on Wallet API');
+      throw new Error(data.error || data.message || 'Loi tao Payment Order tu Ví Mio');
     }
 
-    // 3. Cập nhật qr_token vào database
-    // Dữ liệu API Ví trả về qrCode chứa chuỗi URI mio://pay...
-    const qrToken = data.data.qrCode;
+    // 3. Luu qr_token vao DB
+    const qrToken = data?.data?.qr_code || data?.data?.qrCode || data?.qr_code || merchantOrderId;
     await query(
       'UPDATE store_orders SET qr_token = $1 WHERE id = $2',
       [qrToken, orderId]
@@ -61,7 +59,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       orderId,
       qrToken,
-      message: 'Created order successfully'
+      merchantOrderId,
+      message: 'Tao don hang thanh cong'
     });
 
   } catch (error: any) {
@@ -69,3 +68,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

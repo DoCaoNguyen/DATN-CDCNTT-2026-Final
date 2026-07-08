@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { decryptApiSecret, verifyHmacSignature } = require('../shared/utils/api-secret.util');
 
 const verifyApiKey = async (req, res, next) => {
     const apiKey = req.headers['x-api-key'];
@@ -41,6 +42,80 @@ const verifyApiKey = async (req, res, next) => {
     } catch (error) {
         console.error('Lỗi xác thực API Key:', error);
         res.status(500).json({ error: 'Lỗi hệ thống xác thực' });
+    }
+};
+
+/**
+ * Middleware xác thực nâng cao: kiểm tra public key + HMAC signature.
+ * Dùng cho các endpoint nhạy cảm phía backend của bên thứ ba (VD: charge, tạo order).
+ *
+ * Ben thu ba phai gui them:
+ *   X-Timestamp : unix timestamp (ms) khi tao request
+ *   X-Signature : HMAC_SHA256("<timestamp>.<JSON.stringify(body)>", raw_secret)
+ */
+const verifyApiKeyWithSignature = async (req, res, next) => {
+    const apiKey    = req.headers['x-api-key'];
+    const signature = req.headers['x-signature'];
+    const timestamp = req.headers['x-timestamp'];
+
+    if (!apiKey) {
+        return res.status(401).json({ error: 'Thieu X-Api-Key header' });
+    }
+    if (!signature || !timestamp) {
+        return res.status(401).json({
+            error: 'Thieu X-Signature hoac X-Timestamp. Endpoint nay yeu cau HMAC signature.',
+            hint: 'Xem tai lieu tich hop de biet cach ky request.'
+        });
+    }
+
+    try {
+        const query = `
+            SELECT m.id AS merchant_id, m.status AS merchant_status,
+                   mak.status AS key_status, mak.api_secret_hash
+            FROM merchant_api_keys mak
+            JOIN merchants m ON mak.merchant_id = m.id
+            WHERE mak.api_key = $1
+            AND (mak.expired_at IS NULL OR mak.expired_at > CURRENT_TIMESTAMP)
+        `;
+        const result = await pool.query(query, [apiKey]);
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'API Key khong ton tai hoac da het han' });
+        }
+
+        const row = result.rows[0];
+
+        if (row.key_status !== 'ACTIVE') {
+            return res.status(401).json({
+                error: `API Key da bi ${row.key_status === 'REVOKED' ? 'thu hoi' : 'vo hieu hoa'}`
+            });
+        }
+
+        if (row.merchant_status !== 'ACTIVE') {
+            return res.status(403).json({ error: 'Tai khoan Merchant khong kha dung' });
+        }
+
+        // Giai ma secret de verify HMAC
+        const rawSecret = decryptApiSecret(row.api_secret_hash);
+        if (!rawSecret) {
+            // Key cu dung HMAC one-way hash → khong ho tro signature
+            return res.status(401).json({
+                error: 'Key nay khong ho tro HMAC signature. Vui long tao key moi tai Merchant Portal.'
+            });
+        }
+
+        const { valid, reason } = verifyHmacSignature(timestamp, req.body, signature, rawSecret);
+        if (!valid) {
+            return res.status(401).json({
+                error: `Chu ky khong hop le${reason ? ': ' + reason : ''}`
+            });
+        }
+
+        req.merchant = { merchant_id: row.merchant_id, status: row.merchant_status };
+        next();
+    } catch (error) {
+        console.error('Loi xac thuc HMAC signature:', error);
+        res.status(500).json({ error: 'Loi he thong xac thuc' });
     }
 };
 
@@ -113,6 +188,7 @@ const requireActiveMerchant = (req, res, next) => {
 
 module.exports = {
     verifyApiKey,
+    verifyApiKeyWithSignature,
     resolveMerchantContext,
     requireMerchantUser,
     requireActiveMerchant

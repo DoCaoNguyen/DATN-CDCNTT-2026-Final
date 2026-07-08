@@ -1,22 +1,19 @@
 const crypto = require('crypto');
 const merchantRepository = require('./merchant.repository');
 const { writeAuditLog } = require('../admin/_shared');
+const { encryptApiSecret } = require('../../shared/utils/api-secret.util');
 
 const generateApiKeySandbox = () => `pk_test_${crypto.randomBytes(12).toString('hex')}`;
 const generateApiSecretSandbox = () => `sk_test_${crypto.randomBytes(24).toString('hex')}`;
-const hashApiSecret = (secret) => {
-    const pepper = process.env.API_SECRET_PEPPER;
-    if (!pepper) throw new Error('System_Config_Error: Missing API_SECRET_PEPPER');
-    return crypto.createHmac('sha256', pepper).update(secret).digest('hex');
-};
+const generateApiSecretLive = () => `sk_live_${crypto.randomBytes(24).toString('hex')}`;
 
 const merchantService = {
     createApiKey: async (merchantId, keyName, userId, ipAddress, userAgent) => {
         const rawApiKey = generateApiKeySandbox();
         const rawSecret = generateApiSecretSandbox();
-        const secretHash = hashApiSecret(rawSecret);
+        const secretEncrypted = encryptApiSecret(rawSecret);
 
-        const newKey = await merchantRepository.createApiKey(merchantId, keyName, rawApiKey, secretHash, 'SANDBOX');
+        const newKey = await merchantRepository.createApiKey(merchantId, keyName, rawApiKey, secretEncrypted, 'SANDBOX');
 
         await writeAuditLog({
             actorId: userId,
@@ -41,13 +38,12 @@ const merchantService = {
         if (oldKey.status === 'REVOKED') throw new Error('Api_Key_Already_Revoked');
 
         const isLive = oldKey.environment === 'LIVE';
-        const rawSecret = isLive 
-            ? `sk_live_${crypto.randomBytes(24).toString('hex')}`
-            : `sk_test_${crypto.randomBytes(24).toString('hex')}`;
-            
-        const secretHash = hashApiSecret(rawSecret);
+        const rawSecret = isLive
+            ? generateApiSecretLive()
+            : generateApiSecretSandbox();
 
-        const updatedKey = await merchantRepository.updateApiSecretHash(keyId, secretHash);
+        const secretEncrypted = encryptApiSecret(rawSecret);
+        const updatedKey = await merchantRepository.updateApiSecretHash(keyId, secretEncrypted);
 
         await writeAuditLog({
             actorId: userId,
