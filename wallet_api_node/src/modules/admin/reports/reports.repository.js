@@ -31,10 +31,10 @@ const reportsRepository = {
             SELECT 
                 COUNT(*) as total_count,
                 COALESCE(SUM(amount) FILTER (WHERE status = 'SUCCESS'), 0) as total_success_amount,
-                COUNT(*) FILTER (WHERE transaction_type = 'DEPOSIT_TRANSACTION' AND status = 'SUCCESS') as total_topup_success,
-                COUNT(*) FILTER (WHERE transaction_type = 'WALLET_TRANSFER' AND status = 'SUCCESS') as total_transfer_success,
-                COUNT(*) FILTER (WHERE transaction_type = 'PAYMENT_TRANSACTION' AND status = 'SUCCESS') as total_payment_success,
-                COUNT(*) FILTER (WHERE transaction_type = 'REFUND_TRANSACTION' AND status = 'SUCCESS') as total_refund_success
+                COUNT(*) FILTER (WHERE transaction_type = 'TOPUP' AND status = 'SUCCESS') as total_topup_success,
+                COUNT(*) FILTER (WHERE transaction_type = 'TRANSFER' AND status = 'SUCCESS') as total_transfer_success,
+                COUNT(*) FILTER (WHERE transaction_type = 'PAYMENT' AND status = 'SUCCESS') as total_payment_success,
+                COUNT(*) FILTER (WHERE transaction_type = 'REFUND' AND status = 'SUCCESS') as total_refund_success
             FROM ledger_transactions
             ${whereClause}
         `;
