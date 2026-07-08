@@ -53,8 +53,9 @@ const webhookService = {
             // We must return newLog ID because webhook.publisher uses it for retry logic!
             return newLog._id.toString();
         } catch (error) {
-            console.error('[WebhookLog] Error creating log:', error);
-            throw error;
+            console.error('[WebhookLog] Error creating log:', error.message);
+            // Lỗi log (MongoDB) không được làm gián đoạn luồng thanh toán chính
+            return null;
         }
     },
 

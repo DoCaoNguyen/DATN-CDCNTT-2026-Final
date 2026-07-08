@@ -52,6 +52,31 @@ const transactionRepository = {
         return BigInt(result.rows[0].available_balance);
     },
 
+    lockAndGetMerchantBalance: async (client, merchantId) => {
+        const query = `
+            SELECT available_balance 
+            FROM merchant_balances 
+            WHERE merchant_id = $1 
+            FOR UPDATE;
+        `;
+        const result = await client.query(query, [merchantId]);
+        if (result.rows.length === 0) {
+            throw new Error(`Khong tim thay vi doanh nghiep cho merchant ${merchantId}`);
+        }
+        return BigInt(result.rows[0].available_balance); 
+    },
+
+    addMerchantBalance: async (client, merchantId, amount) => {
+        const query = `
+            UPDATE merchant_balances 
+            SET available_balance = available_balance + $1, updated_at = CURRENT_TIMESTAMP
+            WHERE merchant_id = $2
+            RETURNING available_balance;
+        `;
+        const result = await client.query(query, [amount.toString(), merchantId]);
+        return BigInt(result.rows[0].available_balance);
+    },
+
     subtractBalance: async (client, walletId, amount) => {
         const query = `
             UPDATE wallet_balances 
@@ -85,14 +110,25 @@ const transactionRepository = {
         return result.rows[0].id;
     },
 
-    createLedgerEntry: async (client, ledgerTransactionId, walletId, type, amount, balanceBefore, balanceAfter, accountType = 'USER_WALLET') => {
+    createLedgerEntry: async (client, ledgerTransactionId, accountId, type, amount, balanceBefore, balanceAfter, accountType = 'PERSONAL') => {
         const newId = uuidv7();
+        let query, params;
         const mappedAccountType = accountType === 'PERSONAL' ? 'USER_WALLET' : accountType;
-        const query = `
-            INSERT INTO ledger_entries (id, ledger_transaction_id, wallet_id, entry_type, amount, balance_before, balance_after, account_type)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-        `;
-        await client.query(query, [newId, ledgerTransactionId, walletId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), mappedAccountType]);
+        
+        if (mappedAccountType === 'MERCHANT') {
+            query = `
+                INSERT INTO ledger_entries (id, ledger_transaction_id, merchant_id, entry_type, amount, balance_before, balance_after, account_type)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+            `;
+        } else {
+            query = `
+                INSERT INTO ledger_entries (id, ledger_transaction_id, wallet_id, entry_type, amount, balance_before, balance_after, account_type)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+            `;
+        }
+        
+        params = [newId, ledgerTransactionId, accountId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), mappedAccountType];
+        await client.query(query, params);
         return newId;
     },
 

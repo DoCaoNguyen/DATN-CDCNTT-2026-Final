@@ -236,26 +236,16 @@ const authService = {
             await authRepository.markLoginSuccess(user.id);
         }
 
-        const tokenVersion = await authRepository.incrementTokenVersion(user.id);
-        const accessToken = jwt.sign({
-            userId: user.id,
-            role: user.user_type,
-            tokenVersion
-        }, ensureJwtSecret(), { expiresIn: '15m' });
-
-        const refreshToken = crypto.randomBytes(40).toString('hex');
-        await authRepository.withTransaction(async client => {
+        // Lấy roles & permissions để tạo JWT chuẩn (thống nhất với login và refreshToken flow)
+        const context = await authRepository.getRolesAndPermissions(user.id);
+        const tokens = await authRepository.withTransaction(async client => {
+            // Thu hồi toàn bộ refresh token cũ (chính sách single-device cho mobile)
             await authRepository.revokeAllUserRefreshTokens(client, user.id, ipAddress);
-            await authRepository.saveRefreshToken(client, {
-                userId: user.id,
-                tokenHash: tokenHash(refreshToken),
-                tokenFamilyId: uuidv7(),
-                expiresAt: new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000),
-                ipAddress,
-                userAgent
-            });
+            // Dùng issueTokenPair() để tạo access_token + refresh_token nhất quán
+            return issueTokenPair(user, context, { ipAddress, userAgent, client });
         });
 
+        // Gửi sự kiện kick-out cho các phiên đăng nhập cũ trên thiết bị khác
         try {
             const { emitToUser } = require('../../utils/socket');
             emitToUser(user.id, 'force_logout', { reason: 'logged_in_elsewhere' });
@@ -264,8 +254,7 @@ const authService = {
         }
 
         return {
-            access_token: accessToken,
-            refresh_token: refreshToken,
+            ...tokens,
             user_info: {
                 id: user.id,
                 email: user.email,

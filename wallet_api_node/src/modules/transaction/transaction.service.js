@@ -11,18 +11,19 @@ const traceEventService = require('../system/trace_event.service');
 
 const transactionService = {
     deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
-        const wallet = await repo.getWalletForPinCheck(userId);
-        if (!wallet) throw new Error('Wallet_Not_Found');
-
-        const dailyTotal = await repo.getDailyTotal(wallet.id, 'DEPOSIT');
-        if (dailyTotal + amount > 50000000n) {
-            throw new Error('Daily_Limit_Exceeded');
-        }
-
-        await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
-
-        const client = await pool.connect();
+        let client = null;
         try {
+            const wallet = await repo.getWalletForPinCheck(userId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+
+            const dailyTotal = await repo.getDailyTotal(wallet.id, 'DEPOSIT');
+            if (dailyTotal + amount > 50000000n) {
+                throw new Error('Daily_Limit_Exceeded');
+            }
+
+            await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
+
+            client = await pool.connect();
             await client.query('BEGIN'); 
 
             // SANDBOX SIMULATION: Nạp tiền thất bại nếu số tiền có tận cùng là 999 (ví dụ: 10,999)
@@ -76,31 +77,35 @@ const transactionService = {
                 balanceAfter: balanceAfter.toString() 
             };
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
+            let failedTxId = 'FAIL-' + Date.now();
+            try { failedTxId = await repo.createFailedLedgerTransaction('DEPOSIT', `Nạp tiền thất bại: ${error.message}`, amount, userId); } catch (e) {}
+            traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'DEPOSIT', status: 'FAILED', amount: amount.toString(), actor: userId, event: `Nạp tiền thất bại: ${error.message}` });
             throw error;
         } finally {
-            client.release();
+            if (client) client.release();
         }
     },
 
     withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => { 
-        const wallet = await repo.getWalletForPinCheck(userId);
-        if (!wallet) throw new Error('Wallet_Not_Found');
-
-        const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
-        if (monthlyTotal + amount > 100000000n) {
-            throw new Error('Monthly_Limit_Exceeded');
-        }
-
-        const dailyTotal = await repo.getDailyTotal(wallet.id, 'WITHDRAW');
-        if (dailyTotal + amount > 50000000n) {
-            throw new Error('Daily_Limit_Exceeded');
-        }
-
-        await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
-
-        const client = await pool.connect();
+        let client = null;
         try {
+            const wallet = await repo.getWalletForPinCheck(userId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+
+            const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
+            if (monthlyTotal + amount > 100000000n) {
+                throw new Error('Monthly_Limit_Exceeded');
+            }
+
+            const dailyTotal = await repo.getDailyTotal(wallet.id, 'WITHDRAW');
+            if (dailyTotal + amount > 50000000n) {
+                throw new Error('Daily_Limit_Exceeded');
+            }
+
+            await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
+
+            client = await pool.connect();
             await client.query('BEGIN'); 
 
             // SANDBOX SIMULATION: Rút tiền thất bại do ngân hàng bảo trì nếu số tiền tận cùng là 999
@@ -157,26 +162,30 @@ const transactionService = {
                 balanceAfter: balanceAfter.toString() 
             };
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
+            let failedTxId = 'FAIL-' + Date.now();
+            try { failedTxId = await repo.createFailedLedgerTransaction('WITHDRAW', `Rút tiền thất bại: ${error.message}`, amount, userId); } catch (e) {}
+            traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'WITHDRAWAL', status: 'FAILED', amount: amount.toString(), actor: userId, event: `Rút tiền thất bại: ${error.message}` });
             throw error;
         } finally {
-            client.release();
+            if (client) client.release();
         }
     },
 
     bankTransfer: async (userId, amount, pin, faceImagePath, bankCode, bankName, accountNumber, externalReference) => {
-        const wallet = await repo.getWalletForPinCheck(userId);
-        if (!wallet) throw new Error('Wallet_Not_Found');
-
-        const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
-        if (monthlyTotal + amount > 100000000n) {
-            throw new Error('Monthly_Limit_Exceeded');
-        }
-
-        await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
-
-        const client = await pool.connect();
+        let client = null;
         try {
+            const wallet = await repo.getWalletForPinCheck(userId);
+            if (!wallet) throw new Error('Wallet_Not_Found');
+
+            const monthlyTotal = await repo.getMonthlyDebitTotal(wallet.id);
+            if (monthlyTotal + amount > 100000000n) {
+                throw new Error('Monthly_Limit_Exceeded');
+            }
+
+            await verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService);
+
+            client = await pool.connect();
             await client.query('BEGIN'); 
 
             // SANDBOX SIMULATION: Chuyển tiền tới ngân hàng thất bại nếu số tiền có tận cùng là 999
@@ -233,38 +242,42 @@ const transactionService = {
                 balanceAfter: balanceAfter.toString() 
             };
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
+            let failedTxId = 'FAIL-' + Date.now();
+            try { failedTxId = await repo.createFailedLedgerTransaction('BANK_TRANSFER', `Chuyển tiền ngân hàng thất bại: ${error.message}`, amount, userId); } catch (e) {}
+            traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'BANK_TRANSFER', status: 'FAILED', amount: amount.toString(), actor: userId, event: `Chuyển tiền ngân hàng thất bại: ${error.message}` });
             throw error;
         } finally {
-            client.release();
+            if (client) client.release();
         }
     },
 
     transfer: async (senderUserId, receiverIdentifier, amount, note, referenceCode, pin, faceImagePath) => {
-        const senderWallet = await repo.getWalletForPinCheck(senderUserId);
-        
-        if (!senderWallet) {
-            throw new Error('Sender_Wallet_Not_Found');
-        }
-
-        const monthlyTotal = await repo.getMonthlyDebitTotal(senderWallet.id);
-        if (monthlyTotal + amount > 100000000n) {
-            throw new Error('Monthly_Limit_Exceeded');
-        }
-
-        await verifyTransactionSecurity(amount, pin, faceImagePath, senderWallet, senderUserId, repo, kycService);
-
-        const receiverWallet = await repo.getWalletByIdentifier(receiverIdentifier);
-
-        if (!receiverWallet) throw new Error('Receiver_Wallet_Not_Found');
-        if (senderWallet.id === receiverWallet.id) throw new Error('Self_Transfer_Not_Allowed');
-
-        if (receiverWallet.is_kyc_verified !== true) {
-            throw new Error('Receiver_Not_KYC');
-        }
-
-        const client = await pool.connect();
+        let client = null;
         try {
+            const senderWallet = await repo.getWalletForPinCheck(senderUserId);
+            
+            if (!senderWallet) {
+                throw new Error('Sender_Wallet_Not_Found');
+            }
+
+            const monthlyTotal = await repo.getMonthlyDebitTotal(senderWallet.id);
+            if (monthlyTotal + amount > 100000000n) {
+                throw new Error('Monthly_Limit_Exceeded');
+            }
+
+            await verifyTransactionSecurity(amount, pin, faceImagePath, senderWallet, senderUserId, repo, kycService);
+
+            const receiverWallet = await repo.getWalletByIdentifier(receiverIdentifier);
+
+            if (!receiverWallet) throw new Error('Receiver_Wallet_Not_Found');
+            if (senderWallet.id === receiverWallet.id) throw new Error('Self_Transfer_Not_Allowed');
+
+            if (receiverWallet.is_kyc_verified !== true) {
+                throw new Error('Receiver_Not_KYC');
+            }
+
+            client = await pool.connect();
             await client.query('BEGIN');
 
             const sortedWallets = [senderWallet.id, receiverWallet.id].sort();
@@ -395,10 +408,13 @@ const transactionService = {
                 balanceAfter: senderBalanceAfter.toString() 
             };
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
+            let failedTxId = 'FAIL-' + Date.now();
+            try { failedTxId = await repo.createFailedLedgerTransaction('TRANSFER', `Chuyển tiền thất bại: ${error.message}`, amount, senderUserId); } catch (e) {}
+            traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'TRANSFER', status: 'FAILED', amount: amount.toString(), actor: senderUserId, event: `Chuyển tiền thất bại: ${error.message}` });
             throw error;
         } finally {
-            client.release();
+            if (client) client.release();
         }
     },
 

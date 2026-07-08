@@ -10,7 +10,7 @@ router.get('/me', verifyToken, merchantController.getMe);
 
 router.get('/profile', requireMerchantUser, merchantController.getProfile);
 router.patch('/profile/callback', requireMerchantUser, requireActiveMerchant, merchantController.updateCallback);
-router.get('/api-keys', requireMerchantUser, merchantController.getApiKeys); // Cho phép xem nhưng ko cho tạo
+router.get('/api-keys', requireMerchantUser, merchantController.getApiKeys);
 router.post('/api-keys', requireMerchantUser, requireActiveMerchant, merchantController.createApiKey);
 router.post('/api-keys/:keyId/actions/rotate-secret', requireMerchantUser, requireActiveMerchant, merchantController.rotateApiKey);
 router.post('/api-keys/:keyId/actions/revoke', requireMerchantUser, merchantController.revokeApiKey);
@@ -23,7 +23,7 @@ router.get('/webhooks/:id', requireMerchantUser, merchantController.getWebhookBy
 router.post('/webhooks/:id/retry', requireMerchantUser, requireActiveMerchant, merchantController.retryWebhook);
 router.get('/balance', requireMerchantUser, merchantController.getBalance);
 router.get('/balance/statement', requireMerchantUser, merchantController.getStatement);
-
+router.post('/withdraw-to-wallet', requireMerchantUser, requireActiveMerchant, merchantController.withdrawToWallet);
 // [Thêm mới] API cấp và xác thực Auth_Code
 router.post('/auth-code/generate', verifyToken, merchantController.generateAuthCode);
 router.post('/auth-code/verify', merchantController.verifyAuthCode);

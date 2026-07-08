@@ -43,7 +43,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _fetchLinkedWallets() async {
     try {
-      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/wallets/1'));
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/wallets/1'),
+        headers: {'Bypass-Tunnel-Reminder': 'true'},
+      );
       if (response.statusCode == 200) {
         final jsonResp = jsonDecode(response.body);
         if (jsonResp['success'] == true) {
@@ -118,7 +121,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 try {
                   await http.post(
                     Uri.parse('${ApiConfig.baseUrl}/wallets/link'),
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Bypass-Tunnel-Reminder': 'true'
+                    },
                     body: jsonEncode({
                       'user_id': 1,
                       'wallet_name': 'Mio', // Ví Mio thay thế bằng label Mio trên UI

@@ -160,21 +160,44 @@ const paymentsRepository = {
         return result.rows[0];
     },
 
-    listQrPayments: async (page, limit) => {
+    listQrPayments: async (page, limit, status, q) => {
         const offset = (page - 1) * limit;
-        const query = `
+        let query = `
             SELECT pq.id, pq.qr_token, pq.status as qr_status, pq.expired_at, pq.created_at, pq.used_at,
                    po.payment_no, po.amount, po.status as order_status, m.merchant_name
             FROM payment_qr_codes pq
             LEFT JOIN payment_orders po ON pq.payment_order_id = po.id
             LEFT JOIN merchants m ON po.merchant_id = m.id
-            ORDER BY pq.created_at DESC
-            LIMIT $1 OFFSET $2
+            WHERE 1=1
         `;
-        const countQuery = `SELECT COUNT(*) FROM payment_qr_codes`;
+        let countQuery = `
+            SELECT COUNT(*) 
+            FROM payment_qr_codes pq
+            LEFT JOIN payment_orders po ON pq.payment_order_id = po.id
+            WHERE 1=1
+        `;
+
+        const params = [];
+        let paramCount = 1;
+
+        if (status) {
+            query += ` AND pq.status = $${paramCount++}::qr_status`;
+            countQuery += ` AND pq.status = '${status}'`;
+            params.push(status);
+        }
+
+        if (q) {
+            query += ` AND (pq.qr_token ILIKE $${paramCount} OR po.payment_no ILIKE $${paramCount})`;
+            countQuery += ` AND (pq.qr_token ILIKE '%${q}%' OR po.payment_no ILIKE '%${q}%')`;
+            params.push(`%${q}%`);
+            paramCount++;
+        }
+
+        query += ` ORDER BY pq.created_at DESC LIMIT $${paramCount++} OFFSET $${paramCount++}`;
+        params.push(limit, offset);
 
         const [itemsResult, countResult] = await Promise.all([
-            pool.query(query, [limit, offset]),
+            pool.query(query, params),
             pool.query(countQuery)
         ]);
 

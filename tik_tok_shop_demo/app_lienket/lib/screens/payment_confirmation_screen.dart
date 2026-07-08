@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/cart.dart';
 import '../config/api_config.dart';
+import '../services/mio_payment_service.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
   final double amount;
@@ -62,11 +63,16 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     try {
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/orders/checkout'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
         body: jsonEncode({
           'user_id': 1,
           'amount': widget.amount.toInt(),
           'order_id': widget.orderId,
+          'api_key': MioPaymentService.merchantApiKey,
+          'api_secret': MioPaymentService.apiSecret,
         }),
       );
       

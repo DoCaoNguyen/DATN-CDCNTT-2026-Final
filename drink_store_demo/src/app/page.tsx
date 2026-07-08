@@ -34,9 +34,24 @@ const products = [
 export default function Home() {
   return (
     <main className="container">
-      <header className="header">
+      <header className="header" style={{ position: 'relative' }}>
         <h1>Nước Ép & Trà Sữa Chú Mười</h1>
         <p>Thanh toán siêu tốc 1 chạm qua Ví Điện Tử!</p>
+        <Link 
+          href="/settings" 
+          className="btn" 
+          style={{ 
+            position: 'absolute', 
+            top: '20px', 
+            right: '20px', 
+            width: 'auto', 
+            padding: '0.5rem 1rem', 
+            backgroundColor: '#f1f5f9', 
+            color: '#334155' 
+          }}
+        >
+          Cài đặt
+        </Link>
       </header>
 
       <div className="product-grid">

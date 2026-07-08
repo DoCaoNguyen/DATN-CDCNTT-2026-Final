@@ -80,7 +80,7 @@ const paymentService = {
 
             // [SECURITY FIX] Kiểm tra hạn mức thanh toán trong ngày (50 triệu VND)
             const dailyTotal = await txRepo.getDailyTotal(wallet.id, 'PAYMENT');
-            if (dailyTotal + order.amount > 50000000n) {
+            if (dailyTotal + BigInt(order.amount) > 50000000n) {
                 throw new Error('Daily_Limit_Exceeded');
             }
 
@@ -113,59 +113,52 @@ const paymentService = {
 
             // [NEW] CREDIT TIỀN CHO MERCHANT VÀ THU PHÍ MDR
             if (order.merchant_id) {
-                const merchantRepo = require('../merchant/merchant.repository');
-                const merchantUserId = await merchantRepo.getMerchantUserId(order.merchant_id);
+                // TÍNH PHÍ MDR TỪ CẤU HÌNH
+                let feeAmount = 0n;
+                const orderAmountBig = BigInt(order.amount);
+                let netAmount = orderAmountBig;
+                const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
 
-                if (merchantUserId) {
-                    const merchantWallet = await txRepo.getWalletByUserId(merchantUserId);
-                    if (merchantWallet) {
-                        // TÍNH PHÍ MDR TỪ CẤU HÌNH
-                        let feeAmount = 0n;
-                        const orderAmountBig = BigInt(order.amount);
-                        let netAmount = orderAmountBig;
-                        const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
+                if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
+                    const mdrRateFloat = parseFloat(feeConfig.fee_value);
+                    feeAmount = BigInt(Math.round(Number(orderAmountBig) * mdrRateFloat));
+                    netAmount = orderAmountBig - feeAmount;
+                }
 
-                        if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
-                            const mdrRateFloat = parseFloat(feeConfig.fee_value);
-                            feeAmount = BigInt(Math.round(Number(orderAmountBig) * mdrRateFloat));
-                            netAmount = orderAmountBig - feeAmount;
-                        }
+                // Cập nhật số dư vào merchant_balances (Thay vì wallet_balances cá nhân)
+                const mBalanceBefore = await txRepo.lockAndGetMerchantBalance(client, order.merchant_id);
+                const mBalanceAfter = await txRepo.addMerchantBalance(client, order.merchant_id, netAmount);
 
-                        const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantWallet.id);
-                        const mBalanceAfter = await txRepo.addBalance(client, merchantWallet.id, netAmount);
+                await txRepo.createLedgerEntry(
+                    client, ledgerTxId, order.merchant_id, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
+                );
 
-                        await txRepo.createLedgerEntry(
-                            client, ledgerTxId, merchantWallet.id, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
-                        );
+                // GHI NHẬN DOANH THU PHÍ HỆ THỐNG
+                if (feeAmount > 0n) {
+                    await txRepo.createSystemLedgerEntry(
+                        client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
+                    );
 
-                        // GHI NHẬN DOANH THU PHÍ HỆ THỐNG
-                        if (feeAmount > 0n) {
-                            await txRepo.createSystemLedgerEntry(
-                                client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
-                            );
-
-                            // GHI LOG VÀO MONGODB
-                            const SystemLog = require('../system/models/system_log.model');
-                            SystemLog.create({
-                                service_name: 'PaymentService',
-                                log_level: 'INFO',
-                                message: 'Thu phí MDR từ merchant',
-                                action: 'COLLECT_MDR_FEE',
-                                entity_type: 'PAYMENT_TRANSACTION',
-                                entity_id: paymentTxId,
-                                status: 'SUCCESS',
-                                metadata: {
-                                    merchant_id: order.merchant_id,
-                                    order_id: order.order_id,
-                                    total_amount: order.amount.toString(),
-                                    fee_amount: feeAmount.toString(),
-                                    net_amount: netAmount.toString()
-                                },
-                                ip_address: 'system',
-                                user_agent: 'payment.service'
-                            }).catch(err => console.error('[MongoLog Error]', err));
-                        }
-                    }
+                    // GHI LOG VÀO MONGODB
+                    const SystemLog = require('../system/models/system_log.model');
+                    SystemLog.create({
+                        service_name: 'PaymentService',
+                        log_level: 'INFO',
+                        message: 'Thu phí MDR từ merchant',
+                        action: 'COLLECT_MDR_FEE',
+                        entity_type: 'PAYMENT_TRANSACTION',
+                        entity_id: paymentTxId,
+                        status: 'SUCCESS',
+                        metadata: {
+                            merchant_id: order.merchant_id,
+                            order_id: order.order_id,
+                            total_amount: order.amount.toString(),
+                            fee_amount: feeAmount.toString(),
+                            net_amount: netAmount.toString()
+                        },
+                        ip_address: 'system',
+                        user_agent: 'payment.service'
+                    }).catch(err => console.error('[MongoLog Error]', err));
                 }
             }
 
@@ -176,28 +169,39 @@ const paymentService = {
             const webhookService = require('../webhook/webhook.service');
 
             if (order.merchant_id) {
-                const userProfile = await userRepo.getUserProfile(userId);
-                webhookPayload = {
-                    // Dữ liệu chuẩn (ưu tiên mã của Merchant truyền vào)
-                    order_id: order.merchant_order_id || order.order_code,
-                    merchant_order_id: order.merchant_order_id || null,
-                    orderCode: order.order_code,
-                    status: 'success',
-                    amount: order.amount ? order.amount.toString() : '0',
-                    wallet_transaction_id: paymentTxId.toString(),
-                    phone_number: userProfile ? userProfile.phone : ''
-                };
+                let finalCallbackUrl = order.callback_url;
+                if (!finalCallbackUrl) {
+                    const merchantConfig = await webhookService.getMerchantSecret(order.merchant_id);
+                    if (merchantConfig && merchantConfig.callback_url) {
+                        finalCallbackUrl = merchantConfig.callback_url;
+                    }
+                }
 
-                // Idempotency key using payment transaction ID to prevent duplicate logs
-                const idempotencyKey = `wh_${paymentTxId}`;
+                if (finalCallbackUrl) {
+                    const userProfile = await userRepo.getUserProfile(userId);
+                    webhookPayload = {
+                        // Dữ liệu chuẩn (ưu tiên mã của Merchant truyền vào)
+                        order_id: order.merchant_order_id || order.order_code,
+                        merchant_order_id: order.merchant_order_id || null,
+                        orderCode: order.order_code,
+                        status: 'success',
+                        amount: order.amount ? order.amount.toString() : '0',
+                        wallet_transaction_id: paymentTxId.toString(),
+                        phone_number: userProfile ? userProfile.phone : '',
+                        callback_url: finalCallbackUrl
+                    };
 
-                webhookLogId = await webhookService.createLog(
-                    client,
-                    order.merchant_id,
-                    paymentTxId,
-                    idempotencyKey,
-                    webhookPayload
-                );
+                    // Idempotency key using payment transaction ID to prevent duplicate logs
+                    const idempotencyKey = `wh_${paymentTxId}`;
+
+                    webhookLogId = await webhookService.createLog(
+                        client,
+                        order.merchant_id,
+                        paymentTxId,
+                        idempotencyKey,
+                        webhookPayload
+                    );
+                }
             }
 
             await client.query('COMMIT');
@@ -229,7 +233,7 @@ const paymentService = {
                     logId: webhookLogId,
                     merchantId: order.merchant_id,
                     payload: webhookPayload,
-                    callbackUrl: order.callback_url
+                    callbackUrl: webhookPayload.callback_url
                 }).catch(err => console.error('[WEBHOOK_PUBLISH_ERROR]', err));
             }
 
@@ -287,7 +291,7 @@ const paymentService = {
     },
 
     // ===== NEW: Xử lý Auto-Debit (Thanh toán tự động qua Ví Liên kết) =====
-    processAutoDebit: async (merchantUserId, merchantId, userPhone, amount, merchantOrderId) => {
+    processAutoDebit: async (merchantUserId, merchantId, userPhone, amount, merchantOrderId, walletToken) => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -301,15 +305,17 @@ const paymentService = {
             const linkCheck = await client.query(`
                 SELECT id, status, limit_per_transaction, limit_per_day
                 FROM user_linked_services
-                WHERE user_id = $1 AND merchant_id = $2 AND status = 'ACTIVE'
+                WHERE user_id = $1 AND wallet_token = $2 AND status = 'ACTIVE'
                 LIMIT 1
-            `, [userId, merchantId]);
+            `, [userId, walletToken]);
             if (linkCheck.rows.length === 0) {
                 throw new Error('Auto_Debit_Not_Authorized');
             }
             const linkedService = linkCheck.rows[0];
             // Kiểm tra hạn mức mỗi giao dịch
-            if (linkedService.limit_per_transaction && amount > BigInt(linkedService.limit_per_transaction)) {
+            const txLimitStr = linkedService.limit_per_transaction || 5000000;
+            const txLimit = BigInt(Math.floor(Number(txLimitStr)));
+            if (amount > txLimit) {
                 throw new Error('Auto_Debit_Transaction_Limit_Exceeded');
             }
 
@@ -340,33 +346,30 @@ const paymentService = {
             );
             await txRepo.createLedgerEntry(client, ledgerTxId, userWallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            // 7. Cộng tiền cho Merchant và thu phí 2% MDR
-            const merchantWallet = await txRepo.getWalletByUserId(merchantUserId);
-            if (merchantWallet) {
-                let feeAmount = 0n;
-                const orderAmountBig = BigInt(amount);
-                let netAmount = orderAmountBig;
-                const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
+            // 7. Cộng tiền cho Merchant và thu phí MDR
+            let feeAmount = 0n;
+            const orderAmountBig = BigInt(amount);
+            let netAmount = orderAmountBig;
+            const feeConfig = await paymentRepo.getFeeConfig('MERCHANT_MDR');
 
-                if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
-                    const mdrRateFloat = parseFloat(feeConfig.fee_value);
-                    feeAmount = BigInt(Math.round(Number(orderAmountBig) * mdrRateFloat));
-                    netAmount = orderAmountBig - feeAmount;
-                }
+            if (feeConfig && feeConfig.fee_type === 'PERCENTAGE') {
+                const mdrRateFloat = parseFloat(feeConfig.fee_value);
+                feeAmount = BigInt(Math.round(Number(orderAmountBig) * mdrRateFloat));
+                netAmount = orderAmountBig - feeAmount;
+            }
 
-                const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantWallet.id);
-                const mBalanceAfter = await txRepo.addBalance(client, merchantWallet.id, netAmount);
+            const mBalanceBefore = await txRepo.lockAndGetMerchantBalance(client, merchantId);
+            const mBalanceAfter = await txRepo.addMerchantBalance(client, merchantId, netAmount);
 
-                await txRepo.createLedgerEntry(
-                    client, ledgerTxId, merchantWallet.id, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
+            await txRepo.createLedgerEntry(
+                client, ledgerTxId, merchantId, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
+            );
+
+            // Thu phí MDR
+            if (feeAmount > 0n) {
+                await txRepo.createSystemLedgerEntry(
+                    client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
                 );
-
-                // Thu phí MDR
-                if (feeAmount > 0n) {
-                    await txRepo.createSystemLedgerEntry(
-                        client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
-                    );
-                }
             }
 
             // 8. Lưu Transaction

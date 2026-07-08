@@ -5,7 +5,7 @@ const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const bcrypt = require('bcrypt');
 const notificationService = require('../notification/notification.service');
-
+const { writeAuditLog } = require('../admin/_shared');
 // In-memory store for Auth Codes (Demo purpose only)
 // Trong thực tế sẽ dùng Redis có expire (TTL)
 const authCodeMap = new Map();
@@ -35,6 +35,17 @@ const merchantController = {
             };
 
             const merchantId = await merchantRepository.registerMerchant(merchantData, rawApiKey);
+
+            await writeAuditLog({
+                actorId: userId,
+                action: 'merchant.self_register',
+                entityType: 'MERCHANT',
+                entityId: merchantId,
+                oldData: null,
+                newData: { merchant_name, contact_phone },
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            });
 
             res.status(201).json({
                 message: 'Đăng ký Merchant thành công',
@@ -455,22 +466,18 @@ const merchantController = {
             if (linkedApp.status === 'INACTIVE') {
                 return res.status(400).json({ error: 'Dich vu da bi tam khoa. Vui long mo khoa tren ung dung Vi.' });
             }
-            if (linkedApp.limit_per_transaction) {
-                const txLimit = BigInt(Math.floor(Number(linkedApp.limit_per_transaction)));
-                if (requestAmount > txLimit) {
-                    return res.status(400).json({
-                        error: `Vuot qua han muc thanh toan tu dong (${Number(txLimit).toLocaleString('vi-VN')}d/lan).`
-                    });
-                }
+            const txLimitStr = linkedApp.limit_per_transaction || 5000000;
+            const txLimit = BigInt(Math.floor(Number(txLimitStr)));
+            if (requestAmount > txLimit) {
+                return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(txLimit).toLocaleString('vi-VN')}đ/lần) của ứng dụng liên kết.` });
             }
-            if (linkedApp.limit_per_day) {
-                const appLimit = BigInt(Math.floor(Number(linkedApp.limit_per_day)));
-                const appDailyUsage = await merchantRepository.getDailyUsageForMerchant(wallet_id, merchant.id);
-                if (appDailyUsage + requestAmount > appLimit) {
-                    return res.status(400).json({
-                        error: `Vuot qua han muc thanh toan tu dong (${Number(appLimit).toLocaleString('vi-VN')}d/ngay).`
-                    });
-                }
+            
+            const dayLimitStr = linkedApp.limit_per_day || 5000000;
+            const appLimit = BigInt(Math.floor(Number(dayLimitStr)));
+            const appDailyUsage = await merchantRepository.getDailyUsageForMerchant(wallet_id, merchant.id);
+            
+            if (appDailyUsage + requestAmount > appLimit) {
+                return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(appLimit).toLocaleString('vi-VN')}đ/ngày) của ứng dụng liên kết. Bạn đã tiêu ${Number(appDailyUsage).toLocaleString('vi-VN')}đ hôm nay.` });
             }
 
             // Xu ly thanh toan Auto Debit
@@ -478,9 +485,10 @@ const merchantController = {
             const result = await paymentService.processAutoDebit(
                 merchant.merchant_user_id,
                 merchant.id,
-                wallet_account,
-                amount,
-                order_id || 'AUTO_' + Date.now()
+                wallet_account, 
+                amount, 
+                order_id || 'AUTO_' + Date.now(),
+                wallet_token
             );
 
             res.status(200).json({
@@ -498,6 +506,40 @@ const merchantController = {
                 return res.status(400).json({ error: 'So du khong du de thanh toan' });
             }
             res.status(500).json({ error: 'Loi he thong khi thanh toan tu dong' });
+        }
+    },
+
+    withdrawToWallet: async (req, res) => {
+        try {
+            const userId = req.user.userId || req.user.id;
+            const { merchant_id: merchantId, is_owner, role_code } = req.merchantContext;
+            const { amount } = req.body;
+
+            if (!amount || amount <= 0) {
+                return res.status(400).json({ error: 'Số tiền rút không hợp lệ' });
+            }
+
+            if (!is_owner && role_code !== 'MERCHANT_OWNER') {
+                return res.status(403).json({ error: 'Chỉ chủ cửa hàng mới có quyền rút doanh thu' });
+            }
+
+            const result = await merchantService.withdrawToWallet(merchantId, userId, amount);
+
+            res.status(200).json({
+                message: 'Rút doanh thu về ví cá nhân thành công',
+                data: result
+            });
+        } catch (error) {
+            console.error('Lỗi rút doanh thu merchant:', error);
+            if (
+                error.message.includes('Số dư cửa hàng không đủ') ||
+                error.message.includes('tối thiểu') ||
+                error.message.includes('tối đa') ||
+                error.message.includes('Rút tiền thất bại')
+            ) {
+                return res.status(400).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Lỗi hệ thống khi rút doanh thu' });
         }
     }
 

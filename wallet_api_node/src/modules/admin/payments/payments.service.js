@@ -41,8 +41,8 @@ const adminPaymentsService = {
         return paymentsRepository.getRefundDetail(id);
     },
 
-    listQrPayments: async (page = 1, limit = 20) => {
-        const result = await paymentsRepository.listQrPayments(page, limit);
+    listQrPayments: async (page = 1, limit = 20, status, q) => {
+        const result = await paymentsRepository.listQrPayments(page, limit, status, q);
         return {
             ...result,
             page,

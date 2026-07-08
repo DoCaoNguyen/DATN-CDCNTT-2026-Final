@@ -15,7 +15,7 @@ const transactionsRepository = {
             idx++;
         }
         if (status) {
-            conditions.push(`d.status = $${idx}`);
+            conditions.push(`d.status = $${idx}::deposit_status`);
             params.push(status);
             idx++;
         }
@@ -82,7 +82,7 @@ const transactionsRepository = {
             idx++;
         }
         if (status) {
-            conditions.push(`t.status = $${idx}`);
+            conditions.push(`t.status = $${idx}::transfer_status`);
             params.push(status);
             idx++;
         }
@@ -155,12 +155,12 @@ const transactionsRepository = {
             idx++;
         }
         if (status) {
-            conditions.push(`lt.status = $${idx}`);
+            conditions.push(`lt.status = $${idx}::transaction_status`);
             params.push(status);
             idx++;
         }
         if (type) {
-            conditions.push(`lt.transaction_type = $${idx}`);
+            conditions.push(`lt.transaction_type = $${idx}::ledger_transaction_type`);
             params.push(type);
             idx++;
         }
@@ -230,12 +230,12 @@ const transactionsRepository = {
             idx++;
         }
         if (accountType) {
-            conditions.push(`le.account_type = $${idx}`);
+            conditions.push(`le.account_type = $${idx}::ledger_account_type`);
             params.push(accountType);
             idx++;
         }
         if (entryType) {
-            conditions.push(`le.entry_type = $${idx}`);
+            conditions.push(`le.entry_type = $${idx}::ledger_entry_type`);
             params.push(entryType);
             idx++;
         }

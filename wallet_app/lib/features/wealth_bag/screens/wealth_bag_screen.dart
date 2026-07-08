@@ -7,6 +7,7 @@ import '../services/wealth_bag_service.dart';
 import 'wealth_bag_transaction_screen.dart';
 
 import '../widgets/wealth_bag_history_tab.dart';
+import '../widgets/bag_plus_tab.dart';
 
 class WealthBagScreen extends StatefulWidget {
   final String token;
@@ -80,7 +81,11 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _currentIndex == 1 ? "Lịch sử giao dịch" : "Túi Thần Tài",
+          _currentIndex == 1
+              ? "Lịch sử giao dịch"
+              : _currentIndex == 2
+                  ? "Túi+"
+                  : "Túi Thần Tài",
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -100,9 +105,11 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator()) 
-          : (_isActive 
-              ? (_currentIndex == 1 ? const WealthBagHistoryTab() : _buildDashboard()) 
-              : _buildWelcome()),
+          : (_currentIndex == 1
+              ? const WealthBagHistoryTab()
+              : _currentIndex == 2
+                  ? const BagPlusTab()
+                  : (_isActive ? _buildDashboard() : _buildWelcome())),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (idx) => setState(() => _currentIndex = idx),

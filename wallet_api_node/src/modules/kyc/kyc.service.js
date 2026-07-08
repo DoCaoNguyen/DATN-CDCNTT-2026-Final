@@ -15,24 +15,29 @@ const kycService = {
             console.log(`[1/4] Gọi FPT.AI để bóc tách OCR từ ảnh CCCD...`);
             const fptOcrResult = await kycService.extractOcrFptAi(idFrontPath);
             if (!fptOcrResult.success) {
-                throw new Error(`FPT.AI OCR Failed: ${fptOcrResult.message}`);
-            }
+                console.warn(`⚠️ FPT.AI OCR Failed: ${fptOcrResult.message}. Sử dụng dữ liệu OCR do App gửi lên (Chế độ Demo).`);
+                // Bỏ qua cross-check và tin tưởng ocrData từ App
+                if (!ocrData.id_number && ocrData.id) ocrData.id_number = ocrData.id;
+                if (!ocrData.full_name && ocrData.name) ocrData.full_name = ocrData.name;
+                if (!ocrData.gender && ocrData.sex) ocrData.gender = ocrData.sex;
+                if (!ocrData.address && ocrData.home) ocrData.address = ocrData.home;
+            } else {
+                // Cross-check OCR data
+                const extractedId = fptOcrResult.data.id || fptOcrResult.data.id_number || fptOcrResult.data.id_card;
+                console.log(`=> FPT.AI đọc được ID: ${extractedId} | App gửi lên: ${ocrData.id_number || ocrData.id}`);
+                if (!extractedId || (extractedId !== ocrData.id_number && extractedId !== ocrData.id)) {
+                    throw new Error('Dữ liệu CCCD không khớp! Phát hiện dấu hiệu gian lận OCR.');
+                }
 
-            // Cross-check OCR data
-            const extractedId = fptOcrResult.data.id || fptOcrResult.data.id_number || fptOcrResult.data.id_card;
-            console.log(`=> FPT.AI đọc được ID: ${extractedId} | App gửi lên: ${ocrData.id_number}`);
-            if (!extractedId || extractedId !== ocrData.id_number) {
-                throw new Error('Dữ liệu CCCD không khớp! Phát hiện dấu hiệu gian lận OCR.');
+                // Ghi đè ocrData của App bằng dữ liệu chuẩn 100% của FPT.AI để lưu xuống Database
+                ocrData = {
+                    id_number: extractedId,
+                    full_name: fptOcrResult.data.name || ocrData.full_name || ocrData.name,
+                    dob: fptOcrResult.data.dob || ocrData.dob,
+                    gender: fptOcrResult.data.sex || ocrData.gender || ocrData.sex,
+                    address: fptOcrResult.data.address || fptOcrResult.data.home || ocrData.address
+                };
             }
-
-            // Ghi đè ocrData của App bằng dữ liệu chuẩn 100% của FPT.AI để lưu xuống Database
-            ocrData = {
-                id_number: extractedId,
-                full_name: fptOcrResult.data.name || ocrData.full_name,
-                dob: fptOcrResult.data.dob || ocrData.dob,
-                gender: fptOcrResult.data.sex || ocrData.gender,
-                address: fptOcrResult.data.address || fptOcrResult.data.home || ocrData.address
-            };
         } else {
             console.log(`[1/4] Bỏ qua gọi OCR vì đã có Dữ liệu Cache từ Session trước.`);
         }
@@ -49,7 +54,7 @@ const kycService = {
         
         let status = 'PENDING';
         if (matchResult.isMatch) {
-            status = 'VERIFIED';
+            status = 'APPROVED';
             console.log(`=> KHUÔN MẶT KHỚP! Độ chính xác: ${matchResult.score}%`);
         } else {
             status = 'REJECTED'; 

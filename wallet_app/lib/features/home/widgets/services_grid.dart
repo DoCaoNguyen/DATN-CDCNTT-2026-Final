@@ -4,6 +4,7 @@ import '../../bank/screens/bank_transfer_list_screen.dart';
 import '../../split_bill/screens/split_bill_management_screen.dart';
 import '../../chat/screens/red_packet_create_screen.dart';
 import '../../topup/screens/topup_main_screen.dart';
+import '../../online_savings/screens/online_savings_screen.dart';
 
 class ServicesGrid extends StatelessWidget {
   final String activeLang;
@@ -53,10 +54,14 @@ class ServicesGrid extends StatelessWidget {
         'name': activeLang == 'VIE' ? 'Lì xì' : 'Red Packet',
         'color': Colors.red,
       },
+      {
+        'icon': Icons.savings_rounded,
+        'name': activeLang == 'VIE' ? 'Tiết Kiệm Online' : 'Online Savings',
+        'color': Colors.pinkAccent,
+      },
     ];
 
     return Container(
-      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: GridView.builder(
         shrinkWrap: true,
@@ -127,6 +132,14 @@ class ServicesGrid extends StatelessWidget {
                       builder: (_) => RedPacketCreateScreen(token: token),
                     ),
                   );
+                } else if (service['name'].toString().contains('Tiết Kiệm') ||
+                    service['name'].toString().contains('Savings')) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const OnlineSavingsScreen(),
+                    ),
+                  );
                 }
               }
             },
@@ -136,26 +149,8 @@ class ServicesGrid extends StatelessWidget {
                   width: 54,
                   height: 54,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        service['color'].withValues(alpha: 0.2),
-                        service['color'].withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: service['color'].withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: service['color'].withValues(alpha: 0.15),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: service['color'].withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     service['icon'],
