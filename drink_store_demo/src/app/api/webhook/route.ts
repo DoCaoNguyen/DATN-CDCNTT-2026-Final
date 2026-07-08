@@ -5,7 +5,7 @@ import crypto from 'crypto';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const signature = req.headers.get('x-webhook-signature');
+    const signature = req.headers.get('x-vio-signature') || req.headers.get('x-webhook-signature');
     const secretKey = process.env.MERCHANT_SECRET_KEY;
 
     // Nếu hệ thống Merchant có cấu hình SECRET_KEY, ta verify chữ ký

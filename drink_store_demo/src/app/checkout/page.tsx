@@ -11,11 +11,17 @@ function CheckoutContent() {
   const name = searchParams.get('name') || 'Món nước';
   const price = parseInt(searchParams.get('price') || '0', 10);
   
-  const [orderId, setOrderId] = useState<number | null>(null);
-  const [qrToken, setQrToken] = useState<string | null>(null);
+  const initialOrderId = searchParams.get('orderId');
+  const initialQrToken = searchParams.get('qrToken');
+  
+  const [orderId, setOrderId] = useState<number | null>(initialOrderId ? parseInt(initialOrderId) : null);
+  const [qrToken, setQrToken] = useState<string | null>(initialQrToken || null);
   const [status, setStatus] = useState<string>('PENDING');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialOrderId);
   const [error, setError] = useState('');
+  
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   
   const orderCreatedRef = useRef(false);
 
@@ -28,6 +34,12 @@ function CheckoutContent() {
     }
 
     if (orderCreatedRef.current) return;
+    
+    if (initialOrderId && initialQrToken) {
+      orderCreatedRef.current = true;
+      return;
+    }
+    
     orderCreatedRef.current = true;
 
     const createOrder = async () => {
@@ -46,6 +58,15 @@ function CheckoutContent() {
         
         setOrderId(data.orderId);
         setQrToken(data.qrToken);
+        
+        localStorage.setItem('pendingOrder', JSON.stringify({
+          orderId: data.orderId,
+          name: name,
+          price: price,
+          qrToken: data.qrToken,
+          timestamp: Date.now(),
+          merchantOrderId: data.merchantOrderId
+        }));
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -54,35 +75,78 @@ function CheckoutContent() {
     };
 
     createOrder();
-  }, [name, price]);
+  }, [name, price, initialOrderId, initialQrToken]);
 
   // Bước 2: Polling liên tục kiểm tra trạng thái thanh toán
   useEffect(() => {
-    if (!orderId || status === 'PAID') return;
+    if (!orderId || status === 'PAID' || status === 'SUCCESS' || status === 'EXPIRED' || status === 'CANCELED') return;
+
+    // Hết hạn sau 15 phút (900000 ms)
+    const timeout = setTimeout(() => {
+      setStatus('EXPIRED');
+      localStorage.removeItem('pendingOrder');
+    }, 15 * 60 * 1000);
 
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/order/${orderId}`, { cache: 'no-store' });
         const data = await res.json();
-        if (data.status === 'PAID') {
+        
+        if (data.status === 'PAID' || data.status === 'SUCCESS') {
           setStatus('PAID');
           clearInterval(interval);
-          // Đợi 1 chút rồi chuyển hướng sang trang thành công
+          clearTimeout(timeout);
+          localStorage.removeItem('pendingOrder');
           setTimeout(() => {
             router.push(`/success?name=${encodeURIComponent(name)}&amount=${price}`);
           }, 1500);
+        } else if (data.status === 'EXPIRED') {
+          setStatus('EXPIRED');
+          clearInterval(interval);
+          clearTimeout(timeout);
+          localStorage.removeItem('pendingOrder');
+        } else if (data.status === 'CANCELED') {
+          setStatus('CANCELED');
+          clearInterval(interval);
+          clearTimeout(timeout);
+          localStorage.removeItem('pendingOrder');
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra trạng thái đơn hàng", error);
       }
     }, 2000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, [orderId, status, router, name, price]);
+
+  const handleCancelClick = () => {
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    setIsCanceling(true);
+    try {
+      await fetch('/api/order/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId })
+      });
+      localStorage.removeItem('pendingOrder');
+      router.push('/');
+    } catch (e) {
+      console.error(e);
+      alert('Lỗi khi hủy đơn');
+    } finally {
+      setIsCanceling(false);
+    }
+  };
 
   return (
     <div className="container">
-      <div className="checkout-container">
+      <div className="checkout-container" style={{ position: 'relative' }}>
         <h2>Thanh toán đơn hàng</h2>
         <p style={{ margin: '1rem 0', color: '#747d8c' }}>{name}</p>
         <h1 style={{ color: 'var(--primary)', fontSize: '2.5rem' }}>
@@ -104,9 +168,9 @@ function CheckoutContent() {
 
         {qrToken && (
           <div>
-            <div className="qr-wrapper">
+            <div className="qr-wrapper" style={{ opacity: (status === 'EXPIRED' || status === 'CANCELED') ? 0.3 : 1, transition: '0.3s' }}>
               <QRCodeSVG 
-                value={qrToken} // Hiển thị qr_token hoặc có thể chuyển thành scheme uri tùy yêu cầu của App Ví
+                value={qrToken}
                 size={250}
                 bgColor={"#ffffff"}
                 fgColor={"#000000"}
@@ -116,18 +180,51 @@ function CheckoutContent() {
             
             <div>
               <p>Dùng ứng dụng <strong>Ví Điện Tử</strong> để quét mã này</p>
-              <div className={`status-badge ${status === 'PENDING' ? 'status-pending' : 'status-paid'}`}>
-                {status === 'PENDING' ? '⏳ Đang chờ thanh toán...' : '✅ Đã thanh toán thành công!'}
+              <div className={`status-badge ${status === 'PENDING' ? 'status-pending' : (status === 'EXPIRED' || status === 'CANCELED' ? 'status-expired' : 'status-paid')}`} style={(status === 'EXPIRED' || status === 'CANCELED') ? { background: '#ff7675', color: '#fff' } : {}}>
+                {status === 'PENDING' ? '⏳ Đang chờ thanh toán...' : (status === 'EXPIRED' ? '❌ Mã QR đã hết hạn' : (status === 'CANCELED' ? '❌ Đơn hàng đã bị hủy' : '✅ Đã thanh toán thành công!'))}
               </div>
             </div>
           </div>
         )}
         
         <div style={{ marginTop: '2rem' }}>
-          <button onClick={() => router.push('/')} className="btn btn-secondary" style={{ width: 'auto', padding: '0.8rem 2rem' }}>
+          <button onClick={handleCancelClick} className="btn btn-secondary" style={{ width: 'auto', padding: '0.8rem 2rem' }}>
             Hủy và quay lại
           </button>
         </div>
+        
+        {/* Modal Hủy Đơn */}
+        {isCancelModalOpen && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(255,255,255,0.95)', zIndex: 10,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '2rem', borderRadius: '24px'
+          }}>
+            <h3 style={{ marginBottom: '1rem', color: '#333' }}>Xác nhận hủy</h3>
+            <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#666' }}>
+              Bạn có chắc muốn hủy thanh toán đơn này không?<br/>Mã QR hiện tại sẽ không còn hiệu lực.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', width: '100%', flexDirection: 'column' }}>
+              <button 
+                onClick={() => setIsCancelModalOpen(false)} 
+                className="btn" 
+                style={{ background: 'var(--primary)', color: 'white' }}
+                disabled={isCanceling}
+              >
+                Tiếp tục thanh toán
+              </button>
+              <button 
+                onClick={handleConfirmCancel} 
+                className="btn btn-secondary" 
+                style={{ background: '#f1f5f9', color: '#e74c3c' }}
+                disabled={isCanceling}
+              >
+                {isCanceling ? 'Đang hủy...' : 'Hủy đơn'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
