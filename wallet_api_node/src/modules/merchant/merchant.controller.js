@@ -484,8 +484,6 @@ const merchantController = {
                 return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(appLimit).toLocaleString('vi-VN')}đ/ngày) của ứng dụng liên kết. Bạn đã tiêu ${Number(appDailyUsage).toLocaleString('vi-VN')}đ hôm nay.` });
             }
 
-            // 2. Xử lý thanh toán Auto Debit
-            const paymentService = require('../payment/payment.service');
             const result = await paymentService.processAutoDebit(
                 merchant.merchant_user_id,
                 merchant.id,
@@ -494,6 +492,41 @@ const merchantController = {
                 order_id || 'AUTO_' + Date.now(),
                 wallet_token
             );
+
+            // 3. [CHUẨN HÓA] Bắn Webhook bất đồng bộ báo kết quả cho Merchant (TikTok Shop)
+            try {
+                const pool = require('../../config/db');
+                const configRes = await pool.query("SELECT default_callback_url FROM merchant_callback_configs WHERE merchant_id = $1", [merchant.id]);
+                if (configRes.rows.length > 0 && configRes.rows[0].default_callback_url) {
+                    // Thay thế /wallets/webhook/unlink bằng /orders/webhook/payment
+                    const callbackUrl = configRes.rows[0].default_callback_url.replace('/wallets/webhook/unlink', '/orders/webhook/payment');
+                    const webhookPayload = {
+                        event: 'PAYMENT_SUCCESS',
+                        order_id: order_id || 'AUTO_' + Date.now(),
+                        amount: amount,
+                        transaction_id: result.transaction_id || 'TX_' + Date.now(),
+                        timestamp: Date.now()
+                    };
+
+                    const webhookService = require('../webhook/webhook.service');
+                    const webhookLog = await webhookService.createLog(
+                        merchant.id,
+                        callbackUrl,
+                        'PAYMENT_SUCCESS',
+                        webhookPayload
+                    );
+
+                    const webhookPublisher = require('../webhook/webhook.publisher');
+                    webhookPublisher.publish({
+                        logId: webhookLog.id,
+                        merchantId: merchant.id,
+                        payload: webhookPayload,
+                        callbackUrl: callbackUrl
+                    }).catch(err => console.error('[Webhook] Đẩy Job BullMQ lỗi:', err));
+                }
+            } catch (webhookErr) {
+                console.error('[Webhook] Lỗi khởi tạo webhook:', webhookErr);
+            }
 
             res.status(200).json({ 
                 success: true, 

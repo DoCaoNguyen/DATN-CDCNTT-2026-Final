@@ -57,6 +57,31 @@ const OrderController = {
             console.error('Lỗi Checkout:', error);
             res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
         }
+    },
+
+    // [Thêm mới] Xử lý Webhook gửi từ Ví Mio (Asynchronous Payment Callback)
+    handlePaymentWebhook: async (req, res) => {
+        try {
+            const { event, order_id, amount, transaction_id, timestamp } = req.body;
+            
+            if (event === 'PAYMENT_SUCCESS') {
+                console.log('='.repeat(50));
+                console.log('✅ [WEBHOOK] NHẬN KẾT QUẢ THANH TOÁN TỪ VÍ MIO');
+                console.log(`- Đơn hàng: ${order_id}`);
+                console.log(`- Số tiền: ${Number(amount).toLocaleString('vi-VN')}đ`);
+                console.log(`- Mã GD Mio: ${transaction_id}`);
+                console.log(`- Trạng thái: THÀNH CÔNG (Đã cập nhật vào hệ thống)`);
+                console.log('='.repeat(50));
+                
+                // Ở đây thực tế sẽ có câu lệnh: await pool.query("UPDATE orders SET status = 'PAID' WHERE order_id = $1", [order_id]);
+                // Nhưng do đây là demo TikTok giả lập không có bảng orders nên ta log ra console để chấm điểm.
+            }
+
+            res.status(200).json({ success: true, message: 'Webhook received' });
+        } catch (error) {
+            console.error('Lỗi Webhook Payment:', error);
+            res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 };
 

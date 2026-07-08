@@ -169,7 +169,8 @@ class ShopScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Container(
+        return SafeArea(
+          child: Container(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -249,6 +250,7 @@ class ShopScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
+          ),
           ),
         );
       }

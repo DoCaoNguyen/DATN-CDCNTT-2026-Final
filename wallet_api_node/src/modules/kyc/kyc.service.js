@@ -99,7 +99,7 @@ const kycService = {
             return { success: true, data: response.data.data[0] };
         } catch (error) {
             console.error("Lỗi FPT.AI OCR:", error.response ? error.response.data : error.message);
-            return { success: false, message: 'Lỗi kết nối FPT.AI' };
+            throw new Error('FaceMatch_Service_Unavailable');
         }
     },
 
@@ -127,7 +127,7 @@ const kycService = {
             console.error("Lỗi FPT.AI Liveness:", error.response ? error.response.data : error.message);
             // In demo mode, if the API endpoint is slightly off, we allow it to pass for development purposes
             // In production, this MUST return false
-            return { isLive: true, score: 0.99 };
+            throw new Error('FaceMatch_Service_Unavailable');
         }
     },
 
@@ -158,8 +158,8 @@ const kycService = {
             return { faceFound: false, isMatch: false, score: 0 };
         } catch (error) {
             console.error("Lỗi FPT.AI Face Match:", error.response ? error.response.data : error.message);
-            // Mock fallback logic just in case the FPT API fails during the thesis demo
-            return { faceFound: true, isMatch: true, score: 95.5 };
+            // Throw error to reject the transaction in production
+            throw new Error('FaceMatch_Service_Unavailable');
         }
     }
 };

@@ -5,8 +5,8 @@ const redisConnection = require('../../config/redis');
 const webhookService = require('./webhook.service');
 const webhookPublisher = require('./webhook.publisher');
 
-// Fibonacci delay in minutes: 1, 1, 2, 3, 5, 8, 13
-const FIBONACCI_DELAYS_MINUTES = [1, 1, 2, 3, 5, 8, 13];
+// Delay in minutes: 1, 3, 5, 7, 9, 11, 13 (Số lẻ theo đúng kịch bản báo cáo)
+const RETRY_DELAYS_MINUTES = [1, 3, 5, 7, 9, 11, 13];
 
 /**
  * Generate HMAC SHA256 signature for the payload
@@ -76,8 +76,8 @@ const processWebhookJob = async (job) => {
         if (retry_count <= max_retries) {
             // Determine delay for the next attempt based on Fibonacci sequence
             // retry_count 1 means first retry (index 0 of array)
-            const delayIndex = Math.min(retry_count - 1, FIBONACCI_DELAYS_MINUTES.length - 1);
-            const delayMinutes = FIBONACCI_DELAYS_MINUTES[delayIndex];
+            const delayIndex = Math.min(retry_count - 1, RETRY_DELAYS_MINUTES.length - 1);
+            const delayMinutes = RETRY_DELAYS_MINUTES[delayIndex];
             const delayMs = delayMinutes * 60 * 1000;
 
             console.log(`[WebhookConsumer] Rescheduling LogId: ${logId} (Attempt ${retry_count}/${max_retries}) in ${delayMinutes}m`);

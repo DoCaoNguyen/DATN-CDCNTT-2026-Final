@@ -27,7 +27,11 @@ const walletService = {
             throw new Error('Pin_Not_Set');
         }
 
-        const isValid = await bcrypt.compare(pin, wallet.pin_hash);
+        const pepper = process.env.PIN_PEPPER || '';
+        let isValid = await bcrypt.compare(pin + pepper, wallet.pin_hash);
+        if (!isValid && pepper !== '') {
+            isValid = await bcrypt.compare(pin, wallet.pin_hash);
+        }
         return isValid;
     },
 
@@ -55,7 +59,8 @@ const walletService = {
     setWalletCode: async (userId, pinCode) => {
         try {
             const saltRounds = 10;
-            const pinHash = await bcrypt.hash(pinCode, saltRounds);
+            const pepper = process.env.PIN_PEPPER || '';
+            const pinHash = await bcrypt.hash(pinCode + pepper, saltRounds);
 
             const result = await walletRepository.updatePinHash(userId, pinHash);
 
@@ -133,7 +138,11 @@ const walletService = {
             throw new Error('PIN_Not_Set');
         }
 
-        const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+        const pepper = process.env.PIN_PEPPER || '';
+        let isPinMatch = await bcrypt.compare(pin + pepper, wallet.pin_hash);
+        if (!isPinMatch && pepper !== '') {
+            isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+        }
         if (!isPinMatch) {
             const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
 
@@ -175,7 +184,11 @@ const walletService = {
             throw new Error('PIN_Not_Set');
         }
 
-        const isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+        const pepper = process.env.PIN_PEPPER || '';
+        let isPinMatch = await bcrypt.compare(pin + pepper, wallet.pin_hash);
+        if (!isPinMatch && pepper !== '') {
+            isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+        }
         if (!isPinMatch) {
             const newAttempts = (wallet.pin_failed_attempts || 0) + 1;
 

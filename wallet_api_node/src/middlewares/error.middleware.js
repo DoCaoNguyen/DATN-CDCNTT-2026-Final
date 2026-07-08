@@ -39,6 +39,7 @@ const ERROR_MAPPINGS = {
     'Face_Verification_Failed': [403, 'FACE_FAILED', 'Xác thực khuôn mặt không trùng khớp với dữ liệu eKYC.'],
     'Bank_Insufficient_Balance': [400, 'BANK_INSUFFICIENT', 'Ngân hàng từ chối: Số dư thẻ/tài khoản không đủ.'],
     'Bank_Maintenance': [503, 'BANK_MAINTENANCE', 'Ngân hàng từ chối: Hệ thống đang bảo trì.'],
+    'FaceMatch_Service_Unavailable': [503, 'SERVICE_UNAVAILABLE', 'Dịch vụ xác thực khuôn mặt đang bảo trì. Vui lòng thử lại sau.'],
     'Insufficient_Balance': [400, 'INSUFFICIENT_BALANCE', 'Số dư trong ví không đủ để thực hiện giao dịch này.'],
     'Self_Transfer_Not_Allowed': [400, 'SELF_TRANSFER', 'Không thể tự chuyển tiền cho chính mình'],
     'Receiver_Not_KYC': [403, 'RECEIVER_NOT_KYC', 'Người nhận chưa xác thực danh tính (KYC). Giao dịch bị từ chối!'],
