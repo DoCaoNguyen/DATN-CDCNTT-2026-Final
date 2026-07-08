@@ -115,7 +115,7 @@ const transactionRepository = {
         let query, params;
         const mappedAccountType = accountType === 'PERSONAL' ? 'USER_WALLET' : accountType;
         
-        if (mappedAccountType === 'MERCHANT') {
+        if (mappedAccountType === 'MERCHANT' || mappedAccountType === 'MERCHANT_BALANCE') {
             query = `
                 INSERT INTO ledger_entries (id, ledger_transaction_id, merchant_id, entry_type, amount, balance_before, balance_after, account_type)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8);

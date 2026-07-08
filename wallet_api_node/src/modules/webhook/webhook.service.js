@@ -59,15 +59,14 @@ const webhookService = {
         }
     },
 
-    updateLogStatus: async (logId, status, lastError = null) => {
+    updateLogStatus: async (logId, status, lastError = null, httpStatus = null, durationMs = null) => {
         try {
             const WebhookAttemptLog = require('./models/webhook_attempt_log.model');
-            await WebhookAttemptLog.findByIdAndUpdate(logId, {
-                $set: {
-                    status: status,
-                    error_message: lastError
-                }
-            });
+            const updateData = { status: status, error_message: lastError };
+            if (httpStatus !== null) updateData.http_status = httpStatus;
+            if (durationMs !== null) updateData.duration_ms = durationMs;
+
+            await WebhookAttemptLog.findByIdAndUpdate(logId, { $set: updateData });
         } catch (error) {
             console.error('[WebhookLog] Error updating log status:', error);
         }
@@ -96,9 +95,15 @@ const webhookService = {
 
     getMerchantSecret: async (merchantId) => {
         const query = `
-            SELECT mcc.webhook_secret_hash as secret_key, mcc.default_callback_url as callback_url 
+            SELECT 
+                mak.api_key,
+                mak.api_secret_hash,
+                mcc.default_callback_url as callback_url 
             FROM merchant_callback_configs mcc 
+            LEFT JOIN merchant_api_keys mak ON mak.merchant_id = mcc.merchant_id AND mak.status = 'ACTIVE'
             WHERE mcc.merchant_id = $1
+            ORDER BY mak.created_at DESC
+            LIMIT 1
         `;
         const result = await pool.query(query, [merchantId]);
         return result.rows[0];

@@ -148,6 +148,9 @@ const merchantController = {
             const result = await merchantService.createApiKey(merchant_id, key_name, req.user.userId || req.user.id, ipAddress, userAgent);
             res.status(201).json({ success: true, message: 'Tạo API Key thành công', data: result });
         } catch (err) {
+            if (err.code === '23505' && err.constraint === 'uq_merchant_api_keys_active_env') {
+                return res.status(409).json({ success: false, message: 'Đã tồn tại API Key đang hoạt động trong môi trường này. Vui lòng thu hồi (revoke) hoặc làm mới (rotate) key cũ trước khi tạo key mới.' });
+            }
             console.error(err);
             res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
         }
