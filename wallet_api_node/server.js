@@ -51,7 +51,7 @@ app.use(cors({
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Idempotency-Key']
 }));
 app.use(express.json({ limit: '100kb' })); // [SECURITY FIX] Giới hạn body size chống Memory DoS

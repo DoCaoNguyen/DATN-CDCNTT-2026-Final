@@ -100,8 +100,10 @@ const paymentsController = {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 20;
+            const status = req.query.status;
+            const q = req.query.q || req.query.search;
 
-            const result = await adminPaymentsService.listQrPayments(page, limit);
+            const result = await adminPaymentsService.listQrPayments(page, limit, status, q);
             return success(res, result, 'Lấy danh sách mã QR thanh toán thành công');
         } catch (error) {
             return handleAdminError(res, error, 'Lỗi admin listQrPayments');
