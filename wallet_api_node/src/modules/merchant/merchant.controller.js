@@ -15,14 +15,14 @@ const merchantController = {
         try {
             const userId = req.user.userId;
             const { merchant_name, contact_phone, callback_url } = req.body;
-            
+
             if (!merchant_name || !contact_phone) {
                 return res.status(400).json({ error: 'Tên và số điện thoại đối tác là bắt buộc' });
             }
 
             const rawApiKey = `pk_test_${crypto.randomBytes(12).toString('hex')}`;
             const rawSecret = `sk_test_${crypto.randomBytes(24).toString('hex')}`;
-            
+
             const pepper = process.env.API_SECRET_PEPPER || 'mio_pepper';
             const secretHash = crypto.createHmac('sha256', pepper).update(rawSecret).digest('hex');
 
@@ -75,7 +75,7 @@ const merchantController = {
             const { merchant_id, role_code, is_owner } = result.rows[0];
             const profile = await merchantRepository.getMerchantProfile(merchant_id);
             if (!profile) return res.status(404).json({ success: false, message: 'Merchant not found' });
-            
+
             res.json({ success: true, data: { ...profile, role_code, is_owner } });
         } catch (err) {
             console.error(err);
@@ -88,7 +88,7 @@ const merchantController = {
             const { merchant_id, role_code, is_owner } = req.merchantContext;
             const profile = await merchantRepository.getMerchantProfile(merchant_id);
             if (!profile) return res.status(404).json({ success: false, message: 'Merchant not found' });
-            
+
             res.json({ success: true, data: { ...profile, role_code, is_owner } });
         } catch (err) {
             console.error(err);
@@ -100,7 +100,7 @@ const merchantController = {
         try {
             const { merchant_id, role_code, is_owner } = req.merchantContext;
             const permissions = req.user.permissions || [];
-            
+
             if (!is_owner && role_code !== 'MERCHANT_OWNER' && !permissions.includes('merchant.profile.update')) {
                 return res.status(403).json({ success: false, message: 'Bạn không có quyền cập nhật cấu hình Callback' });
             }
@@ -132,7 +132,7 @@ const merchantController = {
         try {
             const { merchant_id, role_code, is_owner } = req.merchantContext;
             const permissions = req.user.permissions || [];
-            
+
             if (!is_owner && role_code !== 'MERCHANT_OWNER' && !permissions.includes('merchant.api_keys.create')) {
                 return res.status(403).json({ success: false, message: 'Bạn không có quyền tạo API Key' });
             }
@@ -160,7 +160,7 @@ const merchantController = {
         try {
             const { merchant_id, role_code, is_owner } = req.merchantContext;
             const permissions = req.user.permissions || [];
-            
+
             if (!is_owner && role_code !== 'MERCHANT_OWNER' && !permissions.includes('merchant.api_keys.rotate')) {
                 return res.status(403).json({ success: false, message: 'Bạn không có quyền đổi Secret API Key' });
             }
@@ -183,7 +183,7 @@ const merchantController = {
         try {
             const { merchant_id, role_code, is_owner } = req.merchantContext;
             const permissions = req.user.permissions || [];
-            
+
             if (!is_owner && role_code !== 'MERCHANT_OWNER' && !permissions.includes('merchant.api_keys.revoke')) {
                 return res.status(403).json({ success: false, message: 'Bạn không có quyền thu hồi API Key' });
             }
@@ -305,23 +305,23 @@ const merchantController = {
         try {
             const userId = req.user.userId;
             const result = await pool.query('SELECT phone FROM users WHERE id = $1', [userId]);
-            
+
             if (result.rows.length === 0) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            
+
             let phone = result.rows[0].phone;
             // Không che số điện thoại để Merchant (TikTok Shop) có thể lưu lại và dùng làm wallet_account khi gọi API Charge
-            
+
             const authCode = crypto.randomUUID();
-            
+
             // Lưu vào Map, hết hạn sau 5 phút
-            authCodeMap.set(authCode, { 
-                phone, 
-                userId, 
-                expiresAt: Date.now() + 5 * 60 * 1000 
+            authCodeMap.set(authCode, {
+                phone,
+                userId,
+                expiresAt: Date.now() + 5 * 60 * 1000
             });
-            
+
             res.status(200).json({ success: true, auth_code: authCode });
         } catch (error) {
             console.error('Lỗi sinh Auth_Code:', error);
@@ -333,22 +333,22 @@ const merchantController = {
     verifyAuthCode: async (req, res) => {
         try {
             const { auth_code, merchant_name } = req.body;
-            
+
             if (!auth_code || !authCodeMap.has(auth_code)) {
                 return res.status(400).json({ success: false, error: 'Mã xác thực không hợp lệ hoặc đã hết hạn' });
             }
-            
+
             const data = authCodeMap.get(auth_code);
-            
+
             if (Date.now() > data.expiresAt) {
                 authCodeMap.delete(auth_code);
                 return res.status(400).json({ success: false, error: 'Mã xác thực đã hết hạn' });
             }
-            
+
             // GENERATE BILLING TOKEN
             const jwt = require('jsonwebtoken');
             const tokenStr = jwt.sign(
-                { userId: data.userId, phone: data.phone }, 
+                { userId: data.userId, phone: data.phone },
                 process.env.JWT_SECRET || 'mio_secret_key',
                 { expiresIn: '3650d' } // Token siêu dài hạn (10 năm)
             );
@@ -365,9 +365,9 @@ const merchantController = {
                     } else if (merchant_name.toLowerCase().includes('google')) {
                         icon = 'https://cdn-icons-png.flaticon.com/512/300/300218.png'; // Google icon
                     }
-                    
+
                     const newId = uuidv7();
-                    
+
                     await pool.query(
                         'INSERT INTO user_linked_services (id, user_id, service_name, service_icon, wallet_token) VALUES ($1, $2, $3, $4, $5)',
                         [newId, data.userId, merchant_name, icon, billing_token]
@@ -379,7 +379,7 @@ const merchantController = {
                         [billing_token, 'ACTIVE', check.rows[0].id]
                     );
                 }
-                
+
                 // Gửi thông báo Push Notification về app Ví Mio
                 notificationService.sendSystemNotification(
                     data.userId,
@@ -392,8 +392,8 @@ const merchantController = {
             // THU HỒI NGAY LẬP TỨC ĐỂ CHỐNG REPLAY ATTACK (Mỗi mã chỉ được đổi 1 lần)
             authCodeMap.delete(auth_code);
 
-            res.status(200).json({ 
-                success: true, 
+            res.status(200).json({
+                success: true,
                 wallet_token: billing_token,
                 masked_phone: masked_phone,
                 message: 'Xác thực thành công'
@@ -449,8 +449,8 @@ const merchantController = {
 
             // Han muc chung cua Vi trong ngay
             const { limits, usage } = await walletRepo.getLimitsAndUsage(wallet_id);
-            const globalLimit   = BigInt(Math.floor(Number(limits.daily_transaction_limit || 50000000)));
-            const globalUsage   = BigInt(Math.floor(Number(usage.daily_transaction_usage || 0)));
+            const globalLimit = BigInt(Math.floor(Number(limits.daily_transaction_limit || 50000000)));
+            const globalUsage = BigInt(Math.floor(Number(usage.daily_transaction_usage || 0)));
             const requestAmount = BigInt(Math.floor(Number(amount)));
 
             if (globalUsage + requestAmount > globalLimit) {
@@ -474,11 +474,11 @@ const merchantController = {
             if (requestAmount > txLimit) {
                 return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(txLimit).toLocaleString('vi-VN')}đ/lần) của ứng dụng liên kết.` });
             }
-            
+
             const dayLimitStr = linkedApp.limit_per_day || 5000000;
             const appLimit = BigInt(Math.floor(Number(dayLimitStr)));
             const appDailyUsage = await merchantRepository.getDailyUsageForMerchant(wallet_id, merchant.id);
-            
+
             if (appDailyUsage + requestAmount > appLimit) {
                 return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(appLimit).toLocaleString('vi-VN')}đ/ngày) của ứng dụng liên kết. Bạn đã tiêu ${Number(appDailyUsage).toLocaleString('vi-VN')}đ hôm nay.` });
             }
@@ -488,15 +488,50 @@ const merchantController = {
             const result = await paymentService.processAutoDebit(
                 merchant.merchant_user_id,
                 merchant.id,
-                wallet_account, 
-                amount, 
+                wallet_account,
+                amount,
                 order_id || 'AUTO_' + Date.now(),
                 wallet_token
             );
 
+            // 3. [CHUẨN HÓA] Bắn Webhook bất đồng bộ báo kết quả cho Merchant (TikTok Shop)
+            try {
+                const pool = require('../../config/db');
+                const configRes = await pool.query("SELECT default_callback_url FROM merchant_callback_configs WHERE merchant_id = $1", [merchant.id]);
+                if (configRes.rows.length > 0 && configRes.rows[0].default_callback_url) {
+                    // Thay thế /wallets/webhook/unlink bằng /orders/webhook/payment
+                    const callbackUrl = configRes.rows[0].default_callback_url.replace('/wallets/webhook/unlink', '/orders/webhook/payment');
+                    const webhookPayload = {
+                        event: 'PAYMENT_SUCCESS',
+                        order_id: order_id || 'AUTO_' + Date.now(),
+                        amount: amount,
+                        transaction_id: result.transaction_id || 'TX_' + Date.now(),
+                        timestamp: Date.now()
+                    };
+
+                    const webhookService = require('../webhook/webhook.service');
+                    const webhookLog = await webhookService.createLog(
+                        merchant.id,
+                        callbackUrl,
+                        'PAYMENT_SUCCESS',
+                        webhookPayload
+                    );
+
+                    const webhookPublisher = require('../webhook/webhook.publisher');
+                    webhookPublisher.publish({
+                        logId: webhookLog.id,
+                        merchantId: merchant.id,
+                        payload: webhookPayload,
+                        callbackUrl: callbackUrl
+                    }).catch(err => console.error('[Webhook] Đẩy Job BullMQ lỗi:', err));
+                }
+            } catch (webhookErr) {
+                console.error('[Webhook] Lỗi khởi tạo webhook:', webhookErr);
+            }
+
             res.status(200).json({
                 success: true,
-                message: 'Thanh toan thanh cong',
+                message: 'Thanh toán thành công',
                 data: result
             });
 

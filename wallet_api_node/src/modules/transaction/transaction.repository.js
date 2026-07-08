@@ -247,9 +247,8 @@ const transactionRepository = {
             WHERE le.wallet_id = $1 
               AND le.entry_type = $2
               AND lt.transaction_type = $3
-              AND EXTRACT(DAY FROM le.created_at) = EXTRACT(DAY FROM CURRENT_DATE)
-              AND EXTRACT(MONTH FROM le.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
-              AND EXTRACT(YEAR FROM le.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+              AND le.created_at >= CURRENT_DATE 
+              AND le.created_at < CURRENT_DATE + INTERVAL '1 day'
         `;
         const result = await pool.query(query, [walletId, entryType, type]);
         return BigInt(result.rows[0].total);

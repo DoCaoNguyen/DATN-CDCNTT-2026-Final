@@ -17,7 +17,7 @@ const webhookService = {
                     payload: payload,
                     status: 'PENDING',
                     retry_count: 0,
-                    max_retries: 5,
+                    max_retries: 7,
                     last_error: null
                 }
             });
@@ -85,7 +85,7 @@ const webhookService = {
             );
             return {
                 retry_count: updatedLog.attempt_no,
-                max_retries: 5
+                max_retries: 7
             };
         } catch (error) {
             console.error('[WebhookLog] Error incrementing retry:', error);

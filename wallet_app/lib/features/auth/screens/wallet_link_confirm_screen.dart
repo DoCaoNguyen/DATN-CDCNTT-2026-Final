@@ -3,6 +3,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_config.dart';
@@ -49,62 +50,50 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
   }
 
   Future<void> _authenticateAndLink() async {
-    setState(() {
-      _isLoading = true;
-    });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PinConfirmBottomSheet(
+        onPinEntered: (pin) async {
+          try {
+            // 1. Xác minh mã PIN trước
+            const secureStorage = FlutterSecureStorage();
+            final token = await secureStorage.read(key: 'access_token');
+            if (token == null) return "Lỗi: Không tìm thấy phiên đăng nhập";
 
-    try {
-      final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
-      final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+            final pinRes = await http.post(
+              Uri.parse(ApiConfig.verifyPin),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+              },
+              body: jsonEncode({'pin': pin}),
+            );
 
-      if (canAuthenticate) {
-        final bool didAuthenticate = await _localAuth.authenticate(
-          localizedReason: 'Vui lòng xác thực bằng Vân tay/Khuôn mặt hoặc mã PIN để liên kết ví',
-          biometricOnly: false,
-          persistAcrossBackgrounding: true,
-        );
+            if (pinRes.statusCode != 200) {
+              final data = jsonDecode(pinRes.body);
+              return data['error'] ?? "Mã PIN không chính xác";
+            }
 
-        if (didAuthenticate) {
-          // Lấy mã Auth_Code
-          String authCode = await _getAuthCode();
-          
-          // Trả về app merchant với auth_code
-          final uri = Uri.parse('tiktokshop://link-result?status=success&auth_code=$authCode');
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          
-          if (mounted) {
-            Navigator.pop(context); // Đóng màn hình
+            // 2. Lấy mã Auth_Code từ Backend nếu PIN đúng
+            String authCode = await _getAuthCode();
+            
+            // 3. Trả về app merchant với auth_code thông qua Deep Link
+            final uri = Uri.parse('tiktokshop://link-result?status=success&auth_code=$authCode');
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            
+            if (mounted) {
+              Navigator.pop(context); // Đóng màn hình liên kết
+            }
+            return null; // null nghĩa là thành công
+          } catch (e) {
+            return "Có lỗi xảy ra: $e";
           }
-        } else {
-           if (mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('Xác thực thất bại, đã hủy liên kết.')),
-             );
-           }
-        }
-      } else {
-        // Thiết bị không hỗ trợ, cho qua tạm
-        String authCode = await _getAuthCode();
-        final uri = Uri.parse('tiktokshop://link-result?status=success&auth_code=$authCode');
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (mounted) {
-          Navigator.pop(context);
-        }
-      }
-    } catch (e) {
-       debugPrint('Error during auth: $e');
-       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Đã xảy ra lỗi khi xác thực.')),
-         );
-       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+        },
+      ),
+    );
   }
 
   Future<void> _cancelLink() async {

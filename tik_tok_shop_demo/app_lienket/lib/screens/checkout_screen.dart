@@ -449,7 +449,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
             ),
-      bottomSheet: widget.products.isEmpty ? null : Container(
+      bottomNavigationBar: widget.products.isEmpty ? null : Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,

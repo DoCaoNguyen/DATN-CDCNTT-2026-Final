@@ -151,7 +151,8 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       ),
       body: Stack(
         children: [
-          Padding(
+          SafeArea(
+          child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,6 +240,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                 const SizedBox(height: 24),
               ],
             ),
+          ),
           ),
           if (_isLoading)
             Container(

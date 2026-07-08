@@ -7,8 +7,12 @@ const router = express.Router();
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 phút
-    limit: 10, // 10 lần
-    message: { error: 'Bạn thao tác quá nhanh, vui lòng thử lại sau 15 phút.' }
+    limit: 10, // Tối đa 10 lần thử mỗi 15 phút
+    message: { error: 'Bạn thao tác quá nhanh hoặc số điện thoại này đã vượt quá giới hạn gửi. Vui lòng thử lại sau 15 phút.' },
+    keyGenerator: (req) => {
+        const identifier = req.body.phone || req.body.email || req.body.identifier || req.body.login_id || req.body.username;
+        return identifier ? String(identifier).trim() : 'anonymous';
+    }
 });
 
 
