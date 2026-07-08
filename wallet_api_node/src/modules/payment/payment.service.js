@@ -6,6 +6,7 @@ const traceEventService = require('../system/trace_event.service');
 // [SECURITY FIX] Import hàm xác thực bảo mật giao dịch (PIN + FaceID)
 const { verifyTransactionSecurity } = require('../../utils/security.util');
 const kycService = require('../kyc/kyc.service');
+const { broadcastToAdminDashboard } = require('../../utils/socket');
 
 const paymentService = {
     createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
@@ -213,6 +214,17 @@ const paymentService = {
                 event: 'Thanh toán đơn hàng QR'
             });
 
+            const resTxNo = await client.query('SELECT transaction_no FROM ledger_transactions WHERE id = $1', [ledgerTxId]);
+            const transaction_no = resTxNo.rows[0].transaction_no;
+
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', {
+                transaction_no,
+                amount: parseInt(order.amount.toString(), 10),
+                type: 'PAYMENT',
+                status: 'SUCCESS',
+                timestamp: new Date().toISOString()
+            });
+
             // ==========================================
             // 🚀 BẮT ĐẦU BACKGROUND JOBS SAU KHI ĐÃ COMMIT
             // ==========================================
@@ -373,6 +385,18 @@ const paymentService = {
             await paymentRepo.createPaymentTransaction(client, orderId, userId, userWallet.id, amount, paymentTxId);
 
             await client.query('COMMIT');
+
+            const resTxNo = await client.query('SELECT transaction_no FROM ledger_transactions WHERE id = $1', [ledgerTxId]);
+            const transaction_no = resTxNo.rows[0].transaction_no;
+
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', {
+                transaction_no,
+                amount: parseInt(amount.toString(), 10),
+                type: 'PAYMENT',
+                status: 'SUCCESS',
+                timestamp: new Date().toISOString()
+            });
+
             return {
                 order_id: merchantOrderId,
                 amount_paid: amount,

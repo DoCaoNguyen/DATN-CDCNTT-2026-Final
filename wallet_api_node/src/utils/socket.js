@@ -40,6 +40,19 @@ const initSocket = (server) => {
 
         // Mỗi user tham gia vào một room riêng dựa trên userId
         socket.join(`user_${userId}`);
+        
+        // Nếu là Admin, tham gia vào room admin_dashboard để nhận realtime KPI
+        const isAdmin = 
+            socket.user.role === 'ADMIN' || socket.user.role === 'SUPER_ADMIN' ||
+            socket.user.role_code === 'ADMIN' || socket.user.role_code === 'SUPER_ADMIN' ||
+            socket.user.userType === 'ADMIN' || socket.user.userType === 'SUPER_ADMIN' ||
+            socket.user.user_type === 'ADMIN' || socket.user.user_type === 'SUPER_ADMIN' ||
+            (Array.isArray(socket.user.roles) && (socket.user.roles.includes('ADMIN') || socket.user.roles.includes('SUPER_ADMIN')));
+
+        if (isAdmin) {
+            socket.join('admin_dashboard');
+            console.log(`User ${userId} joined admin_dashboard`);
+        }
 
         socket.on('send_message', async (data) => {
             console.log('--- Socket send_message received ---', data);
@@ -121,4 +134,10 @@ const emitToUser = (userId, event, data) => {
     }
 };
 
-module.exports = { initSocket, getIo, emitToUser };
+const broadcastToAdminDashboard = (event, data) => {
+    if (io) {
+        io.to('admin_dashboard').emit(event, data);
+    }
+};
+
+module.exports = { initSocket, getIo, emitToUser, broadcastToAdminDashboard };
