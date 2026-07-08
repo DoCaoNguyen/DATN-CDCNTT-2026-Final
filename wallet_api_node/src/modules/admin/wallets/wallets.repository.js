@@ -133,10 +133,11 @@ const walletsRepository = {
     getWalletStats: async (walletId) => {
         const result = await pool.query(`
             SELECT 
-                SUM(CASE WHEN lt.transaction_type = 'TOPUP' AND le.entry_type = 'CREDIT' THEN le.amount ELSE 0 END) AS topup_success_amount,
-                SUM(CASE WHEN lt.transaction_type = 'TRANSFER' AND le.entry_type = 'DEBIT' THEN le.amount ELSE 0 END) AS transfer_sent_amount,
-                SUM(CASE WHEN lt.transaction_type = 'PAYMENT' AND le.entry_type = 'DEBIT' THEN le.amount ELSE 0 END) AS payment_amount,
-                SUM(CASE WHEN lt.transaction_type = 'REFUND' AND le.entry_type = 'CREDIT' THEN le.amount ELSE 0 END) AS refund_amount
+                SUM(CASE WHEN lt.transaction_type IN ('TOPUP', 'DEPOSIT') AND le.entry_type = 'CREDIT' THEN le.amount ELSE 0 END) AS topup_success_amount,
+                SUM(CASE WHEN lt.transaction_type IN ('TRANSFER', 'WALLET_TRANSFER') AND le.entry_type = 'DEBIT' THEN le.amount ELSE 0 END) AS transfer_sent_amount,
+                SUM(CASE WHEN lt.transaction_type IN ('PAYMENT', 'PAYMENT_TRANSACTION') AND le.entry_type = 'DEBIT' THEN le.amount ELSE 0 END) AS payment_amount,
+                SUM(CASE WHEN lt.transaction_type IN ('REFUND', 'REFUND_TRANSACTION') AND le.entry_type = 'CREDIT' THEN le.amount ELSE 0 END) AS refund_amount,
+                SUM(CASE WHEN lt.transaction_type = 'WITHDRAW' AND le.entry_type = 'DEBIT' THEN le.amount ELSE 0 END) AS withdraw_amount
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
             WHERE le.wallet_id = $1 AND lt.status = 'SUCCESS'
@@ -146,7 +147,8 @@ const walletsRepository = {
             topup_success_amount: Number(result.rows[0].topup_success_amount || 0),
             transfer_sent_amount: Number(result.rows[0].transfer_sent_amount || 0),
             payment_amount: Number(result.rows[0].payment_amount || 0),
-            refund_amount: Number(result.rows[0].refund_amount || 0)
+            refund_amount: Number(result.rows[0].refund_amount || 0),
+            withdraw_amount: Number(result.rows[0].withdraw_amount || 0)
         };
     }
 };
