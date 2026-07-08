@@ -49,7 +49,7 @@ const LoyaltyIntegrationService = {
             const pointsBefore = BigInt(Math.floor(Number(pointsStr)));
 
             // Tỷ lệ 100 VND = 1 Xu
-            let earnedPoints = Math.floor(amount / 100); 
+            let earnedPoints = Math.floor(amount / 100);
 
             if (earnedPoints > 0) {
                 // Cộng Xu
@@ -58,14 +58,14 @@ const LoyaltyIntegrationService = {
 
                 const transactionRepo = require('../transaction/transaction.repository');
                 const loyaltyRepository = require('../loyalty/loyalty.repository');
-                
+
                 // Ghi nhận Sổ cái (Ledger) với currency = 'POINT'
                 const ledgerTxId = await transactionRepo.createLedgerTransaction(
-                    client, 
-                    'LOYALTY_EARN', 
-                    paymentTransactionId, 
-                    'PAYMENT_ORDER', 
-                    'Tích Xu từ giao dịch thanh toán', 
+                    client,
+                    'LOYALTY_EARN',
+                    paymentTransactionId,
+                    'PAYMENT_ORDER',
+                    'Tích Xu từ giao dịch thanh toán',
                     earnedPoints,
                     'POINT'
                 );
@@ -98,11 +98,11 @@ const LoyaltyIntegrationService = {
         } catch (error) {
             if (client) await client.query('ROLLBACK');
             console.error('[LOYALTY_SYNC] Error syncing points:', error.message);
-            
+
             // Cập nhật trạng thái FAILED
             await LoyaltySyncLog.updateOne(
                 { _id: logId },
-                { 
+                {
                     $set: { status: 'FAILED' },
                     $inc: { retry_count: isRetry ? 1 : 0 }
                 }
@@ -193,24 +193,24 @@ const LoyaltyIntegrationService = {
             for (const log of failedLogs) {
                 // Lấy userId từ bảng payment_transactions dựa trên payment_transaction_id
                 const txRes = await client.query(`
-                    SELECT wallet_id FROM payment_transactions WHERE id = $1
+                    SELECT payer_wallet_id as wallet_id FROM payment_transactions WHERE id = $1
                 `, [log.payment_transaction_id]);
 
                 if (txRes.rows.length === 0) continue;
-                
+
                 const walletId = txRes.rows[0].wallet_id;
                 // Lấy userId từ wallet
                 const walletRes = await client.query(`SELECT user_id FROM wallets WHERE id = $1`, [walletId]);
                 if (walletRes.rows.length === 0) continue;
-                
+
                 const userId = walletRes.rows[0].user_id;
 
                 // Gọi lại tích điểm
                 await LoyaltyIntegrationService.executeLoyaltyApiCall(
-                    userId, 
-                    log.payment_transaction_id, 
-                    log.amount, 
-                    log._id, 
+                    userId,
+                    log.payment_transaction_id,
+                    log.amount,
+                    log._id,
                     true // isRetry
                 );
             }
@@ -238,7 +238,7 @@ const LoyaltyIntegrationService = {
             if (walletRes.rows.length === 0) {
                 throw new Error('Wallet_Not_Found');
             }
-            
+
             const walletId = walletRes.rows[0].id;
             const pointsStr = walletRes.rows[0].loyalty_points || 0;
             const currentPoints = BigInt(Math.floor(Number(pointsStr)));
@@ -270,14 +270,14 @@ const LoyaltyIntegrationService = {
             };
 
             const transactionRepo = require('../transaction/transaction.repository');
-            
+
             // Create Ledger Transaction
             const ledgerTxId = await transactionRepo.createLedgerTransaction(
-                client, 
-                'LOYALTY_REDEEM', 
+                client,
+                'LOYALTY_REDEEM',
                 null, // no payment_transaction reference needed for redeem
-                'REDEEM_ORDER', 
-                `Đổi thẻ cào ${provider} ${faceValue}đ`, 
+                'REDEEM_ORDER',
+                `Đổi thẻ cào ${provider} ${faceValue}đ`,
                 requiredPoints,
                 'POINT',
                 JSON.stringify(metadata)
@@ -299,7 +299,7 @@ const LoyaltyIntegrationService = {
             // Send Push Notification
             const title = 'Đổi thẻ cào thành công!';
             const body = `Bạn đã đổi thành công thẻ ${provider} ${faceValue}đ. Nhấn để xem mã thẻ.`;
-            
+
             try {
                 await notificationRepository.createNotification(
                     userId,
