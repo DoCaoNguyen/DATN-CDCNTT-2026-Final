@@ -113,8 +113,9 @@ const transactionRepository = {
     createLedgerEntry: async (client, ledgerTransactionId, accountId, type, amount, balanceBefore, balanceAfter, accountType = 'PERSONAL') => {
         const newId = uuidv7();
         let query, params;
+        const mappedAccountType = accountType === 'PERSONAL' ? 'USER_WALLET' : accountType;
         
-        if (accountType === 'MERCHANT') {
+        if (mappedAccountType === 'MERCHANT' || mappedAccountType === 'MERCHANT_BALANCE') {
             query = `
                 INSERT INTO ledger_entries (id, ledger_transaction_id, merchant_id, entry_type, amount, balance_before, balance_after, account_type)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
@@ -126,7 +127,7 @@ const transactionRepository = {
             `;
         }
         
-        params = [newId, ledgerTransactionId, accountId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), accountType];
+        params = [newId, ledgerTransactionId, accountId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), mappedAccountType];
         await client.query(query, params);
         return newId;
     },

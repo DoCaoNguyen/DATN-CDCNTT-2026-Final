@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const merchantController = require('./merchant.controller');
-const { requireMerchantUser, requireActiveMerchant } = require('../../middlewares/merchant.middleware');
+const { requireMerchantUser, requireActiveMerchant, verifyApiKey, verifyApiKeyWithSignature } = require('../../middlewares/merchant.middleware');
 
 const { verifyToken } = require('../../middlewares/auth.middleware');
 
@@ -28,7 +28,9 @@ router.post('/withdraw-to-wallet', requireMerchantUser, requireActiveMerchant, m
 router.post('/auth-code/generate', verifyToken, merchantController.generateAuthCode);
 router.post('/auth-code/verify', merchantController.verifyAuthCode);
 
-// [Thêm mới] API Ra lệnh trừ tiền tự động (Dùng API Key thay vì token)
-router.post('/charge', merchantController.charge);
+// API Ra lenh tru tien tu dong (Auto-Debit)
+// PHAI dung HMAC signature vi day la endpoint tai chinh nhay cam
+// Ben thu ba (backend) phai ky request truoc khi goi
+router.post('/charge', verifyApiKeyWithSignature, merchantController.charge);
 
 module.exports = router;

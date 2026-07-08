@@ -54,6 +54,7 @@ const paymentController = {
                 'Order_Not_Found': 'Mã QR không tồn tại hoặc không hợp lệ',
                 'QR_Expired': 'Mã QR đã hết hạn, vui lòng tạo lại',
                 'Order_Already_Processed': 'Đơn hàng này đã được thanh toán hoặc đã hủy',
+                'Order_Canceled': 'Đơn thanh toán đã bị hủy hoặc không còn hiệu lực.',
                 'Wallet_Not_Found': 'Không tìm thấy ví của bạn',
                 'Insufficient_Balance': 'Số dư trong ví không đủ để thanh toán',
                 'PIN_Required': 'Vui lòng nhập mã PIN để xác nhận',
@@ -134,7 +135,20 @@ const paymentController = {
                 return res.status(404).json({ error: 'Không tìm thấy đơn hàng từ mã QR này' });
             }
 
-            const isExpired = new Date() > new Date(order.expired_at);
+            let isExpired = new Date() > new Date(order.expired_at);
+            
+            if (isExpired && order.status === 'PENDING') {
+                await paymentRepo.lazyUpdateOrderToExpired(order.order_id);
+                order.status = 'EXPIRED';
+            }
+
+            if (order.status === 'CANCELED' || order.status === 'EXPIRED') {
+                return res.status(400).json({ error: 'Đơn thanh toán đã bị hủy hoặc không còn hiệu lực.' });
+            }
+
+            if (order.status === 'PAID' || order.status === 'SUCCESS') {
+                return res.status(400).json({ error: 'Đơn hàng này đã được thanh toán.' });
+            }
 
             res.status(200).json({
                 message: 'Lấy thông tin đơn hàng thành công',
@@ -176,6 +190,12 @@ const paymentController = {
 
             if (!order) {
                 return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+            }
+
+            let isExpired = new Date() > new Date(order.expired_at);
+            if (isExpired && order.status === 'PENDING') {
+                await paymentRepo.lazyUpdateOrderToExpired(order.order_id);
+                order.status = 'EXPIRED';
             }
 
             res.status(200).json({
@@ -270,6 +290,56 @@ const paymentController = {
             }
 
             res.status(500).json({ error: 'Lỗi hệ thống khi đổi thẻ' });
+        }
+    },
+
+    // ===== NEW: Merchant Hủy đơn thanh toán =====
+    cancelOrder: async (req, res) => {
+        const merchantId = req.merchant.merchant_id;
+        const { merchant_order_id } = req.body;
+
+        if (!merchant_order_id) {
+            return res.status(400).json({ error: 'Vui lòng cung cấp merchant_order_id' });
+        }
+
+        try {
+            const order = await paymentRepo.getOrderByMerchantOrderId(merchantId, merchant_order_id);
+
+            if (!order) {
+                return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+            }
+
+            if (order.status === 'PAID' || order.status === 'SUCCESS') {
+                return res.status(400).json({ error: 'Đơn hàng đã được thanh toán, không thể hủy.' });
+            }
+
+            if (order.status === 'CANCELED') {
+                return res.status(200).json({ message: 'Đơn hàng đã được hủy trước đó', data: { status: 'CANCELED' } });
+            }
+
+            if (order.status === 'EXPIRED') {
+                return res.status(400).json({ error: 'Mã QR đã hết hạn' });
+            }
+            
+            if (new Date() > new Date(order.expired_at)) {
+                if (order.status === 'PENDING') {
+                    await paymentRepo.lazyUpdateOrderToExpired(order.order_id);
+                }
+                return res.status(400).json({ error: 'Mã QR đã hết hạn' });
+            }
+
+            await paymentRepo.cancelPaymentOrder(order.order_id);
+
+            res.status(200).json({
+                message: 'Hủy đơn thanh toán thành công',
+                data: {
+                    merchant_order_id,
+                    status: 'CANCELED'
+                }
+            });
+        } catch (error) {
+            console.error('Lỗi hủy đơn hàng:', error);
+            res.status(500).json({ error: 'Lỗi hệ thống khi hủy đơn hàng' });
         }
     },
 

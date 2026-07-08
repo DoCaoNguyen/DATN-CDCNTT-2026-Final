@@ -14,7 +14,7 @@ const paymentsRepository = {
         let query = `
             SELECT po.id, po.payment_no, po.amount, po.status, po.currency, 
                    po.created_at, po.expired_at, m.merchant_name,
-                   po.merchant_order_id
+                   po.merchant_order_id, po.callback_url
             FROM payment_orders po
             LEFT JOIN merchants m ON po.merchant_id = m.id
             WHERE 1=1
@@ -67,12 +67,15 @@ const paymentsRepository = {
 
     getPaymentTimeline: async (id) => {
         const query = `
-            SELECT 'ORDER_CREATED' as event, created_at as time, status::text as status, null::numeric as amount FROM payment_orders WHERE id = $1
+            SELECT 'ORDER_CREATED' as event_type, created_at as occurred_at, status::text as status, null::numeric as amount 
+            FROM payment_orders WHERE id = $1
             UNION ALL
-            SELECT 'PAYMENT_TRANSACTION' as event, paid_at as time, status::text as status, amount::numeric as amount FROM payment_transactions WHERE payment_order_id = $1
+            SELECT 'PAYMENT_TRANSACTION' as event_type, paid_at as occurred_at, status::text as status, amount::numeric as amount 
+            FROM payment_transactions WHERE payment_order_id = $1 AND paid_at IS NOT NULL
             UNION ALL
-            SELECT 'REFUND' as event, refunded_at as time, status::text as status, amount::numeric as amount FROM refund_transactions WHERE payment_order_id = $1
-            ORDER BY time DESC
+            SELECT 'REFUND' as event_type, refunded_at as occurred_at, status::text as status, amount::numeric as amount 
+            FROM refund_transactions WHERE payment_order_id = $1 AND refunded_at IS NOT NULL
+            ORDER BY occurred_at DESC
         `;
         const result = await pool.query(query, [id]);
         return result.rows;
