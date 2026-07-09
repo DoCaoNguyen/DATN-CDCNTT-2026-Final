@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const redisConnection = require('../../config/redis');
 const webhookService = require('./webhook.service');
 const webhookPublisher = require('./webhook.publisher');
+const { decryptApiSecret } = require('../../shared/utils/api-secret.util');
 
 // Delay in minutes: 1, 3, 5, 7, 9, 11, 13 (Số lẻ theo đúng kịch bản báo cáo)
 const RETRY_DELAYS_MINUTES = [1, 3, 5, 7, 9, 11, 13];
@@ -32,7 +33,17 @@ const processWebhookJob = async (job) => {
             throw new Error('Merchant callback_url not found (both dynamic and global)');
         }
 
-        const secret_key = merchantInfo ? merchantInfo.secret_key : null;
+        let secret_key = null;
+        const apiKey = merchantInfo?.api_key || 'UNKNOWN';
+        
+        if (merchantInfo && merchantInfo.api_secret_hash) {
+            secret_key = decryptApiSecret(merchantInfo.api_secret_hash);
+            if (!secret_key || !secret_key.startsWith('sk_live_')) {
+                throw new Error('Khong the decrypt api_secret_hash hoac secret khong hop le. Vui long revoke va tao API Key moi.');
+            }
+        } else {
+            throw new Error('Khong tim thay ACTIVE API Key de lay webhook secret.');
+        }
 
         // 2. Prepare request with signature
         const signature = generateSignature(payload, secret_key);
@@ -40,11 +51,18 @@ const processWebhookJob = async (job) => {
         const headers = {
             'Content-Type': 'application/json',
             'X-Webhook-Signature': signature,
+            'X-Vio-Signature': signature,
             'User-Agent': 'Mio-Webhook-Service/1.0'
         };
 
         // 3. Send HTTP POST request
         console.log(`\n[WebhookConsumer] MỚI GỬI: Bắt đầu gửi Webhook sang ${targetUrl}...`);
+        console.log(`- Merchant ID: ${merchantId}`);
+        console.log(`- API Key được chọn: ${apiKey}`);
+        console.log(`- Decrypt Secret: ${secret_key ? 'Thành công (' + secret_key.substring(0, 8) + '...)' : 'Thất bại'}`);
+        console.log(`- Generated Signature: ${signature}`);
+        console.log(`- Callback URL: ${targetUrl}`);
+        
         const response = await axios.post(targetUrl, payload, {
             headers,
             timeout: 10000 // 10 seconds timeout
@@ -54,7 +72,8 @@ const processWebhookJob = async (job) => {
 
         // 4. Check if response is successful (Axios throws on 4xx/5xx by default)
         if (response.status >= 200 && response.status < 300) {
-            await webhookService.updateLogStatus(logId, 'SUCCESS');
+            await webhookService.updateLogStatus(logId, 'SUCCESS', null, response.status, duration);
+            console.log(`- Webhook Response Status: ${response.status}`);
             console.log(`[WebhookConsumer] THÀNH CÔNG: Đã nhận phản hồi từ Cửa hàng chỉ trong ${duration}ms. LogId: ${logId}\n`);
             return true;
         } else {
@@ -86,7 +105,8 @@ const processWebhookJob = async (job) => {
             await webhookPublisher.publish({ logId, merchantId, payload }, delayMs);
         } else {
             // Max retries reached
-            await webhookService.updateLogStatus(logId, 'FAILED', errorMessage);
+            const httpStatus = error.response ? error.response.status : null;
+            await webhookService.updateLogStatus(logId, 'FAILED', errorMessage, httpStatus, duration);
             console.log(`[WebhookConsumer] Max retries reached for LogId: ${logId}. Marked as FAILED.`);
         }
     }

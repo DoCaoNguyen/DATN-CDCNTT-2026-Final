@@ -70,6 +70,8 @@ const paymentService = {
             const order = await paymentRepo.lockAndGetOrder(client, qrToken);
 
             if (!order) throw new Error('Order_Not_Found');
+            if (order.status === 'CANCELED') throw new Error('Order_Canceled');
+            if (order.status === 'EXPIRED') throw new Error('QR_Expired');
             if (new Date() > new Date(order.expired_at)) throw new Error('QR_Expired');
             if (order.status !== 'PENDING') throw new Error('Order_Already_Processed');
 
@@ -90,8 +92,8 @@ const paymentService = {
 
             const balanceAfter = await txRepo.subtractBalance(client, wallet.id, order.amount);
 
-
-            await paymentRepo.updateOrderStatus(client, order.order_id, 'SUCCESS');
+            await paymentRepo.updateOrderStatus(client, order.order_id, 'PAID');
+            await paymentRepo.updateQrCodeStatus(client, qrToken, 'USED');
 
 
             const { v7: uuidv7 } = require('uuid');
@@ -185,7 +187,7 @@ const paymentService = {
                         order_id: order.merchant_order_id || order.order_code,
                         merchant_order_id: order.merchant_order_id || null,
                         orderCode: order.order_code,
-                        status: 'success',
+                        status: 'paid',
                         amount: order.amount ? order.amount.toString() : '0',
                         wallet_transaction_id: paymentTxId.toString(),
                         phone_number: userProfile ? userProfile.phone : '',
@@ -348,7 +350,7 @@ const paymentService = {
             const orderId = await paymentRepo.createOrder(
                 client, merchantId, orderCode, amount, null, 'Auto-Debit Thanh toán', expiredAt, merchantOrderId
             );
-            await paymentRepo.updateOrderStatus(client, orderId, 'SUCCESS');
+            await paymentRepo.updateOrderStatus(client, orderId, 'PAID');
 
             // 6. Ghi chép Ledger cho User (DEBIT)
             const { v7: uuidv7 } = require('uuid');
@@ -403,7 +405,7 @@ const paymentService = {
             return {
                 order_id: merchantOrderId,
                 amount_paid: amount,
-                status: 'SUCCESS'
+                status: 'PAID'
             };
         } catch (error) {
             await client.query('ROLLBACK');
