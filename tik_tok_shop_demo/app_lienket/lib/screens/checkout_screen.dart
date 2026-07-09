@@ -107,7 +107,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
               body: jsonEncode({
                 'auth_code': authCode,
-                'merchant_name': 'TikTok Shop'
+                'merchant_name': 'TikTok Shop',
+                'api_key': MioPaymentService.merchantApiKey
               }),
             );
             

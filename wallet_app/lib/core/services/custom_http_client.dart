@@ -41,7 +41,7 @@ class CustomHttpClient extends http.BaseClient {
     if (response.statusCode == 401) {
       if (request.url.path.contains('/auth/refresh-token') ||
           request.url.path.contains('/auth/login')) {
-        _handleUnauthorized();
+        handleUnauthorized();
         return response;
       }
 
@@ -76,7 +76,7 @@ class CustomHttpClient extends http.BaseClient {
         final newToken = await _secureStorage.read(key: 'access_token');
         return await _retryRequest(request, newToken);
       } else {
-        _handleUnauthorized();
+        handleUnauthorized();
       }
     }
 
@@ -164,8 +164,8 @@ class CustomHttpClient extends http.BaseClient {
     }
   }
 
-  /// Xử lý cưỡng bức đăng xuất khi nhận mã lỗi 401
-  static Future<void> _handleUnauthorized() async {
+  /// Xử lý cưỡng bức đăng xuất khi nhận mã lỗi 401 hoặc từ Socket
+  static Future<void> handleUnauthorized() async {
     if (_isLoggingOut) return;
     _isLoggingOut = true;
 
@@ -177,63 +177,57 @@ class CustomHttpClient extends http.BaseClient {
       await prefs.remove('user_id');
       await prefs.remove('is_verified');
 
-      // 2. Lấy context an toàn thông qua navigatorKey toàn cục để hiển thị Dialog thông báo
-      final context = navigatorKey.currentContext;
-      if (context != null) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogCtx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: const Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.red),
-                SizedBox(width: 8),
-                Text(
-                  'Cảnh báo bảo mật',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+      // 2. Tự động điều hướng về màn hình Login ngay lập tức (Xóa sạch Backstack)
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginPhoneScreen()),
+        (route) => false,
+      );
+
+      // 3. Chờ một chút để quá trình chuyển trang hoàn tất, sau đó hiển thị Dialog thông báo
+      Future.delayed(const Duration(milliseconds: 300), () {
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogCtx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text(
+                    'Cảnh báo bảo mật',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: const Text(
+                'Tài khoản của bạn đã được đăng nhập trên một thiết bị khác. Phiên làm việc hiện tại đã kết thúc.',
+                style: TextStyle(fontSize: 14, height: 1.4),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx), // Chỉ cần đóng Dialog
+                  child: const Text(
+                    'Đã hiểu',
+                    style: TextStyle(
+                      color: Colors.pink,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
-            content: const Text(
-              'Tài khoản của bạn đã được đăng nhập trên một thiết bị khác. Phiên làm việc hiện tại đã hết hạn.',
-              style: TextStyle(fontSize: 14, height: 1.4),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogCtx); // Đóng Dialog
-                  _navigateToLogin(); // Điều hướng về màn hình Login
-                },
-                child: const Text(
-                  'Đăng nhập lại',
-                  style: TextStyle(
-                    color: Colors.pink,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      } else {
-        // Dự phòng nếu không lấy được context (ví dụ app đang tắt), vẫn thực hiện chuyển hướng
-        _navigateToLogin();
-      }
+          );
+        }
+      });
     } catch (e) {
       debugPrint("Lỗi xử lý tự động đăng xuất: $e");
+    } finally {
       _isLoggingOut = false;
     }
-  }
-
-  /// Thực hiện điều hướng về trang Login và xóa sạch Backstack màn hình trước đó
-  static void _navigateToLogin() {
-    navigatorKey.currentState?.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPhoneScreen()),
-      (route) => false,
-    );
-    _isLoggingOut = false; // Reset cờ sau khi đã điều hướng xong
   }
 }

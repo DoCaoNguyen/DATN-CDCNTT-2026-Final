@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../constants/api_config.dart';
 
+import 'custom_http_client.dart';
+
 class SocketService {
   static final SocketService _instance = SocketService._internal();
 
@@ -61,6 +63,11 @@ class SocketService {
     if (_onBalanceUpdate != null) {
       _socket!.on('balance_update', (data) => _onBalanceUpdate?.call(data));
     }
+
+    _socket!.on('force_logout', (data) {
+      debugPrint('Received force_logout event! Executing forced logout...');
+      CustomHttpClient.handleUnauthorized();
+    });
 
     _socket!.onDisconnect((_) {
       debugPrint('Socket disconnected');

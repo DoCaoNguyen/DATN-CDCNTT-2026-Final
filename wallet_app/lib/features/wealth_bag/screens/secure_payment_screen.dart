@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/api_config.dart';
@@ -22,6 +23,7 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
   String _selectedMethod = 'wallet'; // 'wallet' or 'bank'
   Map<String, dynamic>? _selectedBank;
   List<dynamic> _linkedBanks = [];
+  final String _idempotencyKey = const Uuid().v7();
   
   @override
   void initState() {
@@ -169,7 +171,7 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
       final response = await CustomHttpClient().post(
         Uri.parse(ApiConfig.wealthBagDeposit),
         headers: {
-          'Idempotency-Key': DateTime.now().millisecondsSinceEpoch.toString(),
+          'Idempotency-Key': _idempotencyKey,
           'Content-Type': 'application/json',
         },
         body: jsonEncode({

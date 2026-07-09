@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/api_config.dart';
@@ -22,6 +23,8 @@ class WithdrawConfirmScreen extends StatefulWidget {
 }
 
 class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
+  final String _idempotencyKey = const Uuid().v7();
+
   String _formatAmount(int amount) {
     return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ';
   }
@@ -52,7 +55,7 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
       final response = await CustomHttpClient().post(
         Uri.parse(ApiConfig.wealthBagWithdraw),
         headers: {
-          'Idempotency-Key': DateTime.now().millisecondsSinceEpoch.toString(),
+          'Idempotency-Key': _idempotencyKey,
           'Content-Type': 'application/json',
         },
         body: jsonEncode({

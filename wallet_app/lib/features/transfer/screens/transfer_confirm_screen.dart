@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import 'transfer_success_screen.dart';
@@ -33,6 +34,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
   final _client = CustomHttpClient();
   final String _refCode =
       "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
+  final String _idempotencyKey = const Uuid().v7();
 
   String _formatAmount(String value) {
     final number = int.tryParse(value);
@@ -88,7 +90,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.transfer));
       request.headers['Authorization'] = 'Bearer ${widget.token}';
       request.headers['ngrok-skip-browser-warning'] = 'true';
-      request.headers['Idempotency-Key'] = _refCode ?? DateTime.now().millisecondsSinceEpoch.toString();
+      request.headers['Idempotency-Key'] = _idempotencyKey;
 
       request.fields['receiver_identifier'] = widget.receiverPhone;
       request.fields['amount'] = cleanAmount;

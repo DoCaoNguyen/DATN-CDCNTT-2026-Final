@@ -481,103 +481,174 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
+            return Dialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
-              title: const Text("Xác thực Email"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Vui lòng nhập địa chỉ email của bạn để nhận mã xác thực OTP.",
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10.0,
+                      offset: Offset(0.0, 10.0),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPink.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
-                      prefixIcon: const Icon(Icons.email_rounded),
+                      child: const Icon(
+                        Icons.mark_email_read_rounded,
+                        color: AppColors.primaryPink,
+                        size: 40,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isLoading ? null : () => Navigator.pop(context),
-                  child: const Text(
-                    "Hủy",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Xác thực Email",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                          final email = emailController.text.trim();
-                          if (email.isEmpty || !email.contains('@')) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Email không hợp lệ"),
-                              ),
-                            );
-                            return;
-                          }
-
-                          setDialogState(() => isLoading = true);
-                          try {
-                            final client = CustomHttpClient();
-                            final response = await client.post(
-                              Uri.parse(
-                                "${ApiConfig.baseUrl}/users/email/request-otp",
-                              ),
-                              body: jsonEncode({"email": email}),
-                            );
-                            setDialogState(() => isLoading = false);
-
-                            if (response.statusCode == 200) {
-                              Navigator.pop(context);
-                              _showOtpDialog(email);
-                            } else {
-                              final error =
-                                  jsonDecode(response.body)['error'] ??
-                                  "Lỗi không xác định";
-                              ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(SnackBar(content: Text(error)));
-                            }
-                          } catch (e) {
-                            setDialogState(() => isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Lỗi kết nối: $e")),
-                            );
-                          }
-                        },
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          "Xác nhận",
-                          style: TextStyle(color: Colors.white),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Vui lòng nhập địa chỉ email của bạn để nhận mã xác thực OTP bảo mật.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: "Địa chỉ Email",
+                        hintText: "VD: example@gmail.com",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+                        ),
+                        prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            onPressed: isLoading ? null : () => Navigator.pop(context),
+                            child: const Text(
+                              "Hủy bỏ",
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryPink,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: isLoading
+                                ? null
+                                : () async {
+                                    final email = emailController.text.trim();
+                                    if (email.isEmpty || !email.contains('@')) {
+                                      SnackbarUtils.showError(context, "Email không hợp lệ");
+                                      return;
+                                    }
+
+                                    setDialogState(() => isLoading = true);
+                                    try {
+                                      final client = CustomHttpClient();
+                                      final response = await client.post(
+                                        Uri.parse("${ApiConfig.baseUrl}/users/email/request-otp"),
+                                        body: jsonEncode({"email": email}),
+                                      );
+                                      setDialogState(() => isLoading = false);
+
+                                      if (!mounted) return;
+
+                                      if (response.statusCode == 200) {
+                                        Navigator.pop(context);
+                                        _showOtpDialog(email);
+                                      } else {
+                                        final error = jsonDecode(response.body)['error'] ?? "Lỗi không xác định";
+                                        SnackbarUtils.showError(context, error);
+                                      }
+                                    } catch (e) {
+                                      setDialogState(() => isLoading = false);
+                                      SnackbarUtils.showError(context, "Lỗi kết nối: $e");
+                                    }
+                                  },
+                            child: isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Nhận OTP",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );

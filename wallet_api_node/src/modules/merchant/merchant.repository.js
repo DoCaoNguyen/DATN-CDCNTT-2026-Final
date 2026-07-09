@@ -112,9 +112,10 @@ const merchantRepository = {
         return result.rows.length > 0 ? result.rows[0] : null;
     },
 
-    getLinkedService: async (userId, serviceName) => {
-        const query = 'SELECT limit_per_day, limit_per_transaction, status FROM user_linked_services WHERE user_id = $1 AND service_name LIKE $2 LIMIT 1';
-        const result = await pool.query(query, [userId, '%' + serviceName + '%']);
+    getLinkedService: async (userId, merchantId) => {
+        // Tìm theo merchant_id (FK) thay vì tên - chính xác 100%
+        const query = "SELECT limit_per_day, limit_per_transaction, status FROM user_linked_services WHERE user_id = $1 AND merchant_id = $2 LIMIT 1";
+        const result = await pool.query(query, [userId, merchantId]);
         return result.rows.length > 0 ? result.rows[0] : null;
     },
 

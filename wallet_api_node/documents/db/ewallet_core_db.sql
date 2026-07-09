@@ -932,6 +932,8 @@ CREATE TABLE public.withdrawal_transactions (
     amount bigint NOT NULL,
     currency character varying(10) DEFAULT 'VND'::character varying NOT NULL,
     withdrawal_method character varying(50) DEFAULT 'SANDBOX_BANK'::character varying NOT NULL,
+    bank_code character varying(50),
+    account_number character varying(100),
     external_reference character varying(255),
     idempotency_key character varying(255),
     status character varying(50) DEFAULT 'PENDING'::character varying NOT NULL,

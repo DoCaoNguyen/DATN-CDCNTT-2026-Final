@@ -375,9 +375,28 @@ const transactionRepository = {
             LEFT JOIN merchants m ON po.merchant_id = m.id
             LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
             LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
-            WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT') AND le.created_at >= CURRENT_DATE - INTERVAL '1 year'
+            WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT') AND le.created_at >= CURRENT_DATE - INTERVAL '3 months'
             ORDER BY le.created_at DESC
-            LIMIT 500;
+            LIMIT 50;
+        `;
+        const result = await pool.query(query, [walletId]);
+        return result.rows;
+    },
+
+    getMonthlySummaryForAI: async (walletId) => {
+        const query = `
+            SELECT 
+                TO_CHAR(le.created_at, 'YYYY-MM') as month,
+                le.entry_type,
+                COALESCE(lt.category_name, lt.transaction_type) AS category_name,
+                SUM(le.amount) as total_amount
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
+            WHERE le.wallet_id = $1 
+              AND (lt.currency IS NULL OR lt.currency != 'POINT')
+              AND le.created_at >= CURRENT_DATE - INTERVAL '6 months'
+            GROUP BY month, le.entry_type, category_name
+            ORDER BY month DESC, le.entry_type, category_name;
         `;
         const result = await pool.query(query, [walletId]);
         return result.rows;

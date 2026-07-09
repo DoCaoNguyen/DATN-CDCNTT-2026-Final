@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:async';
+import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../../../core/services/custom_http_client.dart';
@@ -11,6 +12,7 @@ import '../../../core/constants/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
 import '../../transfer/screens/transfer_confirm_screen.dart';
+import '../../transfer/screens/transfer_success_screen.dart';
 import 'package:flutter/services.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 
@@ -305,6 +307,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
         .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
 
     bool isPaying = false;
+    final String idempotencyKey = const Uuid().v7();
 
     showModalBottomSheet(
       context: context,
@@ -433,7 +436,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                 if (!mounted) return null;
                                 Navigator.pop(pinSheetCtx); // Đóng Bottom Sheet nhập PIN
                                 setSheetState(() => isPaying = true);
-                                await _processQrPayment(sheetCtx, qrToken, amount, pin);
+                                await _processQrPayment(sheetCtx, qrToken, amount, pin, idempotencyKey, merchantName);
                                 return null;
                               } catch (e) {
                                 return "Lỗi kết nối máy chủ";
@@ -472,10 +475,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // ============================================================
   // GỌI API THANH TOÁN QR
   // ============================================================
-  Future<void> _processQrPayment(BuildContext sheetCtx, String qrToken, int amount, String pin) async {
-    // Tạo idempotency key ngẫu nhiên để tránh thanh toán 2 lần
-    final idempotencyKey = '${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(999999)}';
-
+  Future<void> _processQrPayment(BuildContext sheetCtx, String qrToken, int amount, String pin, String idempotencyKey, String merchantName) async {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.processPayment),
@@ -491,7 +491,21 @@ class _QrMainScreenState extends State<QrMainScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['data'];
-        _showSuccessDialog(amount, data['balance_remaining']);
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TransferSuccessScreen(
+              token: widget.token,
+              receiverName: merchantName,
+              receiverPhone: "Thanh toán dịch vụ",
+              amount: amount.toString(),
+              note: "Thanh toán qua mã QR",
+              referenceCode: data['reference_code'] ?? data['transaction_id'] ?? 'N/A',
+              paymentTime: data['timestamp'] ?? DateTime.now().toIso8601String(),
+            ),
+          ),
+        );
       } else {
         final errMsg = jsonDecode(response.body)['error'] ?? 'Thanh toán thất bại';
         _showErrorDialog(errMsg);
@@ -502,63 +516,6 @@ class _QrMainScreenState extends State<QrMainScreen> {
     }
   }
 
-  void _showSuccessDialog(int amount, dynamic remaining) {
-    String fmt(num v) => v
-        .toInt()
-        .toString()
-        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-                child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 48),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Thanh toán thành công!',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text('${fmt(amount)}đ',
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryPink)),
-              const SizedBox(height: 6),
-              Text('Số dư còn lại: ${fmt(num.tryParse(remaining.toString()) ?? 0)}đ',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _isScannerActive = true;
-                    _scannerController.start();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Xong',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
 
   @override

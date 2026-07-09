@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/services/custom_http_client.dart';
 import 'package:camera/camera.dart';
@@ -34,6 +35,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
   List<dynamic> _linkedBanks = [];
   Map<String, dynamic>? _selectedBank;
   String? _currentTxRefCode;
+  final String _idempotencyKey = const Uuid().v7();
   
   final TextEditingController _amountController = TextEditingController();
   String _mioBalance = "0đ";
@@ -318,7 +320,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'Idempotency-Key': _currentTxRefCode ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          'Idempotency-Key': _idempotencyKey,
         },
         body: jsonEncode(body),
       );
@@ -383,7 +385,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
 
       var request = http.MultipartRequest('POST', Uri.parse(url));
       request.headers['Authorization'] = 'Bearer ${widget.token}';
-      request.headers['Idempotency-Key'] = _currentTxRefCode ?? DateTime.now().millisecondsSinceEpoch.toString();
+      request.headers['Idempotency-Key'] = _idempotencyKey;
       request.fields['amount'] = amountVal.toString();
       request.fields['external_reference'] = _currentTxRefCode ?? '';
       
