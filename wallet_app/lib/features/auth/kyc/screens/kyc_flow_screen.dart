@@ -16,7 +16,8 @@ import '../services/nfc_kyc_service.dart';
 
 class KycFlowScreen extends StatefulWidget {
   final String userId;
-  const KycFlowScreen({Key? key, required this.userId}) : super(key: key);
+  final String token;
+  const KycFlowScreen({Key? key, required this.userId, required this.token}) : super(key: key);
 
   @override
   State<KycFlowScreen> createState() => _KycFlowScreenState();
@@ -283,7 +284,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
       var response = await http.Response.fromStream(await request.send());
       setState(() => _isLoading = false);
 
-      if (response.statusCode == 200) KycDialogs.showSuccess(context, widget.userId);
+      if (response.statusCode == 200) KycDialogs.showSuccess(context, widget.userId, widget.token);
       else KycDialogs.showError(context, jsonDecode(response.body)['error'] ?? 'Lỗi xác thực', _resetFlow);
     } catch (e) {
       setState(() => _isLoading = false);

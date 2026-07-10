@@ -38,7 +38,7 @@ class KycDialogs {
     );
   }
 
-  static void showSuccess(BuildContext context, String userId) {
+  static void showSuccess(BuildContext context, String userId, String token) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -61,7 +61,7 @@ class KycDialogs {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool('is_verified', true);
                   if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen(userId: userId, isVerified: true)), (route) => false);
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen(userId: userId, isVerified: true, token: token)), (route) => false);
                   }
                 },
                 child: const Text('Về trang chủ', style: TextStyle(color: Colors.white)),
