@@ -232,7 +232,7 @@ const walletController = {
             const { id } = req.params;
 
             const result = await pool.query(
-                "UPDATE user_linked_services SET status = 'UNLINKED' WHERE id = $1 AND user_id = $2 RETURNING *",
+                "UPDATE user_linked_services SET status = 'UNLINKED' WHERE id = $1 AND user_id = $2 RETURNING service_name, wallet_token, merchant_id",
                 [id, userId]
             );
 
@@ -244,7 +244,7 @@ const walletController = {
             try {
                 const serviceName = result.rows[0].service_name;
                 const walletToken = result.rows[0].wallet_token;
-                const searchName = serviceName.split(' ')[0];
+                const merchantId = result.rows[0].merchant_id;
 
                 let walletAccount = walletToken;
                 if (!walletAccount) {
@@ -252,20 +252,24 @@ const walletController = {
                     walletAccount = userRes.rows[0]?.phone;
                 }
 
-                const merchantRes = await pool.query("SELECT id, merchant_name FROM merchants WHERE merchant_name ILIKE $1", ['%' + searchName + '%']);
-                if (merchantRes.rows.length > 0 && walletAccount) {
-                    const merchantId = merchantRes.rows[0].id;
-                    const configRes = await pool.query("SELECT default_callback_url FROM merchant_callback_configs WHERE merchant_id = $1", [merchantId]);
-                    if (configRes.rows.length > 0 && configRes.rows[0].default_callback_url) {
-                        const callbackUrl = configRes.rows[0].default_callback_url;
-                        const axios = require('axios');
-                        // Fire and forget
-                        axios.post(callbackUrl, {
-                            event: 'USER_UNLINKED',
-                            wallet_account: walletAccount,
-                            service_name: serviceName,
-                            timestamp: Date.now()
-                        }).catch(err => console.error('Lỗi gửi webhook hủy liên kết (Merchant chưa mở port hoặc timeout):', err.message));
+                if (merchantId && walletAccount) {
+                    // Dùng merchant_id trực tiếp (FK) - không cần fuzzy search theo tên nữa
+                    const configRes = await pool.query(
+                        "SELECT unlink_callback_url, default_callback_url FROM merchant_callback_configs WHERE merchant_id = $1",
+                        [merchantId]
+                    );
+                    if (configRes.rows.length > 0) {
+                        const callbackUrl = configRes.rows[0].unlink_callback_url || configRes.rows[0].default_callback_url;
+                        if (callbackUrl) {
+                            const axios = require('axios');
+                            // Fire and forget
+                            axios.post(callbackUrl, {
+                                event: 'USER_UNLINKED',
+                                wallet_account: walletAccount,
+                                service_name: serviceName,
+                                timestamp: Date.now()
+                            }).catch(err => console.error('Lỗi gửi webhook hủy liên kết:', err.message));
+                        }
                     }
                 }
             } catch (webhookErr) {

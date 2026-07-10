@@ -20,8 +20,8 @@ const merchantController = {
                 return res.status(400).json({ error: 'Tên và số điện thoại đối tác là bắt buộc' });
             }
 
-            const rawApiKey = `pk_test_${crypto.randomBytes(12).toString('hex')}`;
-            const rawSecret = `sk_test_${crypto.randomBytes(24).toString('hex')}`;
+            const rawApiKey = `ak_mio_${crypto.randomBytes(12).toString('hex')}`;
+            const rawSecret = `sk_mio_${crypto.randomBytes(24).toString('hex')}`;
 
             const pepper = process.env.API_SECRET_PEPPER || 'mio_pepper';
             const secretHash = crypto.createHmac('sha256', pepper).update(rawSecret).digest('hex');
@@ -312,8 +312,7 @@ const merchantController = {
 
             let phone = result.rows[0].phone;
             // Không che số điện thoại để Merchant (TikTok Shop) có thể lưu lại và dùng làm wallet_account khi gọi API Charge
-
-            const authCode = crypto.randomUUID();
+            const authCode = uuidv7();
 
             // Lưu vào Map, hết hạn sau 5 phút
             authCodeMap.set(authCode, {
@@ -350,13 +349,21 @@ const merchantController = {
             const tokenStr = jwt.sign(
                 { userId: data.userId, phone: data.phone },
                 process.env.JWT_SECRET || 'mio_secret_key',
-                { expiresIn: '3650d' } // Token siêu dài hạn (10 năm)
+                { expiresIn: '3650d' } //(10 năm)
             );
-            const billing_token = 'tok_mio_' + tokenStr;
+            const billing_token = 'mio_merchant_' + tokenStr;
             const masked_phone = '******' + data.phone.slice(-4);
 
             // LƯU LIÊN KẾT VÀO DATABASE
             if (merchant_name && data.userId) {
+                // Tìm merchant_id: ưu tiên api_key, fallback theo tên
+                let merchantId = null;
+                const apiKeyInBody = req.body.api_key;
+                if (apiKeyInBody) {
+                    const mByKey = await pool.query('SELECT m.id FROM merchants m JOIN merchant_api_keys mak ON m.id = mak.merchant_id WHERE mak.api_key = $1', [apiKeyInBody]);
+                    if (mByKey.rows.length > 0) merchantId = mByKey.rows[0].id;
+                }
+                
                 const check = await pool.query('SELECT id FROM user_linked_services WHERE user_id = $1 AND service_name = $2', [data.userId, merchant_name]);
                 if (check.rows.length === 0) {
                     let icon = 'https://cdn-icons-png.flaticon.com/512/2875/2875364.png';
@@ -369,14 +376,14 @@ const merchantController = {
                     const newId = uuidv7();
 
                     await pool.query(
-                        'INSERT INTO user_linked_services (id, user_id, service_name, service_icon, wallet_token) VALUES ($1, $2, $3, $4, $5)',
-                        [newId, data.userId, merchant_name, icon, billing_token]
+                        'INSERT INTO user_linked_services (id, user_id, service_name, service_icon, wallet_token, merchant_id) VALUES ($1, $2, $3, $4, $5, $6)',
+                        [newId, data.userId, merchant_name, icon, billing_token, merchantId]
                     );
                 } else {
-                    // Cập nhật lại token, reset hạn mức và bật lại trạng thái ACTIVE
+                    // Cập nhật lại token, merchant_id, reset hạn mức và bật lại trạng thái ACTIVE
                     await pool.query(
-                        'UPDATE user_linked_services SET wallet_token = $1, status = $2, limit_per_day = NULL, limit_per_transaction = NULL WHERE id = $3',
-                        [billing_token, 'ACTIVE', check.rows[0].id]
+                        'UPDATE user_linked_services SET wallet_token = $1, status = $2, merchant_id = COALESCE($3, merchant_id), limit_per_day = NULL, limit_per_transaction = NULL WHERE id = $4',
+                        [billing_token, 'ACTIVE', merchantId, check.rows[0].id]
                     );
                 }
 
@@ -416,13 +423,18 @@ const merchantController = {
                 return res.status(400).json({ error: 'Thieu thong tin bat buoc (wallet_token, amount)' });
             }
 
-            // Giai ma Token Uy Quyen
+            console.log(`[CHARGE DEBUG] api_key=${api_key}, wallet_token_tail=${wallet_token.slice(-20)}, amount=${amount}`);
+            require('fs').appendFileSync('charge_debug.log', JSON.stringify(req.body) + '\n');
+            
+            // Bỏ hardcode AUTO_DEBIT_LIMIT ở đây, sẽ check phía dưới sau khi có thông tin ví.
+
+            // Giải mã Token Ủy Quyền
             let wallet_account = '';
-            if (wallet_token && wallet_token.startsWith('tok_mio_')) {
+            if (wallet_token && wallet_token.startsWith('mio_merchant_')) {
                 try {
                     const jwt = require('jsonwebtoken');
                     const decoded = jwt.verify(
-                        wallet_token.replace('tok_mio_', ''),
+                        wallet_token.replace('mio_merchant_', ''),
                         process.env.JWT_SECRET || 'mio_secret_key'
                     );
                     wallet_account = decoded.phone;
@@ -430,7 +442,7 @@ const merchantController = {
                     return res.status(401).json({ error: 'Token uy quyen khong hop le hoac da het han' });
                 }
             } else {
-                return res.status(400).json({ error: 'Yeu cau Token uy quyen hop le (tok_mio_...)' });
+                return res.status(400).json({ error: 'Yeu cau Token uy quyen hop le (mio_merchant_...)' });
             }
 
             // Lay thong tin merchant de check han muc
@@ -459,9 +471,14 @@ const merchantController = {
                 });
             }
 
-            // Han muc rieng cua App Lien Ket
-            const searchName = merchant.merchant_name.split(' ')[0];
-            const linkedApp = await merchantRepository.getLinkedService(user_id, searchName);
+            // Kiểm tra hạn mức riêng của App Liên Kết - dùng merchant_id để tra cứu chính xác
+            const linkedApp = await merchantRepository.getLinkedService(user_id, merchant.id);
+        
+            console.log(`[CHARGE DEBUG] user_id=${user_id}, merchant.id=${merchant.id}, linkedApp_status=${linkedApp ? linkedApp.status : 'null'}`);
+            
+            if (!linkedApp || linkedApp.status === 'UNLINKED') {
+                return res.status(403).json({ error: 'Dịch vụ chưa được liên kết hoặc đã bị huỷ liên kết. Không thể thanh toán.' });
+            }
 
             if (!linkedApp || linkedApp.status === 'UNLINKED') {
                 return res.status(403).json({ error: 'Dich vu chua duoc lien ket hoac da bi huy. Khong the thanh toan.' });
@@ -483,7 +500,6 @@ const merchantController = {
                 return res.status(400).json({ error: `Giao dịch thất bại: Vượt quá hạn mức thanh toán tự động (${Number(appLimit).toLocaleString('vi-VN')}đ/ngày) của ứng dụng liên kết. Bạn đã tiêu ${Number(appDailyUsage).toLocaleString('vi-VN')}đ hôm nay.` });
             }
 
-            // Xu ly thanh toan Auto Debit
             const paymentService = require('../payment/payment.service');
             const result = await paymentService.processAutoDebit(
                 merchant.merchant_user_id,
@@ -499,8 +515,7 @@ const merchantController = {
                 const pool = require('../../config/db');
                 const configRes = await pool.query("SELECT default_callback_url FROM merchant_callback_configs WHERE merchant_id = $1", [merchant.id]);
                 if (configRes.rows.length > 0 && configRes.rows[0].default_callback_url) {
-                    // Thay thế /wallets/webhook/unlink bằng /orders/webhook/payment
-                    const callbackUrl = configRes.rows[0].default_callback_url.replace('/wallets/webhook/unlink', '/orders/webhook/payment');
+                    const callbackUrl = configRes.rows[0].default_callback_url;
                     const webhookPayload = {
                         event: 'PAYMENT_SUCCESS',
                         order_id: order_id || 'AUTO_' + Date.now(),
@@ -510,16 +525,17 @@ const merchantController = {
                     };
 
                     const webhookService = require('../webhook/webhook.service');
-                    const webhookLog = await webhookService.createLog(
+                    const webhookLogId = await webhookService.createLog(
+                        null,
                         merchant.id,
-                        callbackUrl,
-                        'PAYMENT_SUCCESS',
+                        result.transaction_id || 'TX_' + Date.now(),
+                        'wh_' + Date.now(),
                         webhookPayload
                     );
 
                     const webhookPublisher = require('../webhook/webhook.publisher');
                     webhookPublisher.publish({
-                        logId: webhookLog.id,
+                        logId: webhookLogId,
                         merchantId: merchant.id,
                         payload: webhookPayload,
                         callbackUrl: callbackUrl

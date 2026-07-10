@@ -136,7 +136,7 @@ const paymentRepository = {
         return result.rows[0];
     },
 
-    // ===== NEW: Cấu hình phí =====
+    // Cấu hình phí 
     getFeeConfig: async (feeCode) => {
         const query = `SELECT fee_value, fee_type FROM fee_configs WHERE fee_code = $1`;
         const result = await pool.query(query, [feeCode]);

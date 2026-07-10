@@ -541,13 +541,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Container(
-              height: 40,
-              padding: const EdgeInsets.only(left: 16, right: 8),
+              constraints: const BoxConstraints(
+                minHeight: 40,
+                maxHeight: 120,
+              ),
+              padding: const EdgeInsets.only(left: 16, right: 8, top: 2, bottom: 2),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: TextField(
@@ -559,7 +563,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         hintText: 'Nhập tin nhắn',
                         hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                         isDense: true,
                       ),
                     ),

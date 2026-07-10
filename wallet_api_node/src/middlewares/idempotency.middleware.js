@@ -15,6 +15,14 @@ const withIdempotency = async (req, res, next) => {
     try {
         const existingRecord = await idempotencyRepo.findByKey(idempotencyKey);
         if (existingRecord) {
+            const currentHash = crypto.createHash('sha256').update(JSON.stringify(req.body || {})).digest('hex');
+            if (existingRecord.request_hash && existingRecord.request_hash !== currentHash) {
+                return res.status(409).json({
+                    success: false,
+                    error_code: 'IDEMPOTENCY_PAYLOAD_MISMATCH',
+                    message: 'Idempotency Key đã được sử dụng với một nội dung Payload khác. Vui lòng tạo Key mới.'
+                });
+            }
             return res.status(200).json(existingRecord.response_data);
         }
 

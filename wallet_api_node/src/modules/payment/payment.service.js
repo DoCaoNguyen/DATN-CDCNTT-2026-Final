@@ -15,8 +15,7 @@ const paymentService = {
         try {
             await client.query('BEGIN');
 
-
-            const orderCode = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
+            const orderCode = `ORD-${Date.now()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
             const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
 
 
@@ -58,7 +57,7 @@ const paymentService = {
     },
 
     processQrPayment: async (userId, qrToken, pin, faceImagePath) => {
-        // [SECURITY FIX] Xác thực PIN/FaceID TRƯỚC khi bắt đầu giao dịch (giống transfer/deposit)
+        // Xác thực PIN/FaceID TRƯỚC khi bắt đầu giao dịch (giống transfer/deposit)
         const walletForPin = await txRepo.getWalletForPinCheck(userId);
         if (!walletForPin) throw new Error('Wallet_Not_Found');
 
@@ -187,7 +186,7 @@ const paymentService = {
                         order_id: order.merchant_order_id || order.order_code,
                         merchant_order_id: order.merchant_order_id || null,
                         orderCode: order.order_code,
-                        status: 'paid',
+                        status: 'PAID',
                         amount: order.amount ? order.amount.toString() : '0',
                         wallet_transaction_id: paymentTxId.toString(),
                         phone_number: userProfile ? userProfile.phone : '',
@@ -315,7 +314,7 @@ const paymentService = {
             const userId = await merchantRepo.findUserByPhone(userPhone);
             if (!userId) throw new Error('Wallet_Not_Found');
 
-            // [SECURITY FIX] Kiểm tra user đã ủy quyền auto-debit cho merchant này chưa
+            // Kiểm tra user đã ủy quyền auto-debit cho merchant này chưa
             const linkCheck = await client.query(`
                 SELECT id, status, limit_per_transaction, limit_per_day
                 FROM user_linked_services
@@ -345,7 +344,8 @@ const paymentService = {
             const balanceAfter = await txRepo.subtractBalance(client, userWallet.id, amount);
 
             // 5. Tạo Order tự động (Thành công luôn)
-            const orderCode = 'AD' + Date.now() + Math.floor(Math.random() * 1000);
+            const orderCode = `AD-${Date.now()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+
             const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
             const orderId = await paymentRepo.createOrder(
                 client, merchantId, orderCode, amount, null, 'Auto-Debit Thanh toán', expiredAt, merchantOrderId

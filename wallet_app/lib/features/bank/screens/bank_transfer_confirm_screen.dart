@@ -12,6 +12,7 @@ import '../../../../core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
+import 'package:uuid/uuid.dart';
 import 'bank_transfer_success_screen.dart';
 import '../widgets/transaction_details_card.dart';
 import '../widgets/payment_source_card.dart';
@@ -47,6 +48,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
   final _client = CustomHttpClient();
   final String _refCode =
       "${Random().nextInt(900000) + 100000}${Random().nextInt(900000) + 100000}";
+  final String _idempotencyKey = const Uuid().v7();
   bool _isLoading = false;
   String _mioBalance = "0đ";
 
@@ -273,7 +275,10 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.bankTransfer),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': _idempotencyKey,
+        },
         body: jsonEncode({
           'amount': widget.amount,
           'pin': pin,
@@ -347,6 +352,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
         request.headers['Authorization'] = 'Bearer $authToken';
       }
       request.headers['ngrok-skip-browser-warning'] = 'true';
+      request.headers['Idempotency-Key'] = _idempotencyKey;
 
       request.fields['amount'] = widget.amount;
       request.fields['bank_code'] = widget.bankCode;

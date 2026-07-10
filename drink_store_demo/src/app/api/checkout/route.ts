@@ -25,10 +25,9 @@ export async function POST(req: NextRequest) {
 
     // 2. Goi Ví Mio API tao Payment Order (QR Code flow)
     // Endpoint nay chi can X-Api-Key (public key), khong can HMAC signature
-    const walletApiBase = process.env.WALLET_API_URL || 'http://localhost:8000/api/v1';
+    const walletApiBase = process.env.WALLET_API_URL || 'http://localhost:3000/api/v1';
     const walletApiUrl = `${walletApiBase}/payment/create`;
 
-    const callbackUrl = process.env.CALLBACK_URL || 'http://localhost:3001/api/webhook';
 
     const walletRes = await fetch(walletApiUrl, {
       method: 'POST',
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest) {
         amount: amount,
         description: `Thanh toan: ${productName}`,
         merchant_order_id: merchantOrderId,
-        callback_url: callbackUrl,
       }),
     });
 

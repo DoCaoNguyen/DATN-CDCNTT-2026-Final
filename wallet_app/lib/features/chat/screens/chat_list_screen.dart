@@ -250,6 +250,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             child: const TextField(
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
+                isDense: true,
                 hintText: 'Tìm kiếm',
                 hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
                 prefixIcon: Icon(
@@ -257,8 +258,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   color: Colors.grey,
                   size: 20,
                 ),
+                prefixIconConstraints: BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),

@@ -41,26 +41,32 @@ exports.linkWallet = async (req, res) => {
 
 exports.handleUnlinkWebhook = async (req, res) => {
     try {
-        const { event, wallet_account, service_name } = req.body;
+        const { event, wallet_account, service_name, timestamp } = req.body;
         
         if (event === 'USER_UNLINKED' && wallet_account) {
-            // Ép kiểu sang chuỗi để tránh lỗi .startsWith nếu webhook gửi dạng số
             const accountStr = String(wallet_account);
-            
-            // wallet_account từ webhook có thể là token chuẩn (tok_mio_...) hoặc số điện thoại (tương thích ngược)
             const isToken = accountStr.startsWith('tok_mio_');
-            const query = isToken 
-                ? "UPDATE user_linked_wallets SET status = 'UNLINKED' WHERE wallet_account = $1 RETURNING *"
-                : "UPDATE user_linked_wallets SET status = 'UNLINKED' WHERE masked_account LIKE '%' || $1 RETURNING *";
-            const param = isToken ? accountStr : (accountStr.length >= 4 ? accountStr.slice(-4) : accountStr);
             
-            // Cập nhật trạng thái ví thành UNLINKED
-            const result = await pool.query(query, [param]);
+            // Tìm record theo wallet_account (token) hoặc masked_account (số điện thoại)
+            const whereCol = isToken ? 'wallet_account = $1' : "masked_account LIKE '%' || $1";
+            const param = isToken ? accountStr : (accountStr.length >= 4 ? accountStr.slice(-4) : accountStr);
+
+            // FIX RACE CONDITION: Chỉ set UNLINKED nếu linked_at < timestamp webhook
+            // Nếu user đã liên kết lại (linked_at mới hơn) → bỏ qua webhook cũ
+            const timestampCondition = timestamp 
+                ? ` AND linked_at < to_timestamp($2 / 1000.0)` 
+                : '';
+            const params = timestamp ? [param, timestamp] : [param];
+            
+            const query = `UPDATE user_linked_wallets SET status = 'UNLINKED' 
+                           WHERE ${whereCol}${timestampCondition} RETURNING *`;
+            
+            const result = await pool.query(query, params);
             
             if (result.rows.length > 0) {
-                console.log(`[WEBHOOK] Đã hủy liên kết ví cho tài khoản: ${wallet_account}`);
+                console.log(`[WEBHOOK] Hủy liên kết thành công cho: ...${accountStr.slice(-20)}`);
             } else {
-                console.log(`[WEBHOOK] Nhận yêu cầu hủy liên kết nhưng không tìm thấy tài khoản ví với đuôi/token: ${param}`);
+                console.log(`[WEBHOOK] Bỏ qua webhook cũ (user đã liên kết lại hoặc không khớp): ...${accountStr.slice(-20)}`);
             }
         }
         

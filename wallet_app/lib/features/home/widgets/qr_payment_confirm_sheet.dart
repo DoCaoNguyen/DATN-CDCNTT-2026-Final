@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
@@ -32,6 +33,7 @@ class QrPaymentConfirmSheet extends StatefulWidget {
 class _QrPaymentConfirmSheetState extends State<QrPaymentConfirmSheet> {
   final _client = CustomHttpClient();
   bool isPaying = false;
+  final String _idempotencyKey = const Uuid().v7();
 
   String fmtAmt(int v) => v.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -39,15 +41,12 @@ class _QrPaymentConfirmSheetState extends State<QrPaymentConfirmSheet> {
   );
 
   Future<void> _processQrPayment(String qrToken, int amount, String pin) async {
-    final idempotencyKey =
-        '${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(999999)}';
-
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.processPayment),
         headers: {
           'Content-Type': 'application/json',
-          'idempotency-key': idempotencyKey,
+          'idempotency-key': _idempotencyKey,
         },
         body: jsonEncode({'qr_token': qrToken, 'pin': pin}),
       );

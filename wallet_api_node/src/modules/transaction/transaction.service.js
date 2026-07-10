@@ -10,7 +10,71 @@ const aiService = require('../ai/ai.service');
 const traceEventService = require('../system/trace_event.service');
 
 const transactionService = {
-    deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
+    autoDebit: async (merchant, userPhone, amount, orderId, walletToken) => {
+        let client = null;
+        try {
+            // Lấy ví của user (dựa trên userPhone)
+            const userWallet = await repo.getWalletByIdentifier(userPhone);
+            if (!userWallet) throw new Error('Wallet_Not_Found');
+
+            // Lấy ví doanh nghiệp của merchant
+            const mWalletRes = await pool.query(
+                "SELECT id FROM wallets WHERE user_id = $1 AND wallet_type = 'BUSINESS' LIMIT 1",
+                [merchant.merchant_user_id]
+            );
+            if (mWalletRes.rows.length === 0) throw new Error('Merchant_Wallet_Not_Found');
+            const merchantWalletId = mWalletRes.rows[0].id;
+
+            client = await pool.connect();
+            await client.query('BEGIN');
+
+            const sortedWallets = [userWallet.id, merchantWalletId].sort();
+            
+            let userBalanceBefore, merchantBalanceBefore;
+            for (let wId of sortedWallets) {
+                const bal = await repo.lockAndGetBalance(client, wId);
+                if (wId === userWallet.id) userBalanceBefore = bal;
+                if (wId === merchantWalletId) merchantBalanceBefore = bal;
+            }
+
+            const amountBigInt = BigInt(Math.floor(Number(amount)));
+
+            if (userBalanceBefore < amountBigInt) {
+                throw new Error('Insufficient_Balance');
+            }
+
+            const userBalanceAfter = await repo.subtractBalance(client, userWallet.id, amountBigInt);
+            const merchantBalanceAfter = await repo.addBalance(client, merchantWalletId, amountBigInt);
+
+            const tId = uuidv7();
+            const hex = tId.replace(/-/g, '').substring(0, 10);
+            const extRef = 'AUTO_' + hex;
+
+            const ledgerTxId = await repo.createLedgerTransaction(
+                client, tId, 'PAYMENT', extRef, amountBigInt, 
+                userWallet.user_id, merchant.merchant_user_id,
+                `Thanh toán Auto-Debit đơn hàng ${orderId}`
+            );
+
+            await repo.createLedgerEntry(client, ledgerTxId, userWallet.id, 'DEBIT', amountBigInt, userBalanceBefore, userBalanceAfter);
+            await repo.createLedgerEntry(client, ledgerTxId, merchantWalletId, 'CREDIT', amountBigInt, merchantBalanceBefore, merchantBalanceAfter);
+
+            await client.query('COMMIT');
+
+            return { 
+                transaction_id: extRef,
+                amount: amountBigInt.toString(), 
+                status: 'SUCCESS'
+            };
+        } catch (error) {
+            if (client) await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            if (client) client.release();
+        }
+    },
+
+    deposit: async (userId, amount, pin, faceImagePath, externalReference, idempotencyKey = null) => { 
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);
@@ -38,11 +102,11 @@ const transactionService = {
             const hex = depositId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', depositId, 'DEPOSIT', 'Nạp tiền từ ngân hàng liên kết', amount);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', depositId, 'DEPOSIT', 'Nạp tiền từ ngân hàng liên kết', amount, 'VND', null, idempotencyKey);
             
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordDeposit(client, depositId, 'DEP-' + extRef, userId, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
+            await repo.recordDeposit(client, depositId, 'DEP-' + extRef, userId, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef, idempotencyKey);
 
             await client.query('COMMIT'); 
             
@@ -104,7 +168,7 @@ const transactionService = {
         }
     },
 
-    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => { 
+    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference, idempotencyKey = null) => { 
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);
@@ -237,11 +301,11 @@ const transactionService = {
             const hex = transferId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount, 'VND', null, idempotencyKey);
             
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordBankTransfer(client, transferId, 'BNK-' + extRef, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
+            await repo.recordBankTransfer(client, transferId, 'BNK-' + extRef, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef, idempotencyKey);
 
             await client.query('COMMIT'); 
             

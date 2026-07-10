@@ -42,15 +42,6 @@ const OrderController = {
             } catch (mioError) {
                 console.error('Lỗi khi gọi API Ví Mio:', mioError.response?.data || mioError.message);
                 const errorMsg = mioError.response?.data?.error || 'Thanh toán thất bại từ cổng thanh toán';
-                
-                // Nếu lỗi là 403, chứng tỏ ví đã bị hủy liên kết, tự động đồng bộ trạng thái nội bộ
-                if (mioError.response?.status === 403) {
-                    await pool.query(
-                        "UPDATE user_linked_wallets SET status = 'UNLINKED' WHERE user_id = $1 AND wallet_name = 'Mio'", 
-                        [user_id]
-                    );
-                }
-                
                 return res.status(400).json({ success: false, message: errorMsg });
             }
         } catch (error) {

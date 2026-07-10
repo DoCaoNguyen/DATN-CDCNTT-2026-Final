@@ -37,9 +37,9 @@ const processWebhookJob = async (job) => {
         const apiKey = merchantInfo?.api_key || 'UNKNOWN';
         
         if (merchantInfo && merchantInfo.api_secret_hash) {
-            secret_key = decryptApiSecret(merchantInfo.api_secret_hash);
-            if (!secret_key || !secret_key.startsWith('sk_live_')) {
-                throw new Error('Khong the decrypt api_secret_hash hoac secret khong hop le. Vui long revoke va tao API Key moi.');
+            secret_key = decryptApiSecret(merchantInfo.api_secret_hash) || merchantInfo.api_secret_hash;
+            if (!secret_key) {
+                throw new Error('Khong the decrypt api_secret_hash. Vui long revoke va tao API Key moi.');
             }
         } else {
             throw new Error('Khong tim thay ACTIVE API Key de lay webhook secret.');
