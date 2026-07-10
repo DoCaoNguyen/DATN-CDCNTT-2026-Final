@@ -1,14 +1,12 @@
-import 'dart:convert';
+const fs = require('fs');
+
+const code = `import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-import '../../bank/screens/deposit_withdraw_success_screen.dart';
-import '../../transfer/screens/transfer_success_screen.dart';
-import '../../bank/screens/bank_transfer_success_screen.dart';
 
 class MerchantWithdrawScreen extends StatefulWidget {
   final String token;
@@ -29,11 +27,12 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
   final _client = CustomHttpClient();
   bool _isWithdrawing = false;
   bool _isWithdrawingToBank = false;
-
+  
   // Bank selection state
+  bool _isLoadingBanks = false;
   List<dynamic> _linkedBanks = [];
   Map<String, dynamic>? _selectedBank;
-
+  
   String? _amountError;
 
   @override
@@ -41,23 +40,24 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
     super.initState();
     _fetchLinkedBanks();
   }
-
+  
   Future<void> _fetchLinkedBanks() async {
+    setState(() => _isLoadingBanks = true);
     try {
-      final response = await _client.get(Uri.parse(ApiConfig.getLinkedBanks));
+      final response = await _client.get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _linkedBanks = data['data'] ?? [];
-            if (_linkedBanks.isNotEmpty) {
-              _selectedBank = _linkedBanks.first;
-            }
-          });
+        _linkedBanks = data['data'] ?? [];
+        if (_linkedBanks.isNotEmpty) {
+          _selectedBank = _linkedBanks.first;
         }
       }
     } catch (e) {
       debugPrint("Error fetching linked banks: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingBanks = false);
     }
   }
 
@@ -67,22 +67,18 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       setState(() => _amountError = null);
       return;
     }
-
+    
     int parsed = int.tryParse(clean) ?? 0;
-    int currentBalance =
-        int.tryParse(
-          widget.availableBalance.replaceAll(RegExp(r'[^0-9]'), ''),
-        ) ??
-        0;
-
+    int currentBalance = int.tryParse(widget.availableBalance.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    
     setState(() {
-      if (parsed < 10000) {
-        _amountError = 'Số tiền rút tối thiểu là 10.000đ';
-      } else if (parsed > currentBalance) {
-        _amountError = 'Số dư không đủ để thực hiện giao dịch này';
-      } else {
-        _amountError = null;
-      }
+       if (parsed < 10000) {
+          _amountError = 'Số tiền rút tối thiểu là 10.000đ';
+       } else if (parsed > currentBalance) {
+          _amountError = 'Số dư không đủ để thực hiện giao dịch này';
+       } else {
+          _amountError = null;
+       }
     });
   }
 
@@ -91,36 +87,28 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
   }
 
   void _selectQuickAmount(int amount) {
-    int currentBalance =
-        int.tryParse(
-          widget.availableBalance.replaceAll(RegExp(r'[^0-9]'), ''),
-        ) ??
-        0;
+    int currentBalance = int.tryParse(widget.availableBalance.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
     if (amount > currentBalance) amount = currentBalance;
-
+    
     String formatted = amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
+      (Match m) => '\${m[1]}.',
     );
     _amountController.text = formatted;
-    _amountController.selection = TextSelection.collapsed(
-      offset: formatted.length,
-    );
+    _amountController.selection = TextSelection.collapsed(offset: formatted.length);
     _validateAmount(formatted);
   }
 
   void _withdrawAll() {
     final numStr = widget.availableBalance.replaceAll(RegExp(r'[^0-9]'), '');
     int value = int.tryParse(numStr) ?? 0;
-
+    
     String formatted = value.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
+      (Match m) => '\${m[1]}.',
     );
     _amountController.text = formatted;
-    _amountController.selection = TextSelection.collapsed(
-      offset: formatted.length,
-    );
+    _amountController.selection = TextSelection.collapsed(offset: formatted.length);
     _validateAmount(formatted);
   }
 
@@ -130,7 +118,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       SnackbarUtils.showError(context, "Vui lòng nhập số tiền hợp lệ");
       return;
     }
-
+    
     if (_amountError != null) return;
 
     final amount = int.tryParse(amountStr) ?? 0;
@@ -171,7 +159,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
 
     try {
       final res = await _client.post(
-        Uri.parse('${ApiConfig.baseUrl}/merchant/withdraw-to-wallet'),
+        Uri.parse('\${ApiConfig.baseUrl}/merchant/withdraw-to-wallet'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"amount": amount}),
       );
@@ -179,24 +167,11 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       if (!mounted) return;
 
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (ctx) => TransferSuccessScreen(
-                token: widget.token,
-                receiverName: 'Ví cá nhân của tôi',
-                receiverPhone: 'Chủ cửa hàng',
-                senderName: 'Cửa hàng của tôi',
-                note: 'Rút doanh thu về ví',
-                amount: amount.toString(),
-                referenceCode: data['transactionId'] ?? 'GD${DateTime.now().millisecondsSinceEpoch}',
-                paymentTime: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
-              ),
-            ),
-          );
-        }
+        SnackbarUtils.showSuccess(
+          context,
+          "Rút tiền về ví cá nhân thành công!",
+        );
+        Navigator.pop(context, true); // Return true to refresh dashboard
       } else {
         final err = jsonDecode(res.body)['error'] ?? "Rút tiền thất bại";
         SnackbarUtils.showError(context, err);
@@ -211,14 +186,14 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       }
     }
   }
-
+  
   void _withdrawToBank() {
     final amountStr = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (amountStr.isEmpty) {
       SnackbarUtils.showError(context, "Vui lòng nhập số tiền hợp lệ");
       return;
     }
-
+    
     if (_amountError != null) return;
 
     final amount = int.tryParse(amountStr) ?? 0;
@@ -226,7 +201,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       setState(() => _amountError = 'Số tiền rút về NH tối thiểu là 50.000đ');
       return;
     }
-
+    
     if (_selectedBank == null) {
       SnackbarUtils.showError(context, "Vui lòng chọn ngân hàng để rút tiền");
       return;
@@ -268,11 +243,10 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
 
     try {
       final res = await _client.post(
-        Uri.parse('${ApiConfig.baseUrl}/merchant/withdraw-to-bank'),
+        Uri.parse('\${ApiConfig.baseUrl}/merchant/withdraw-to-bank'),
         headers: {
           "Content-Type": "application/json",
-          "idempotency-key":
-              "bank-payout-${DateTime.now().millisecondsSinceEpoch}",
+          "idempotency-key": "bank-payout-\${DateTime.now().millisecondsSinceEpoch}",
         },
         body: jsonEncode({
           "amount": amount,
@@ -285,25 +259,8 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       if (!mounted) return;
 
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (ctx) => BankTransferSuccessScreen(
-                token: widget.token,
-                amount: amount.toString(),
-                referenceCode: data['transactionId'] ?? 'GD${DateTime.now().millisecondsSinceEpoch}',
-                paymentTime: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
-                receiverName: _selectedBank!['owner_name'] ?? 'Chủ thẻ',
-                accountNumber: _selectedBank!['card_number'] ?? '',
-                bankName: _selectedBank!['bank_name'] ?? '',
-                bankCode: _selectedBank!['bank_code'] ?? '',
-                note: 'Rút doanh thu về ngân hàng',
-              ),
-            ),
-          );
-        }
+        SnackbarUtils.showSuccess(context, "Rút tiền về Ngân hàng thành công!");
+        Navigator.pop(context, true); // Return true to refresh dashboard
       } else {
         final err = jsonDecode(res.body)['error'] ?? "Rút tiền thất bại";
         SnackbarUtils.showError(context, err);
@@ -324,7 +281,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
       SnackbarUtils.showError(context, "Bạn chưa liên kết ngân hàng nào");
       return;
     }
-
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -352,9 +309,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                   ),
                   const Divider(),
                   ..._linkedBanks.map((bank) {
-                    final isSelected =
-                        _selectedBank != null &&
-                        _selectedBank!['id'] == bank['id'];
+                    final isSelected = _selectedBank != null && _selectedBank!['id'] == bank['id'];
                     return ListTile(
                       leading: _buildBankIcon(bank, 36),
                       title: Text(
@@ -363,9 +318,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                       ),
                       subtitle: Text(bank['card_number'] ?? ''),
                       trailing: Icon(
-                        isSelected
-                            ? Icons.radio_button_checked_rounded
-                            : Icons.radio_button_off_rounded,
+                        isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
                         color: isSelected ? Colors.pink : Colors.grey,
                       ),
                       onTap: () {
@@ -375,7 +328,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                         Navigator.pop(context);
                       },
                     );
-                  }),
+                  }).toList(),
                 ],
               ),
             );
@@ -386,34 +339,53 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
   }
 
   Widget _buildBankIcon(dynamic bank, double size) {
-    if (bank != null && bank['bank_code'] != null && bank['bank_code'].toString().isNotEmpty) {
-      String bCode = bank['bank_code'].toString();
-      if (bCode.toUpperCase() == 'AGR' || bCode.toUpperCase() == 'AGRIBANK') {
-        bCode = 'VBA';
-      }
+    if (bank == null) {
       return Container(
         width: size,
         height: size,
-        padding: EdgeInsets.all(size * 0.1),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(size * 0.2),
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Image.network(
-          'https://api.vietqr.io/img/$bCode.png',
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size * 0.7);
-          },
+        decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle),
+        child: Icon(Icons.account_balance, color: Colors.grey, size: size * 0.6),
+      );
+    }
+    final code = (bank['bank_code'] ?? '').toString().toLowerCase();
+    String? logoPath;
+    if (code.contains('vcb') || code.contains('vietcombank')) {
+      logoPath = 'assets/banks/vcb.png';
+    } else if (code.contains('tcb') || code.contains('techcombank')) {
+      logoPath = 'assets/banks/tcb.png';
+    } else if (code.contains('mbb') || code.contains('mbbank')) {
+      logoPath = 'assets/banks/mbb.png';
+    } else if (code.contains('vtb') || code.contains('vietinbank')) {
+      logoPath = 'assets/banks/vtb.png';
+    } else if (code.contains('bidv')) {
+      logoPath = 'assets/banks/bidv.png';
+    } else if (code.contains('scb') || code.contains('sacombank')) {
+      logoPath = 'assets/banks/sacombank.png';
+    } else if (code.contains('acb')) {
+      logoPath = 'assets/banks/acb.png';
+    }
+
+    if (logoPath != null) {
+      return Image.asset(logoPath, width: size, height: size);
+    } else {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(color: Colors.blue.shade50, shape: BoxShape.circle),
+        child: Center(
+          child: Text(
+            (bank['bank_name'] ?? 'B').toString().substring(0, 1).toUpperCase(),
+            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: size * 0.5),
+          ),
         ),
       );
     }
-    return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size * 0.7);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bankNameDetails = _selectedBank != null ? "\${_selectedBank!['bank_name']} - \${_selectedBank!['card_number']}" : "Chưa chọn ngân hàng";
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -460,24 +432,17 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
+            
             // Bank Selector
             const Text(
               'Ngân hàng thụ hưởng',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87),
             ),
             const SizedBox(height: 12),
             InkWell(
               onTap: _showBankSelection,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -492,21 +457,13 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _selectedBank != null
-                                ? _selectedBank!['bank_name'] ?? 'Ngân hàng'
-                                : 'Chọn ngân hàng',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
+                            _selectedBank != null ? _selectedBank!['bank_name'] ?? 'Ngân hàng' : 'Chọn ngân hàng',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                           ),
                           if (_selectedBank != null)
                             Text(
                               _selectedBank!['card_number'] ?? '',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 12,
-                              ),
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                             ),
                         ],
                       ),
@@ -528,11 +485,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _amountError != null
-                      ? Colors.red
-                      : Colors.grey.shade300,
-                ),
+                border: Border.all(color: _amountError != null ? Colors.red : Colors.grey.shade300),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,9 +504,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                       prefixText: "đ ",
                       prefixStyle: TextStyle(
                         fontSize: 24,
-                        color: _amountError != null
-                            ? Colors.red
-                            : Colors.black87,
+                        color: _amountError != null ? Colors.red : Colors.black87,
                       ),
                       hintText: "0",
                       border: InputBorder.none,
@@ -582,31 +533,16 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                 ),
               ),
             const SizedBox(height: 16),
-
+            
             // Quick selector buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectQuickAmount(50000),
-                    child: const Text('50.000'),
-                  ),
-                ),
+                Expanded(child: OutlinedButton(onPressed: () => _selectQuickAmount(50000), child: const Text('50.000'))),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectQuickAmount(100000),
-                    child: const Text('100.000'),
-                  ),
-                ),
+                Expanded(child: OutlinedButton(onPressed: () => _selectQuickAmount(100000), child: const Text('100.000'))),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectQuickAmount(200000),
-                    child: const Text('200.000'),
-                  ),
-                ),
+                Expanded(child: OutlinedButton(onPressed: () => _selectQuickAmount(200000), child: const Text('200.000'))),
               ],
             ),
             const SizedBox(height: 16),
@@ -705,7 +641,7 @@ class CurrencyInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     if (newValue.text.isEmpty) return newValue.copyWith(text: '');
-    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\\d]'), '');
     if (digitsOnly.isEmpty) return newValue.copyWith(text: '');
 
     // Giới hạn 12 số
@@ -715,8 +651,8 @@ class CurrencyInputFormatter extends TextInputFormatter {
 
     int value = int.parse(digitsOnly);
     String newText = value.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
+      RegExp(r'(\\d{1,3})(?=(\\d{3})+(?!\\d))'),
+      (Match m) => '\${m[1]}.',
     );
     return newValue.copyWith(
       text: newText,
@@ -724,3 +660,7 @@ class CurrencyInputFormatter extends TextInputFormatter {
     );
   }
 }
+`;
+
+fs.writeFileSync('merchant_withdraw_screen_rewrite.dart', code);
+console.log("Written successfully.");

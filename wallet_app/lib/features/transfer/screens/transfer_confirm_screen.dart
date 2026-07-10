@@ -104,7 +104,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
         );
       }
 
-      var responseStream = await request.send();
+      var responseStream = await _client.send(request);
       var response = await http.Response.fromStream(responseStream);
 
       if (response.statusCode == 200 || response.statusCode == 201) {

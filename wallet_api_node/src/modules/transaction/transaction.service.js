@@ -270,7 +270,7 @@ const transactionService = {
         }
     },
 
-    bankTransfer: async (userId, amount, pin, faceImagePath, bankCode, bankName, accountNumber, externalReference) => {
+    bankTransfer: async (userId, amount, pin, faceImagePath, bankCode, bankName, accountNumber, externalReference, idempotencyKey) => {
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);

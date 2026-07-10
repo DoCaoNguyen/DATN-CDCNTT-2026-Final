@@ -76,7 +76,8 @@ const transactionController = {
                 bank_code, 
                 bank_name || bank_code, 
                 account_number, 
-                external_reference
+                external_reference,
+                idempotencyKey
             );
             return success(req, res, 200, 'Chuyển tiền ngân hàng thành công', result );
         } catch (error) { next(error); }

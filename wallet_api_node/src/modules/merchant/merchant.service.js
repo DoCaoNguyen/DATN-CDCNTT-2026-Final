@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const merchantRepository = require('./merchant.repository');
 const { writeAuditLog } = require('../admin/_shared');
 const { encryptApiSecret } = require('../../shared/utils/api-secret.util');
@@ -85,7 +86,7 @@ const merchantService = {
         return true;
     },
 
-    withdrawToWallet: async (merchantId, userId, amountStr) => {
+    withdrawToWallet: async (merchantId, userId, amountStr, pin) => {
         const client = await pool.connect();
         try {
             const amount = BigInt(amountStr);
@@ -157,10 +158,105 @@ const merchantService = {
             });
 
             await client.query('COMMIT');
+            
+            // [NEW] Emit realtime balance to merchant owner
+            if (merchantId) {
+                const ownerId = await merchantRepository.getMerchantUserId(merchantId);
+                if (ownerId) {
+                    const { emitToUser } = require('../../utils/socket');
+                    emitToUser(ownerId, 'merchant_balance_update', { newBalance: mBalanceAfter.toString() });
+                }
+            }
+
             return {
                 amount: amount.toString(),
                 merchantBalance: mBalanceAfter.toString(),
                 userBalance: uBalanceAfter.toString(),
+                transactionId: tId
+            };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    withdrawToBank: async (merchantId, userId, amountStr, pin, bankCode, accountNumber, idempotencyKey = null) => {
+        const client = await pool.connect();
+        try {
+            const amount = BigInt(amountStr);
+            if (amount < 50000n) throw new Error('Số tiền rút tối thiểu là 50.000đ');
+
+            // Xác thực mã PIN trước (Sử dụng ví cá nhân của owner để xác thực)
+            const userWallet = await txRepo.getWalletForPinCheck(userId);
+            if (!userWallet) throw new Error('Không tìm thấy ví cá nhân của bạn');
+            
+            const pepper = process.env.PIN_PEPPER || '';
+            let isPinValid = await bcrypt.compare(pin + pepper, userWallet.pin_hash);
+            if (!isPinValid && pepper !== '') {
+                isPinValid = await bcrypt.compare(pin, userWallet.pin_hash);
+            }
+            if (!isPinValid) throw new Error('Mã PIN không chính xác');
+
+            await client.query('BEGIN');
+
+            const merchantWalletId = merchantId; 
+            
+            const query = `
+                SELECT available_balance
+                FROM merchant_balances
+                WHERE merchant_id = $1
+                FOR UPDATE
+            `;
+            const result = await client.query(query, [merchantWalletId]);
+            if (result.rows.length === 0) throw new Error('Không tìm thấy ví doanh nghiệp');
+
+            const mBalanceBefore = BigInt(result.rows[0].available_balance);
+
+            // KHÔNG KIỂM TRA HẠN MỨC NGÀY (UNLIMITED LIMIT)
+            if (mBalanceBefore < amount) throw new Error('Số dư cửa hàng không đủ để rút');
+
+            const mBalanceAfter = await txRepo.addMerchantBalance(client, merchantWalletId, -amount);
+
+            const tId = uuidv7();
+            
+            const metadataStr = JSON.stringify({
+                bank_code: bankCode,
+                account_number: accountNumber
+            });
+
+            const ledgerTxId = await txRepo.createLedgerTransaction(client, 'MERCHANT_BANK_PAYOUT', tId, 'WITHDRAW', `Rút tiền doanh thu về tài khoản ngân hàng ${bankCode} - ${accountNumber}`, amount, 'VND', metadataStr, idempotencyKey);
+
+            await txRepo.createLedgerEntry(client, ledgerTxId, merchantWalletId, 'DEBIT', amount, mBalanceBefore, mBalanceAfter, 'MERCHANT');
+
+            await writeAuditLog({
+                actorId: userId,
+                action: 'merchant.withdraw_to_bank',
+                entityType: 'MERCHANT',
+                entityId: merchantId,
+                oldData: { balance: mBalanceBefore.toString() },
+                newData: { balance: mBalanceAfter.toString(), amount: amount.toString(), bankCode, accountNumber },
+                ipAddress: 'system',
+                userAgent: 'merchant.service'
+            });
+
+            await client.query('COMMIT');
+            
+            // [NEW] Emit realtime balance to merchant owner
+            if (merchantId) {
+                const ownerId = await merchantRepository.getMerchantUserId(merchantId);
+                if (ownerId) {
+                    const { emitToUser } = require('../../utils/socket');
+                    emitToUser(ownerId, 'merchant_balance_update', { newBalance: mBalanceAfter.toString() });
+                }
+            }
+
+            return {
+                amount: amount.toString(),
+                merchantBalance: mBalanceAfter.toString(),
+                bankCode,
+                accountNumber,
                 transactionId: tId
             };
         } catch (error) {

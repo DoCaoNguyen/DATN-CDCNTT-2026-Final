@@ -595,6 +595,47 @@ const merchantController = {
             }
             res.status(500).json({ error: 'Lỗi hệ thống khi rút doanh thu' });
         }
+    },
+
+    withdrawToBank: async (req, res) => {
+        try {
+            const userId = req.user.userId || req.user.id;
+            const { merchant_id: merchantId, is_owner, role_code } = req.merchantContext;
+            const { amount, pin, bank_code, account_number } = req.body;
+            const idempotencyKey = req.headers['idempotency-key'];
+
+            if (!amount || amount <= 0) {
+                return res.status(400).json({ error: 'Số tiền rút không hợp lệ' });
+            }
+
+            if (!is_owner && role_code !== 'MERCHANT_OWNER') {
+                return res.status(403).json({ error: 'Chỉ chủ cửa hàng mới có quyền rút doanh thu' });
+            }
+
+            if (!bank_code || !account_number) {
+                return res.status(400).json({ error: 'Vui lòng cung cấp ngân hàng và số tài khoản nhận' });
+            }
+
+            const result = await merchantService.withdrawToBank(merchantId, userId, amount, pin, bank_code, account_number, idempotencyKey);
+
+            res.status(200).json({
+                message: 'Rút doanh thu về tài khoản ngân hàng thành công',
+                data: result
+            });
+        } catch (error) {
+            console.error('Lỗi rút doanh thu merchant về ngân hàng:', error);
+            if (
+                error.message.includes('Số dư cửa hàng không đủ') ||
+                error.message.includes('tối thiểu') ||
+                error.message.includes('tối đa') ||
+                error.message.includes('Rút tiền thất bại') ||
+                error.message.includes('Mã PIN không chính xác') ||
+                error.message.includes('Không tìm thấy ví cá nhân')
+            ) {
+                return res.status(400).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Lỗi hệ thống khi rút doanh thu về ngân hàng' });
+        }
     }
 
 };

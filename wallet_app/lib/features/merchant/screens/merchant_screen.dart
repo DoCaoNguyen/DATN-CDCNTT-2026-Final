@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
+import '../../../core/services/socket_service.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import '../../../core/widgets/otp_input_widget.dart';
@@ -45,6 +46,25 @@ class _MerchantScreenState extends State<MerchantScreen> {
   void initState() {
     super.initState();
     _fetchData();
+    
+    // Đăng ký nhận sự kiện cập nhật số dư merchant qua Socket
+    SocketService().onMerchantBalanceUpdate((data) {
+      if (mounted && _isMerchant) {
+        setState(() {
+          _merchantData['available_balance'] = data['newBalance']?.toString() ?? _merchantData['available_balance'];
+        });
+        debugPrint('Merchant balance updated via Socket: ${data['newBalance']}');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    SocketService().offMerchantBalanceUpdate();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _webhookController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchData() async {

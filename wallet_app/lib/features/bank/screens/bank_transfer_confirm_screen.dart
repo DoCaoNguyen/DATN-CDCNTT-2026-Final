@@ -309,7 +309,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               note: widget.note,
               referenceCode: _refCode,
               paymentTime: formattedTime,
-              cardHolderName: widget.cardHolderName,
+              receiverName: widget.cardHolderName ?? '',
             ),
           ),
         );
@@ -385,7 +385,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               note: widget.note,
               referenceCode: _refCode,
               paymentTime: formattedTime,
-              cardHolderName: widget.cardHolderName,
+              receiverName: widget.cardHolderName ?? '',
             ),
           ),
         );

@@ -24,6 +24,7 @@ router.post('/webhooks/:id/retry', requireMerchantUser, requireActiveMerchant, m
 router.get('/balance', requireMerchantUser, merchantController.getBalance);
 router.get('/balance/statement', requireMerchantUser, merchantController.getStatement);
 router.post('/withdraw-to-wallet', requireMerchantUser, requireActiveMerchant, merchantController.withdrawToWallet);
+router.post('/withdraw-to-bank', requireMerchantUser, requireActiveMerchant, merchantController.withdrawToBank);
 // [Thêm mới] API cấp và xác thực Auth_Code
 router.post('/auth-code/generate', verifyToken, merchantController.generateAuthCode);
 router.post('/auth-code/verify', merchantController.verifyAuthCode);
