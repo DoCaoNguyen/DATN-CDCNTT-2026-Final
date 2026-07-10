@@ -74,7 +74,7 @@ const transactionService = {
         }
     },
 
-    deposit: async (userId, amount, pin, faceImagePath, externalReference) => { 
+    deposit: async (userId, amount, pin, faceImagePath, externalReference, idempotencyKey = null) => { 
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);
@@ -102,11 +102,11 @@ const transactionService = {
             const hex = depositId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', depositId, 'DEPOSIT', 'Nạp tiền từ ngân hàng liên kết', amount);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', depositId, 'DEPOSIT', 'Nạp tiền từ ngân hàng liên kết', amount, 'VND', null, idempotencyKey);
             
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordDeposit(client, depositId, 'DEP-' + extRef, userId, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef);
+            await repo.recordDeposit(client, depositId, 'DEP-' + extRef, userId, wallet.id, amount, ledgerTxId, 'LINKED_BANK', extRef, idempotencyKey);
 
             await client.query('COMMIT'); 
             
@@ -168,7 +168,7 @@ const transactionService = {
         }
     },
 
-    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference) => { 
+    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference, idempotencyKey = null) => { 
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);
@@ -301,11 +301,11 @@ const transactionService = {
             const hex = transferId.replace(/-/g, '').substring(0, 10);
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount);
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount, 'VND', null, idempotencyKey);
             
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            await repo.recordBankTransfer(client, transferId, 'BNK-' + extRef, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef);
+            await repo.recordBankTransfer(client, transferId, 'BNK-' + extRef, userId, wallet.id, amount, ledgerTxId, bankCode, accountNumber, extRef, idempotencyKey);
 
             await client.query('COMMIT'); 
             
