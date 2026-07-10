@@ -20,8 +20,8 @@ const merchantController = {
                 return res.status(400).json({ error: 'Tên và số điện thoại đối tác là bắt buộc' });
             }
 
-            const rawApiKey = `pk_test_${crypto.randomBytes(12).toString('hex')}`;
-            const rawSecret = `sk_test_${crypto.randomBytes(24).toString('hex')}`;
+            const rawApiKey = `ak_mio_${crypto.randomBytes(12).toString('hex')}`;
+            const rawSecret = `sk_mio_${crypto.randomBytes(24).toString('hex')}`;
 
             const pepper = process.env.API_SECRET_PEPPER || 'mio_pepper';
             const secretHash = crypto.createHmac('sha256', pepper).update(rawSecret).digest('hex');
@@ -312,8 +312,7 @@ const merchantController = {
 
             let phone = result.rows[0].phone;
             // Không che số điện thoại để Merchant (TikTok Shop) có thể lưu lại và dùng làm wallet_account khi gọi API Charge
-
-            const authCode = crypto.randomUUID();
+            const authCode = uuidv7();
 
             // Lưu vào Map, hết hạn sau 5 phút
             authCodeMap.set(authCode, {
@@ -350,9 +349,9 @@ const merchantController = {
             const tokenStr = jwt.sign(
                 { userId: data.userId, phone: data.phone },
                 process.env.JWT_SECRET || 'mio_secret_key',
-                { expiresIn: '3650d' } // Token siêu dài hạn (10 năm)
+                { expiresIn: '3650d' } //(10 năm)
             );
-            const billing_token = 'tok_mio_' + tokenStr;
+            const billing_token = 'mio_merchant_' + tokenStr;
             const masked_phone = '******' + data.phone.slice(-4);
 
             // LƯU LIÊN KẾT VÀO DATABASE
@@ -363,15 +362,6 @@ const merchantController = {
                 if (apiKeyInBody) {
                     const mByKey = await pool.query('SELECT m.id FROM merchants m JOIN merchant_api_keys mak ON m.id = mak.merchant_id WHERE mak.api_key = $1', [apiKeyInBody]);
                     if (mByKey.rows.length > 0) merchantId = mByKey.rows[0].id;
-                }
-                // Fallback: tìm theo tên (bỏ khoảng trắng để khớp 'TikTok Shop' vs 'Tik Tok Shop')
-                if (!merchantId) {
-                    const keyword = merchant_name.replace(/\s+/g, '').toLowerCase();
-                    const mByName = await pool.query(
-                        "SELECT id FROM merchants WHERE LOWER(REPLACE(merchant_name, ' ', '')) LIKE $1 LIMIT 1",
-                        ['%' + keyword + '%']
-                    );
-                    if (mByName.rows.length > 0) merchantId = mByName.rows[0].id;
                 }
                 
                 const check = await pool.query('SELECT id FROM user_linked_services WHERE user_id = $1 AND service_name = $2', [data.userId, merchant_name]);
@@ -440,11 +430,11 @@ const merchantController = {
 
             // Giải mã Token Ủy Quyền
             let wallet_account = '';
-            if (wallet_token && wallet_token.startsWith('tok_mio_')) {
+            if (wallet_token && wallet_token.startsWith('mio_merchant_')) {
                 try {
                     const jwt = require('jsonwebtoken');
                     const decoded = jwt.verify(
-                        wallet_token.replace('tok_mio_', ''),
+                        wallet_token.replace('mio_merchant_', ''),
                         process.env.JWT_SECRET || 'mio_secret_key'
                     );
                     wallet_account = decoded.phone;
@@ -452,7 +442,7 @@ const merchantController = {
                     return res.status(401).json({ error: 'Token uy quyen khong hop le hoac da het han' });
                 }
             } else {
-                return res.status(400).json({ error: 'Yeu cau Token uy quyen hop le (tok_mio_...)' });
+                return res.status(400).json({ error: 'Yeu cau Token uy quyen hop le (mio_merchant_...)' });
             }
 
             // Lay thong tin merchant de check han muc

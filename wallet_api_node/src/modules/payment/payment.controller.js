@@ -4,7 +4,7 @@ const paymentRepo = require('./payment.repository');
 const paymentController = {
     createOrder: async (req, res) => {
         const merchantId = req.merchant.merchant_id;
-        const { amount, callback_url, description, merchant_order_id } = req.body;
+        const { amount, description, merchant_order_id } = req.body;
 
         if (!amount) {
             return res.status(400).json({ error: 'Số tiền đơn hàng không hợp lệ' });
@@ -23,7 +23,7 @@ const paymentController = {
         }
 
         try {
-            const result = await paymentService.createDynamicQR(merchantId, bigAmount, callback_url, description, merchant_order_id || null);
+            const result = await paymentService.createDynamicQR(merchantId, bigAmount, null, description, merchant_order_id || null);
             res.status(201).json({
                 message: 'Tạo đơn hàng thanh toán thành công',
                 data: result

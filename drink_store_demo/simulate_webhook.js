@@ -1,4 +1,4 @@
-﻿const crypto = require('crypto');
+const crypto = require('crypto');
 require('dotenv').config({ path: '.env.local' });
 
 async function simulateWebhook() {
@@ -16,8 +16,8 @@ async function simulateWebhook() {
     return;
   }
 
-  // Tự động lấy CALLBACK_URL từ .env.local, nếu không có thì mặc định port 3001
-  const webhookUrl = process.env.CALLBACK_URL || 'http://localhost:3001/api/webhook';
+  // Tự động lấy CALLBACK_URL từ .env.local, nếu không có thì mặc định port 8000
+  const webhookUrl = process.env.CALLBACK_URL || 'http://localhost:8000/api/webhook';
   
   // Payload giả lập Ví Mio trả về
   const payload = {
