@@ -5,13 +5,13 @@ import '../config/api_config.dart';
 
 class MioPaymentService {
   // Demo API Key. In production, this would be a real key registered via merchant portal
-  static String merchantApiKey = 'mio_test_key_12345'; // Giả lập key, có thể thay đổi trong Cài đặt
-  static String apiSecret = ''; // Dành cho các request cần verify
+  static String merchantApiKey = 'ak_mio_849ee09de5a0a403197fd0ac'; // Giả lập key, có thể thay đổi trong Cài đặt
+  static String apiSecret = 'b34db7b47e23a314e9b100777c17107d99b91cef1439ad174057aca614c7f8a5'; // Dành cho các request cần verify
   
   static Future<void> loadConfig() async {
     final prefs = await SharedPreferences.getInstance();
-    merchantApiKey = prefs.getString('api_key') ?? 'mio_test_key_12345';
-    apiSecret = prefs.getString('api_secret') ?? '';
+    merchantApiKey = prefs.getString('api_key') ?? 'ak_mio_849ee09de5a0a403197fd0ac';
+    apiSecret = prefs.getString('api_secret') ?? 'b34db7b47e23a314e9b100777c17107d99b91cef1439ad174057aca614c7f8a5';
   }
   static const String baseUrl = ApiConfig.mioApiUrl;
 

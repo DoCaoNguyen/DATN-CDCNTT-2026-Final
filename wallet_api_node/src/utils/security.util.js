@@ -30,10 +30,11 @@ async function verifyTransactionSecurity(amount, pin, faceImagePath, wallet, use
         if (!wallet.pin_hash) throw new Error('Wallet_Not_Found');
         
         const pepper = process.env.PIN_PEPPER || '';
-        let isPinMatch = await bcrypt.compare(pin + pepper, wallet.pin_hash);
+        const safePin = String(pin).trim();
+        let isPinMatch = await bcrypt.compare(safePin + pepper, wallet.pin_hash);
         if (!isPinMatch && pepper !== '') {
             // Hỗ trợ tương thích ngược cho các ví cũ chưa có pepper
-            isPinMatch = await bcrypt.compare(pin, wallet.pin_hash);
+            isPinMatch = await bcrypt.compare(safePin, wallet.pin_hash);
         }
 
         if (!isPinMatch) {

@@ -45,11 +45,11 @@ export default function SettingsPage() {
   return (
     <main className="container">
       <header className="header">
-        <h1>Cài Đặt Cửa Hàng</h1>
+        <h1>Cài Đặt Cửa Hàng & Tích Hợp</h1>
         <p>Cập nhật API Key & Secret Key để kết nối Ví Điện Tử</p>
       </header>
 
-      <div style={{ background: '#fff', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+      <div style={{ background: '#fff', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>MERCHANT_API_KEY</label>
@@ -83,6 +83,24 @@ export default function SettingsPage() {
             </Link>
           </div>
         </form>
+      </div>
+
+      <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+        <h2 style={{ color: '#0f172a', marginBottom: '1rem', fontSize: '1.2rem' }}>📌 Lưu ý Tích hợp Quan trọng</h2>
+        <p style={{ color: '#334155', marginBottom: '0.5rem' }}>
+          Hệ thống ví sẽ bắn <strong>Webhook/Callback</strong> về server của bạn (VD: <code>/api/webhook</code>) khi khách hàng thanh toán thành công.
+        </p>
+        <p style={{ color: '#334155', marginBottom: '1rem' }}>
+          Tuy nhiên, để đề phòng trường hợp rớt mạng, nghẽn mạng hoặc lỗi Webhook, bạn <strong>bắt buộc phải có cơ chế chủ động (Pull)</strong> kiểm tra trạng thái đơn hàng.
+        </p>
+        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '8px', color: '#f8fafc', fontFamily: 'monospace' }}>
+          GET /api/v1/payment/status?merchant_order_id=YOUR_ORDER_ID<br/>
+          Headers:<br/>
+          x-api-key: {apiKey || 'YOUR_API_KEY'}
+        </div>
+        <p style={{ color: '#475569', fontSize: '0.9rem', marginTop: '1rem' }}>
+          * Bạn nên dùng API này khi: (1) Setup Cronjob quét đơn quá hạn 15 phút, (2) Khách hàng bấm nút "Tôi đã thanh toán" trên web nhưng đơn vẫn đang hiển thị chờ.
+        </p>
       </div>
     </main>
   );
