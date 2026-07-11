@@ -15,7 +15,7 @@ const transactionsRepository = {
             idx++;
         }
         if (status) {
-            conditions.push(`d.status = $${idx}::deposit_status`);
+            conditions.push(`d.status = $${idx}`);
             params.push(status);
             idx++;
         }
@@ -82,7 +82,7 @@ const transactionsRepository = {
             idx++;
         }
         if (status) {
-            conditions.push(`t.status = $${idx}::transfer_status`);
+            conditions.push(`t.status = $${idx}`);
             params.push(status);
             idx++;
         }
@@ -155,12 +155,12 @@ const transactionsRepository = {
             idx++;
         }
         if (status) {
-            conditions.push(`lt.status = $${idx}::transaction_status`);
+            conditions.push(`lt.status = $${idx}`);
             params.push(status);
             idx++;
         }
         if (type) {
-            conditions.push(`lt.transaction_type = $${idx}::ledger_transaction_type`);
+            conditions.push(`lt.transaction_type = $${idx}`);
             params.push(type);
             idx++;
         }
@@ -182,7 +182,8 @@ const transactionsRepository = {
         const total = Number(countRows[0].count);
 
         const dataSql = `
-            SELECT lt.*
+            SELECT lt.*,
+                   (SELECT COUNT(*) FROM ledger_entries le WHERE le.ledger_transaction_id = lt.id) AS entries_count
             FROM ledger_transactions lt
             ${where}
             ORDER BY lt.created_at DESC
@@ -230,12 +231,12 @@ const transactionsRepository = {
             idx++;
         }
         if (accountType) {
-            conditions.push(`le.account_type = $${idx}::ledger_account_type`);
+            conditions.push(`le.account_type = $${idx}`);
             params.push(accountType);
             idx++;
         }
         if (entryType) {
-            conditions.push(`le.entry_type = $${idx}::ledger_entry_type`);
+            conditions.push(`le.entry_type = $${idx}`);
             params.push(entryType);
             idx++;
         }

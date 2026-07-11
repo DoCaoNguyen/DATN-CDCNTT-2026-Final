@@ -56,6 +56,7 @@ function mapLedgerTransactionRow(row) {
         source_id: row.source_id || null,
         description: row.description || null,
         created_by: row.created_by || null,
+        entries_count: Number(row.entries_count || 0),
         completed_at: row.completed_at,
         created_at: row.created_at,
         updated_at: row.updated_at

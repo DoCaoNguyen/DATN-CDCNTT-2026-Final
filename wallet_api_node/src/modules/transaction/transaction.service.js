@@ -16,13 +16,15 @@ const transactionService = {
             // Lấy ví của user (dựa trên userPhone)
             const userWallet = await repo.getWalletByIdentifier(userPhone);
             if (!userWallet) throw new Error('Wallet_Not_Found');
+            if (userWallet.status !== 'ACTIVE') throw new Error('Wallet_Locked');
 
             // Lấy ví doanh nghiệp của merchant
             const mWalletRes = await pool.query(
-                "SELECT id FROM wallets WHERE user_id = $1 AND wallet_type = 'BUSINESS' LIMIT 1",
+                "SELECT id, status FROM wallets WHERE user_id = $1 AND wallet_type = 'BUSINESS' LIMIT 1",
                 [merchant.merchant_user_id]
             );
             if (mWalletRes.rows.length === 0) throw new Error('Merchant_Wallet_Not_Found');
+            if (mWalletRes.rows[0].status !== 'ACTIVE') throw new Error('Merchant_Wallet_Locked');
             const merchantWalletId = mWalletRes.rows[0].id;
 
             client = await pool.connect();

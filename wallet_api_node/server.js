@@ -47,6 +47,8 @@ app.use(cors({
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:5176',
         'https://admin.yourdomain.com',
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'

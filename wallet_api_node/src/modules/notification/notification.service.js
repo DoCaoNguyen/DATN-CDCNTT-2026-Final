@@ -98,6 +98,15 @@ const notificationService = {
 
         try {
             // 5. Send multicast message
+            if (admin.apps.length === 0) {
+                console.warn('Firebase Admin SDK is not initialized. Skipping push notification.');
+                return {
+                    success: false,
+                    error: 'Firebase not initialized',
+                    notification: notificationRecord
+                };
+            }
+            
             const response = await admin.messaging().sendEachForMulticast(fcmPayload);
             console.log(`FCM Multicast sent: ${response.successCount} success, ${response.failureCount} failed.`);
 
@@ -205,6 +214,10 @@ const notificationService = {
         };
 
         try {
+            if (admin.apps.length === 0) {
+                console.warn('Firebase Admin SDK is not initialized. Skipping push notification.');
+                return { success: false, error: 'Firebase not initialized', notification: notificationRecord };
+            }
             const response = await admin.messaging().sendEachForMulticast(fcmPayload);
             const tokensToDelete = [];
 
@@ -287,6 +300,10 @@ const notificationService = {
         };
 
         try {
+            if (admin.apps.length === 0) {
+                console.warn('Firebase Admin SDK is not initialized. Skipping push notification.');
+                return { success: false, error: 'Firebase not initialized' };
+            }
             const response = await admin.messaging().sendEachForMulticast(fcmPayload);
             return { success: true, sentDevices: response.successCount };
         } catch (error) {

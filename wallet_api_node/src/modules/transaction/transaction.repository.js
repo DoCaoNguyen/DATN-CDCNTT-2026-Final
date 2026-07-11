@@ -4,7 +4,7 @@ const { v7: uuidv7 } = require('uuid');
 const transactionRepository = {
     getWalletByUserId: async (userId) => {
         const query = `
-            SELECT w.id, w.user_id, u.is_kyc_verified, u.full_name, u.phone
+            SELECT w.id, w.status, w.user_id, u.is_kyc_verified, u.full_name, u.phone
             FROM wallets w
             JOIN users u ON w.user_id = u.id
             WHERE w.user_id = $1
@@ -15,7 +15,7 @@ const transactionRepository = {
 
     getWalletByIdentifier: async (identifier) => {
         const query = `
-            SELECT w.id, w.user_id, u.is_kyc_verified, u.full_name
+            SELECT w.id, w.status, w.user_id, u.is_kyc_verified, u.full_name
             FROM wallets w
             JOIN users u ON w.user_id = u.id
             WHERE u.phone = $1 OR u.email = $1 OR w.wallet_code = $1
@@ -130,13 +130,13 @@ const transactionRepository = {
         return newId;
     },
 
-    createSystemLedgerEntry: async (client, ledgerTransactionId, systemAccountCode, type, amount) => {
+    createSystemLedgerEntry: async (client, ledgerTransactionId, systemAccountCode, type, amount, merchantId = null) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO ledger_entries (id, ledger_transaction_id, system_account_code, entry_type, amount, balance_before, balance_after, account_type)
-            VALUES ($1, $2, $3, $4, $5, 0, 0, 'SYSTEM');
+            INSERT INTO ledger_entries (id, ledger_transaction_id, system_account_code, entry_type, amount, balance_before, balance_after, account_type, merchant_id)
+            VALUES ($1, $2, $3, $4, $5, 0, 0, 'SYSTEM_ACCOUNT', $6);
         `;
-        await client.query(query, [newId, ledgerTransactionId, systemAccountCode, type, amount.toString()]);
+        await client.query(query, [newId, ledgerTransactionId, systemAccountCode, type, amount.toString(), merchantId]);
         return newId;
     },
 
@@ -189,6 +189,7 @@ const transactionRepository = {
         const query = `
             SELECT 
                 w.id, 
+                w.status,
                 COALESCE(w.wallet_code, u.phone) AS wallet_code, 
                 w.pin_failed_attempts, 
                 w.pin_locked_until,

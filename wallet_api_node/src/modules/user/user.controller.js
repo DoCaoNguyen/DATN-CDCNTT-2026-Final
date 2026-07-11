@@ -4,13 +4,19 @@ const userController = {
     search: async (req, res) => {
         try {
             const currentUserId = req.user.userId; 
-            const { q } = req.query; 
+            let { q } = req.query; 
 
             
             if (!q || q.trim() === '') {
                 return res.status(200).json({ data: [] });
             }
 
+            q = q.trim();
+            if (q.startsWith('+84')) {
+                q = '0' + q.slice(3);
+            } else if (q.startsWith('84') && q.length === 11) {
+                q = '0' + q.slice(2);
+            }
             
             const users = await userService.searchUsers(q, currentUserId);
             
@@ -26,10 +32,18 @@ const userController = {
     checkContacts: async (req, res) => {
         try {
             const currentUserId = req.user.userId;
-            const { phones } = req.body;
+            let { phones } = req.body;
             if (!phones || !Array.isArray(phones)) {
                 return res.status(400).json({ error: 'Vui lòng cung cấp danh sách số điện thoại hợp lệ' });
             }
+            
+            phones = phones.map(p => {
+                let val = String(p).trim();
+                if (val.startsWith('+84')) return '0' + val.slice(3);
+                if (val.startsWith('84') && val.length === 11) return '0' + val.slice(2);
+                return val;
+            });
+
             const users = await userService.checkContacts(phones, currentUserId);
             res.status(200).json({ data: users });
         } catch (error) {

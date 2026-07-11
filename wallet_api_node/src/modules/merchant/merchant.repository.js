@@ -496,8 +496,8 @@ const merchantRepository = {
                 u_payer.full_name AS payer_name,
                 u_payer.phone AS payer_phone,
                 -- Thông tin rút tiền
-                wt_act.bank_code,
-                wt_act.account_number AS bank_account_number,
+                wlb.bank_code,
+                wlb.card_number AS bank_account_number,
                 -- Thông tin rút về ví cá nhân
                 u_wallet.full_name AS wallet_owner_name,
                 u_wallet.phone AS wallet_owner_phone
@@ -510,6 +510,7 @@ const merchantRepository = {
             LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
             -- JOIN withdrawal (rút về ngân hàng)
             LEFT JOIN withdrawal_transactions wt_act ON lt.source_type = 'WITHDRAWAL' AND lt.source_id = wt_act.id
+            LEFT JOIN wallet_linked_banks wlb ON wt_act.linked_bank_id = wlb.id
             -- JOIN transfer (rút về ví cá nhân)
             LEFT JOIN wallet_transfers wtr ON lt.source_type = 'TRANSFER' AND lt.source_id = wtr.id
             LEFT JOIN wallets w_recv ON wtr.receiver_wallet_id = w_recv.id

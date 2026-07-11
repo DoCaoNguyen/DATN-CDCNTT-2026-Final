@@ -42,7 +42,7 @@ const TopupService = {
 
             const createOrderQuery = `
                 INSERT INTO payment_orders (id, payment_no, amount, description, status, expired_at, idempotency_key)
-                VALUES ($1, $2, $3, $4, 'COMPLETED', CURRENT_TIMESTAMP + interval '15 minutes', $5)
+                VALUES ($1, $2, $3, $4, 'SUCCESS', CURRENT_TIMESTAMP + interval '15 minutes', $5)
             `;
             await client.query(createOrderQuery, [orderId, 'TOPUP_' + Date.now(), amount, description, orderId]);
 
