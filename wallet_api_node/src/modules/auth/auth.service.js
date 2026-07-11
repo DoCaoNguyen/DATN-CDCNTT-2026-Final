@@ -153,6 +153,13 @@ const authService = {
             throw new Error('Invalid_Credentials');
         }
 
+        if (user.status === 'PENDING_VERIFY') {
+            throw new Error('USER_PENDING_VERIFY');
+        }
+        if (user.status !== 'ACTIVE') {
+            throw new Error('Account_Inactive');
+        }
+
         if (user.locked_until) {
             if (new Date(user.locked_until) > new Date()) {
                 throw new Error('Account_Locked');
@@ -170,8 +177,6 @@ const authService = {
             error.remainingAttempts = Math.max(MAX_FAILED_LOGIN - attempts, 0);
             throw error;
         }
-
-        if (user.status !== 'ACTIVE') throw new Error('Account_Inactive');
 
         if (user.is_force_change_password && user.temporary_password_expires_at) {
             if (new Date(user.temporary_password_expires_at) < new Date()) {
@@ -486,6 +491,19 @@ const authService = {
         });
     },
 
+    resendVerifyPhone: async (phone) => {
+        const user = await authRepository.findByLoginId(phone);
+        if (!user || user.user_type !== 'USER' || user.status !== 'PENDING_VERIFY') {
+            throw new Error('User_Not_Found');
+        }
+
+        const twilioVerifyService = require('../../shared/services/twilio-verify.service');
+        const verifyRes = await twilioVerifyService.sendVerification({ phone: user.phone });
+        if (!verifyRes.success) {
+            throw new Error('TWILIO_VERIFY_ERROR');
+        }
+    },
+
     verifyPhoneOTP: async (phone, code) => {
         const user = await authRepository.findByLoginId(phone);
         if (!user) throw new Error('User_Not_Found');
@@ -500,7 +518,7 @@ const authService = {
 
         return jwt.sign({
             sub: user.id,
-            phone: normalizedPhone,
+            phone: user.phone,
             purpose: 'SET_PASSWORD_AFTER_VERIFY',
             token_type: 'VERIFY_TOKEN'
         }, ensureJwtSecret(), { expiresIn: '15m' });
@@ -514,34 +532,31 @@ const authService = {
             throw new Error('Invalid_Verify_Token');
         }
 
-        if (decoded.token_type !== 'VERIFY_TOKEN' || decoded.purpose !== 'SET_PASSWORD_AFTER_VERIFY') {
+        if (decoded.token_type !== 'VERIFY_TOKEN' || 
+            decoded.purpose !== 'SET_PASSWORD_AFTER_VERIFY' || 
+            !decoded.sub || 
+            !decoded.phone) {
             throw new Error('Invalid_Verify_Token');
         }
 
         if (newPassword !== confirmPassword) throw new Error('Validation_Error');
         validatePinPassword(newPassword);
 
-        const userId = decoded.sub;
-        const user = await authRepository.findById(userId);
-        if (!user) throw new Error('User_Not_Found');
-
         const passwordHash = await bcrypt.hash(newPassword, 10);
 
         await authRepository.withTransaction(async client => {
-            const status = user.status === 'PENDING_VERIFY' ? 'ACTIVE' : user.status;
+            const rowCount = await authRepository.updatePasswordAfterVerify(
+                client, 
+                decoded.sub, 
+                decoded.phone, 
+                passwordHash
+            );
+            
+            if (rowCount === 0) {
+                throw new Error('Invalid_Or_Used_Verify_Token');
+            }
 
-            await client.query(`
-                UPDATE users
-                SET password_hash = $1,
-                    is_force_change_password = false,
-                    temporary_password_expires_at = null,
-                    status = $2::user_status,
-                    token_version = token_version + 1,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = $3
-            `, [passwordHash, status, userId]);
-
-            await authRepository.revokeAllUserRefreshTokens(client, userId, null);
+            await authRepository.revokeAllUserRefreshTokens(client, decoded.sub, null);
         });
     }
 };

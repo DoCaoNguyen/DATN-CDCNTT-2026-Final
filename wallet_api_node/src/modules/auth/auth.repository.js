@@ -286,6 +286,25 @@ const authRepository = {
                 temporary_password_expires_at = $3
             WHERE id = $1
         `, [userId, passwordHash, expiresAt]);
+    },
+
+    updatePasswordAfterVerify: async (client, userId, phone, passwordHash) => {
+        const result = await client.query(`
+            UPDATE users
+            SET password_hash = $1,
+                status = 'ACTIVE',
+                token_version = token_version + 1,
+                password_changed_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP,
+                is_force_change_password = false,
+                temporary_password_expires_at = NULL
+            WHERE id = $2 
+              AND phone = $3 
+              AND user_type = 'USER' 
+              AND status = 'PENDING_VERIFY'
+            RETURNING id
+        `, [passwordHash, userId, phone]);
+        return result.rowCount;
     }
 };
 

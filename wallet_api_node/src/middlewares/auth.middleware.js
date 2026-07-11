@@ -80,6 +80,10 @@ const requireRole = (...allowedRoles) => (req, res, next) => {
 };
 
 const requirePermission = (...requiredPermissions) => (req, res, next) => {
+    const roles = req.user?.roles || [];
+    if (roles.includes('SUPER_ADMIN')) {
+        return next();
+    }
     const permissions = req.user?.permissions || [];
     if (!requiredPermissions.every(permission => permissions.includes(permission))) {
         return forbidden(res, 'Không có quyền truy cập tài nguyên này');

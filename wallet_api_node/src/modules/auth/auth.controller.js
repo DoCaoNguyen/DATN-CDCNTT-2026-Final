@@ -200,8 +200,15 @@ const authController = {
 
     checkPhone: async (req, res, next) => {
         try {
-            const isExist = await authRepository.checkExists(null, req.body.phone);
-            return res.status(200).json({ isExist });
+            const user = await authRepository.findByLoginId(req.body.phone);
+            if (!user) {
+                return res.status(200).json({ isExist: false });
+            }
+            return res.status(200).json({ 
+                isExist: true,
+                status: user.status,
+                user_type: user.user_type
+            });
         } catch (error) {
             return next(error);
         }
@@ -286,6 +293,27 @@ const authController = {
                 return res.status(400).json({ error: 'Lỗi xác thực từ hệ thống' });
             }
             return next(error);
+        }
+    },
+
+    resendVerifyPhone: async (req, res, next) => {
+        const defaultResponse = {
+            success: true,
+            code: "OTP_RESEND_REQUEST_ACCEPTED",
+            message: "Nếu tài khoản đang chờ kích hoạt, mã xác minh sẽ được gửi.",
+            data: {
+                cooldown_seconds: 60
+            }
+        };
+        try {
+            if (!req.body.phone) {
+                return res.status(400).json({ error: 'Vui lòng cung cấp số điện thoại' });
+            }
+            await authService.resendVerifyPhone(req.body.phone);
+            return res.status(200).json(defaultResponse);
+        } catch (error) {
+            // Không lộ lỗi User Not Found để tránh enumeration
+            return res.status(200).json(defaultResponse);
         }
     },
 

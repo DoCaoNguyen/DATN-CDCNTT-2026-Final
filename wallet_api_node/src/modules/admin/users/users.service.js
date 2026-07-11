@@ -3,8 +3,14 @@ const usersRepository = require('./users.repository');
 const walletRepository = require('../../wallet/wallet.repository');
 const authService = require('../../auth/auth.service');
 const auditLogService = require('../../system/audit_log.service');
-const { ensureWriteAccess, sanitizeUserInput, normalizeOptional, isSuperAdmin, SYSTEM_ROLES, withTransaction, writeAuditLog } = require('../_shared');
+const { ensureWriteAccess, sanitizeUserInput, normalizeOptional, SYSTEM_ROLES, withTransaction, isSuperAdmin, writeAuditLog } = require('../_shared');
 const { sendStaffOnboardingEmail } = require('../../../shared/services/email.service');
+const { 
+    normalizeUsername, 
+    normalizeEmail, 
+    normalizeVietnamPhone,
+    normalizeFullName
+} = require('../_shared/validation.util');
 
 function deriveUserType(roleCodes) {
     if (!roleCodes || roleCodes.length === 0) return 'USER';
@@ -36,15 +42,37 @@ const usersService = {
         ensureWriteAccess(actor);
         const data = sanitizeUserInput(payload);
 
+        const normalizedPhone = normalizeVietnamPhone(data.phone);
+        const normalizedEmail = data.email && String(data.email).trim() !== '' ? normalizeEmail(data.email) : null;
+        const normalizedFullName = normalizeFullName(data.full_name || data.fullName);
+
         const conflict = await usersRepository.checkUserConflict({
             username: data.username,
-            email: data.email,
-            phone: data.phone
+            email: normalizedEmail,
+            phone: normalizedPhone
         });
-        if (conflict) throw new Error('User_Conflict');
+        
+        if (conflict) {
+            const errList = [];
+            if (conflict.phone === normalizedPhone) {
+                errList.push({ field: 'phone', code: 'PHONE_ALREADY_EXISTS', message: 'Số điện thoại này đã được sử dụng.' });
+            }
+            if (conflict.email && conflict.email === normalizedEmail) {
+                errList.push({ field: 'email', code: 'EMAIL_ALREADY_EXISTS', message: 'Email này đã được sử dụng.' });
+            }
+            
+            // If conflict by username somehow
+            if (errList.length === 0) {
+                 errList.push({ field: 'username', code: 'USERNAME_ALREADY_EXISTS', message: 'Dữ liệu đã được sử dụng.' });
+            }
+
+            const err = new Error('RESOURCE_CONFLICT');
+            err.errors = errList;
+            throw err;
+        }
 
         const crypto = require('crypto');
-        const rawPassword = String(Math.floor(100000 + Math.random() * 900000));
+        const rawPassword = crypto.randomBytes(32).toString('hex');
         const passwordHash = await bcrypt.hash(rawPassword, 10);
         
         const derivedUserType = 'USER';
@@ -55,13 +83,13 @@ const usersService = {
 
         const created = await withTransaction(async (client) => {
             const userId = await usersRepository.createUser(client, {
-                fullName: data.fullName,
+                fullName: normalizedFullName,
                 username: data.username,
-                email: data.email,
-                phone: data.phone,
+                email: normalizedEmail,
+                phone: normalizedPhone,
                 passwordHash,
                 userType: derivedUserType,
-                status: data.status || 'ACTIVE',
+                status: 'PENDING_VERIFY',
                 isForceChangePassword,
                 temporaryPasswordExpiresAt
             });
@@ -83,7 +111,7 @@ const usersService = {
             newData: {
                 user_type: derivedUserType,
                 roles: roleCodes,
-                status: data.status || 'ACTIVE',
+                status: 'PENDING_VERIFY',
                 wallet_id: created.walletId
             },
             ipAddress,
@@ -94,16 +122,17 @@ const usersService = {
         
         if (process.env.SMS_PROVIDER === 'TWILIO_VERIFY') {
             const twilioVerifyService = require('../../../shared/services/twilio-verify.service');
-            let verifyResult = { verification_sent: false, verification_provider: 'TWILIO_VERIFY' };
+            let verifyResult = { sms_sent: false };
             
             if (user.phone) {
                 const verifyRes = await twilioVerifyService.sendVerification({ phone: user.phone });
-                verifyResult.verification_sent = verifyRes.success;
-                if (verifyRes.status) verifyResult.verification_status = verifyRes.status;
-                if (verifyRes.error_code) verifyResult.verification_error_code = verifyRes.error_code;
-                if (verifyRes.error_message) verifyResult.verification_error_message = verifyRes.error_message;
-            } else {
-                verifyResult.verification_skipped_reason = 'NO_PHONE';
+                if (verifyRes.success) {
+                    verifyResult.sms_sent = true;
+                } else {
+                    verifyResult.sms_sent = false;
+                    verifyResult.error_code = 'USER_CREATED_OTP_SEND_FAILED';
+                    verifyResult.can_resend = true;
+                }
             }
             
             return { ...user, ...verifyResult };
@@ -115,23 +144,23 @@ const usersService = {
             const content = `${rawPassword} la ma xac minh dang ky Baotrixemay cua ban\nCam on quy khach da su dung dich vu cua chung toi. Chuc quy khach mot ngay tot lanh!`;
             const sms = await smsService.sendSms({ phone: user.phone, content, requestId: `CREATE_WU_${created.userId}` });
             smsResult.sms_sent = sms.success;
-            if (sms.mocked !== undefined) smsResult.sms_mocked = sms.mocked;
-            if (sms.provider) smsResult.sms_provider = sms.provider;
-            if (sms.error_code) smsResult.sms_error_code = sms.error_code;
-            if (sms.error_message) smsResult.sms_error_message = sms.error_message;
-        } else {
-            smsResult.sms_skipped_reason = 'NO_PHONE';
         }
 
-        return { ...user, temporary_password: rawPassword, ...smsResult };
+        return { ...user, ...smsResult };
     },
 
     createStaff: async ({ actor, payload, actorId, ipAddress, userAgent }) => {
         ensureWriteAccess(actor);
         const data = sanitizeUserInput(payload);
         
-        if (data.email) data.email = String(data.email).toLowerCase().trim();
-        if (data.phone && !String(data.phone).trim()) data.phone = null;
+        if (data.username) data.username = normalizeUsername(data.username);
+        if (data.email) data.email = normalizeEmail(data.email);
+        if (data.phone) {
+            const normalizedPhone = normalizeVietnamPhone(data.phone);
+            data.phone = normalizedPhone || null;
+        } else {
+            data.phone = null;
+        }
         
 
         let roleCodes = [];
@@ -176,7 +205,29 @@ const usersService = {
             email: data.email,
             phone: data.phone || null
         });
-        if (conflict) throw new Error('User_Conflict');
+        if (conflict) {
+            const conflictErr = new Error();
+            conflictErr.isConflict = true;
+            if (data.username && conflict.username === data.username) {
+                conflictErr.field = 'username';
+                conflictErr.conflictCode = 'USERNAME_ALREADY_EXISTS';
+                conflictErr.message = 'Tên đăng nhập đã được sử dụng.';
+                throw conflictErr;
+            }
+            if (data.email && conflict.email && conflict.email.toLowerCase() === data.email) {
+                conflictErr.field = 'email';
+                conflictErr.conflictCode = 'EMAIL_ALREADY_EXISTS';
+                conflictErr.message = 'Email đã được sử dụng.';
+                throw conflictErr;
+            }
+            if (data.phone && conflict.phone === data.phone) {
+                conflictErr.field = 'phone';
+                conflictErr.conflictCode = 'PHONE_ALREADY_EXISTS';
+                conflictErr.message = 'Số điện thoại đã được sử dụng.';
+                throw conflictErr;
+            }
+            throw new Error('User_Conflict');
+        }
 
         const cryptoStr = require('crypto');
         const rawPassword = cryptoStr.randomBytes(6).toString('hex');
@@ -187,13 +238,13 @@ const usersService = {
 
         const created = await withTransaction(async (client) => {
             const userId = await usersRepository.createUser(client, {
-                fullName: data.fullName,
+                fullName: data.fullName || data.full_name,
                 username: data.username,
                 email: data.email,
                 phone: data.phone,
                 passwordHash,
                 userType: derivedUserType,
-                status: data.status || 'ACTIVE',
+                status: 'ACTIVE',
                 isForceChangePassword,
                 temporaryPasswordExpiresAt
             });
@@ -230,10 +281,6 @@ const usersService = {
         }
 
         const responseData = { ...user, email_sent: emailSent };
-        
-        if (process.env.RETURN_TEMP_PASSWORD === 'true') {
-            responseData.temporary_password = rawPassword;
-        }
         
         return responseData;
     },
@@ -415,6 +462,68 @@ const usersService = {
         }
 
         return { ...userDetail, temporary_password: temporaryPassword, ...smsResult };
+    },
+
+    resendOnboardingEmail: async ({ actor, targetUserId, actorId, ipAddress, userAgent }) => {
+        ensureWriteAccess(actor);
+        const user = await usersRepository.findUserRawById(targetUserId);
+        if (!user) throw new Error('User_Not_Found');
+        
+        if (!user.email) {
+            throw new Error('EMAIL_REQUIRED');
+        }
+
+        const cryptoStr = require('crypto');
+        const rawPassword = cryptoStr.randomBytes(6).toString('hex');
+        const passwordHash = await bcrypt.hash(rawPassword, 10);
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await withTransaction(async (client) => {
+            const authRepository = require('../../auth/auth.repository');
+            await authRepository.forceResetPassword(client, targetUserId, passwordHash, expiresAt);
+        });
+
+        await writeAuditLog({
+            actorId: actorId || actor.userId || actor.id,
+            action: 'admin.users.resend_onboarding_email',
+            entityType: 'users',
+            entityId: targetUserId,
+            ipAddress,
+            userAgent
+        });
+
+        let emailSent = false;
+        
+        if (user.roles && user.roles.includes('MERCHANT_OWNER')) {
+            const pool = require('../../../config/db');
+            const mRes = await pool.query(`
+                SELECT m.merchant_name 
+                FROM merchants m
+                JOIN merchant_users mu ON m.id = mu.merchant_id
+                WHERE mu.user_id = $1
+            `, [targetUserId]);
+            const merchantName = mRes.rows[0]?.merchant_name || 'Đối tác';
+            
+            const emailService = require('../../../shared/services/email.service');
+            emailSent = await emailService.sendOnboardingEmail(user.email, {
+                merchantName,
+                username: user.username,
+                password: rawPassword
+            });
+        } else {
+            const { sendStaffOnboardingEmail } = require('../../../shared/services/email.service');
+            emailSent = await sendStaffOnboardingEmail(user.email, {
+                fullName: user.full_name || user.username,
+                username: user.username,
+                password: rawPassword
+            });
+        }
+
+        if (!emailSent) {
+            throw new Error('EMAIL_SEND_FAILED');
+        }
+
+        return { email_sent: true };
     },
 
     getUserAuditLogs: async ({ userId, query }) => {
