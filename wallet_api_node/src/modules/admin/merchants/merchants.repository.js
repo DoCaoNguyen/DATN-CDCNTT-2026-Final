@@ -123,6 +123,19 @@ const merchantsRepository = {
         return res.rows[0];
     },
 
+    checkConflicts: async (email, client = pool) => {
+        const errors = [];
+        
+        if (email) {
+            const emailRes = await client.query('SELECT 1 FROM merchants WHERE email = $1', [email]);
+            if (emailRes.rows.length > 0) {
+                errors.push({ field: 'email', code: 'EMAIL_ALREADY_EXISTS', message: 'Email này đã được sử dụng cho một Merchant khác.' });
+            }
+        }
+        
+        return errors;
+    },
+
     updateMerchantInfo: async (id, data, client = pool) => {
         const fields = [];
         const params = [id];
@@ -166,9 +179,9 @@ const merchantsRepository = {
         const params = [
             newId,
             merchantId, 
-            data.default_callback_url || '', 
+            data.default_callback_url || null, 
             data.default_redirect_url || null, 
-            data.webhook_secret_hash || '', 
+            data.webhook_secret_hash || null, 
             data.callback_enabled ?? true, 
             data.retry_enabled ?? true
         ];
