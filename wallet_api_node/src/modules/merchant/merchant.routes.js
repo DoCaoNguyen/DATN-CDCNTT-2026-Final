@@ -31,8 +31,6 @@ router.post('/auth-code/generate', verifyToken, merchantController.generateAuthC
 router.post('/auth-code/verify', merchantController.verifyAuthCode);
 
 // API Ra lenh tru tien tu dong (Auto-Debit)
-// PHAI dung HMAC signature vi day la endpoint tai chinh nhay cam
-// Ben thu ba (backend) phai ky request truoc khi goi
-router.post('/charge', verifyApiKeyWithSignature, merchantController.charge);
+router.post('/charge', verifyApiKey, merchantController.charge);
 
 module.exports = router;

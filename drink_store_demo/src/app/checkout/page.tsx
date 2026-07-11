@@ -144,6 +144,29 @@ function CheckoutContent() {
     }
   };
 
+  const handleCheckStatus = async () => {
+    if (!orderId) return;
+    try {
+      const res = await fetch(`/api/order/${orderId}/sync`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'PAID') {
+        setStatus('PAID');
+        localStorage.removeItem('pendingOrder');
+        router.push(`/success?name=${encodeURIComponent(name)}&amount=${price}`);
+      } else if (data.status === 'EXPIRED') {
+        setStatus('EXPIRED');
+        localStorage.removeItem('pendingOrder');
+      } else if (data.status === 'CANCELED') {
+        setStatus('CANCELED');
+        localStorage.removeItem('pendingOrder');
+      } else {
+        alert('Đơn hàng vẫn đang chờ thanh toán!');
+      }
+    } catch (e) {
+      alert('Lỗi kiểm tra trạng thái.');
+    }
+  };
+
   return (
     <div className="container">
       <div className="checkout-container" style={{ position: 'relative' }}>
@@ -184,6 +207,14 @@ function CheckoutContent() {
                 {status === 'PENDING' ? '⏳ Đang chờ thanh toán...' : (status === 'EXPIRED' ? '❌ Mã QR đã hết hạn' : (status === 'CANCELED' ? '❌ Đơn hàng đã bị hủy' : '✅ Đã thanh toán thành công!'))}
               </div>
             </div>
+            
+            {status === 'PENDING' && (
+              <div style={{ marginTop: '1rem' }}>
+                <button onClick={handleCheckStatus} className="btn" style={{ width: 'auto', padding: '0.5rem 1.5rem', fontSize: '0.9rem', backgroundColor: '#3498db' }}>
+                  Tôi đã thanh toán (Lấy trạng thái)
+                </button>
+              </div>
+            )}
           </div>
         )}
         

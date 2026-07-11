@@ -92,6 +92,8 @@ const transactionController = {
         if (!receiver_identifier || !amount || !pin) {
             return res.status(400).json({ error: 'Vui lòng nhập người nhận, số tiền và mã PIN' });
         }
+        
+        const safePin = String(pin).trim();
 
         let bigAmount;
         try {
@@ -102,7 +104,7 @@ const transactionController = {
         }
 
         try {
-            const result = await txService.transfer(senderId, receiver_identifier, bigAmount, note, reference_code, pin, faceImagePath);
+            const result = await txService.transfer(senderId, receiver_identifier, bigAmount, note, reference_code, safePin, faceImagePath);
             return success(req, res, 200, 'Chuyển tiền thành công', result );
         } catch (error) { next(error); }
     },

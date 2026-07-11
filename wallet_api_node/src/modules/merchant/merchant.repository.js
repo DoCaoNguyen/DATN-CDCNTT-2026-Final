@@ -193,12 +193,13 @@ const merchantRepository = {
 
     getMerchantProfile: async (merchantId) => {
         const query = `
-            SELECT m.id AS merchant_id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone AS contact_phone, m.email, m.address, m.status,
+            SELECT m.id, m.id AS merchant_id, mu.user_id AS merchant_user_id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone AS contact_phone, m.email, m.address, m.status,
                    mcc.default_callback_url AS callback_url, mcc.default_redirect_url, mcc.callback_enabled, mcc.retry_enabled,
                    k.api_key, k.api_secret_hash AS secret_key
             FROM merchants m
             LEFT JOIN merchant_callback_configs mcc ON m.id = mcc.merchant_id
             LEFT JOIN merchant_api_keys k ON m.id = k.merchant_id
+            LEFT JOIN merchant_users mu ON m.id = mu.merchant_id AND mu.is_owner = true
             WHERE m.id = $1
             ORDER BY k.created_at DESC
             LIMIT 1

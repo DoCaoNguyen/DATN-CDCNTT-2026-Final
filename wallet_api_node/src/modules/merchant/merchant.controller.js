@@ -423,8 +423,9 @@ const merchantController = {
                 return res.status(400).json({ error: 'Thieu thong tin bat buoc (wallet_token, amount)' });
             }
 
-            console.log(`[CHARGE DEBUG] api_key=${api_key}, wallet_token_tail=${wallet_token.slice(-20)}, amount=${amount}`);
-            require('fs').appendFileSync('charge_debug.log', JSON.stringify(req.body) + '\n');
+            const currentApiKey = req.headers['x-api-key'] || 'unknown';
+            console.log(`[CHARGE DEBUG] api_key=${currentApiKey}, wallet_token_tail=${wallet_token.slice(-20)}, amount=${amount}`);
+            require('fs').appendFileSync('charge_debug.log', JSON.stringify(req.body) + '\\n');
             
             // Bỏ hardcode AUTO_DEBIT_LIMIT ở đây, sẽ check phía dưới sau khi có thông tin ví.
 
@@ -446,7 +447,7 @@ const merchantController = {
             }
 
             // Lay thong tin merchant de check han muc
-            const merchant = await merchantRepository.getMerchantByMerchantId(merchant_id);
+            const merchant = await merchantRepository.getMerchantProfile(merchant_id);
             if (!merchant) {
                 return res.status(404).json({ error: 'Khong tim thay Merchant' });
             }
@@ -472,9 +473,9 @@ const merchantController = {
             }
 
             // Kiểm tra hạn mức riêng của App Liên Kết - dùng merchant_id để tra cứu chính xác
-            const linkedApp = await merchantRepository.getLinkedService(user_id, merchant.id);
+            const linkedApp = await merchantRepository.getLinkedService(user_id, merchant.merchant_id);
         
-            console.log(`[CHARGE DEBUG] user_id=${user_id}, merchant.id=${merchant.id}, linkedApp_status=${linkedApp ? linkedApp.status : 'null'}`);
+            console.log(`[CHARGE DEBUG] user_id=${user_id}, merchant.merchant_id=${merchant.merchant_id}, linkedApp_status=${linkedApp ? linkedApp.status : 'null'}`);
             
             if (!linkedApp || linkedApp.status === 'UNLINKED') {
                 return res.status(403).json({ error: 'Dịch vụ chưa được liên kết hoặc đã bị huỷ liên kết. Không thể thanh toán.' });

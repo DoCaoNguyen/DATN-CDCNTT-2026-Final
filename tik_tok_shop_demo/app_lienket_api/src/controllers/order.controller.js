@@ -24,13 +24,28 @@ const OrderController = {
 
             // 2. Ra lệnh trừ tiền qua API của Ví Mio (Server-to-Server)
             try {
-                const response = await axios.post(MIO_API_URL, {
-                    api_key: api_key || process.env.MERCHANT_API_KEY,
+                const reqBody = {
                     merchant_code: 'MC_TIKTOK',
                     wallet_token: walletAccount, // walletAccount ở đây đang chứa token JWT
                     amount: amount,
                     order_id: order_id || 'TTS_' + Date.now()
-                });
+                };
+                
+                // Kiem tra HMAC Signature neu co SECRET
+                const apiKey = api_key || process.env.MERCHANT_API_KEY;
+                const apiSecret = process.env.MERCHANT_API_SECRET;
+                const headers = { 'X-Api-Key': apiKey };
+                
+                if (apiSecret) {
+                    const crypto = require('crypto');
+                    const timestamp = Date.now().toString();
+                    const payload = timestamp + '.' + JSON.stringify(reqBody);
+                    const signature = crypto.createHmac('sha256', apiSecret).update(payload).digest('hex');
+                    headers['X-Timestamp'] = timestamp;
+                    headers['X-Signature'] = signature;
+                }
+
+                const response = await axios.post(MIO_API_URL, reqBody, { headers });
 
                 if (response.data.success) {
                     return res.status(200).json({ 
