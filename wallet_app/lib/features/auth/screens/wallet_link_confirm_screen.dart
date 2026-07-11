@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:wallet_app/core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 
@@ -28,7 +29,7 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
       final token = await secureStorage.read(key: 'access_token');
       if (token == null) return 'DEMO-AUTH-CODE';
 
-      final response = await http.post(
+      final response = await CustomHttpClient().post(
         Uri.parse(ApiConfig.generateAuthCode),
         headers: {
           'Authorization': 'Bearer $token',
@@ -62,7 +63,7 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
             final token = await secureStorage.read(key: 'access_token');
             if (token == null) return "Lỗi: Không tìm thấy phiên đăng nhập";
 
-            final pinRes = await http.post(
+            final pinRes = await CustomHttpClient().post(
               Uri.parse(ApiConfig.verifyPin),
               headers: {
                 'Authorization': 'Bearer $token',

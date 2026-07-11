@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:http/http.dart' as http;
+import 'package:wallet_app/core/services/custom_http_client.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../utils/ocr_helper.dart';
@@ -148,7 +149,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
     try {
       var request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}/kyc/ocr-front'));
       request.files.add(await http.MultipartFile.fromPath('id_front', idFrontImage.path));
-      var response = await request.send();
+      var response = await CustomHttpClient().send(request);
       var responseData = await response.stream.bytesToString();
       var json = jsonDecode(responseData);
       
@@ -175,7 +176,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
          return false;
       }
 
-      final checkResponse = await http.get(Uri.parse('${ApiConfig.baseUrl}/kyc/check-id?id=${data["id"]}'));
+      final checkResponse = await CustomHttpClient().get(Uri.parse('${ApiConfig.baseUrl}/kyc/check-id?id=${data["id"]}'));
       if (checkResponse.statusCode == 200 && jsonDecode(checkResponse.body)['is_used'] == true) {
         setState(() => _isLoading = false);
         KycDialogs.showError(context, "Số CCCD này đã được sử dụng. Vui lòng liên hệ CSKH.", _resetFlow);
@@ -281,7 +282,7 @@ class _KycFlowScreenState extends State<KycFlowScreen> {
       request.files.add(await http.MultipartFile.fromPath('id_front', _idFrontImage!.path));
       request.files.add(await http.MultipartFile.fromPath('id_back', _idBackImage!.path));
 
-      var response = await http.Response.fromStream(await request.send());
+      var response = await http.Response.fromStream(await CustomHttpClient().send(request));
       setState(() => _isLoading = false);
 
       if (response.statusCode == 200) KycDialogs.showSuccess(context, widget.userId, widget.token);

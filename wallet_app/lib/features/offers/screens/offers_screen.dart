@@ -420,12 +420,12 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        RichText(
-                          text: TextSpan(
+                        Text.rich(
+                          TextSpan(
                             style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
                             children: [
-                              const TextSpan(text: 'Ví Trả Sau - Hoàn tiền '),
-                              TextSpan(text: '50%', style: TextStyle(color: Colors.pink.shade600, fontSize: 20)),
+                              const TextSpan(text: 'Ví Trả Sau - Hoàn tiền'),
+                              TextSpan(text: ' 50%', style: TextStyle(color: Colors.pink.shade600, fontSize: 20)),
                             ]
                           )
                         ),

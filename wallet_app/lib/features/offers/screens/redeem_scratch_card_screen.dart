@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/offers_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'redeem_success_screen.dart';
@@ -228,11 +228,13 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                                 final prefs = await SharedPreferences.getInstance();
                                 final token = prefs.getString('auth_token') ?? '';
                                 
-                                final verifyResp = await http.post(
+                                final client = CustomHttpClient();
+                                final verifyResp = await client.post(
                                   Uri.parse(ApiConfig.verifyPin),
                                   headers: {
                                     'Authorization': 'Bearer $token',
                                     'Content-Type': 'application/json',
+                                    'ngrok-skip-browser-warning': 'true',
                                   },
                                   body: jsonEncode({'pin': pin}),
                                 );

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/api_config.dart';
 import '../../../core/services/custom_http_client.dart';
@@ -172,7 +173,10 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
     try {
       final res = await _client.post(
         Uri.parse('${ApiConfig.baseUrl}/merchant/withdraw-to-wallet'),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "idempotency-key": const Uuid().v4(),
+        },
         body: jsonEncode({"amount": amount}),
       );
 
@@ -271,8 +275,7 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
         Uri.parse('${ApiConfig.baseUrl}/merchant/withdraw-to-bank'),
         headers: {
           "Content-Type": "application/json",
-          "idempotency-key":
-              "bank-payout-${DateTime.now().millisecondsSinceEpoch}",
+          "idempotency-key": const Uuid().v4(),
         },
         body: jsonEncode({
           "amount": amount,
