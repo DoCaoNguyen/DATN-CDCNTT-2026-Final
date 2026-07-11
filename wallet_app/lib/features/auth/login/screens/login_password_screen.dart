@@ -11,6 +11,7 @@ import '../../../../core/constants/api_config.dart';
 import '../../../home/screens/home_screen.dart';
 import '../../../../core/services/socket_service.dart';
 import '../../forgot_password/screens/forgot_password_face_auth_screen.dart';
+import '../../activation/screens/activation_otp_screen.dart';
 
 class LoginPasswordScreen extends StatefulWidget {
   final String phoneNumber;
@@ -121,10 +122,15 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
           );
         }
       } else if (response.statusCode == 403) {
-        String errorMsg =
-            responseData['error'] ??
-            'Tài khoản đã bị khóa 30 phút do nhập sai quá nhiều lần.';
-        _showLockDialog(errorMsg);
+        String code = responseData['code'] ?? '';
+        if (code == 'USER_PENDING_VERIFY') {
+          _showPendingVerifyDialog();
+        } else {
+          String errorMsg =
+              responseData['error'] ??
+              'Tài khoản đã bị khóa 30 phút do nhập sai quá nhiều lần.';
+          _showLockDialog(errorMsg);
+        }
       } else {
         setState(() {
           _errorMessage = responseData['error'] ?? 'Mật khẩu không chính xác';
@@ -219,6 +225,106 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
                       ),
                     ),
                   ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPendingVerifyDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 10,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.orange,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Tài khoản của bạn chưa được kích hoạt. Vui lòng xác minh OTP và tạo mật khẩu đăng nhập để tiếp tục.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textDark,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: AppColors.primaryPink),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Để sau',
+                          style: TextStyle(
+                            color: AppColors.primaryPink,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Đóng dialog
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => ActivationOtpScreen(phoneNumber: widget.phoneNumber)));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: AppColors.primaryPink,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Kích hoạt ngay',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

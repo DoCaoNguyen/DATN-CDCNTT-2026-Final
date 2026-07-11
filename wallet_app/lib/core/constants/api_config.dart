@@ -3,7 +3,7 @@ class ApiConfig {
   // Dùng 10.0.2.2 cho máy ảo Android
   // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
   static const String baseUrl =
-      'https://orectic-noctilucent-ronan.ngrok-free.dev/api/v1';
+      'https://carol-trimming-napkin.ngrok-free.dev/api/v1';
 
   static String get socketUrl {
     final uri = Uri.parse(baseUrl);
@@ -22,6 +22,11 @@ class ApiConfig {
   static const String forgotPasswordOtp = '$baseUrl/auth/forgot-password-otp';
   static const String resetPassword = '$baseUrl/auth/reset-password';
   static const String exportTransaction = '$baseUrl/transaction/export';
+
+  // --- TWILIO AUTH ENDPOINTS (ADMIN CREATED USER) ---
+  static const String verifyPhone = '$baseUrl/auth/verify-phone';
+  static const String setPasswordAfterVerify = '$baseUrl/auth/set-password-after-verify';
+  static const String resendVerifyPhone = '$baseUrl/auth/resend-verify-phone';
 
   // --- WEALTH BAG ENDPOINTS ---
   static const String wealthBagStatus = '$baseUrl/wealth-bag/status';

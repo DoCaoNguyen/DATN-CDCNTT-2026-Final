@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../widgets/phone_input_field.dart';
 import '../../register/screens/otp_verification_screen.dart';
+import '../../activation/screens/activation_otp_screen.dart';
 import 'login_password_screen.dart';
 
 class LoginPhoneScreen extends StatefulWidget {
@@ -71,12 +72,16 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
         final data = jsonDecode(response.body);
         if (data['isExist'] == true) {
           if (mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => LoginPasswordScreen(phoneNumber: phone),
-              ),
-            );
+            if (data['status'] == 'PENDING_VERIFY' && data['user_type'] == 'USER') {
+              _showPendingVerifyDialog(phone, lang);
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginPasswordScreen(phoneNumber: phone),
+                ),
+              );
+            }
           }
         } else {
           _showConfirmationDialog(phone, lang);
@@ -175,6 +180,113 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
         ),
       );
     }
+  }
+
+  void _showPendingVerifyDialog(String phone, String lang) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 10,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.orange,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Tài khoản của bạn chưa được kích hoạt. Vui lòng xác minh OTP và tạo mật khẩu đăng nhập để tiếp tục.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textDark,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.primaryPink),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Text(
+                          lang == 'VIE' ? 'Để sau' : 'Later',
+                          style: const TextStyle(
+                            color: AppColors.primaryPink,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ActivationOtpScreen(
+                                phoneNumber: phone,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryPink,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          lang == 'VIE' ? 'Kích hoạt ngay' : 'Activate Now',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showLockDialog(String message) {
