@@ -7,21 +7,21 @@ import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
-import 'create_password_screen.dart';
+import 'activation_password_screen.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 
-class OtpVerificationScreen extends StatefulWidget {
+class ActivationOtpScreen extends StatefulWidget {
   final String phoneNumber;
 
-  const OtpVerificationScreen({Key? key, required this.phoneNumber})
+  const ActivationOtpScreen({Key? key, required this.phoneNumber})
     : super(key: key);
 
   @override
-  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+  State<ActivationOtpScreen> createState() => _ActivationOtpScreenState();
 }
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  int _start = 30;
+class _ActivationOtpScreenState extends State<ActivationOtpScreen> {
+  int _start = 60;
   Timer? _timer;
 
   // --- BIẾN ĐẾM NGƯỢC KHÓA TÀI KHOẢN (1 PHÚT) ---
@@ -42,6 +42,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void initState() {
     super.initState();
     startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resendOtp();
+    });
     for (var controller in _controllers) {
       controller.addListener(() {
         if (_hasError && controller.text.isNotEmpty) {
@@ -55,7 +58,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   // Timer cho nút Gửi lại mã
   void startTimer() {
-    _start = 30;
+    _start = 60;
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       if (_start == 0) {
@@ -124,9 +127,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(ApiConfig.verifyOtp),
+        Uri.parse(ApiConfig.verifyPhone),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone': widget.phoneNumber, 'otp': otp}),
+        body: jsonEncode({'phone': widget.phoneNumber, 'code': otp}),
       );
 
       setState(() {
@@ -136,13 +139,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        String token = responseData['register_token'];
+        String token = responseData['verify_token'];
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CreatePasswordScreen(
+            builder: (context) => ActivationPasswordScreen(
               phoneNumber: widget.phoneNumber,
-              registerToken: token,
+              verifyToken: token,
             ),
           ),
         );
@@ -195,11 +198,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(ApiConfig.sendOtp),
+        Uri.parse(ApiConfig.resendVerifyPhone),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email':
-              '${widget.phoneNumber}@wallet.com', // Dùng email giả để qua được Validate như lúc Đăng ký
           'phone': widget.phoneNumber,
         }),
       );

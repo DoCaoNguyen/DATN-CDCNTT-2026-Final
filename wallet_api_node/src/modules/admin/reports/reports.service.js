@@ -14,52 +14,52 @@
 const ExcelJS = require('exceljs');
 const reportsRepository = require('./reports.repository');
 
+const parseDateParams = (query) => {
+    let from = query.from || query.fromDate;
+    let to = query.to || query.toDate;
+    if (from && from.length === 10) from = `${from}T00:00:00.000Z`;
+    if (to && to.length === 10) to = `${to}T23:59:59.999Z`;
+    return { from, to };
+};
+
 const reportsService = {
     getWalletTransactions: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit, type, status } = query;
         return reportsRepository.getWalletTransactions({ page, limit, from, to, type, status });
     },
     getTopupReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit, status } = query;
         return reportsRepository.getTopupReport({ page, limit, from, to, status });
     },
     getTransferReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit, status } = query;
         return reportsRepository.getTransferReport({ page, limit, from, to, status });
     },
     getPaymentReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit, status, merchant_id } = query;
         return reportsRepository.getPaymentReport({ page, limit, from, to, status, merchant_id });
     },
     getRefundReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit, status, merchant_id } = query;
         return reportsRepository.getRefundReport({ page, limit, from, to, status, merchant_id });
     },
     getMerchantReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit, status } = query;
         return reportsRepository.getMerchantReport({ page, limit, from, to, status });
     },
     getFeesReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { page, limit } = query;
         return reportsRepository.getFeesReport({ page, limit, from, to });
     },
     exportReport: async (query) => {
-        const from = query.from || query.fromDate;
-        const to = query.to || query.toDate;
+        const { from, to } = parseDateParams(query);
         const { type, status } = query;
         const params = { page: 1, limit: 10000, from, to, status };
         

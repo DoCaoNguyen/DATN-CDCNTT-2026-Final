@@ -5,6 +5,22 @@ const { authenticateJwt } = require('../../middlewares/auth.middleware');
 
 const router = express.Router();
 
+const normalizePhoneMiddleware = (req, res, next) => {
+    const fields = ['phone', 'identifier', 'login_id', 'username'];
+    fields.forEach(field => {
+        if (req.body[field] && typeof req.body[field] === 'string') {
+            let val = req.body[field].trim();
+            if (val.startsWith('+84')) {
+                req.body[field] = '0' + val.slice(3);
+            } else if (val.startsWith('84') && val.length === 11) {
+                req.body[field] = '0' + val.slice(2);
+            }
+        }
+    });
+    next();
+};
+
+router.use(normalizePhoneMiddleware);
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 phút
     limit: 10, // Tối đa 10 lần thử mỗi 15 phút
@@ -38,7 +54,23 @@ router.post('/forgot-password-otp', authLimiter, authController.forgotPasswordOt
 router.post('/set-password', authLimiter, authController.setPassword);
 
 // --- Chức năng Twilio Verify OTP ---
+const twilioResendLimiter = rateLimit({
+    windowMs: 60 * 1000, // 60 giây cooldown
+    limit: 1, 
+    message: { success: true }, 
+    handler: (req, res) => res.status(200).json({
+        success: true,
+        code: "OTP_RESEND_REQUEST_ACCEPTED",
+        message: "Nếu tài khoản đang chờ kích hoạt, mã xác minh sẽ được gửi.",
+        data: { cooldown_seconds: 60 }
+    }),
+    keyGenerator: (req) => {
+        const identifier = req.body.phone || req.ip;
+        return identifier ? String(identifier).trim() : 'anonymous';
+    }
+});
 router.post('/verify-phone', authLimiter, authController.verifyPhone);
+router.post('/resend-verify-phone', twilioResendLimiter, authController.resendVerifyPhone);
 router.post('/set-password-after-verify', authLimiter, authController.setPasswordAfterVerify);
 
 // --- Lấy thông tin Cá nhân ---

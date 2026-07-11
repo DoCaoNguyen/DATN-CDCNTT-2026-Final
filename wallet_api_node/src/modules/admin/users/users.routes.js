@@ -309,11 +309,12 @@ router.get('/users', requirePermission('admin.users.read'), usersController.list
 router.post('/users', requirePermission('admin.users.create'), usersValidator.validateCreateWalletUser, usersController.createWalletUser);
 router.post('/staffs', requirePermission('admin.staffs.create'), usersValidator.validateCreateStaff, usersController.createStaff);
 router.get('/users/:id', requirePermission('admin.users.read'), usersValidator.validateIdParam, usersController.getUserDetail);
-router.patch('/users/:id', requirePermission('admin.users.update'), usersValidator.validateIdParam, usersController.updateUser);
+router.patch('/users/:id', requirePermission('admin.users.update'), usersValidator.validateIdParam, usersValidator.validateUpdateUser, usersController.updateUser);
 router.get('/users/:id/wallet', requirePermission('admin.wallets.read'), usersValidator.validateIdParam, usersController.getUserWallet);
 router.post('/users/:id/actions/lock', requirePermission('admin.users.lock'), usersValidator.validateIdParam, usersValidator.validateReason, usersController.lockUser);
 router.post('/users/:id/actions/unlock', requirePermission('admin.users.lock'), usersValidator.validateIdParam, usersValidator.validateReason, usersController.unlockUser);
 router.post('/users/:id/actions/reset-password', requirePermission('admin.users.reset_password'), usersValidator.validateIdParam, usersValidator.validateResetPassword, usersController.resetUserPassword);
+router.post('/users/:id/actions/resend-onboarding', requirePermission('admin.users.update'), usersValidator.validateIdParam, usersController.resendOnboardingEmail);
 router.get('/users/:id/audit-logs', requirePermission('admin.audit_logs.read'), usersValidator.validateIdParam, usersController.getUserAuditLogs);
 
 module.exports = router;

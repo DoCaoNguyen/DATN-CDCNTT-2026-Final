@@ -53,7 +53,7 @@ class NfcKycService {
   static Map<String, String>? parseCccdQr(String qrData) {
     try {
       final parts = qrData.split('|');
-      if (parts.length < 7) return null;
+      if (parts.length < 6) return null;
 
       return {
         'documentNumber': parts[0],
@@ -62,7 +62,7 @@ class NfcKycService {
         'dob': parts[3], // DDMMYYYY
         'gender': parts[4],
         'address': parts[5],
-        'issueDate': parts[6], // DDMMYYYY
+        'issueDate': parts.length > 6 ? parts[6] : '', // DDMMYYYY
       };
     } catch (e) {
       return null;

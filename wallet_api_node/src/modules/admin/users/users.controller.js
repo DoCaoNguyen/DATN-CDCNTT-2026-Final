@@ -18,8 +18,30 @@ const usersController = {
                 actor: req.user,
                 payload: req.body
             });
+            
+            if (result.error_code === 'USER_CREATED_OTP_SEND_FAILED') {
+                return res.status(201).json({
+                    success: true,
+                    code: 'USER_CREATED_OTP_SEND_FAILED',
+                    message: 'Đã tạo người dùng nhưng chưa thể gửi mã xác minh.',
+                    data: {
+                        status: 'PENDING_VERIFY',
+                        sms_sent: false,
+                        can_resend: true
+                    }
+                });
+            }
+
             return success(res, result, 'Tao nguoi dung vi thanh cong', 201);
         } catch (err) {
+            if (err.message === 'RESOURCE_CONFLICT') {
+                return res.status(409).json({
+                    success: false,
+                    code: 'RESOURCE_CONFLICT',
+                    message: 'Dữ liệu đã tồn tại.',
+                    errors: err.errors
+                });
+            }
             return handleAdminError(res, err, 'Loi admin create wallet user:');
         }
     },
@@ -110,6 +132,26 @@ const usersController = {
             return success(res, result, 'Reset mat khau nguoi dung vi thanh cong');
         } catch (err) {
             return handleAdminError(res, err, 'Loi admin reset user password:');
+        }
+    },
+
+    resendOnboardingEmail: async (req, res) => {
+        try {
+            const result = await usersService.resendOnboardingEmail({
+                ...getRequestMeta(req),
+                actor: req.user,
+                targetUserId: req.params.id
+            });
+            return success(res, result, 'Gui lai email onboarding thanh cong');
+        } catch (err) {
+            if (err.message === 'EMAIL_SEND_FAILED') {
+                return res.status(400).json({
+                    success: false,
+                    code: 'EMAIL_SEND_FAILED',
+                    message: 'Gửi email onboarding thất bại. Vui lòng kiểm tra lại cấu hình hoặc địa chỉ email.'
+                });
+            }
+            return handleAdminError(res, err, 'Loi gui lai email onboarding:');
         }
     },
 

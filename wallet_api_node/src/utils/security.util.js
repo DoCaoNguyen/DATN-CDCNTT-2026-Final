@@ -12,6 +12,7 @@ const bcrypt = require('bcrypt');
  */
 async function verifyTransactionSecurity(amount, pin, faceImagePath, wallet, userId, repo, kycService) {
     if (!wallet) throw new Error('Wallet_Not_Found');
+    if (wallet.status && wallet.status !== 'ACTIVE') throw new Error('Wallet_Locked');
 
     // Verify based on amount (30,000,000 VND)
     if (amount < 30000000n) {

@@ -32,8 +32,17 @@ const usersRepository = {
         const where = [];
 
         if (q) {
-            params.push(`%${q.trim()}%`);
-            where.push(`(u.full_name ILIKE $${params.length} OR u.username ILIKE $${params.length} OR u.email ILIKE $${params.length} OR u.phone ILIKE $${params.length})`);
+            const query = q.trim();
+            params.push(`%${query}%`);
+            const pIndex1 = params.length;
+            
+            if (/^0\d+$/.test(query)) {
+                params.push(`%+84${query.slice(1)}%`);
+                const pIndex2 = params.length;
+                where.push(`(u.full_name ILIKE $${pIndex1} OR u.username ILIKE $${pIndex1} OR u.email ILIKE $${pIndex1} OR u.phone ILIKE $${pIndex1} OR u.phone ILIKE $${pIndex2})`);
+            } else {
+                where.push(`(u.full_name ILIKE $${pIndex1} OR u.username ILIKE $${pIndex1} OR u.email ILIKE $${pIndex1} OR u.phone ILIKE $${pIndex1})`);
+            }
         }
         if (status) {
             params.push(status);

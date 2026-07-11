@@ -1,6 +1,19 @@
 const { error } = require('./admin-response');
 
 function handleAdminError(res, err, logPrefix) {
+    if (err.code === 'RESOURCE_CONFLICT' || err.isConflict) {
+        return res.status(409).json({
+            success: false,
+            code: 'RESOURCE_CONFLICT',
+            message: 'Dữ liệu đã tồn tại.',
+            errors: err.errors || [{
+                field: err.field,
+                code: err.conflictCode,
+                message: err.message
+            }]
+        });
+    }
+
     const mapping = {
         Validation_Error: [400, 'VALIDATION_ERROR', 'Thieu thong tin bat buoc'],
         Invalid_Id: [400, 'VALIDATION_ERROR', 'ID khong hop le'],
@@ -11,7 +24,7 @@ function handleAdminError(res, err, logPrefix) {
         Invalid_Date_Filter: [400, 'VALIDATION_ERROR', 'Bo loc thoi gian khong hop le'],
         Invalid_User_Type: [400, 'VALIDATION_ERROR', 'Loai user khong hop le'],
         Invalid_User_Status: [400, 'VALIDATION_ERROR', 'Trang thai user khong hop le'],
-        User_Conflict: [409, 'CONFLICT', 'Username, email hoac so dien thoai da ton tai'],
+        User_Conflict: [409, 'RESOURCE_CONFLICT', 'Dữ liệu đã tồn tại.'],
         Role_Not_Found: [400, 'VALIDATION_ERROR', 'Role khong ton tai hoac khong hoat dong'],
         User_Not_Found: [404, 'USER_NOT_FOUND', 'Khong tim thay user'],
         Wallet_Not_Found: [404, 'WALLET_NOT_FOUND', 'Khong tim thay vi'],

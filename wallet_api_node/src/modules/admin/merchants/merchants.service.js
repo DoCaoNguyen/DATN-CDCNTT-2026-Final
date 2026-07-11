@@ -11,6 +11,56 @@ const merchantsService = {
     createMerchant: async (data, actor) => {
         ensureWriteAccess(actor);
         
+        // Validation Utilities
+        const { normalizeMerchantName, normalizeTaxCode, normalizeVietnamPhone, normalizeEmail, normalizeFullName, normalizeUsername } = require('../_shared/validation.util');
+
+        // Normalize Merchant Data
+        data.merchant_name = normalizeMerchantName(data.merchant_name);
+        data.email = normalizeEmail(data.email) || null;
+        data.phone = normalizeVietnamPhone(data.phone) || null;
+        data.tax_code = normalizeTaxCode(data.tax_code) || null;
+        data.representative_name = data.representative_name ? String(data.representative_name).trim() || null : null;
+        data.address = data.address ? String(data.address).trim() || null : null;
+
+        // Check Merchant Conflicts (Only Email for Merchant)
+        const merchantConflicts = await merchantsRepository.checkConflicts(data.email);
+        const allErrors = [...merchantConflicts];
+
+        // Normalize & Check Owner Conflicts
+        if (data.owner_info) {
+            data.owner_info.full_name = normalizeFullName(data.owner_info.full_name);
+            data.owner_info.username = normalizeUsername(data.owner_info.username);
+            data.owner_info.email = normalizeEmail(data.owner_info.email);
+            data.owner_info.phone = normalizeVietnamPhone(data.owner_info.phone) || null;
+
+            const usersRepository = require('../users/users.repository');
+            const ownerConflict = await usersRepository.checkUserConflict({
+                username: data.owner_info.username,
+                email: data.owner_info.email,
+                phone: data.owner_info.phone
+            });
+            
+            if (ownerConflict) {
+                if (ownerConflict.phone === data.owner_info.phone) {
+                    allErrors.push({ field: 'owner.phone', code: 'PHONE_ALREADY_EXISTS', message: 'Số điện thoại này đã được sử dụng.' });
+                }
+                if (ownerConflict.email && ownerConflict.email === data.owner_info.email) {
+                    allErrors.push({ field: 'owner.email', code: 'EMAIL_ALREADY_EXISTS', message: 'Email này đã được sử dụng.' });
+                }
+                if (ownerConflict.username === data.owner_info.username) {
+                    allErrors.push({ field: 'owner.username', code: 'USERNAME_ALREADY_EXISTS', message: 'Tên đăng nhập đã được sử dụng.' });
+                }
+            }
+        }
+
+        if (allErrors.length > 0) {
+            const error = new Error('Resource Conflict');
+            error.statusCode = 409;
+            error.code = 'RESOURCE_CONFLICT';
+            error.errors = allErrors;
+            throw error;
+        }
+
         const MAX_RETRIES = 3;
         let attempt = 0;
 
@@ -27,36 +77,42 @@ const merchantsService = {
                 // 2. Tạo merchant
                 const merchant = await merchantsRepository.createMerchant(data, client);
 
-                // 3. Tạo Merchant Owner user
-                const usersRepository = require('../users/users.repository');
-                const bcrypt = require('bcrypt');
-                const cryptoStr = require('crypto');
-                
-                const rawPassword = cryptoStr.randomBytes(6).toString('hex');
-                const passwordHash = await bcrypt.hash(rawPassword, 10);
-                
-                const userId = await usersRepository.createUser(client, {
-                    fullName: data.owner_info.full_name,
-                    username: data.owner_info.username,
-                    email: data.owner_info.email,
-                    phone: data.owner_info.phone,
-                    passwordHash,
-                    userType: 'MERCHANT_USER',
-                    status: 'ACTIVE',
-                    isForceChangePassword: true
-                });
+                // 3. Tạo Merchant Owner user (nếu có yêu cầu)
+                let rawPassword = null;
+                let userId = null;
+                if (data.owner_info) {
+                    const usersRepository = require('../users/users.repository');
+                    const bcrypt = require('bcrypt');
+                    const cryptoStr = require('crypto');
+                    
+                    rawPassword = cryptoStr.randomBytes(6).toString('hex');
+                    const passwordHash = await bcrypt.hash(rawPassword, 10);
+                    
+                    userId = await usersRepository.createUser(client, {
+                        fullName: data.owner_info.full_name,
+                        username: data.owner_info.username,
+                        email: data.owner_info.email,
+                        phone: data.owner_info.phone,
+                        passwordHash,
+                        userType: 'MERCHANT_USER',
+                        status: 'ACTIVE',
+                        isForceChangePassword: true
+                    });
 
-                await usersRepository.replaceRolesByCodes(client, userId, ['MERCHANT_OWNER']);
-                
-                const crypto = require('crypto');
-                await client.query(`
-                    INSERT INTO merchant_users (id, merchant_id, user_id, role_code, is_owner)
-                    VALUES ($1, $2, $3, $4, $5)
-                `, [crypto.randomUUID(), merchant.id, userId, 'MERCHANT_OWNER', true]);
+                    await usersRepository.replaceRolesByCodes(client, userId, ['MERCHANT_OWNER']);
+                    
+                    const crypto = require('crypto');
+                    await client.query(`
+                        INSERT INTO merchant_users (id, merchant_id, user_id, role_code, is_owner)
+                        VALUES ($1, $2, $3, $4, $5)
+                    `, [crypto.randomUUID(), merchant.id, userId, 'MERCHANT_OWNER', true]);
+                }
                 
                 // 4. Nếu có data callback thì tạo config
                 let callbackConfig = null;
-                if (data.callback) {
+                const hasCallback = data.callback && (data.callback.default_callback_url || data.callback.default_redirect_url);
+                
+                if (hasCallback) {
                     callbackConfig = await merchantsRepository.createCallbackConfig(merchant.id, data.callback, client);
                 }
 
@@ -95,12 +151,9 @@ const merchantsService = {
                 const responseData = {
                     ...merchant,
                     callback_config: sanitizeCallbackConfig(callbackConfig),
-                    email_sent: emailSent
+                    email_sent: emailSent,
+                    owner_user_id: userId
                 };
-
-                if (process.env.RETURN_TEMP_PASSWORD === 'true') {
-                    responseData.owner_password = rawPassword;
-                }
 
                 return responseData;
             } catch (error) {
@@ -116,6 +169,16 @@ const merchantsService = {
                         client.release();
                         throw new Error('Failed to generate unique merchant_code after multiple attempts');
                     }
+                }
+                
+                // Lỗi duplicate email (23505)
+                if (error.code === '23505' && error.constraint === 'merchants_email_unique') {
+                    client.release();
+                    const conflictErr = new Error('Resource Conflict');
+                    conflictErr.statusCode = 409;
+                    conflictErr.code = 'RESOURCE_CONFLICT';
+                    conflictErr.errors = [{ field: 'email', code: 'EMAIL_ALREADY_EXISTS', message: 'Email này đã được sử dụng cho một Merchant khác.' }];
+                    throw conflictErr;
                 }
 
                 client.release();
@@ -178,6 +241,16 @@ const merchantsService = {
             };
         } catch (error) {
             await client.query('ROLLBACK');
+            
+            // Lỗi duplicate email (23505)
+            if (error.code === '23505' && error.constraint === 'merchants_email_unique') {
+                const conflictErr = new Error('Resource Conflict');
+                conflictErr.statusCode = 409;
+                conflictErr.code = 'RESOURCE_CONFLICT';
+                conflictErr.errors = [{ field: 'email', code: 'EMAIL_ALREADY_EXISTS', message: 'Email này đã được sử dụng cho một Merchant khác.' }];
+                throw conflictErr;
+            }
+            
             throw error;
         } finally {
             client.release();

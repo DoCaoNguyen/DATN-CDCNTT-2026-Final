@@ -140,7 +140,7 @@ const paymentService = {
                 // GHI NHẬN DOANH THU PHÍ HỆ THỐNG
                 if (feeAmount > 0n) {
                     await txRepo.createSystemLedgerEntry(
-                        client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
+                        client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount, order.merchant_id
                     );
 
                     // GHI LOG VÀO MONGODB
@@ -400,7 +400,7 @@ const paymentService = {
             // Thu phí MDR
             if (feeAmount > 0n) {
                 await txRepo.createSystemLedgerEntry(
-                    client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount
+                    client, ledgerTxId, 'SYS_FEE_MDR', 'CREDIT', feeAmount, merchantId
                 );
             }
 

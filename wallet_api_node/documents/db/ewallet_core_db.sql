@@ -26,11 +26,52 @@ SET row_security = off;
 -- Name: group_funding_type; Type: TYPE; Schema: public; Owner: postgres
 --
 
+--10-7-2026
+ALTER TABLE merchant_callback_configs ADD COLUMN IF NOT EXISTS unlink_callback_url VARCHAR(255)
+--7-7
 
+ALTER TABLE merchant_balances 
+            ADD COLUMN IF NOT EXISTS daily_withdraw_usage NUMERIC DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS last_withdraw_date DATE;
+
+
+CREATE TABLE IF NOT EXISTS wealth_bag_transactions (
+            id UUID PRIMARY KEY,
+            user_id UUID REFERENCES users(id),
+            transaction_type VARCHAR(50),
+            amount NUMERIC(20,2),
+            balance_after NUMERIC(20,2),
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+ 
+CREATE TABLE IF NOT EXISTS user_wealth_bags (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    balance DECIMAL(15, 2) DEFAULT 0.00,
+    total_profit DECIMAL(15, 2) DEFAULT 0.00,
+    is_active BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+--1-07
+ALTER TABLE user_linked_services 
+ADD COLUMN IF NOT EXISTS wallet_token VARCHAR(255);
+ALTER TABLE user_linked_services ALTER COLUMN limit_per_transaction TYPE DECIMAL(15,2)
+ALTER TABLE user_linked_services ADD COLUMN IF NOT EXISTS limit_per_transaction NUMERIC DEFAULT 5000000
 
 --27/06/2026
 ALTER TABLE ledger_transactions ADD COLUMN metadata JSONB;
 
+CREATE TABLE user_linked_services (
+                id UUID PRIMARY KEY,
+                user_id UUID REFERENCES users(id),
+                service_name VARCHAR(100),
+                service_icon VARCHAR(255),
+                limit_per_day DECIMAL(15,2) DEFAULT 5000000,
+                status VARCHAR(20) DEFAULT 'ACTIVE',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
 
 ALTER TABLE public.users
 ADD COLUMN IF NOT EXISTS is_force_change_password BOOLEAN NOT NULL DEFAULT FALSE, -- Bắt đổi mật khẩu lần đầu

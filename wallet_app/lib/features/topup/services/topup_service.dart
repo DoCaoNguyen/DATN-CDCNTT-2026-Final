@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 
@@ -20,6 +21,7 @@ class TopupService {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
+        'Idempotency-Key': const Uuid().v4(),
       },
       body: jsonEncode({
         'type': type,

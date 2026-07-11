@@ -520,15 +520,13 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         } else {
           if (!mounted) return;
-          final result = await Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => DepositWithdrawScreen(token: widget.token),
             ),
           );
-          if (result == true) {
-            _fetchBalance();
-          }
+          _fetchBalance();
         }
       } else {
         _showErrorSnackBar("Không thể kiểm tra thông tin liên kết ngân hàng.");
