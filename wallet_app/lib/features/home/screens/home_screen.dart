@@ -481,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => KycFlowScreen(userId: widget.userId),
+                  builder: (_) => KycFlowScreen(userId: widget.userId, token: widget.token),
                 ),
               );
             },

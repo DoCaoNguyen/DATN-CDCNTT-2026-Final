@@ -337,9 +337,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => DepositWithdrawSuccessScreen(
-              token: widget.token,
-              amount: amountVal.toString(),
               isDeposit: isDeposit,
+              amount: amountVal.toString(),
               referenceCode: refId,
               paymentTime: formattedTime,
             ),
@@ -397,7 +396,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
         await http.MultipartFile.fromPath('face_image', selfieFile.path),
       );
 
-      var responseStream = await request.send();
+      var responseStream = await _client.send(request);
       var response = await http.Response.fromStream(responseStream);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -411,9 +410,8 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => DepositWithdrawSuccessScreen(
-              token: widget.token,
-              amount: amountVal.toString(),
               isDeposit: isDeposit,
+              amount: amountVal.toString(),
               referenceCode: refId,
               paymentTime: formattedTime,
             ),

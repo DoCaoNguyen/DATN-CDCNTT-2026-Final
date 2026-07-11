@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../../core/constants/api_config.dart';
+import '../../../core/services/custom_http_client.dart';
 
 class OffersService {
   final String token;
@@ -9,7 +9,8 @@ class OffersService {
 
   Future<Map<String, dynamic>> redeemScratchCard(String provider, int faceValue) async {
     try {
-      final response = await http.post(
+      final client = CustomHttpClient();
+      final response = await client.post(
         Uri.parse('${ApiConfig.baseUrl}/payment/loyalty/redeem'),
         headers: {
           'Content-Type': 'application/json',

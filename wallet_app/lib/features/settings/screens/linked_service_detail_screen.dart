@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:wallet_app/core/services/custom_http_client.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
@@ -54,7 +55,7 @@ class _LinkedServiceDetailScreenState extends State<LinkedServiceDetailScreen> {
       final token = await _secureStorage.read(key: 'access_token');
       if (token == null) return;
 
-      final response = await http.get(
+      final response = await CustomHttpClient().get(
         Uri.parse(ApiConfig.getLinkedServiceTransactions(widget.service['id'])),
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -85,7 +86,7 @@ class _LinkedServiceDetailScreenState extends State<LinkedServiceDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final token = await _secureStorage.read(key: 'access_token');
-      final response = await http.patch(
+      final response = await CustomHttpClient().patch(
         Uri.parse(ApiConfig.updateLinkedServiceLimits(widget.service['id'])),
         headers: {
           'Authorization': 'Bearer $token',
@@ -182,7 +183,7 @@ class _LinkedServiceDetailScreenState extends State<LinkedServiceDetailScreen> {
         onPinEntered: (pin) async {
           try {
             final token = await _secureStorage.read(key: 'access_token');
-            final verifyRes = await http.post(
+            final verifyRes = await CustomHttpClient().post(
               Uri.parse(ApiConfig.verifyPin),
               headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
               body: jsonEncode({'pin': pin}),
@@ -192,7 +193,7 @@ class _LinkedServiceDetailScreenState extends State<LinkedServiceDetailScreen> {
               return verifyJson['error'] ?? verifyJson['message'] ?? 'Mã PIN không đúng';
             }
 
-            final updateRes = await http.patch(
+            final updateRes = await CustomHttpClient().patch(
               Uri.parse(ApiConfig.updateLinkedServiceLimits(widget.service['id'].toString())),
               headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
               body: jsonEncode({
@@ -250,7 +251,7 @@ class _LinkedServiceDetailScreenState extends State<LinkedServiceDetailScreen> {
           try {
             final token = await _secureStorage.read(key: 'access_token');
             
-            final verifyRes = await http.post(
+            final verifyRes = await CustomHttpClient().post(
               Uri.parse(ApiConfig.verifyPin),
               headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
               body: jsonEncode({'pin': pin}),
@@ -260,7 +261,7 @@ class _LinkedServiceDetailScreenState extends State<LinkedServiceDetailScreen> {
               return verifyJson['error'] ?? verifyJson['message'] ?? 'Mã PIN không đúng';
             }
 
-            final response = await http.delete(
+            final response = await CustomHttpClient().delete(
               Uri.parse(ApiConfig.unlinkService(widget.service['id'].toString())),
               headers: {'Authorization': 'Bearer $token'},
             );

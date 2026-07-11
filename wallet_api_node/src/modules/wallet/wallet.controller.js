@@ -160,7 +160,10 @@ const walletController = {
                 return res.status(400).json({ error: 'Vui lòng nhập mã PIN' });
             }
 
-            await walletService.verifyPin(userId, pin);
+            const isValid = await walletService.verifyPin(userId, pin);
+            if (!isValid) {
+                return res.status(400).json({ error: 'Mã PIN không chính xác' });
+            }
             res.status(200).json({ message: 'Mã PIN chính xác' });
         } catch (error) {
             if (error.message.startsWith('Wrong_PIN_')) {

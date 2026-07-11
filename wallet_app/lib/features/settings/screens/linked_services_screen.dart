@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:wallet_app/core/services/custom_http_client.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
@@ -31,7 +32,7 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
       final token = await secureStorage.read(key: 'access_token');
       
       if (token != null) {
-        final response = await http.get(
+        final response = await CustomHttpClient().get(
           Uri.parse(ApiConfig.getLinkedServices),
           headers: {'Authorization': 'Bearer $token'},
         );

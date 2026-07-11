@@ -113,6 +113,7 @@ const paymentService = {
                 client, order.order_id, userId, wallet.id, order.amount, paymentTxId
             );
 
+            let updatedMerchantBalance = null;
             // [NEW] CREDIT TIỀN CHO MERCHANT VÀ THU PHÍ MDR
             if (order.merchant_id) {
                 // TÍNH PHÍ MDR TỪ CẤU HÌNH
@@ -130,6 +131,7 @@ const paymentService = {
                 // Cập nhật số dư vào merchant_balances (Thay vì wallet_balances cá nhân)
                 const mBalanceBefore = await txRepo.lockAndGetMerchantBalance(client, order.merchant_id);
                 const mBalanceAfter = await txRepo.addMerchantBalance(client, order.merchant_id, netAmount);
+                updatedMerchantBalance = mBalanceAfter.toString();
 
                 await txRepo.createLedgerEntry(
                     client, ledgerTxId, order.merchant_id, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
@@ -208,6 +210,16 @@ const paymentService = {
 
             await client.query('COMMIT');
 
+            // [NEW] Emit realtime balance to merchant owner
+            if (updatedMerchantBalance && order.merchant_id) {
+                const merchantRepo = require('../merchant/merchant.repository');
+                const ownerId = await merchantRepo.getMerchantUserId(order.merchant_id);
+                if (ownerId) {
+                    const { emitToUser } = require('../../utils/socket');
+                    emitToUser(ownerId, 'merchant_balance_update', { newBalance: updatedMerchantBalance });
+                }
+            }
+
             // [NEW] Ghi log Payment Flow vào MongoDB
             traceEventService.logEvent({
                 trace_id: ledgerTxId,
@@ -250,12 +262,17 @@ const paymentService = {
                 }).catch(err => console.error('[WEBHOOK_PUBLISH_ERROR]', err));
             }
 
+            // Return the sequence transaction_no directly
+
             return {
                 order_id: order.merchant_order_id || order.order_code,
                 merchant_order_id: order.merchant_order_id || null,
                 order_code: order.order_code,
+                transaction_id: paymentTxId,
+                reference_code: transaction_no,
                 amount_paid: order.amount ? order.amount.toString() : '0',
-                balance_remaining: balanceAfter ? balanceAfter.toString() : '0'
+                balance_remaining: balanceAfter ? balanceAfter.toString() : '0',
+                timestamp: new Date().toISOString()
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -374,6 +391,7 @@ const paymentService = {
 
             const mBalanceBefore = await txRepo.lockAndGetMerchantBalance(client, merchantId);
             const mBalanceAfter = await txRepo.addMerchantBalance(client, merchantId, netAmount);
+            const updatedMerchantBalance = mBalanceAfter.toString();
 
             await txRepo.createLedgerEntry(
                 client, ledgerTxId, merchantId, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
@@ -390,6 +408,15 @@ const paymentService = {
             await paymentRepo.createPaymentTransaction(client, orderId, userId, userWallet.id, amount, paymentTxId);
 
             await client.query('COMMIT');
+
+            // [NEW] Emit realtime balance to merchant owner
+            if (updatedMerchantBalance && merchantId) {
+                const ownerId = await merchantRepo.getMerchantUserId(merchantId);
+                if (ownerId) {
+                    const { emitToUser } = require('../../utils/socket');
+                    emitToUser(ownerId, 'merchant_balance_update', { newBalance: updatedMerchantBalance });
+                }
+            }
 
             const resTxNo = await client.query('SELECT transaction_no FROM ledger_transactions WHERE id = $1', [ledgerTxId]);
             const transaction_no = resTxNo.rows[0].transaction_no;

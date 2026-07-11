@@ -274,6 +274,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                             _buildOverviewAssetItem(
                               iconData: Icons.account_balance,
                               iconColor: Colors.green,
+                              bankCode: bank['bank_code']?.toString(),
                               title: bank['bank_name'] ?? 'Ngân hàng',
                               value: '',
                               valueColor: AppColors.primaryPink,
@@ -347,6 +348,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     return _buildAccountItem(
                       iconData: Icons.account_balance,
                       iconColor: Colors.green,
+                      bankCode: bank['bank_code']?.toString(),
                       title: bank['bank_name'] ?? 'Ngân hàng',
                       value: 'Xem số dư >',
                       valueColor: Colors.black87,
@@ -456,6 +458,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
   Widget _buildOverviewAssetItem({
     required IconData iconData,
     required Color iconColor,
+    String? bankCode,
     required String title,
     required String value,
     Color? valueColor,
@@ -474,7 +477,16 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
               border: Border.all(color: Colors.grey.shade200),
             ),
             alignment: Alignment.center,
-            child: Icon(iconData, color: iconColor, size: 20),
+            child: bankCode != null
+                ? Image.network(
+                    'https://api.vietqr.io/img/$bankCode.png',
+                    width: 20,
+                    height: 20,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        Icon(iconData, color: iconColor, size: 20),
+                  )
+                : Icon(iconData, color: iconColor, size: 20),
           ),
           const SizedBox(width: 12),
           Text(
@@ -514,6 +526,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
   Widget _buildAccountItem({
     required IconData iconData,
     required Color iconColor,
+    String? bankCode,
     required String title,
     required String value,
     Color? valueColor,
@@ -544,7 +557,16 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                   border: Border.all(color: Colors.grey.shade100),
                 ),
                 alignment: Alignment.center,
-                child: Icon(iconData, color: iconColor, size: 22),
+                child: bankCode != null
+                    ? Image.network(
+                        'https://api.vietqr.io/img/$bankCode.png',
+                        width: 22,
+                        height: 22,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(iconData, color: iconColor, size: 22),
+                      )
+                    : Icon(iconData, color: iconColor, size: 22),
               ),
               const SizedBox(width: 12),
               Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),

@@ -57,7 +57,7 @@ class BankService {
         await http.MultipartFile.fromPath('face_image', selfieFile.path),
       );
 
-      var responseStream = await request.send();
+      var responseStream = await _client.send(request);
       var response = await http.Response.fromStream(responseStream);
 
       final data = jsonDecode(response.body);

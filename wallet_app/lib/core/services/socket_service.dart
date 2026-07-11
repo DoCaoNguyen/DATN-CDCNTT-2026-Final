@@ -64,6 +64,10 @@ class SocketService {
       _socket!.on('balance_update', (data) => _onBalanceUpdate?.call(data));
     }
 
+    if (_onMerchantBalanceUpdate != null) {
+      _socket!.on('merchant_balance_update', (data) => _onMerchantBalanceUpdate?.call(data));
+    }
+
     _socket!.on('force_logout', (data) {
       debugPrint('Received force_logout event! Executing forced logout...');
       CustomHttpClient.handleUnauthorized();
@@ -129,6 +133,23 @@ class SocketService {
   void offReceiveMessage() {
     if (_socket != null) {
       _socket!.off('receive_message');
+    }
+  }
+
+  Function(dynamic)? _onMerchantBalanceUpdate;
+
+  void onMerchantBalanceUpdate(Function(dynamic) callback) {
+    _onMerchantBalanceUpdate = callback;
+    if (_socket != null) {
+      _socket!.off('merchant_balance_update');
+      _socket!.on('merchant_balance_update', (data) => _onMerchantBalanceUpdate?.call(data));
+    }
+  }
+
+  void offMerchantBalanceUpdate() {
+    _onMerchantBalanceUpdate = null;
+    if (_socket != null) {
+      _socket!.off('merchant_balance_update');
     }
   }
 }

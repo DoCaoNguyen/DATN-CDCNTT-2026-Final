@@ -29,43 +29,13 @@ class QrScannerTab extends StatelessWidget {
         children: [
           MobileScanner(controller: scannerController, onDetect: onDetectQR),
 
-          // Tạo lớp mờ đen đục lỗ ở giữa
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Colors.black.withValues(alpha: 0.6),
-              BlendMode.srcOut,
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    backgroundBlendMode: BlendMode.dstOut,
-                  ),
-                ),
-                Center(
-                  child: Container(
-                    width: 260,
-                    height: 260,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Viền trắng của khung quét
+          // Khung quét (chỉ có 4 góc)
           Center(
-            child: Container(
+            child: SizedBox(
               width: 260,
               height: 260,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 1.5),
-                borderRadius: BorderRadius.circular(16),
+              child: CustomPaint(
+                painter: _ScannerCornerPainter(),
               ),
             ),
           ),
@@ -163,4 +133,43 @@ class QrScannerTab extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ScannerCornerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 4.0
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+
+    final double cornerLength = 30.0;
+    final path = Path();
+
+    // Top Left
+    path.moveTo(0, cornerLength);
+    path.lineTo(0, 0);
+    path.lineTo(cornerLength, 0);
+
+    // Top Right
+    path.moveTo(size.width - cornerLength, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, cornerLength);
+
+    // Bottom Right
+    path.moveTo(size.width, size.height - cornerLength);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width - cornerLength, size.height);
+
+    // Bottom Left
+    path.moveTo(cornerLength, size.height);
+    path.lineTo(0, size.height);
+    path.lineTo(0, size.height - cornerLength);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

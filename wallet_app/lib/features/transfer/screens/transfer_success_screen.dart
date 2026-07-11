@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../history/screens/transaction_history_screen.dart';
 
 class TransferSuccessScreen extends StatelessWidget {
   final String token;
@@ -9,6 +8,7 @@ class TransferSuccessScreen extends StatelessWidget {
   final String note;
   final String referenceCode;
   final String paymentTime;
+  final String senderName; // Pass the sender name if possible
 
   const TransferSuccessScreen({
     Key? key,
@@ -19,6 +19,7 @@ class TransferSuccessScreen extends StatelessWidget {
     required this.note,
     required this.referenceCode,
     required this.paymentTime,
+    this.senderName = 'Bạn', // Default to "Bạn" if not provided
   }) : super(key: key);
 
   String _formatAmount(String value) {
@@ -77,7 +78,7 @@ class TransferSuccessScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              // Vòng tròn checkmark màu xanh lá
+              // Vòng tròn checkmark
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(4),
@@ -112,7 +113,7 @@ class TransferSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Thông báo người nhận tiền
+              // Thông báo người nhận
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -120,15 +121,15 @@ class TransferSuccessScreen extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9).withValues(alpha: 0.6),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFC8E6C9), width: 1),
+                  border: Border.all(color: Colors.blue.shade100, width: 1),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.info_outline_rounded,
-                      color: Color(0xFF4CAF50),
+                      color: Colors.blue.shade600,
                       size: 20,
                     ),
                     const SizedBox(width: 10),
@@ -147,54 +148,72 @@ class TransferSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Thông tin giao dịch chính
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Giao dịch',
-                    style: TextStyle(color: Colors.grey, fontSize: 15),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        referenceCode,
-                        style: const TextStyle(
-                          color: Color(0xFFE91E63),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Color(0xFFE91E63),
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Thời gian thanh toán',
-                    style: TextStyle(color: Colors.grey, fontSize: 15),
-                  ),
-                  Text(
-                    paymentTime,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
+              // Thông tin giao dịch chính trong khung trắng
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Giao dịch',
+                          style: TextStyle(color: Colors.grey, fontSize: 15),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              referenceCode,
+                              style: const TextStyle(
+                                color: Color(0xFFE91E63),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFFE91E63),
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Thời gian thanh toán',
+                          style: TextStyle(color: Colors.grey, fontSize: 15),
+                        ),
+                        Text(
+                          paymentTime,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
 
-              // Khung Biên lai chuyển tiền lớn
+              // Khung Biên lai
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -202,7 +221,7 @@ class TransferSuccessScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: Colors.black.withOpacity(0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -278,7 +297,7 @@ class TransferSuccessScreen extends StatelessWidget {
                     ),
                     const Divider(height: 1),
 
-                    // Phần đường đi giao dịch (Người gửi -> Người nhận)
+                    // Phần đường đi giao dịch
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -290,7 +309,7 @@ class TransferSuccessScreen extends StatelessWidget {
                                 radius: 18,
                                 backgroundColor: const Color(0xFFFFE4EE),
                                 child: Text(
-                                  'VT',
+                                  _getInitials(senderName),
                                   style: const TextStyle(
                                     color: Color(0xFFE91E63),
                                     fontSize: 13,
@@ -299,33 +318,45 @@ class TransferSuccessScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Phan Văn Thống',
-                                    style: TextStyle(
+                                    senderName,
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                       color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    note.isEmpty ? 'Chuyển tiền' : note,
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          // Đường nối dọc
+                          
+                          // Mũi tên (3 mũi tên mờ)
                           Padding(
-                            padding: const EdgeInsets.only(left: 18.0),
+                            padding: const EdgeInsets.only(left: 11.0, top: 4.0, bottom: 4.0),
                             child: Align(
                               alignment: Alignment.centerLeft,
-                              child: Container(
-                                width: 2,
-                                height: 20,
-                                color: Colors.grey.shade300,
+                              child: Column(
+                                children: [
+                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.grey.shade400),
+                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.grey.shade400),
+                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.grey.shade400),
+                                ],
                               ),
                             ),
                           ),
+                          
                           // Người nhận
                           Row(
                             children: [
@@ -365,241 +396,107 @@ class TransferSuccessScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-
-                    // Phần Lời nhắn nhanh
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text(
-                                'Gửi lời nhắn nhanh',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                size: 16,
-                                color: Colors.blue.shade700,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              _buildQuickTag('Đã chuyển'),
-                              _buildQuickTag('💵 Ting ting rồi nhé'),
-                              _buildQuickTag('🫶 Cảm ơn bạn'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Các nút thao tác
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 16.0,
-                        right: 16.0,
-                        bottom: 20.0,
-                        top: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 44,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // Quay lại màn hình TransferAmountScreen
-                                  Navigator.pop(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE91E63),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Chuyển thêm',
+                          
+                          const SizedBox(height: 16),
+                          // Giao dịch hoàn thành trong...
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F8E9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'Giao dịch hoàn thành chỉ trong: ',
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                    color: Colors.black87,
+                                    fontSize: 13,
                                   ),
                                 ),
-                              ),
+                                const Text(
+                                  '1.0 giây ',
+                                  style: TextStyle(
+                                    color: Color(0xFF4CAF50),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Icon(Icons.flash_on_rounded, color: Colors.green.shade600, size: 14),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
+                    
+                    const SizedBox(height: 4),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Phần "Quản lý chi tiêu" ở dưới
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.account_balance_wallet_rounded,
-                          color: Colors.teal,
-                          size: 20,
+              // Các nút thao tác
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE91E63)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Quản lý chi tiêu',
+                        child: const Text(
+                          'Trò chuyện',
                           style: TextStyle(
+                            color: Color(0xFFE91E63),
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
                         ),
-                        const Icon(
-                          Icons.visibility_rounded,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            children: [
-                              Text(
-                                'Giải trí',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_drop_down_rounded,
-                                size: 16,
-                                color: Colors.black87,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.format_quote_rounded,
-                            color: Colors.blue,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 13,
-                                ),
-                                children: [
-                                  const TextSpan(
-                                    text:
-                                        'Tháng 6 biến động, Thống đã chi bao tiền? Liệu đã tới ',
-                                  ),
-                                  TextSpan(
-                                    text: '5.000.000đ?',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      TransactionHistoryScreen(token: token),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'Xem lại ngay →',
-                              style: TextStyle(
-                                color: Colors.red.shade400,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE91E63),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Chuyển thêm',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildQuickTag(String text) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 13, color: Colors.black87),
       ),
     );
   }

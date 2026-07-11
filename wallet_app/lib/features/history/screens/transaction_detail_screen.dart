@@ -6,6 +6,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../widgets/category_bottom_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:wallet_app/core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
 import '../../transfer/screens/transfer_amount_screen.dart';
 import '../../bank/screens/bank_transfer_input_screen.dart';
@@ -199,7 +200,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       debugPrint(
         "Sending PUT category request for transId: $transId, category: $categoryName, counted: $isCounted",
       );
-      final response = await http.put(
+      final response = await CustomHttpClient().put(
         Uri.parse("${ApiConfig.baseUrl}/transaction/$transId/category"),
         headers: {
           'Content-Type': 'application/json',
@@ -629,6 +630,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                     "Nội dung",
                                     child: Text(
                                       note,
+                                      textAlign: TextAlign.right,
                                       style: const TextStyle(
                                         color: Colors.black87,
                                         fontWeight: FontWeight.w500,
@@ -970,10 +972,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          child,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: child,
+            ),
+          ),
         ],
       ),
     );
