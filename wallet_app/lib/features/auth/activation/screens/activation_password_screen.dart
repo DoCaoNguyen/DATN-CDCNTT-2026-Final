@@ -20,7 +20,8 @@ class ActivationPasswordScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ActivationPasswordScreen> createState() => _ActivationPasswordScreenState();
+  State<ActivationPasswordScreen> createState() =>
+      _ActivationPasswordScreenState();
 }
 
 class _ActivationPasswordScreenState extends State<ActivationPasswordScreen> {
@@ -66,7 +67,7 @@ class _ActivationPasswordScreenState extends State<ActivationPasswordScreen> {
         Uri.parse(ApiConfig.setPasswordAfterVerify),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.verifyToken}'
+          'Authorization': 'Bearer ${widget.verifyToken}',
         },
         body: jsonEncode({
           'new_password': newPassword,

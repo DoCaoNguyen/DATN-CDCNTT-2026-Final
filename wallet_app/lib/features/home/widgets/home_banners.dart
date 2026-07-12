@@ -3,6 +3,7 @@ import '../../transfer/screens/transfer_main_screen.dart';
 import '../../bank/screens/bank_transfer_list_screen.dart';
 import '../../split_bill/screens/split_bill_management_screen.dart';
 import '../../topup/screens/topup_main_screen.dart';
+
 class FinancialCenterBanner extends StatelessWidget {
   final String activeLang;
   final String fullName;
@@ -57,7 +58,12 @@ class HomeEventBanner extends StatelessWidget {
   final String token;
   final Map<String, dynamic> me;
 
-  const HomeEventBanner({Key? key, required this.activeLang, required this.token, required this.me}) : super(key: key);
+  const HomeEventBanner({
+    Key? key,
+    required this.activeLang,
+    required this.token,
+    required this.me,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +77,18 @@ class HomeEventBanner extends StatelessWidget {
             children: [
               Text(
                 activeLang == 'VIE' ? "Sự kiện đang diễn ra" : "Ongoing Events",
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 activeLang == 'VIE' ? "Xem tất cả" : "See all",
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFC62828)),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFC62828),
+                ),
               ),
             ],
           ),
@@ -140,7 +153,10 @@ class HomeEventBanner extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => SplitBillManagementScreen(token: token, me: me),
+                                builder: (context) => SplitBillManagementScreen(
+                                  token: token,
+                                  me: me,
+                                ),
                               ),
                             );
                           },
@@ -154,7 +170,9 @@ class HomeEventBanner extends StatelessWidget {
                               borderRadius: BorderRadius.circular(24),
                             ),
                             child: Text(
-                              activeLang == 'VIE' ? "Khám phá ngay" : "Explore Now",
+                              activeLang == 'VIE'
+                                  ? "Khám phá ngay"
+                                  : "Explore Now",
                               style: const TextStyle(
                                 color: Color(0xFFC62828),
                                 fontWeight: FontWeight.bold,
@@ -181,8 +199,12 @@ class HomeRecommendations extends StatelessWidget {
   final String token;
   final Map<String, dynamic> me;
 
-  const HomeRecommendations({Key? key, required this.activeLang, required this.token, required this.me})
-    : super(key: key);
+  const HomeRecommendations({
+    Key? key,
+    required this.activeLang,
+    required this.token,
+    required this.me,
+  }) : super(key: key);
 
   Widget buildRecommendItem(
     BuildContext context,
@@ -294,7 +316,8 @@ class HomeRecommendations extends StatelessWidget {
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => BankTransferListScreen(token: token),
+                      builder: (context) =>
+                          BankTransferListScreen(token: token),
                     ),
                   ),
                 ),
@@ -307,7 +330,8 @@ class HomeRecommendations extends StatelessWidget {
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SplitBillManagementScreen(token: token, me: me),
+                      builder: (context) =>
+                          SplitBillManagementScreen(token: token, me: me),
                     ),
                   ),
                 ),

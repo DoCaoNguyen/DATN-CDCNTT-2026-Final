@@ -13,10 +13,12 @@ import '../../../../core/constants/app_colors.dart';
 class WalletLinkConfirmScreen extends StatefulWidget {
   final String merchantName;
 
-  const WalletLinkConfirmScreen({Key? key, required this.merchantName}) : super(key: key);
+  const WalletLinkConfirmScreen({Key? key, required this.merchantName})
+    : super(key: key);
 
   @override
-  State<WalletLinkConfirmScreen> createState() => _WalletLinkConfirmScreenState();
+  State<WalletLinkConfirmScreen> createState() =>
+      _WalletLinkConfirmScreenState();
 }
 
 class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
@@ -80,11 +82,13 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
 
             // 2. Lấy mã Auth_Code từ Backend nếu PIN đúng
             String authCode = await _getAuthCode();
-            
+
             // 3. Trả về app merchant với auth_code thông qua Deep Link
-            final uri = Uri.parse('tiktokshop://link-result?status=success&auth_code=$authCode');
+            final uri = Uri.parse(
+              'tiktokshop://link-result?status=success&auth_code=$authCode',
+            );
             await launchUrl(uri, mode: LaunchMode.externalApplication);
-            
+
             if (mounted) {
               Navigator.pop(context); // Đóng màn hình liên kết
             }
@@ -116,7 +120,10 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
           icon: const Icon(Icons.close, color: Colors.black),
           onPressed: _cancelLink,
         ),
-        title: const Text('Xác nhận liên kết dịch vụ', style: TextStyle(color: Colors.black, fontSize: 16)),
+        title: const Text(
+          'Xác nhận liên kết dịch vụ',
+          style: TextStyle(color: Colors.black, fontSize: 16),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -137,7 +144,11 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.shopping_bag, color: Colors.white, size: 30),
+                    child: const Icon(
+                      Icons.shopping_bag,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Icon(Icons.link, color: Colors.grey, size: 30),
@@ -149,14 +160,21 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
                       color: AppColors.primaryPink,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 30),
+                    child: const Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
               Text(
                 'Liên kết Ví Mio với ${widget.merchantName}',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -168,7 +186,11 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
                 ),
                 child: const Text(
                   'Bằng việc xác nhận, bạn cho phép nền tảng đối tác tự động thanh toán các giao dịch từ nguồn tiền của Ví Mio mà không cần nhập lại OTP hay Mật khẩu cho các lần sau.',
-                  style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    height: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -180,11 +202,27 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
                   onPressed: _isLoading ? null : _authenticateAndLink,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Xác nhận liên kết', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Xác nhận liên kết',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -194,9 +232,18 @@ class _WalletLinkConfirmScreenState extends State<WalletLinkConfirmScreen> {
                 child: TextButton(
                   onPressed: _isLoading ? null : _cancelLink,
                   style: TextButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
                   ),
-                  child: const Text('Hủy bỏ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  child: const Text(
+                    'Hủy bỏ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ),
               ),
             ],

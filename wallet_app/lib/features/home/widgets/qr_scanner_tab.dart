@@ -34,9 +34,7 @@ class QrScannerTab extends StatelessWidget {
             child: SizedBox(
               width: 260,
               height: 260,
-              child: CustomPaint(
-                painter: _ScannerCornerPainter(),
-              ),
+              child: CustomPaint(painter: _ScannerCornerPainter()),
             ),
           ),
 

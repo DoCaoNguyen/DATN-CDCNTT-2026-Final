@@ -10,8 +10,8 @@ class TopupMainScreen extends StatelessWidget {
   final int? initialValue;
 
   const TopupMainScreen({
-    Key? key, 
-    required this.token, 
+    Key? key,
+    required this.token,
     this.initialTab = 0,
     this.initialProvider,
     this.initialValue,

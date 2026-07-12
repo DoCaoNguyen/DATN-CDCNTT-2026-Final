@@ -2,22 +2,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/services/custom_http_client.dart';
 import '../../../core/constants/api_config.dart';
-import 'transfer_search_screen.dart'; 
+import 'transfer_search_screen.dart';
 import 'transfer_amount_screen.dart';
 import '../../bank/screens/bank_transfer_input_screen.dart';
 import '../../chat/screens/chat_list_screen.dart';
 import '../../split_bill/screens/split_bill_management_screen.dart';
 
 class TransferMainScreen extends StatefulWidget {
-  final String token; 
-  final String? initialPhone; 
-  final String? initialName; 
-  
+  final String token;
+  final String? initialPhone;
+  final String? initialName;
+
   const TransferMainScreen({
-    Key? key, 
+    Key? key,
     required this.token,
-    this.initialPhone, 
-    this.initialName,  
+    this.initialPhone,
+    this.initialName,
   }) : super(key: key);
 
   @override
@@ -48,7 +48,15 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         if (data['success'] && data['data'] != null) {
           if (mounted) {
             setState(() {
-              _recentContacts = (data['data'] as List).take(10).toList();
+              final List<dynamic> rawContacts = data['data'] ?? [];
+              final uniqueContacts = <String, dynamic>{};
+              for (var contact in rawContacts) {
+                final phone = contact['counterparty_phone'];
+                if (phone != null && !uniqueContacts.containsKey(phone)) {
+                  uniqueContacts[phone] = contact;
+                }
+              }
+              _recentContacts = uniqueContacts.values.take(20).toList();
             });
           }
         }
@@ -60,9 +68,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
 
   Future<void> _fetchLinkedBanks() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getLinkedBanks),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getLinkedBanks));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
@@ -87,12 +93,12 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F9), 
+      backgroundColor: const Color(0xFFF5F5F9),
       body: SafeArea(
         top: false,
         child: Column(
           children: [
-            _buildHeader(context), 
+            _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -140,22 +146,36 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             children: [
               GestureDetector(
                 onTap: () {
-                  Navigator.pop(context); 
-                }, 
+                  Navigator.pop(context);
+                },
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.arrow_back_rounded, size: 20, color: Colors.black87),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    size: 20,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               const Text(
                 'Chuyển tiền',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(20),
@@ -183,29 +203,43 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
-                      BoxShadow(color: Colors.pink.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.pink.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Row(
                     children: [
                       const SizedBox(width: 12),
-                      const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                      const Icon(
+                        Icons.search_rounded,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
                             Navigator.push(
-                              context, 
-                              MaterialPageRoute(builder: (_) => TransferSearchScreen(token: widget.token))
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    TransferSearchScreen(token: widget.token),
+                              ),
                             );
                           },
                           child: Container(
                             height: double.infinity,
-                            color: Colors.transparent, 
+                            color: Colors.transparent,
                             alignment: Alignment.centerLeft,
                             child: const Text(
                               'Nhập SĐT/STK tại đây',
-                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         ),
@@ -221,9 +255,20 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                         child: Center(
                           child: Row(
                             children: [
-                              Icon(Icons.paste_rounded, size: 14, color: Colors.pink.shade700),
+                              Icon(
+                                Icons.paste_rounded,
+                                size: 14,
+                                color: Colors.pink.shade700,
+                              ),
                               const SizedBox(width: 4),
-                              Text('Dán', style: TextStyle(color: Colors.pink.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+                              Text(
+                                'Dán',
+                                style: TextStyle(
+                                  color: Colors.pink.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -237,8 +282,14 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
               Container(
                 height: 44,
                 width: 44,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.contact_phone_rounded, color: Colors.black87),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.contact_phone_rounded,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
@@ -257,7 +308,10 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Chuyển tiền đến', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Chuyển tiền đến',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -274,12 +328,34 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                        child: const Text('mio', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold, height: 1)),
+                        decoration: const BoxDecoration(
+                          color: Colors.pink,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Text(
+                          'mio',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            height: 1,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('Ví Mio khác', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
+                      const Text(
+                        'Ví Mio khác',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                     ],
                   ),
                 ),
@@ -295,10 +371,24 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.account_balance_rounded, color: Colors.blue, size: 18),
+                      Icon(
+                        Icons.account_balance_rounded,
+                        color: Colors.blue,
+                        size: 18,
+                      ),
                       SizedBox(width: 8),
-                      Text('Ngân hàng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
+                      Text(
+                        'Ngân hàng',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                     ],
                   ),
                 ),
@@ -319,7 +409,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
                 _buildBankItem('ICB', 'Vietinbank'),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -343,7 +433,10 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+          Text(
+            name,
+            style: const TextStyle(fontSize: 12, color: Colors.black87),
+          ),
         ],
       ),
     );
@@ -364,56 +457,97 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         children: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Chọn chuyển nhanh', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Chọn chuyển nhanh',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(height: 8),
-          ..._recentContacts.map((contact) {
-            final name = contact['counterparty_name'] ?? 'Người lạ';
-            final phone = contact['counterparty_phone'] ?? '';
-            final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-            return Column(
-              children: [
-                _buildQuickTransferUser(
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: _recentContacts.length > 5 ? 360.0 : double.infinity,
+            ),
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: _recentContacts.length > 5
+                  ? const BouncingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              itemCount: _recentContacts.length,
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, indent: 70),
+              itemBuilder: (context, index) {
+                final contact = _recentContacts[index];
+                final name = contact['counterparty_name'] ?? 'Người lạ';
+                final phone = contact['counterparty_phone'] ?? '';
+                final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+                return _buildQuickTransferUser(
                   avatarColor: Colors.purple.shade100,
                   initials: initials,
                   name: name,
                   phone: phone,
-                ),
-                if (_recentContacts.last != contact)
-                  const Divider(height: 1, indent: 70),
-              ],
-            );
-          }).toList(),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickTransferUser({required Color avatarColor, required String initials, required String name, required String phone}) {
+  Widget _buildQuickTransferUser({
+    required Color avatarColor,
+    required String initials,
+    required String name,
+    required String phone,
+  }) {
     return ListTile(
       leading: Stack(
         children: [
           CircleAvatar(
             radius: 20,
             backgroundColor: avatarColor,
-            child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(
+              initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           Positioned(
             right: 0,
             bottom: 0,
             child: Container(
               padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.pink, shape: BoxShape.circle),
-                child: const Text('mio', style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold, height: 1)),
+                decoration: const BoxDecoration(
+                  color: Colors.pink,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  'mio',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 6,
+                    fontWeight: FontWeight.bold,
+                    height: 1,
+                  ),
+                ),
               ),
             ),
-          )
+          ),
         ],
       ),
-      title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+      title: Text(
+        name,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+      ),
       trailing: const Icon(Icons.history, color: Colors.grey),
       onTap: () {
         Navigator.push(
@@ -433,9 +567,9 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
   String _maskCardNumber(String? number) {
     if (number == null || number.isEmpty) return '';
     if (number.length > 4) {
-      return '******${number.substring(number.length - 4)}';
+      return '••••••${number.substring(number.length - 4)}';
     }
-    return '******$number';
+    return '••••••$number';
   }
 
   // ==========================================
@@ -449,75 +583,164 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Tài khoản ngân hàng của tôi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 8),
-          if (_isLoadingBanks)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: CircularProgressIndicator(color: Colors.pink),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Tài khoản ngân hàng của tôi',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
-            )
-          else if (_linkedBanks.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text(
-                'Chưa liên kết tài khoản ngân hàng nào.',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-            )
-          else
-            ListView.builder(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _linkedBanks.length,
-              itemBuilder: (context, index) {
-                final bank = _linkedBanks[index];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BankTransferInputScreen(
-                          token: widget.token,
-                          bankName: bank['bank_name'] ?? 'Ngân hàng',
-                          bankCode: bank['bank_code'] ?? 'BANK',
-                          prefilledAccountNumber: bank['card_number'] ?? bank['account_number'],
-                          cardHolderName: bank['card_holder_name'] ?? bank['account_holder_name'],
+              const SizedBox(height: 8),
+              if (_isLoadingBanks)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    child: CircularProgressIndicator(color: Colors.pink),
+                  ),
+                )
+              else if (_linkedBanks.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: Text(
+                    'Chưa liên kết tài khoản ngân hàng nào.',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: _linkedBanks.length > 5
+                        ? 360.0
+                        : double.infinity,
+                  ),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: _linkedBanks.length > 5
+                        ? const BouncingScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    itemCount: _linkedBanks.length,
+                    itemBuilder: (context, index) {
+                      final bank = _linkedBanks[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 0,
                         ),
-                      ),
-                    );
-                  },
-                  leading: Container(
-                    height: 44,
-                    width: 44,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFFE8F2FC),
-                    ),
-                    child: const Icon(Icons.account_balance_rounded, color: Color(0xFF0F75BD), size: 22),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BankTransferInputScreen(
+                                token: widget.token,
+                                bankName: bank['bank_name'] ?? 'Ngân hàng',
+                                bankCode: bank['bank_code'] ?? 'BANK',
+                                prefilledAccountNumber:
+                                    bank['card_number'] ??
+                                    bank['account_number'],
+                                cardHolderName:
+                                    bank['card_holder_name'] ??
+                                    bank['account_holder_name'],
+                              ),
+                            ),
+                          );
+                        },
+                        leading: _buildBankIcon(bank, 44),
+                        title: Text(
+                          bank['card_holder_name'] ??
+                              bank['account_holder_name'] ??
+                              'Tài khoản liên kết',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        subtitle: _buildMaskedSubtitle(bank),
+                      );
+                    },
                   ),
-                  title: Text(
-                    bank['card_holder_name'] ?? bank['account_holder_name'] ?? 'Tài khoản liên kết', 
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
-                  ),
-                  subtitle: Text(
-                    "${bank['bank_name'] ?? 'Ngân hàng'} - ${_maskCardNumber(bank['card_number'] ?? bank['account_number'])}", 
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
+                ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  // --- UI WIDGET BUILDERS ---
+  Widget _buildBankIcon(Map<String, dynamic>? bank, double size) {
+    if (bank != null &&
+        bank['bank_code'] != null &&
+        bank['bank_code'].toString().isNotEmpty) {
+      String bCode = bank['bank_code'].toString();
+      if (bCode.toUpperCase() == 'AGR' || bCode.toUpperCase() == 'AGRIBANK') {
+        bCode = 'VBA';
+      }
+      return Container(
+        width: size,
+        height: size,
+        padding: EdgeInsets.all(size * 0.1),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size * 0.2),
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Image.network(
+          'https://api.vietqr.io/img/$bCode.png',
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(
+              Icons.account_balance_rounded,
+              color: Colors.pink,
+              size: size * 0.7,
+            );
+          },
+        ),
+      );
+    }
+    return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size);
+  }
+
+  Widget _buildMaskedSubtitle(Map<String, dynamic> bank) {
+    final String number = bank['card_number'] ?? bank['account_number'] ?? '';
+    final String bankName = bank['bank_name'] ?? 'Ngân hàng';
+
+    if (number.length <= 4) {
+      return Text(
+        "$bankName - $number",
+        style: const TextStyle(fontSize: 13, color: Colors.grey),
+      );
+    }
+
+    final String last4 = number.substring(number.length - 4);
+
+    return Text.rich(
+      TextSpan(
+        text: "$bankName - ",
+        style: const TextStyle(fontSize: 13, color: Colors.grey),
+        children: [
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2.0),
+              child: Text(
+                '******',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
+          TextSpan(text: last4),
+        ],
       ),
     );
   }
@@ -537,7 +760,10 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Ưu đãi khi chuyển tiền trên Mio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(
+                  'Ưu đãi khi chuyển tiền trên Mio',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 Icon(Icons.chevron_right_rounded, color: Colors.pink),
               ],
             ),
@@ -549,18 +775,36 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildOfferCard('Chuyển tiền Mio', 'Hoàn tiền', 'Khi chuyển Mio', Icons.currency_exchange_rounded, Colors.red),
+                _buildOfferCard(
+                  'Chuyển tiền Mio',
+                  'Hoàn tiền',
+                  'Khi chuyển Mio',
+                  Icons.currency_exchange_rounded,
+                  Colors.red,
+                ),
                 const SizedBox(width: 12),
-                _buildOfferCard('Chuyển khoản Ngân...', 'Hoàn tiền', 'Chuyển Ngân hàng', Icons.account_balance_rounded, Colors.blue),
+                _buildOfferCard(
+                  'Chuyển khoản Ngân...',
+                  'Hoàn tiền',
+                  'Chuyển Ngân hàng',
+                  Icons.account_balance_rounded,
+                  Colors.blue,
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildOfferCard(String title, String highlight, String subtitle, IconData icon, Color iconColor) {
+  Widget _buildOfferCard(
+    String title,
+    String highlight,
+    String subtitle,
+    IconData icon,
+    Color iconColor,
+  ) {
     return Container(
       width: 150,
       padding: const EdgeInsets.all(12),
@@ -575,12 +819,24 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             children: [
               Icon(icon, color: iconColor, size: 16),
               const SizedBox(width: 4),
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey), overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(highlight, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(
+            highlight,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -588,8 +844,15 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
               border: Border.all(color: Colors.pink),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text('Khám phá', style: TextStyle(color: Colors.pink, fontSize: 11, fontWeight: FontWeight.bold)),
-          )
+            child: const Text(
+              'Khám phá',
+              style: TextStyle(
+                color: Colors.pink,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -606,32 +869,53 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Dịch vụ khác', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Dịch vụ khác',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildOtherServiceItem(Icons.card_giftcard_rounded, Colors.pink, 'Gửi thiệp'),
-              _buildOtherServiceItem(Icons.receipt_long_rounded, Colors.pinkAccent, 'Chia tiền', onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SplitBillManagementScreen(
-                      token: widget.token,
-                      me: const {}, // Dummy user, since it's hardcoded internally or unused there
+              _buildOtherServiceItem(
+                Icons.card_giftcard_rounded,
+                Colors.pink,
+                'Gửi thiệp',
+              ),
+              _buildOtherServiceItem(
+                Icons.receipt_long_rounded,
+                Colors.pinkAccent,
+                'Chia tiền',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SplitBillManagementScreen(
+                        token: widget.token,
+                        me: const {}, // Dummy user, since it's hardcoded internally or unused there
+                      ),
                     ),
-                  ),
-                );
-              }),
-              _buildOtherServiceItem(Icons.notifications_active_rounded, Colors.purple, 'Nhắc trả tiền'),
+                  );
+                },
+              ),
+              _buildOtherServiceItem(
+                Icons.notifications_active_rounded,
+                Colors.purple,
+                'Nhắc trả tiền',
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildOtherServiceItem(IconData icon, Color color, String name, {VoidCallback? onTap}) {
+  Widget _buildOtherServiceItem(
+    IconData icon,
+    Color color,
+    String name, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -645,7 +929,10 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             child: Icon(icon, color: color),
           ),
           const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(
+            name,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -667,17 +954,26 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Expanded(
-              child: _buildBottomNavItem(Icons.currency_exchange_rounded, 'Chuyển tiền', isActive: true),
+              child: _buildBottomNavItem(
+                Icons.currency_exchange_rounded,
+                'Chuyển tiền',
+                isActive: true,
+              ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => ChatListScreen(token: widget.token)),
+                    MaterialPageRoute(
+                      builder: (_) => ChatListScreen(token: widget.token),
+                    ),
                   );
                 },
-                child: _buildBottomNavItem(Icons.chat_bubble_outline_rounded, 'Chuyển qua Chat'),
+                child: _buildBottomNavItem(
+                  Icons.chat_bubble_outline_rounded,
+                  'Chuyển qua Chat',
+                ),
               ),
             ),
           ],
@@ -686,19 +982,23 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
     );
   }
 
-  Widget _buildBottomNavItem(IconData icon, String label, {bool isActive = false}) {
+  Widget _buildBottomNavItem(
+    IconData icon,
+    String label, {
+    bool isActive = false,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: isActive ? Colors.pink : Colors.grey),
         const SizedBox(height: 4),
         Text(
-          label, 
+          label,
           style: TextStyle(
-            fontSize: 11, 
+            fontSize: 11,
             color: isActive ? Colors.pink : Colors.grey,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal
-          )
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ],
     );

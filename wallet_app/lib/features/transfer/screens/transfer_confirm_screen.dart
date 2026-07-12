@@ -49,9 +49,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
     if (amountInt >= 30000000) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => const FaceLivenessScannerScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const FaceLivenessScannerScreen()),
       ).then((faceFile) {
         if (faceFile != null && faceFile is File) {
           showModalBottomSheet(
@@ -87,7 +85,10 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
         '',
       );
 
-      var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.transfer));
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.transfer),
+      );
       request.headers['Authorization'] = 'Bearer ${widget.token}';
       request.headers['ngrok-skip-browser-warning'] = 'true';
       request.headers['Idempotency-Key'] = _idempotencyKey;
@@ -108,6 +109,10 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       var response = await http.Response.fromStream(responseStream);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        final String returnedRefCode =
+            responseData['data']?['id']?.toString() ?? _refCode;
+
         if (!mounted) return null;
         Navigator.pop(context);
 
@@ -125,7 +130,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
               receiverPhone: widget.receiverPhone,
               amount: widget.amount,
               note: widget.note.isNotEmpty ? widget.note : 'Chuyển tiền',
-              referenceCode: _refCode,
+              referenceCode: returnedRefCode,
               paymentTime: formattedTime,
             ),
           ),
@@ -134,7 +139,9 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       } else {
         final errorData = jsonDecode(response.body);
         final String errorMessage =
-            errorData['message'] ?? errorData['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại sau.';
+            errorData['message'] ??
+            errorData['error'] ??
+            'Giao dịch thất bại. Vui lòng thử lại sau.';
 
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
           return errorMessage;

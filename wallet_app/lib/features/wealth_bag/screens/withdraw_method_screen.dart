@@ -15,7 +15,8 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
   String _selectedMethod = 'wallet';
 
   String _formatAmount(int amount) {
-    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ';
+    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') +
+        'đ';
   }
 
   @override
@@ -31,7 +32,11 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
         ),
         title: const Text(
           "Rút tiền từ Túi Thần Tài",
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -40,7 +45,8 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_outlined, color: Colors.black87),
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () =>
+                Navigator.popUntil(context, (route) => route.isFirst),
           ),
         ],
       ),
@@ -62,16 +68,29 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.download_rounded, color: Colors.deepOrange, size: 24),
+                        const Icon(
+                          Icons.download_rounded,
+                          color: Colors.deepOrange,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Số tiền cần rút:", style: TextStyle(color: Colors.black54, fontSize: 14)),
+                            const Text(
+                              "Số tiền cần rút:",
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               _formatAmount(widget.amount),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             ),
                           ],
                         ),
@@ -87,7 +106,10 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                   const SizedBox(height: 12),
 
                   // Withdraw to wallet option
-                  const Text("Rút về Ví Mio", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text(
+                    "Rút về Ví Mio",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () => setState(() => _selectedMethod = 'wallet'),
@@ -96,7 +118,9 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border.all(
-                          color: _selectedMethod == 'wallet' ? Colors.deepOrange : Colors.grey.shade300,
+                          color: _selectedMethod == 'wallet'
+                              ? Colors.deepOrange
+                              : Colors.grey.shade300,
                           width: _selectedMethod == 'wallet' ? 1.5 : 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -111,7 +135,11 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                             ),
                             child: const Text(
                               'mio',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -119,9 +147,18 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Ví Mio", style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text(
+                                  "Ví Mio",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                                 SizedBox(height: 2),
-                                Text("Miễn phí rút từ Túi về Ví", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                Text(
+                                  "Miễn phí rút từ Túi về Ví",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -129,7 +166,8 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                             value: 'wallet',
                             groupValue: _selectedMethod,
                             activeColor: Colors.deepOrange,
-                            onChanged: (val) => setState(() => _selectedMethod = val!),
+                            onChanged: (val) =>
+                                setState(() => _selectedMethod = val!),
                           ),
                         ],
                       ),
@@ -138,7 +176,10 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                   const SizedBox(height: 24),
 
                   // Withdraw to bank option (mock)
-                  const Text("Rút về ngân hàng", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text(
+                    "Rút về ngân hàng",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                   const SizedBox(height: 4),
                   const Text(
                     "Phí 0,5% - 1% giá trị giao dịch, phí tối thiểu 5.000đ.",
@@ -146,7 +187,8 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
-                    onTap: () {}, // Navigate to add bank or open bottom sheet in real app
+                    onTap:
+                        () {}, // Navigate to add bank or open bottom sheet in real app
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -163,11 +205,18 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                               border: Border.all(color: Colors.deepOrange),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Icon(Icons.add, color: Colors.deepOrange, size: 16),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.deepOrange,
+                              size: 16,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(
-                            child: Text("Thêm ngân hàng nhận tiền", style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text(
+                              "Thêm ngân hàng nhận tiền",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
                           const Icon(Icons.chevron_right, color: Colors.grey),
                         ],
@@ -179,14 +228,18 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                     onTap: () {},
                     child: const Text(
                       "Xem biểu phí rút về ngân hàng >",
-                      style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.deepOrange,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          
+
           // Bottom button
           Container(
             padding: EdgeInsets.only(
@@ -197,7 +250,13 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
             ),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, -2),
+                ),
+              ],
             ),
             child: SizedBox(
               width: double.infinity,
@@ -205,7 +264,9 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepOrange,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -223,7 +284,7 @@ class _WithdrawMethodScreenState extends State<WithdrawMethodScreen> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),

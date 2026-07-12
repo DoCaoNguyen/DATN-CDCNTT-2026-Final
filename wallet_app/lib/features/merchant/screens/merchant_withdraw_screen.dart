@@ -195,8 +195,12 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
                 senderName: 'Cửa hàng của tôi',
                 note: 'Rút doanh thu về ví',
                 amount: amount.toString(),
-                referenceCode: data['transactionId'] ?? 'GD${DateTime.now().millisecondsSinceEpoch}',
-                paymentTime: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
+                referenceCode:
+                    data['transactionId'] ??
+                    'GD${DateTime.now().millisecondsSinceEpoch}',
+                paymentTime: DateFormat(
+                  'dd/MM/yyyy HH:mm',
+                ).format(DateTime.now()),
               ),
             ),
           );
@@ -296,8 +300,12 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
               builder: (ctx) => BankTransferSuccessScreen(
                 token: widget.token,
                 amount: amount.toString(),
-                referenceCode: data['transactionId'] ?? 'GD${DateTime.now().millisecondsSinceEpoch}',
-                paymentTime: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
+                referenceCode:
+                    data['transactionId'] ??
+                    'GD${DateTime.now().millisecondsSinceEpoch}',
+                paymentTime: DateFormat(
+                  'dd/MM/yyyy HH:mm',
+                ).format(DateTime.now()),
                 receiverName: _selectedBank!['owner_name'] ?? 'Chủ thẻ',
                 accountNumber: _selectedBank!['card_number'] ?? '',
                 bankName: _selectedBank!['bank_name'] ?? '',
@@ -389,7 +397,9 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
   }
 
   Widget _buildBankIcon(dynamic bank, double size) {
-    if (bank != null && bank['bank_code'] != null && bank['bank_code'].toString().isNotEmpty) {
+    if (bank != null &&
+        bank['bank_code'] != null &&
+        bank['bank_code'].toString().isNotEmpty) {
       String bCode = bank['bank_code'].toString();
       if (bCode.toUpperCase() == 'AGR' || bCode.toUpperCase() == 'AGRIBANK') {
         bCode = 'VBA';
@@ -407,12 +417,20 @@ class _MerchantWithdrawScreenState extends State<MerchantWithdrawScreen> {
           'https://api.vietqr.io/img/$bCode.png',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size * 0.7);
+            return Icon(
+              Icons.account_balance_rounded,
+              color: Colors.pink,
+              size: size * 0.7,
+            );
           },
         ),
       );
     }
-    return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size * 0.7);
+    return Icon(
+      Icons.account_balance_rounded,
+      color: Colors.pink,
+      size: size * 0.7,
+    );
   }
 
   @override

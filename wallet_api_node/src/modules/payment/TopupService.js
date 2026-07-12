@@ -91,12 +91,16 @@ const TopupService = {
                 balanceAfter
             );
 
+            // Fetch transaction_no
+            const ledgerTxResult = await client.query('SELECT transaction_no FROM ledger_transactions WHERE id = $1', [ledgerId]);
+            const transactionNo = ledgerTxResult.rows[0].transaction_no;
+
             await client.query('COMMIT');
 
             // Mock card code was generated before the transaction
 
             return {
-                transaction_id: transactionId,
+                transaction_id: transactionNo,
                 new_balance: newBalance,
                 cardCode,
                 serial,

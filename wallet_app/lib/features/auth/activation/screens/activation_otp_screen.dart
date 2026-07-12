@@ -200,9 +200,7 @@ class _ActivationOtpScreenState extends State<ActivationOtpScreen> {
       final response = await http.post(
         Uri.parse(ApiConfig.resendVerifyPhone),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'phone': widget.phoneNumber,
-        }),
+        body: jsonEncode({'phone': widget.phoneNumber}),
       );
 
       Navigator.pop(context); // Đóng Loading

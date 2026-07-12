@@ -28,7 +28,9 @@ class FinancialCenterApi {
 
   /// Fetches linked banks and sorts them based on saved SharedPreferences order.
   /// Also returns the enabled status for each bank if needed.
-  static Future<List<Map<String, dynamic>>> getSortedLinkedBanks(String token) async {
+  static Future<List<Map<String, dynamic>>> getSortedLinkedBanks(
+    String token,
+  ) async {
     final banks = await fetchLinkedBanks(token);
     if (banks == null) return [];
 
@@ -36,7 +38,10 @@ class FinancialCenterApi {
     for (var i = 0; i < banks.length; i++) {
       final bank = banks[i];
       methods.add({
-        'id': bank['id']?.toString() ?? bank['bank_code']?.toString() ?? 'bank_$i',
+        'id':
+            bank['id']?.toString() ??
+            bank['bank_code']?.toString() ??
+            'bank_$i',
         'name': bank['bank_name'] ?? 'Ngân hàng',
         'original_data': bank, // keep original API data if needed
         'isEnabled': true,

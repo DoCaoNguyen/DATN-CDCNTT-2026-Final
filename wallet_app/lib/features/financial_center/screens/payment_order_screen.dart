@@ -26,17 +26,18 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
     final String key = 'payment_order_prefs_${widget.token}';
-    final List<Map<String, dynamic>> savedData = _paymentMethods.map((m) => {
-      'id': m['id'],
-      'isEnabled': m['isEnabled'],
-    }).toList();
+    final List<Map<String, dynamic>> savedData = _paymentMethods
+        .map((m) => {'id': m['id'], 'isEnabled': m['isEnabled']})
+        .toList();
     await prefs.setString(key, jsonEncode(savedData));
   }
 
   Future<void> _fetchLinkedBanks() async {
     try {
-      final sortedBanks = await FinancialCenterApi.getSortedLinkedBanks(widget.token);
-      
+      final sortedBanks = await FinancialCenterApi.getSortedLinkedBanks(
+        widget.token,
+      );
+
       List<Map<String, dynamic>> methods = [
         {
           'id': 'wallet',
@@ -45,7 +46,7 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
           'iconColor': Colors.pink,
           'isEnabled': true,
           'isFixed': true,
-        }
+        },
       ];
 
       methods.addAll(sortedBanks);
@@ -105,151 +106,190 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
         ),
         title: const Text(
           'Thứ tự thanh toán',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: false,
-        actions: const [
-          FinancialCenterAppBarActions(),
-        ],
+        actions: const [FinancialCenterAppBarActions()],
       ),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryPink))
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryPink),
+            )
           : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Info Card
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade100),
-            ),
-            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Nhấn giữ ≡ để sắp xếp thứ tự thanh toán',
-                        style: TextStyle(fontSize: 14, color: Colors.black87),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
+                // Info Card
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const TextSpan(text: 'Bật tắt '),
-                      WidgetSpan(
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryPink,
-                            borderRadius: BorderRadius.circular(4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Nhấn giữ ≡ để sắp xếp thứ tự thanh toán',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                              ),
+                            ),
                           ),
-                          child: const Icon(Icons.check, size: 12, color: Colors.white),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                            height: 1.5,
+                          ),
+                          children: [
+                            const TextSpan(text: 'Bật tắt '),
+                            WidgetSpan(
+                              child: Container(
+                                width: 16,
+                                height: 16,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryPink,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Icon(
+                                  Icons.check,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              alignment: PlaceholderAlignment.middle,
+                            ),
+                            const TextSpan(
+                              text: ' để chọn tài khoản/thẻ được sử dụng cho ',
+                            ),
+                            const TextSpan(
+                              text: 'dịch vụ liên kết & hoá đơn định kỳ',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const TextSpan(text: ' (Apple, Google...)'),
+                          ],
                         ),
-                        alignment: PlaceholderAlignment.middle,
                       ),
-                      const TextSpan(text: ' để chọn tài khoản/thẻ được sử dụng cho '),
-                      const TextSpan(
-                        text: 'dịch vụ liên kết & hoá đơn định kỳ',
-                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
-                      ),
-                      const TextSpan(text: ' (Apple, Google...)'),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
 
-          // Title
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Thứ tự thanh toán',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Toggle All
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade100),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    value: _isAllEnabled,
-                    onChanged: _toggleAll,
-                    activeColor: AppColors.primaryPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                // Title
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    'Thứ tự thanh toán',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Bật tất cả tài khoản/thẻ',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
+                const SizedBox(height: 12),
+
+                // Toggle All
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: _isAllEnabled,
+                          onChanged: _toggleAll,
+                          activeColor: AppColors.primaryPink,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Bật tất cả tài khoản/thẻ',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Reorderable List
+                Expanded(
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      canvasColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                    ),
+                    child: ReorderableListView.builder(
+                      padding: const EdgeInsets.only(bottom: 40),
+                      itemCount: _paymentMethods.length,
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          if (newIndex > oldIndex) {
+                            newIndex -= 1;
+                          }
+                          final item = _paymentMethods.removeAt(oldIndex);
+                          _paymentMethods.insert(newIndex, item);
+                        });
+                        _savePreferences();
+                      },
+                      itemBuilder: (context, index) {
+                        final method = _paymentMethods[index];
+                        return _buildReorderableItem(
+                          key: ValueKey(method['id']),
+                          index: index,
+                          method: method,
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Reorderable List
-          Expanded(
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                canvasColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-              ),
-              child: ReorderableListView.builder(
-                padding: const EdgeInsets.only(bottom: 40),
-                itemCount: _paymentMethods.length,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
-                    final item = _paymentMethods.removeAt(oldIndex);
-                    _paymentMethods.insert(newIndex, item);
-                  });
-                  _savePreferences();
-                },
-                itemBuilder: (context, index) {
-                  final method = _paymentMethods[index];
-                  return _buildReorderableItem(
-                    key: ValueKey(method['id']),
-                    index: index,
-                    method: method,
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildReorderableItem({required Key key, required int index, required Map<String, dynamic> method}) {
+  Widget _buildReorderableItem({
+    required Key key,
+    required int index,
+    required Map<String, dynamic> method,
+  }) {
     return Container(
       key: key,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -260,7 +300,11 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
             width: 24,
             child: Text(
               '${index + 1}',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -274,7 +318,11 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
               child: Row(
@@ -284,8 +332,12 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
                     height: 24,
                     child: Checkbox(
                       value: method['isEnabled'],
-                      onChanged: method['isFixed'] ? null : (val) => _toggleItem(index, val),
-                      activeColor: method['isFixed'] ? Colors.pink.shade100 : AppColors.primaryPink,
+                      onChanged: method['isFixed']
+                          ? null
+                          : (val) => _toggleItem(index, val),
+                      activeColor: method['isFixed']
+                          ? Colors.pink.shade100
+                          : AppColors.primaryPink,
                       checkColor: Colors.white,
                       fillColor: MaterialStateProperty.resolveWith((states) {
                         if (states.contains(MaterialState.disabled)) {
@@ -296,7 +348,9 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
                         }
                         return Colors.white;
                       }),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -309,13 +363,21 @@ class _PaymentOrderScreenState extends State<PaymentOrderScreen> {
                       border: Border.all(color: Colors.grey.shade100),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(method['iconData'], color: method['iconColor'], size: 20),
+                    child: Icon(
+                      method['iconData'],
+                      color: method['iconColor'],
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       method['name'],
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                   // Drag handle

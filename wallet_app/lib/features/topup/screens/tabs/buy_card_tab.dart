@@ -10,7 +10,7 @@ class BuyCardTab extends StatefulWidget {
   final int? initialValue;
 
   const BuyCardTab({
-    Key? key, 
+    Key? key,
     required this.token,
     this.initialProvider,
     this.initialValue,
@@ -21,8 +21,22 @@ class BuyCardTab extends StatefulWidget {
 }
 
 class _BuyCardTabState extends State<BuyCardTab> {
-  final List<String> _providers = ['Viettel', 'Mobifone', 'Vinaphone', 'Vietnamobile'];
-  final List<int> _values = [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000];
+  final List<String> _providers = [
+    'Viettel',
+    'Mobifone',
+    'Vinaphone',
+    'Vietnamobile',
+  ];
+  final List<int> _values = [
+    10000,
+    20000,
+    30000,
+    50000,
+    100000,
+    200000,
+    300000,
+    500000,
+  ];
 
   String? _selectedProvider;
   int? _selectedValue;
@@ -31,13 +45,14 @@ class _BuyCardTabState extends State<BuyCardTab> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialProvider != null && _providers.contains(widget.initialProvider)) {
+    if (widget.initialProvider != null &&
+        _providers.contains(widget.initialProvider)) {
       _selectedProvider = widget.initialProvider;
     }
     if (widget.initialValue != null && _values.contains(widget.initialValue)) {
       _selectedValue = widget.initialValue;
     }
-    
+
     // Auto show confirm dialog if both are provided by AI
     if (_selectedProvider != null && _selectedValue != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,7 +92,7 @@ class _BuyCardTabState extends State<BuyCardTab> {
       );
 
       if (!mounted) return;
-      
+
       // Navigate to success screen
       Navigator.pushReplacement(
         context,
@@ -87,7 +102,8 @@ class _BuyCardTabState extends State<BuyCardTab> {
             faceValue: result['amount'],
             cardCode: result['cardCode'],
             serial: result['serial'],
-            deductedPoints: result['amount'], // We use deducted points to show money deducted
+            deductedPoints:
+                result['amount'], // We use deducted points to show money deducted
             transactionId: result['transaction_id'].toString(),
             isMoney: true,
           ),
@@ -102,7 +118,10 @@ class _BuyCardTabState extends State<BuyCardTab> {
   }
 
   String _formatNumber(int value) {
-    return value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    return value.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   @override
@@ -110,13 +129,16 @@ class _BuyCardTabState extends State<BuyCardTab> {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: Colors.pink));
     }
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Chọn nhà mạng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Chọn nhà mạng',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
@@ -126,10 +148,16 @@ class _BuyCardTabState extends State<BuyCardTab> {
               return GestureDetector(
                 onTap: () => setState(() => _selectedProvider = p),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.pink.shade50 : Colors.white,
-                    border: Border.all(color: isSelected ? Colors.pink : Colors.grey.shade300, width: isSelected ? 2 : 1),
+                    border: Border.all(
+                      color: isSelected ? Colors.pink : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -144,7 +172,10 @@ class _BuyCardTabState extends State<BuyCardTab> {
             }).toList(),
           ),
           const SizedBox(height: 24),
-          const Text('Chọn mệnh giá', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Chọn mệnh giá',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
@@ -165,7 +196,10 @@ class _BuyCardTabState extends State<BuyCardTab> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.pink.shade50 : Colors.white,
-                    border: Border.all(color: isSelected ? Colors.pink : Colors.grey.shade300, width: isSelected ? 2 : 1),
+                    border: Border.all(
+                      color: isSelected ? Colors.pink : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -184,14 +218,25 @@ class _BuyCardTabState extends State<BuyCardTab> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: (_selectedProvider != null && _selectedValue != null) ? _showConfirmDialog : null,
+              onPressed: (_selectedProvider != null && _selectedValue != null)
+                  ? _showConfirmDialog
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Mua ngay', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Mua ngay',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

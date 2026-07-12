@@ -18,7 +18,16 @@ class PhoneTopupTab extends StatefulWidget {
 
 class _PhoneTopupTabState extends State<PhoneTopupTab> {
   final TextEditingController _phoneController = TextEditingController();
-  final List<int> _values = [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000];
+  final List<int> _values = [
+    10000,
+    20000,
+    30000,
+    50000,
+    100000,
+    200000,
+    300000,
+    500000,
+  ];
 
   int? _selectedValue;
   bool _isLoading = false;
@@ -58,7 +67,10 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
     if (await FlutterContacts.requestPermission()) {
       final contact = await FlutterContacts.openExternalPick();
       if (contact != null && contact.phones.isNotEmpty) {
-        String phone = contact.phones.first.number.replaceAll(RegExp(r'\D'), '');
+        String phone = contact.phones.first.number.replaceAll(
+          RegExp(r'\D'),
+          '',
+        );
         setState(() {
           _phoneController.text = phone;
         });
@@ -102,12 +114,17 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
       );
 
       if (!mounted) return;
-      
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Nạp thành công', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-          content: Text('Bạn đã nạp thành công ${_formatNumber(result['amount'])}đ cho số điện thoại $phone.'),
+          title: const Text(
+            'Nạp thành công',
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Bạn đã nạp thành công ${_formatNumber(result['amount'])}đ cho số điện thoại $phone.',
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -131,7 +148,10 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
   }
 
   String _formatNumber(int value) {
-    return value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    return value.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   @override
@@ -139,13 +159,16 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: Colors.pink));
     }
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Số điện thoại nạp tiền', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Số điện thoại nạp tiền',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -174,7 +197,10 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Chọn mệnh giá nạp', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Chọn mệnh giá nạp',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
@@ -195,7 +221,10 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.pink.shade50 : Colors.white,
-                    border: Border.all(color: isSelected ? Colors.pink : Colors.grey.shade300, width: isSelected ? 2 : 1),
+                    border: Border.all(
+                      color: isSelected ? Colors.pink : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -217,11 +246,20 @@ class _PhoneTopupTabState extends State<PhoneTopupTab> {
               onPressed: (_selectedValue != null) ? _showConfirmDialog : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Nạp ngay', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Nạp ngay',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

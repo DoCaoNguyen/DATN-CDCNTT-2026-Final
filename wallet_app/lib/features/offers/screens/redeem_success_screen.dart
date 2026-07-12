@@ -25,7 +25,9 @@ class RedeemSuccessScreen extends StatelessWidget {
     final number = int.tryParse(value);
     if (number == null) return "0";
     return number.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   String _formatTransactionId(String txId) {
@@ -71,7 +73,10 @@ class RedeemSuccessScreen extends StatelessWidget {
         ),
         title: Text(
           isMoney ? 'Thanh toán thành công' : 'Đổi thẻ thành công',
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -95,12 +100,20 @@ class RedeemSuccessScreen extends StatelessWidget {
                   color: Colors.green.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 80),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.green,
+                  size: 80,
+                ),
               ),
               const SizedBox(height: 24),
               const Text(
                 'Giao dịch thành công!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -118,7 +131,11 @@ class RedeemSuccessScreen extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
-                    BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
                   ],
                 ),
                 child: Column(
@@ -126,10 +143,16 @@ class RedeemSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Loại thẻ', style: TextStyle(color: Colors.black54, fontSize: 16)),
+                        const Text(
+                          'Loại thẻ',
+                          style: TextStyle(color: Colors.black54, fontSize: 16),
+                        ),
                         Text(
                           'Thẻ cào $provider',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -140,10 +163,16 @@ class RedeemSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Mệnh giá', style: TextStyle(color: Colors.black54, fontSize: 16)),
+                        const Text(
+                          'Mệnh giá',
+                          style: TextStyle(color: Colors.black54, fontSize: 16),
+                        ),
                         Text(
                           '${_formatNumber(faceValue.toString())}đ',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -154,7 +183,10 @@ class RedeemSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Mã nạp', style: TextStyle(color: Colors.black54, fontSize: 16)),
+                        const Text(
+                          'Mã nạp',
+                          style: TextStyle(color: Colors.black54, fontSize: 16),
+                        ),
                         Row(
                           children: [
                             Text(
@@ -168,8 +200,13 @@ class RedeemSuccessScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () => _copyToClipboard(context, cardCode, 'mã nạp'),
-                              child: const Icon(Icons.copy_rounded, color: Colors.blue, size: 20),
+                              onTap: () =>
+                                  _copyToClipboard(context, cardCode, 'mã nạp'),
+                              child: const Icon(
+                                Icons.copy_rounded,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
                             ),
                           ],
                         ),
@@ -182,17 +219,31 @@ class RedeemSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Số Serial', style: TextStyle(color: Colors.black54, fontSize: 16)),
+                        const Text(
+                          'Số Serial',
+                          style: TextStyle(color: Colors.black54, fontSize: 16),
+                        ),
                         Row(
                           children: [
                             Text(
                               serial,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () => _copyToClipboard(context, serial, 'số serial'),
-                              child: const Icon(Icons.copy_rounded, color: Colors.grey, size: 20),
+                              onTap: () => _copyToClipboard(
+                                context,
+                                serial,
+                                'số serial',
+                              ),
+                              child: const Icon(
+                                Icons.copy_rounded,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
                             ),
                           ],
                         ),
@@ -205,10 +256,16 @@ class RedeemSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Mã giao dịch', style: TextStyle(color: Colors.black54, fontSize: 14)),
+                        const Text(
+                          'Mã giao dịch',
+                          style: TextStyle(color: Colors.black54, fontSize: 14),
+                        ),
                         Text(
                           _formatTransactionId(transactionId),
-                          style: const TextStyle(color: Colors.black54, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -235,7 +292,11 @@ class RedeemSuccessScreen extends StatelessWidget {
             ),
             child: const Text(
               'Về trang chủ',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),

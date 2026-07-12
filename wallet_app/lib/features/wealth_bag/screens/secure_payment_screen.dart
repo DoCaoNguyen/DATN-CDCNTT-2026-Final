@@ -24,7 +24,7 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
   Map<String, dynamic>? _selectedBank;
   List<dynamic> _linkedBanks = [];
   final String _idempotencyKey = const Uuid().v7();
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,15 +34,19 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
 
   Future<void> _fetchWalletBalance() async {
     try {
-      final response = await CustomHttpClient().get(Uri.parse(ApiConfig.getWalletBalance));
+      final response = await CustomHttpClient().get(
+        Uri.parse(ApiConfig.getWalletBalance),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['data'] != null && data['data']['available_balance'] != null) {
           setState(() {
-            _walletBalance = int.tryParse(data['data']['available_balance'].toString()) ?? 0;
+            _walletBalance =
+                int.tryParse(data['data']['available_balance'].toString()) ?? 0;
             _isLoading = false;
             if (_walletBalance < widget.amount) {
-              _selectedMethod = 'bank'; // Tự động chuyển sang ngân hàng nếu ví không đủ
+              _selectedMethod =
+                  'bank'; // Tự động chuyển sang ngân hàng nếu ví không đủ
             }
           });
           return;
@@ -56,7 +60,9 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
 
   Future<void> _fetchLinkedBanks() async {
     try {
-      final response = await CustomHttpClient().get(Uri.parse(ApiConfig.getLinkedBanks));
+      final response = await CustomHttpClient().get(
+        Uri.parse(ApiConfig.getLinkedBanks),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
@@ -74,7 +80,9 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
   }
 
   Widget _buildBankIcon(Map<String, dynamic>? bank, double size) {
-    if (bank != null && bank['bank_code'] != null && bank['bank_code'].toString().isNotEmpty) {
+    if (bank != null &&
+        bank['bank_code'] != null &&
+        bank['bank_code'].toString().isNotEmpty) {
       String bCode = bank['bank_code'].toString();
       if (bCode.toUpperCase() == 'AGR' || bCode.toUpperCase() == 'AGRIBANK') {
         bCode = 'VBA';
@@ -92,7 +100,11 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
           'https://api.vietqr.io/img/$bCode.png',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return Icon(Icons.account_balance_rounded, color: Colors.pink, size: size * 0.7);
+            return Icon(
+              Icons.account_balance_rounded,
+              color: Colors.pink,
+              size: size * 0.7,
+            );
           },
         ),
       );
@@ -101,13 +113,16 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
   }
 
   String _formatAmount(int amount) {
-    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ';
+    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') +
+        'đ';
   }
 
   void _showBankSelectionSheet() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (ctx) {
         return SafeArea(
           child: Column(
@@ -115,7 +130,10 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
             children: [
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text("Chọn Nguồn Tiền", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Chọn Nguồn Tiền",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
               const Divider(height: 1),
               if (_linkedBanks.isEmpty)
@@ -127,7 +145,10 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                 ..._linkedBanks.map((bank) {
                   return ListTile(
                     leading: _buildBankIcon(bank, 36),
-                    title: Text(bank['bank_name'] ?? 'Ngân hàng', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(
+                      bank['bank_name'] ?? 'Ngân hàng',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(bank['card_number'] ?? ''),
                     onTap: () {
                       setState(() {
@@ -141,7 +162,7 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -177,7 +198,9 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
         body: jsonEncode({
           'amount': widget.amount,
           'source': _selectedMethod == 'wallet' ? 'wallet' : 'linked_bank',
-          'bankNumber': _selectedMethod == 'bank' ? (_selectedBank != null ? _selectedBank!['card_number'] : null) : null
+          'bankNumber': _selectedMethod == 'bank'
+              ? (_selectedBank != null ? _selectedBank!['card_number'] : null)
+              : null,
         }),
       );
 
@@ -185,12 +208,23 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
+        final txId =
+            data['data']?['id']?.toString() ??
+            data['data']?['transaction_id']?.toString();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => TransactionResultScreen(amount: widget.amount)),
+          MaterialPageRoute(
+            builder: (_) => TransactionResultScreen(
+              amount: widget.amount,
+              transactionId: txId,
+            ),
+          ),
         );
       } else {
-        SnackbarUtils.showError(context, data['message'] ?? 'Lỗi không xác định');
+        SnackbarUtils.showError(
+          context,
+          data['message'] ?? 'Lỗi không xác định',
+        );
       }
     } catch (e) {
       Navigator.pop(context); // close loading
@@ -205,7 +239,9 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EF), // Màu nền tổng thể sáng
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF9F1), // Gradient giả lập từ trên xuống
+        backgroundColor: const Color(
+          0xFFFDF9F1,
+        ), // Gradient giả lập từ trên xuống
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
@@ -213,10 +249,14 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
         ),
         title: const Text(
           "Thanh toán an toàn",
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-      body: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
@@ -230,7 +270,13 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,36 +285,70 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                                 padding: const EdgeInsets.all(16.0),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.receipt_long, color: Colors.blue, size: 20),
+                                    const Icon(
+                                      Icons.receipt_long,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
                                     const SizedBox(width: 8),
                                     const Text(
                                       "Nạp tiền Túi Thần Tài",
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Container(height: 1, color: Colors.grey.shade200),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                child: Container(
+                                  height: 1,
+                                  color: Colors.grey.shade200,
+                                ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(16.0),
                                 child: Column(
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text("Số tiền", style: TextStyle(color: Colors.black54)),
-                                        Text(_formatAmount(widget.amount), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        const Text(
+                                          "Số tiền",
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        Text(
+                                          _formatAmount(widget.amount),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text("Tạm tính", style: TextStyle(color: Colors.black54)),
-                                        Text(_formatAmount(widget.amount), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        const Text(
+                                          "Tạm tính",
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        Text(
+                                          _formatAmount(widget.amount),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -285,16 +365,32 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Row(
                                 children: [
-                                  Text("Trả ngay", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text(
+                                    "Trả ngay",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                   SizedBox(width: 8),
-                                  Icon(Icons.visibility, size: 16, color: Colors.black54),
+                                  Icon(
+                                    Icons.visibility,
+                                    size: 16,
+                                    color: Colors.black54,
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 16),
@@ -305,28 +401,62 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: _selectedMethod == 'bank' ? Colors.pink : Colors.grey.shade300, width: _selectedMethod == 'bank' ? 1.5 : 1),
+                                    border: Border.all(
+                                      color: _selectedMethod == 'bank'
+                                          ? Colors.pink
+                                          : Colors.grey.shade300,
+                                      width: _selectedMethod == 'bank'
+                                          ? 1.5
+                                          : 1,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Row(
                                     children: [
-                                      if (_selectedBank != null) _buildBankIcon(_selectedBank, 36),
+                                      if (_selectedBank != null)
+                                        _buildBankIcon(_selectedBank, 36),
                                       if (_selectedBank == null)
                                         Container(
                                           padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-                                          child: const Icon(Icons.account_balance, color: Colors.blue, size: 24),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.account_balance,
+                                            color: Colors.blue,
+                                            size: 24,
+                                          ),
                                         ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             if (_selectedBank != null)
-                                              Text("${_selectedBank!['bank_name']} ${_selectedBank!['card_number']}", style: const TextStyle(fontWeight: FontWeight.bold))
+                                              Text(
+                                                "${_selectedBank!['bank_name']} ${_selectedBank!['card_number']}",
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
                                             else
-                                              const Text("Vui lòng chọn ngân hàng", style: TextStyle(fontWeight: FontWeight.bold)),
-                                            const Text("Đăng ký xem số dư >", style: TextStyle(color: Colors.pink, fontSize: 12)),
+                                              const Text(
+                                                "Vui lòng chọn ngân hàng",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            const Text(
+                                              "Đăng ký xem số dư >",
+                                              style: TextStyle(
+                                                color: Colors.pink,
+                                                fontSize: 12,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -334,7 +464,9 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                                         value: 'bank',
                                         groupValue: _selectedMethod,
                                         activeColor: Colors.pink,
-                                        onChanged: (val) => setState(() => _selectedMethod = val!),
+                                        onChanged: (val) => setState(
+                                          () => _selectedMethod = val!,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -344,30 +476,64 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
 
                               // Nguồn tiền: Ví Mio
                               GestureDetector(
-                                onTap: isWalletDisabled ? null : () => setState(() => _selectedMethod = 'wallet'),
+                                onTap: isWalletDisabled
+                                    ? null
+                                    : () => setState(
+                                        () => _selectedMethod = 'wallet',
+                                      ),
                                 child: Opacity(
                                   opacity: isWalletDisabled ? 0.5 : 1.0,
                                   child: Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: _selectedMethod == 'wallet' ? Colors.pink : Colors.grey.shade300, width: _selectedMethod == 'wallet' ? 1.5 : 1),
+                                      border: Border.all(
+                                        color: _selectedMethod == 'wallet'
+                                            ? Colors.pink
+                                            : Colors.grey.shade300,
+                                        width: _selectedMethod == 'wallet'
+                                            ? 1.5
+                                            : 1,
+                                      ),
                                       borderRadius: BorderRadius.circular(12),
-                                      color: isWalletDisabled ? Colors.grey.shade50 : Colors.white,
+                                      color: isWalletDisabled
+                                          ? Colors.grey.shade50
+                                          : Colors.white,
                                     ),
                                     child: Row(
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(color: Colors.pink, borderRadius: BorderRadius.circular(8)),
-                                          child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 24),
+                                          decoration: BoxDecoration(
+                                            color: Colors.pink,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.account_balance_wallet,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              const Text("Ví Mio", style: TextStyle(fontWeight: FontWeight.bold)),
-                                              Text(_formatAmount(_walletBalance), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                              const Text(
+                                                "Ví Mio",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Text(
+                                                _formatAmount(_walletBalance),
+                                                style: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -375,7 +541,11 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                                           value: 'wallet',
                                           groupValue: _selectedMethod,
                                           activeColor: Colors.pink,
-                                          onChanged: isWalletDisabled ? null : (val) => setState(() => _selectedMethod = val!),
+                                          onChanged: isWalletDisabled
+                                              ? null
+                                              : (val) => setState(
+                                                  () => _selectedMethod = val!,
+                                                ),
                                         ),
                                       ],
                                     ),
@@ -400,7 +570,13 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                   ),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, -2),
+                      ),
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -408,10 +584,22 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text("Tổng tiền", style: TextStyle(color: Colors.black54, fontSize: 16)),
+                          const Text(
+                            "Tổng tiền",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 16,
+                            ),
+                          ),
                           Row(
                             children: [
-                              Text(_formatAmount(widget.amount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                              Text(
+                                _formatAmount(widget.amount),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 24,
+                                ),
+                              ),
                               const Icon(Icons.keyboard_arrow_up),
                             ],
                           ),
@@ -424,13 +612,23 @@ class _SecurePaymentScreenState extends State<SecurePaymentScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.pink,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           onPressed: _handleConfirm,
-                          icon: const Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                          icon: const Icon(
+                            Icons.lock_outline,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           label: const Text(
                             "Xác nhận",
-                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

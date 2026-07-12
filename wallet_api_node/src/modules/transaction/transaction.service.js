@@ -147,7 +147,7 @@ const transactionService = {
             });
 
             return { 
-                id: extRef,
+                id: transaction_no,
                 external_reference: extRef,
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -249,7 +249,7 @@ const transactionService = {
             });
 
             return { 
-                id: extRef,
+                id: transaction_no,
                 external_reference: extRef,
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -346,7 +346,7 @@ const transactionService = {
             });
 
             return { 
-                id: extRef,
+                id: transaction_no,
                 external_reference: extRef,
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -532,6 +532,7 @@ const transactionService = {
             });
 
             return { 
+                id: finalRef,
                 amount: amount.toString(), 
                 balanceAfter: senderBalanceAfter.toString() 
             };

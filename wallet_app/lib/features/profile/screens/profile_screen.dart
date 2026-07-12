@@ -56,9 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfile() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getMyProfile),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getMyProfile));
 
       if (response.statusCode == 200) {
         final jsonResp = jsonDecode(response.body);
@@ -92,26 +90,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: AppColors.primaryPink))
-        : SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                _buildTopActionCards(),
-                _buildQuickSettings(),
-                const SizedBox(height: 16),
-                _buildSectionTitle('Tiện ích'),
-                _buildUtilitiesGrid(),
-                const SizedBox(height: 16),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryPink),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  _buildTopActionCards(),
+                  _buildQuickSettings(),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Tiện ích'),
+                  _buildUtilitiesGrid(),
+                  const SizedBox(height: 16),
 
-                _buildMoreSettingsSection(),
-                _buildFooterSection(),
-                const SizedBox(height: 100), // Space for bottom nav bar
-              ],
+                  _buildMoreSettingsSection(),
+                  _buildFooterSection(),
+                  const SizedBox(height: 100), // Space for bottom nav bar
+                ],
+              ),
             ),
-          ),
     );
   }
 
@@ -136,7 +136,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Container(
                 margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(20),
@@ -144,9 +147,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.palette_rounded, size: 16, color: Colors.black87),
+                    Icon(
+                      Icons.palette_rounded,
+                      size: 16,
+                      color: Colors.black87,
+                    ),
                     SizedBox(width: 4),
-                    Text('Đổi ảnh nền', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    Text(
+                      'Đổi ảnh nền',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -161,7 +175,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: Colors.pink.shade100,
                 child: Text(
                   _getInitials(_fullName),
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryPink),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryPink,
+                  ),
                 ),
               ),
               Positioned(
@@ -173,7 +191,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green,
+                    size: 20,
+                  ),
                 ),
               ),
             ],
@@ -181,7 +203,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           Text(
             _fullName,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -200,7 +226,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: const Text(
                   'Đã sinh trắc học',
-                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -234,18 +264,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(12),
+                  ),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
-                  ]
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.badge_rounded, size: 18, color: Colors.grey),
                     SizedBox(width: 4),
-                    Text('Trang cá nhân', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
+                    Text(
+                      'Trang cá nhân',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
                   ],
                 ),
               ),
@@ -269,18 +315,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                  borderRadius: const BorderRadius.horizontal(
+                    right: Radius.circular(12),
+                  ),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
-                  ]
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.qr_code_scanner_rounded, size: 18, color: AppColors.primaryPink),
+                    Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 18,
+                      color: AppColors.primaryPink,
+                    ),
                     SizedBox(width: 4),
-                    Text('Mã QR của tôi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey),
+                    Text(
+                      'Mã QR của tôi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
                   ],
                 ),
               ),
@@ -303,8 +369,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildQuickSettingItem(
-            Icons.security_rounded, 
-            'Quản lý\ntài khoản', 
+            Icons.security_rounded,
+            'Quản lý\ntài khoản',
             badge: 'Mio',
             onTap: () {
               Navigator.push(
@@ -319,7 +385,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          _buildQuickSettingItem(Icons.settings_applications_rounded, 'Cài đặt thanh\ntoán'),
+          _buildQuickSettingItem(
+            Icons.settings_applications_rounded,
+            'Cài đặt thanh\ntoán',
+          ),
           _buildQuickSettingItem(
             Icons.person_outline_rounded,
             'Đăng nhập và\nbảo mật',
@@ -327,21 +396,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LoginSecurityScreen(
-                    token: widget.token,
-                    phone: _phone,
-                  ),
+                  builder: (context) =>
+                      LoginSecurityScreen(token: widget.token, phone: _phone),
                 ),
               );
             },
           ),
-          _buildQuickSettingItem(Icons.notifications_none_rounded, 'Cài đặt thông\nbáo'),
+          _buildQuickSettingItem(
+            Icons.notifications_none_rounded,
+            'Cài đặt thông\nbáo',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickSettingItem(IconData icon, String title, {String? badge, VoidCallback? onTap}) {
+  Widget _buildQuickSettingItem(
+    IconData icon,
+    String title, {
+    String? badge,
+    VoidCallback? onTap,
+  }) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -357,14 +432,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     bottom: -5,
                     right: -10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 2,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryPink,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         badge,
-                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -387,7 +469,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
       ),
     );
   }
@@ -405,58 +491,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisCount: 3,
         childAspectRatio: 1.2,
         children: [
-          _buildUtilityItem(Icons.account_balance_rounded, 'Trung Tâm Tài Chính', Colors.blue, onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FinancialCenterScreen(balance: "0", token: widget.token),
-              ),
-            );
-          }),
-          _buildUtilityItem(Icons.verified_rounded, 'Điểm Mio', AppColors.primaryPink),
-          _buildUtilityItem(Icons.receipt_long_rounded, 'Thanh toán', Colors.teal),
-          _buildUtilityItem(Icons.attach_money_rounded, 'Quản lý chi tiêu', Colors.teal.shade300),
-          _buildUtilityItem(Icons.redeem_rounded, 'Quà của tôi', Colors.pinkAccent),
+          _buildUtilityItem(
+            Icons.account_balance_rounded,
+            'Trung Tâm Tài Chính',
+            Colors.blue,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      FinancialCenterScreen(balance: "0", token: widget.token),
+                ),
+              );
+            },
+          ),
+          _buildUtilityItem(
+            Icons.verified_rounded,
+            'Điểm Mio',
+            AppColors.primaryPink,
+          ),
+          _buildUtilityItem(
+            Icons.receipt_long_rounded,
+            'Thanh toán',
+            Colors.teal,
+          ),
+          _buildUtilityItem(
+            Icons.attach_money_rounded,
+            'Quản lý chi tiêu',
+            Colors.teal.shade300,
+          ),
+          _buildUtilityItem(
+            Icons.redeem_rounded,
+            'Quà của tôi',
+            Colors.pinkAccent,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildUtilityItem(IconData icon, String title, Color color, {String? badge, VoidCallback? onTap}) {
+  Widget _buildUtilityItem(
+    IconData icon,
+    String title,
+    Color color, {
+    String? badge,
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Icon(icon, size: 32, color: color),
-            if (badge != null)
-              Positioned(
-                top: -5,
-                left: -10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPink,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    badge,
-                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, size: 32, color: color),
+              if (badge != null)
+                Positioned(
+                  top: -5,
+                  left: -10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryPink,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      badge,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
@@ -480,60 +601,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
         child: Column(
-        children: [
-          _buildMoreSettingsItem(
-            icon: Icons.storefront_rounded,
-            title: 'Đối tác kinh doanh',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MerchantScreen(token: widget.token),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
-          _buildMoreSettingsItem(
-            icon: Icons.help_outline_rounded,
-            title: 'Trung tâm trợ giúp',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HelpCenterScreen(
-                    token: widget.token,
-                    fullName: _fullName,
-                    phone: _phone,
+          children: [
+            _buildMoreSettingsItem(
+              icon: Icons.storefront_rounded,
+              title: 'Đối tác kinh doanh',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MerchantScreen(token: widget.token),
                   ),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
-          _buildMoreSettingsItem(
-            icon: Icons.notifications_none_rounded,
-            title: 'Cài đặt thông báo',
-            onTap: () {},
-          ),
-          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
-          _buildMoreSettingsItem(
-            icon: Icons.mail_outline_rounded,
-            title: 'Chia sẻ góp ý',
-            onTap: () {},
-          ),
-          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
-          _buildMoreSettingsItem(
-            icon: Icons.phone_android_rounded,
-            title: 'Thông tin chung',
-            onTap: () {},
-          ),
-          const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
-          _buildLanguageItem(),
-          const Divider(height: 1, color: Color(0xFFF5F5F5)),
-          _buildLogoutSwitchAccountRow(),
-        ],
-      ),
+                );
+              },
+            ),
+            const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
+            _buildMoreSettingsItem(
+              icon: Icons.help_outline_rounded,
+              title: 'Trung tâm trợ giúp',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HelpCenterScreen(
+                      token: widget.token,
+                      fullName: _fullName,
+                      phone: _phone,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
+            _buildMoreSettingsItem(
+              icon: Icons.notifications_none_rounded,
+              title: 'Cài đặt thông báo',
+              onTap: () {},
+            ),
+            const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
+            _buildMoreSettingsItem(
+              icon: Icons.mail_outline_rounded,
+              title: 'Chia sẻ góp ý',
+              onTap: () {},
+            ),
+            const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
+            _buildMoreSettingsItem(
+              icon: Icons.phone_android_rounded,
+              title: 'Thông tin chung',
+              onTap: () {},
+            ),
+            const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),
+            _buildLanguageItem(),
+            const Divider(height: 1, color: Color(0xFFF5F5F5)),
+            _buildLogoutSwitchAccountRow(),
+          ],
+        ),
       ),
     );
   }
@@ -560,7 +681,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: Colors.black87,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        size: 20,
+        color: Colors.grey,
+      ),
       onTap: onTap,
     );
   }
@@ -573,7 +698,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: Colors.grey.shade100,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.translate_rounded, size: 20, color: Colors.black54),
+        child: const Icon(
+          Icons.translate_rounded,
+          size: 20,
+          color: Colors.black54,
+        ),
       ),
       title: const Text(
         'Ngôn ngữ',
@@ -601,9 +730,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     AppState.currentLanguage.value = 'ENG';
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: !isVietnamese ? const Color(0xFF333333) : Colors.transparent,
+                      color: !isVietnamese
+                          ? const Color(0xFF333333)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -621,9 +755,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     AppState.currentLanguage.value = 'VIE';
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: isVietnamese ? const Color(0xFF333333) : Colors.transparent,
+                      color: isVietnamese
+                          ? const Color(0xFF333333)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -664,17 +803,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          Container(
-            width: 1,
-            height: 16,
-            color: Colors.grey.shade300,
-          ),
+          Container(width: 1, height: 16, color: Colors.grey.shade300),
           Expanded(
             child: GestureDetector(
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginPhoneScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPhoneScreen(),
+                  ),
                   (route) => false,
                 );
               },
@@ -700,7 +837,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -753,7 +892,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
                         elevation: 0,
                       ),
                       child: const Text(
@@ -790,9 +932,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      await _client.post(
-        Uri.parse(ApiConfig.logout),
-      );
+      await _client.post(Uri.parse(ApiConfig.logout));
     } catch (e) {
       print('Lỗi gọi API logout: $e');
     }
@@ -812,10 +952,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 16),
         const Text(
           'Phiên bản 1.1.0 build 10100',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.black38,
-          ),
+          style: TextStyle(fontSize: 11, color: Colors.black38),
         ),
         const SizedBox(height: 16),
         Container(
@@ -868,9 +1005,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400, width: 0.5),
+                            border: Border.all(
+                              color: Colors.grey.shade400,
+                              width: 0.5,
+                            ),
                             borderRadius: BorderRadius.circular(2),
                           ),
                           child: const Text(
@@ -884,7 +1027,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.shade800,
                             borderRadius: BorderRadius.circular(2),
@@ -892,7 +1038,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.lock_rounded, color: Colors.white, size: 8),
+                              Icon(
+                                Icons.lock_rounded,
+                                color: Colors.white,
+                                size: 8,
+                              ),
                               SizedBox(width: 2),
                               Text(
                                 'SECURE',
@@ -917,4 +1067,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-

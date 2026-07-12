@@ -69,7 +69,14 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
             final data = jsonDecode(response.body);
             if (mounted) {
               setState(() {
-                _contactResults = data['data'] ?? [];
+                final List rawData = data['data'] ?? [];
+                final Map<String, dynamic> uniqueUsers = {};
+                for (var user in rawData) {
+                  if (user['phone'] != null) {
+                    uniqueUsers[user['phone']] = user;
+                  }
+                }
+                _contactResults = uniqueUsers.values.toList();
               });
             }
           }
@@ -137,7 +144,14 @@ class _TransferSearchScreenState extends State<TransferSearchScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          _searchResults = data['data'] ?? [];
+          final List rawData = data['data'] ?? [];
+          final Map<String, dynamic> uniqueUsers = {};
+          for (var user in rawData) {
+            if (user['phone'] != null) {
+              uniqueUsers[user['phone']] = user;
+            }
+          }
+          _searchResults = uniqueUsers.values.toList();
         });
       }
     } catch (e) {

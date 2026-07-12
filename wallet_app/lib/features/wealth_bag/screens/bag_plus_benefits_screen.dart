@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 class BagPlusBenefitsScreen extends StatefulWidget {
   final int initialIndex;
 
-  const BagPlusBenefitsScreen({Key? key, this.initialIndex = 0}) : super(key: key);
+  const BagPlusBenefitsScreen({Key? key, this.initialIndex = 0})
+    : super(key: key);
 
   @override
   State<BagPlusBenefitsScreen> createState() => _BagPlusBenefitsScreenState();
@@ -51,7 +52,7 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
   @override
   Widget build(BuildContext context) {
     final bool isDark = _selectedTab == 2;
-    
+
     // Determine background color based on selected tab
     Color bgColor;
     if (_selectedTab == 0) {
@@ -76,7 +77,11 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
         ),
         title: Text(
           'Quyền lợi hạng Túi+',
-          style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
         actions: [
           IconButton(
@@ -111,13 +116,19 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                       color: Colors.black.withOpacity(0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
-                    )
+                    ),
                   ],
                 ),
                 labelColor: Colors.black87,
                 unselectedLabelColor: isDark ? Colors.white54 : Colors.black45,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 13),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.normal,
+                  fontSize: 13,
+                ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
                 tabs: const [
@@ -153,7 +164,13 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
         ),
         decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, -2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, -2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -176,7 +193,11 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      _selectedTab == 0 ? '9.000đ ' : _selectedTab == 1 ? '19.000đ ' : '49.000đ ',
+                      _selectedTab == 0
+                          ? '9.000đ '
+                          : _selectedTab == 1
+                          ? '19.000đ '
+                          : '49.000đ ',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -184,7 +205,11 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                       ),
                     ),
                     Text(
-                      _selectedTab == 0 ? '19.000đ' : _selectedTab == 1 ? '39.000đ' : '69.000đ',
+                      _selectedTab == 0
+                          ? '19.000đ'
+                          : _selectedTab == 1
+                          ? '39.000đ'
+                          : '69.000đ',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.black38,
@@ -200,8 +225,13 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE85D04),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 elevation: 0,
               ),
               onPressed: () {
@@ -209,19 +239,28 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   context: context,
                   builder: (_) => AlertDialog(
                     title: const Text('Thông báo'),
-                    content: const Text('Tính năng Mua Túi+ đang được phát triển. Vui lòng quay lại sau!'),
+                    content: const Text(
+                      'Tính năng Mua Túi+ đang được phát triển. Vui lòng quay lại sau!',
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Đã hiểu', style: TextStyle(color: Color(0xFFE85D04))),
-                      )
+                        child: const Text(
+                          'Đã hiểu',
+                          style: TextStyle(color: Color(0xFFE85D04)),
+                        ),
+                      ),
                     ],
                   ),
                 );
               },
               child: const Text(
                 'Mua ngay',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -239,7 +278,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
           // Silver tier intro card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -253,15 +295,30 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Hạng Bạc', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hạng Bạc',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Càng dùng càng thêm lợi - bắt đầu hành trình tài chính hiệu quả nhẹ nhàng mỗi ngày.',
-                        style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.4),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                          height: 1.4,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text('*Thời hạn Túi+: 1 tháng (1/$currentMonth - $lastDayOfMonth/$currentMonthStr)',
-                          style: const TextStyle(fontSize: 11, color: Colors.black38)),
+                      Text(
+                        '*Thời hạn Túi+: 1 tháng (1/$currentMonth - $lastDayOfMonth/$currentMonthStr)',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black38,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -273,32 +330,47 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
           // Benefits card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Quyền lợi từ Túi+', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Quyền lợi từ Túi+',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 14),
                 _buildBenefitItem(
                   icon: Icons.account_balance_wallet_outlined,
                   iconColor: const Color(0xFFE85D04),
-                  title: 'Thêm ', titleHighlight: '50 triệu', titleSuffix: ' hạn mức rút miễn phí',
+                  title: 'Thêm ',
+                  titleHighlight: '50 triệu',
+                  titleSuffix: ' hạn mức rút miễn phí',
                   subtitle: 'Khi rút tiền từ Túi về ngân hàng',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.timer_outlined,
                   iconColor: const Color(0xFFE85D04),
-                  title: 'Thêm ', titleHighlight: '0,2%/năm', titleSuffix: ' lãi gửi tiết kiệm',
+                  title: 'Thêm ',
+                  titleHighlight: '0,2%/năm',
+                  titleSuffix: ' lãi gửi tiết kiệm',
                   subtitle: 'Áp dụng với ngân hàng BVBank',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.monetization_on_outlined,
                   iconColor: const Color(0xFFE85D04),
-                  title: 'Thêm Xu đổi Voucher', titleHighlight: null, titleSuffix: null,
+                  title: 'Thêm Xu đổi Voucher',
+                  titleHighlight: null,
+                  titleSuffix: null,
                   subtitle: null,
-                  bulletPoints: const ['Cộng 1 Xu mỗi 10K thanh toán với Túi', 'Cộng thêm Xu đến 8%/năm'],
+                  bulletPoints: const [
+                    'Cộng 1 Xu mỗi 10K thanh toán với Túi',
+                    'Cộng thêm Xu đến 8%/năm',
+                  ],
                 ),
               ],
             ),
@@ -308,7 +380,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
           // Free tier card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -320,12 +395,21 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Nhận Túi+ Bạc tháng $nextMonth miễn phí',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Nhận Túi+ Bạc tháng $nextMonth miễn phí',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             'Hoàn thành điều kiện dưới đây trước ngày $lastDayOfMonth/$currentMonthStr để nhận quyền lợi miễn phí.',
-                            style: const TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
@@ -333,15 +417,22 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Hoàn thành 1 trong 3 cách',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const Text(
+                  'Hoàn thành 1 trong 3 cách',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 _buildMethodCard(
                   icon: Icons.phone_android,
                   iconBg: const Color(0xFFFFF3E0),
                   iconColor: Colors.orange,
                   title: 'Cách 1: Nạp tiền điện thoại',
-                  description: 'Đạt hạng Thuê bao Tâm giao của dịch vụ Nạp tiền điện thoại',
+                  description:
+                      'Đạt hạng Thuê bao Tâm giao của dịch vụ Nạp tiền điện thoại',
                   actionText: 'Thực hiện →',
                 ),
                 const SizedBox(height: 10),
@@ -350,7 +441,8 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   iconBg: const Color(0xFFFFF3E0),
                   iconColor: Colors.orange,
                   title: 'Cách 2: Nhận tiền tự động vào Túi',
-                  description: 'Bật Nhận tiền tự động vào Túi và nhận 7 triệu tiền chuyển đến Ví của bạn.',
+                  description:
+                      'Bật Nhận tiền tự động vào Túi và nhận 7 triệu tiền chuyển đến Ví của bạn.',
                   actionText: 'Thực hiện →',
                 ),
                 const SizedBox(height: 10),
@@ -358,8 +450,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   icon: Icons.emoji_events_outlined,
                   iconBg: const Color(0xFFFFF3E0),
                   iconColor: Colors.orange,
-                  title: 'Cách 3: Đạt hạng Khỏe mạnh của Điểm MoMo (601 - 700 điểm)',
-                  description: 'Vào Điểm MoMo ngày 3 hàng tháng để kiểm tra hạng và nhận Túi+ miễn phí.',
+                  title:
+                      'Cách 3: Đạt hạng Khỏe mạnh của Điểm MoMo (601 - 700 điểm)',
+                  description:
+                      'Vào Điểm MoMo ngày 3 hàng tháng để kiểm tra hạng và nhận Túi+ miễn phí.',
                   actionText: 'Đến Điểm MoMo →',
                   actionColor: const Color(0xFFE85D04),
                 ),
@@ -402,15 +496,30 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Hạng Vàng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hạng Vàng',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Cân bằng giữa tích lũy và chi tiêu – đầu tư cho tương lai từ những thói quen hàng ngày.',
-                        style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.4),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                          height: 1.4,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text('*Thời hạn Túi+: 1 tháng (1/$currentMonth - $lastDayOfMonth/$currentMonthStr)',
-                          style: const TextStyle(fontSize: 11, color: Colors.black38)),
+                      Text(
+                        '*Thời hạn Túi+: 1 tháng (1/$currentMonth - $lastDayOfMonth/$currentMonthStr)',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black38,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -422,40 +531,59 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
           // Benefits card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Quyền lợi từ Túi+', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Quyền lợi từ Túi+',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 14),
                 _buildBenefitItem(
                   icon: Icons.account_balance_wallet_outlined,
                   iconColor: const Color(0xFFFFAA00),
-                  title: 'Thêm ', titleHighlight: '100 triệu', titleSuffix: ' hạn mức rút miễn phí',
+                  title: 'Thêm ',
+                  titleHighlight: '100 triệu',
+                  titleSuffix: ' hạn mức rút miễn phí',
                   subtitle: 'Khi rút tiền từ Túi về ngân hàng',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.timer_outlined,
                   iconColor: const Color(0xFFFFAA00),
-                  title: 'Thêm ', titleHighlight: '0,3%/năm', titleSuffix: ' lãi gửi tiết kiệm',
+                  title: 'Thêm ',
+                  titleHighlight: '0,3%/năm',
+                  titleSuffix: ' lãi gửi tiết kiệm',
                   subtitle: 'Áp dụng với ngân hàng BVBank',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.refresh_outlined,
                   iconColor: const Color(0xFFFFAA00),
-                  title: 'Thêm hoàn tiền ', titleHighlight: '0,1%', titleSuffix: null,
+                  title: 'Thêm hoàn tiền ',
+                  titleHighlight: '0,1%',
+                  titleSuffix: null,
                   subtitle: null,
-                  bulletPoints: const ['Khi thanh toán hóa đơn điện, nước, Internet và nạp tiền điện thoại'],
+                  bulletPoints: const [
+                    'Khi thanh toán hóa đơn điện, nước, Internet và nạp tiền điện thoại',
+                  ],
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.monetization_on_outlined,
                   iconColor: const Color(0xFFFFAA00),
-                  title: 'Thêm Xu đổi Voucher', titleHighlight: null, titleSuffix: null,
+                  title: 'Thêm Xu đổi Voucher',
+                  titleHighlight: null,
+                  titleSuffix: null,
                   subtitle: null,
-                  bulletPoints: const ['Cộng 2 Xu mỗi 10K thanh toán với Túi', 'Cộng thêm Xu đến 12%/năm'],
+                  bulletPoints: const [
+                    'Cộng 2 Xu mỗi 10K thanh toán với Túi',
+                    'Cộng thêm Xu đến 12%/năm',
+                  ],
                 ),
               ],
             ),
@@ -465,7 +593,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
           // Free tier card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -477,12 +608,21 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Nhận Túi+ Vàng tháng $nextMonth miễn phí',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Nhận Túi+ Vàng tháng $nextMonth miễn phí',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             'Hoàn thành điều kiện dưới đây trước ngày $lastDayOfMonth/$currentMonthStr để nhận quyền lợi miễn phí.',
-                            style: const TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
@@ -490,15 +630,22 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Hoàn thành 1 trong 2 cách',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const Text(
+                  'Hoàn thành 1 trong 2 cách',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 _buildMethodCard(
                   icon: Icons.checklist_outlined,
                   iconBg: const Color(0xFFFFF3E0),
                   iconColor: Colors.orange,
                   title: 'Cách 1: Hoàn thành tất cả nhiệm vụ sau',
-                  description: 'Hoàn thành đầy đủ các nhiệm vụ được giao trong tháng để nhận Túi+ Vàng miễn phí.',
+                  description:
+                      'Hoàn thành đầy đủ các nhiệm vụ được giao trong tháng để nhận Túi+ Vàng miễn phí.',
                   actionText: 'Thực hiện →',
                 ),
                 const SizedBox(height: 10),
@@ -506,8 +653,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   icon: Icons.emoji_events_outlined,
                   iconBg: const Color(0xFFFFF3E0),
                   iconColor: Colors.orange,
-                  title: 'Cách 2: Đạt hạng Đỉnh cao của Điểm MoMo (trên 700 điểm)',
-                  description: 'Vào Điểm MoMo ngày 3 hàng tháng để kiểm tra hạng và nhận Túi+ miễn phí.',
+                  title:
+                      'Cách 2: Đạt hạng Đỉnh cao của Điểm MoMo (trên 700 điểm)',
+                  description:
+                      'Vào Điểm MoMo ngày 3 hàng tháng để kiểm tra hạng và nhận Túi+ miễn phí.',
                   actionText: 'Đến Điểm MoMo →',
                   actionColor: const Color(0xFFE85D04),
                 ),
@@ -540,15 +689,31 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Hạng Bạch Kim', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                    const Text(
+                      'Hạng Bạch Kim',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFFFD700),
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     const Text(
                       'Khởi đầu hành trình tài chính đẳng cấp – mỗi giao dịch đều được ưu ái và thêm lợi',
-                      style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text('*Thời hạn Túi+: 1 tháng (1/$currentMonth - $lastDayOfMonth/$currentMonthStr)',
-                        style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                    Text(
+                      '*Thời hạn Túi+: 1 tháng (1/$currentMonth - $lastDayOfMonth/$currentMonthStr)',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white54,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -559,39 +724,60 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
           // Benefits card
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Quyền lợi từ Túi+', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const Text(
+                  'Quyền lợi từ Túi+',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 _buildBenefitItem(
                   icon: Icons.account_balance_wallet_outlined,
                   iconColor: Colors.black54,
-                  title: 'Hạn mức rút miễn phí ', titleHighlight: 'không giới hạn', titleSuffix: null,
+                  title: 'Hạn mức rút miễn phí ',
+                  titleHighlight: 'không giới hạn',
+                  titleSuffix: null,
                   subtitle: 'Khi rút tiền từ Túi về ngân hàng',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.timer_outlined,
                   iconColor: Colors.black54,
-                  title: 'Thêm ', titleHighlight: '0,5%/năm', titleSuffix: ' lãi gửi tiết kiệm',
+                  title: 'Thêm ',
+                  titleHighlight: '0,5%/năm',
+                  titleSuffix: ' lãi gửi tiết kiệm',
                   subtitle: 'Áp dụng với ngân hàng BVBank',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.refresh_outlined,
                   iconColor: Colors.black54,
-                  title: 'Thêm hoàn tiền ', titleHighlight: '0,1%', titleSuffix: ' không giới hạn',
+                  title: 'Thêm hoàn tiền ',
+                  titleHighlight: '0,1%',
+                  titleSuffix: ' không giới hạn',
                   subtitle: 'Khi thanh toán với Túi',
                 ),
                 const Divider(height: 24, color: Color(0xFFEEEEEE)),
                 _buildBenefitItem(
                   icon: Icons.monetization_on_outlined,
                   iconColor: Colors.black54,
-                  title: 'Thêm Xu đổi Voucher', titleHighlight: null, titleSuffix: null,
+                  title: 'Thêm Xu đổi Voucher',
+                  titleHighlight: null,
+                  titleSuffix: null,
                   subtitle: null,
-                  bulletPoints: const ['Cộng 4 Xu mỗi 10K thanh toán với Túi', 'Cộng thêm Xu đến 15%/năm'],
+                  bulletPoints: const [
+                    'Cộng 4 Xu mỗi 10K thanh toán với Túi',
+                    'Cộng thêm Xu đến 15%/năm',
+                  ],
                 ),
               ],
             ),
@@ -616,12 +802,21 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Nhận Túi+ Bạch Kim tháng $nextMonth miễn phí',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Nhận Túi+ Bạch Kim tháng $nextMonth miễn phí',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             'Hoàn thành điều kiện dưới đây trước ngày $lastDayOfMonth/$currentMonthStr để nhận quyền lợi miễn phí.',
-                            style: const TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
@@ -638,8 +833,14 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Hoàn thành nhiệm vụ sau',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      const Text(
+                        'Hoàn thành nhiệm vụ sau',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -651,24 +852,46 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Duy trì số dư Túi', style: TextStyle(fontSize: 13, color: Colors.black87)),
+                            const Text(
+                              'Duy trì số dư Túi',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.savings_outlined, color: Colors.orange, size: 16),
+                                const Icon(
+                                  Icons.savings_outlined,
+                                  color: Colors.orange,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 6),
                                 const Expanded(
-                                  child: Text('Số dư Túi trung bình tháng này đạt 50 triệu',
-                                      style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.3)),
+                                  child: Text(
+                                    'Số dư Túi trung bình tháng này đạt 50 triệu',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black54,
+                                      height: 1.3,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             const Align(
                               alignment: Alignment.centerRight,
-                              child: Text('Thực hiện →',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFFE85D04), fontWeight: FontWeight.w500)),
+                              child: Text(
+                                'Thực hiện →',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFE85D04),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -744,7 +967,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
         Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(color: iconColor.withOpacity(0.1), shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
           child: Icon(icon, color: iconColor, size: 20),
         ),
         const SizedBox(width: 12),
@@ -755,28 +981,50 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
               titleHighlight != null
                   ? RichText(
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
                         children: [
                           TextSpan(text: title),
                           TextSpan(
                             text: titleHighlight,
-                            style: const TextStyle(color: Color(0xFFE85D04), fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Color(0xFFE85D04),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           if (titleSuffix != null) TextSpan(text: titleSuffix),
                         ],
                       ),
                     )
-                  : Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  : Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
               if (subtitle != null) ...[
                 const SizedBox(height: 3),
-                Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: Colors.black45),
+                ),
               ],
               if (bulletPoints != null) ...[
                 const SizedBox(height: 4),
                 ...bulletPoints.map(
                   (b) => Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Text('• $b', style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                    child: Text(
+                      '• $b',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black45,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -806,7 +1054,10 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -814,21 +1065,36 @@ class _BagPlusBenefitsScreenState extends State<BagPlusBenefitsScreen>
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Icon(icon, color: iconColor, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(description,
-                    style: const TextStyle(fontSize: 13, color: Colors.black54, height: 1.4)),
+                child: Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.black54,
+                    height: 1.4,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
-            child: Text(actionText,
-                style: TextStyle(fontSize: 13, color: actionColor, fontWeight: FontWeight.w500)),
+            child: Text(
+              actionText,
+              style: TextStyle(
+                fontSize: 13,
+                color: actionColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),

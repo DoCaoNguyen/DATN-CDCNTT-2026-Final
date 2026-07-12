@@ -168,11 +168,15 @@ const merchantService = {
                 }
             }
 
+            // Fetch transaction_no
+            const ledgerTxResult = await client.query('SELECT transaction_no FROM ledger_transactions WHERE id = $1', [ledgerTxId]);
+            const transactionNo = ledgerTxResult.rows[0].transaction_no;
+
             return {
                 amount: amount.toString(),
                 merchantBalance: mBalanceAfter.toString(),
                 userBalance: uBalanceAfter.toString(),
-                transactionId: tId
+                transactionId: transactionNo
             };
         } catch (error) {
             await client.query('ROLLBACK');
@@ -252,12 +256,16 @@ const merchantService = {
                 }
             }
 
+            // Fetch transaction_no
+            const ledgerTxResult = await client.query('SELECT transaction_no FROM ledger_transactions WHERE id = $1', [ledgerTxId]);
+            const transactionNo = ledgerTxResult.rows[0].transaction_no;
+
             return {
                 amount: amount.toString(),
                 merchantBalance: mBalanceAfter.toString(),
                 bankCode,
                 accountNumber,
-                transactionId: tId
+                transactionId: transactionNo
             };
         } catch (error) {
             await client.query('ROLLBACK');

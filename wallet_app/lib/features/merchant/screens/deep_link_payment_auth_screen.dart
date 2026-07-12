@@ -21,7 +21,8 @@ class DeepLinkPaymentAuthScreen extends StatefulWidget {
   });
 
   @override
-  State<DeepLinkPaymentAuthScreen> createState() => _DeepLinkPaymentAuthScreenState();
+  State<DeepLinkPaymentAuthScreen> createState() =>
+      _DeepLinkPaymentAuthScreenState();
 }
 
 class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
@@ -66,9 +67,9 @@ class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
   Future<void> _authenticatePassword() async {
     final password = _passwordController.text;
     if (password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập mật khẩu')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng nhập mật khẩu')));
       return;
     }
 
@@ -83,10 +84,7 @@ class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
       final client = CustomHttpClient();
       final response = await client.post(
         Uri.parse(ApiConfig.login),
-        body: jsonEncode({
-          'phone': phone,
-          'password': password,
-        }),
+        body: jsonEncode({'phone': phone, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -97,9 +95,9 @@ class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã có lỗi xảy ra')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã có lỗi xảy ra')));
     } finally {
       if (mounted) {
         setState(() {
@@ -113,9 +111,8 @@ class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => DeepLinkPaymentConfirmScreen(
-          qrToken: widget.qrToken,
-        ),
+        builder: (context) =>
+            DeepLinkPaymentConfirmScreen(qrToken: widget.qrToken),
       ),
     );
   }
@@ -140,7 +137,11 @@ class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
                 color: AppColors.primaryPink.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.security, size: 64, color: AppColors.primaryPink),
+              child: Icon(
+                Icons.security,
+                size: 64,
+                color: AppColors.primaryPink,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -200,7 +201,10 @@ class _DeepLinkPaymentAuthScreenState extends State<DeepLinkPaymentAuthScreen> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Xác nhận mật khẩu', style: TextStyle(fontSize: 16)),
+                    : const Text(
+                        'Xác nhận mật khẩu',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
             ),
             const SizedBox(height: 24),

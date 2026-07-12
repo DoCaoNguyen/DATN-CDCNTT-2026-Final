@@ -552,9 +552,15 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+                          borderSide: const BorderSide(
+                            color: AppColors.primaryPink,
+                            width: 2,
+                          ),
                         ),
-                        prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                          color: Colors.grey,
+                        ),
                         filled: true,
                         fillColor: Colors.grey.shade50,
                       ),
@@ -571,7 +577,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                               ),
                               side: BorderSide(color: Colors.grey.shade300),
                             ),
-                            onPressed: isLoading ? null : () => Navigator.pop(context),
+                            onPressed: isLoading
+                                ? null
+                                : () => Navigator.pop(context),
                             child: const Text(
                               "Hủy bỏ",
                               style: TextStyle(
@@ -598,7 +606,10 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                 : () async {
                                     final email = emailController.text.trim();
                                     if (email.isEmpty || !email.contains('@')) {
-                                      SnackbarUtils.showError(context, "Email không hợp lệ");
+                                      SnackbarUtils.showError(
+                                        context,
+                                        "Email không hợp lệ",
+                                      );
                                       return;
                                     }
 
@@ -606,7 +617,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                     try {
                                       final client = CustomHttpClient();
                                       final response = await client.post(
-                                        Uri.parse("${ApiConfig.baseUrl}/users/email/request-otp"),
+                                        Uri.parse(
+                                          "${ApiConfig.baseUrl}/users/email/request-otp",
+                                        ),
                                         body: jsonEncode({"email": email}),
                                       );
                                       setDialogState(() => isLoading = false);
@@ -617,12 +630,19 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                         Navigator.pop(context);
                                         _showOtpDialog(email);
                                       } else {
-                                        final error = jsonDecode(response.body)['error'] ?? "Lỗi không xác định";
+                                        final error =
+                                            jsonDecode(
+                                              response.body,
+                                            )['error'] ??
+                                            "Lỗi không xác định";
                                         SnackbarUtils.showError(context, error);
                                       }
                                     } catch (e) {
                                       setDialogState(() => isLoading = false);
-                                      SnackbarUtils.showError(context, "Lỗi kết nối: $e");
+                                      SnackbarUtils.showError(
+                                        context,
+                                        "Lỗi kết nối: $e",
+                                      );
                                     }
                                   },
                             child: isLoading
@@ -731,7 +751,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                             : () async {
                                 if (currentOtp.length != 6) {
                                   SnackbarUtils.showError(
-                                      context, "Vui lòng nhập đủ 6 số OTP");
+                                    context,
+                                    "Vui lòng nhập đủ 6 số OTP",
+                                  );
                                   return;
                                 }
 
@@ -742,10 +764,12 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                     Uri.parse(
                                       "${ApiConfig.baseUrl}/users/email/verify-otp",
                                     ),
-                                    body: jsonEncode(
-                                        {"email": email, "otp": currentOtp}),
+                                    body: jsonEncode({
+                                      "email": email,
+                                      "otp": currentOtp,
+                                    }),
                                   );
-                                  
+
                                   if (!mounted) return;
 
                                   if (response.statusCode == 200) {
@@ -761,7 +785,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                     setSheetState(() => isLoading = false);
                                     final error =
                                         jsonDecode(response.body)['error'] ??
-                                            "Mã OTP không hợp lệ";
+                                        "Mã OTP không hợp lệ";
                                     SnackbarUtils.showError(context, error);
                                   }
                                 } catch (e) {

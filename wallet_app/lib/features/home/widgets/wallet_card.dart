@@ -69,7 +69,9 @@ class _WalletCardState extends State<WalletCard> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              setState(() => _isBalanceVisible = !_isBalanceVisible);
+                              setState(
+                                () => _isBalanceVisible = !_isBalanceVisible,
+                              );
                               if (widget.onToggleVisibility != null) {
                                 widget.onToggleVisibility!();
                               }
@@ -84,8 +86,13 @@ class _WalletCardState extends State<WalletCard> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            widget.activeLang == 'VIE' ? "Ví Mio" : "Mio Wallet",
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            widget.activeLang == 'VIE'
+                                ? "Ví Mio"
+                                : "Mio Wallet",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -121,11 +128,20 @@ class _WalletCardState extends State<WalletCard> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              widget.activeLang == 'VIE' ? "Túi Thần Tài" : "Wealth Bag",
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              widget.activeLang == 'VIE'
+                                  ? "Túi Thần Tài"
+                                  : "Wealth Bag",
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(width: 2),
-                            const Icon(Icons.savings_rounded, color: Colors.orange, size: 14),
+                            const Icon(
+                              Icons.savings_rounded,
+                              color: Colors.orange,
+                              size: 14,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -140,7 +156,9 @@ class _WalletCardState extends State<WalletCard> {
                               )
                             : Text(
                                 _isBalanceVisible
-                                    ? CurrencyFormatter.format(widget.wealthBagBalance)
+                                    ? CurrencyFormatter.format(
+                                        widget.wealthBagBalance,
+                                      )
                                     : "******",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -168,7 +186,11 @@ class _WalletCardState extends State<WalletCard> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.shield_rounded, color: Colors.blue.shade700, size: 20),
+                      Icon(
+                        Icons.shield_rounded,
+                        color: Colors.blue.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         widget.activeLang == 'VIE'

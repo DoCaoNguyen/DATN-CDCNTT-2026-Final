@@ -341,22 +341,38 @@ class TransferSuccessScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          
+
                           // Mũi tên (3 mũi tên mờ)
                           Padding(
-                            padding: const EdgeInsets.only(left: 11.0, top: 4.0, bottom: 4.0),
+                            padding: const EdgeInsets.only(
+                              left: 11.0,
+                              top: 4.0,
+                              bottom: 4.0,
+                            ),
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Column(
                                 children: [
-                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.grey.shade400),
-                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.grey.shade400),
-                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.grey.shade400),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 14,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 14,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 14,
+                                    color: Colors.grey.shade400,
+                                  ),
                                 ],
                               ),
                             ),
                           ),
-                          
+
                           // Người nhận
                           Row(
                             children: [
@@ -396,7 +412,7 @@ class TransferSuccessScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
                           // Giao dịch hoàn thành trong...
                           Container(
@@ -424,14 +440,18 @@ class TransferSuccessScreen extends StatelessWidget {
                                     fontSize: 13,
                                   ),
                                 ),
-                                Icon(Icons.flash_on_rounded, color: Colors.green.shade600, size: 14),
+                                Icon(
+                                  Icons.flash_on_rounded,
+                                  color: Colors.green.shade600,
+                                  size: 14,
+                                ),
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 4),
                   ],
                 ),
@@ -446,7 +466,9 @@ class TransferSuccessScreen extends StatelessWidget {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFE91E63)),

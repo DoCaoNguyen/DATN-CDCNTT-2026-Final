@@ -105,15 +105,6 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
     return "${number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
   }
 
-  String getNickname(String name) {
-    if (name.isEmpty) return 'ThoongCT';
-    final parts = name.trim().split(' ');
-    final last = parts.last;
-    if (last.isEmpty) return 'ThoongCT';
-    String cap = last[0].toUpperCase() + last.substring(1).toLowerCase();
-    return '${cap}CT';
-  }
-
   int get _parsedAmount {
     return int.tryParse(widget.amount) ?? 0;
   }
@@ -290,6 +281,10 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        final String returnedRefCode =
+            responseData['data']?['id']?.toString() ?? _refCode;
+
         if (!mounted) return null;
         Navigator.pop(context); // Close PIN Sheet
 
@@ -307,7 +302,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               accountNumber: widget.accountNumber,
               amount: widget.amount,
               note: widget.note,
-              referenceCode: _refCode,
+              referenceCode: returnedRefCode,
               paymentTime: formattedTime,
               receiverName: widget.cardHolderName ?? '',
             ),
@@ -368,6 +363,10 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       var response = await http.Response.fromStream(responseStream);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        final String returnedRefCode =
+            responseData['data']?['id']?.toString() ?? _refCode;
+
         final now = DateTime.now();
         final formattedTime =
             "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
@@ -383,7 +382,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               accountNumber: widget.accountNumber,
               amount: widget.amount,
               note: widget.note,
-              referenceCode: _refCode,
+              referenceCode: returnedRefCode,
               paymentTime: formattedTime,
               receiverName: widget.cardHolderName ?? '',
             ),
@@ -607,9 +606,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
                                 accountNumber: widget.accountNumber,
                                 amountFormatted: _formatAmount(widget.amount),
                                 note: widget.note,
-                                nickname: getNickname(
-                                  widget.cardHolderName ?? 'PHAN VAN THONG',
-                                ),
+                                nickname:
+                                    (widget.cardHolderName ?? 'PHAN VAN THONG')
+                                        .toUpperCase(),
                               ),
                               const SizedBox(height: 16),
                               Container(

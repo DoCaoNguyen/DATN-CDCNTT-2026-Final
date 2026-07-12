@@ -93,7 +93,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
-    
+
     // Xử lý deep link khi app đang mở hoặc chạy nền
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
       _handleDeepLink(uri);
@@ -163,7 +163,11 @@ class _MyAppState extends State<MyApp> {
       ),
       routes: {'/login': (context) => const LoginPhoneScreen()},
       home: isLoggedIn
-          ? HomeScreen(userId: widget.userId!, isVerified: widget.isVerified, token: widget.token!)
+          ? HomeScreen(
+              userId: widget.userId!,
+              isVerified: widget.isVerified,
+              token: widget.token!,
+            )
           : const LoginPhoneScreen(),
     );
   }

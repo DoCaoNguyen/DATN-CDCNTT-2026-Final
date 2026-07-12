@@ -33,14 +33,14 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
     try {
       final limitsRes = await _client.get(
         Uri.parse(ApiConfig.getWalletLimits),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-        },
+        headers: {'Authorization': 'Bearer ${widget.token}'},
       );
-      
+
       final balanceData = await HomeService().fetchBalance(widget.token);
-      final banksData = await FinancialCenterApi.getSortedLinkedBanks(widget.token);
-      
+      final banksData = await FinancialCenterApi.getSortedLinkedBanks(
+        widget.token,
+      );
+
       if (mounted) {
         setState(() {
           if (limitsRes.statusCode == 200) {
@@ -48,7 +48,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
             _limitsData = jsonResp['data'];
           }
           if (balanceData != null) {
-            _balance = double.tryParse(balanceData['available_balance']?.toString() ?? '0') ?? 0.0;
+            _balance =
+                double.tryParse(
+                  balanceData['available_balance']?.toString() ?? '0',
+                ) ??
+                0.0;
           }
           _linkedBanks = banksData;
           _isLoading = false;
@@ -85,7 +89,10 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.support_agent_rounded, color: Colors.black87),
+            icon: const Icon(
+              Icons.support_agent_rounded,
+              color: Colors.black87,
+            ),
             onPressed: () {},
           ),
           IconButton(
@@ -98,16 +105,14 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.pink),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.pink))
           : _limitsData == null
-              ? const Center(child: Text('Không thể tải thông tin hạn mức'))
-              : RefreshIndicator(
-                  onRefresh: _fetchData,
-                  color: Colors.pink,
-                  child: _buildContent(),
-                ),
+          ? const Center(child: Text('Không thể tải thông tin hạn mức'))
+          : RefreshIndicator(
+              onRefresh: _fetchData,
+              color: Colors.pink,
+              child: _buildContent(),
+            ),
     );
   }
 
@@ -115,23 +120,57 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
     final limits = _limitsData!['limits'] ?? {};
     final usage = _limitsData!['usage'] ?? {};
 
-    final monthlyLimit = double.tryParse(limits['monthly_transaction_limit']?.toString() ?? '100000000') ?? 100000000;
-    final monthlyUsage = double.tryParse(usage['monthly_transaction_usage']?.toString() ?? '0') ?? 0;
+    final monthlyLimit =
+        double.tryParse(
+          limits['monthly_transaction_limit']?.toString() ?? '100000000',
+        ) ??
+        100000000;
+    final monthlyUsage =
+        double.tryParse(
+          usage['monthly_transaction_usage']?.toString() ?? '0',
+        ) ??
+        0;
     final monthlyPercent = (monthlyUsage / monthlyLimit).clamp(0.0, 1.0);
 
-    final specialLimit = double.tryParse(limits['monthly_special_service_limit']?.toString() ?? '300000000') ?? 300000000;
-    final specialUsage = double.tryParse(usage['monthly_special_service_usage']?.toString() ?? '0') ?? 0;
-    final specialPercent = specialLimit > 0 ? (specialUsage / specialLimit).clamp(0.0, 1.0) : 0.0;
+    final specialLimit =
+        double.tryParse(
+          limits['monthly_special_service_limit']?.toString() ?? '300000000',
+        ) ??
+        300000000;
+    final specialUsage =
+        double.tryParse(
+          usage['monthly_special_service_usage']?.toString() ?? '0',
+        ) ??
+        0;
+    final specialPercent = specialLimit > 0
+        ? (specialUsage / specialLimit).clamp(0.0, 1.0)
+        : 0.0;
 
-    final dailyDepositLimit = double.tryParse(limits['daily_deposit_limit']?.toString() ?? '50000000') ?? 50000000;
-    final dailyDepositUsage = double.tryParse(usage['daily_deposit_usage']?.toString() ?? '0') ?? 0;
-    final dailyDepositPercent = (dailyDepositUsage / dailyDepositLimit).clamp(0.0, 1.0);
+    final dailyDepositLimit =
+        double.tryParse(
+          limits['daily_deposit_limit']?.toString() ?? '50000000',
+        ) ??
+        50000000;
+    final dailyDepositUsage =
+        double.tryParse(usage['daily_deposit_usage']?.toString() ?? '0') ?? 0;
+    final dailyDepositPercent = (dailyDepositUsage / dailyDepositLimit).clamp(
+      0.0,
+      1.0,
+    );
 
-    final dailyWithdrawLimit = double.tryParse(limits['daily_withdrawal_limit']?.toString() ?? '50000000') ?? 50000000;
-    final dailyWithdrawUsage = double.tryParse(usage['daily_withdrawal_usage']?.toString() ?? '0') ?? 0;
-    
+    final dailyWithdrawLimit =
+        double.tryParse(
+          limits['daily_withdrawal_limit']?.toString() ?? '50000000',
+        ) ??
+        50000000;
+    final dailyWithdrawUsage =
+        double.tryParse(usage['daily_withdrawal_usage']?.toString() ?? '0') ??
+        0;
+
     final dailyTxLimit = 50000000.0;
-    final dailyTxUsage = monthlyUsage > dailyTxLimit ? dailyTxLimit : monthlyUsage; 
+    final dailyTxUsage = monthlyUsage > dailyTxLimit
+        ? dailyTxLimit
+        : monthlyUsage;
     final dailyTxPercent = (dailyTxUsage / dailyTxLimit).clamp(0.0, 1.0);
 
     return SingleChildScrollView(
@@ -142,16 +181,31 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
             height: 20,
             decoration: BoxDecoration(
               color: Colors.pink.shade50,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(24),
+              ),
             ),
           ),
           Transform.translate(
             offset: const Offset(0, -10),
             child: Column(
               children: [
-                _buildMonthlyCard(monthlyLimit, monthlyUsage, monthlyPercent, specialLimit, specialUsage, specialPercent),
+                _buildMonthlyCard(
+                  monthlyLimit,
+                  monthlyUsage,
+                  monthlyPercent,
+                  specialLimit,
+                  specialUsage,
+                  specialPercent,
+                ),
                 const SizedBox(height: 12),
-                _buildDailyDepositCard(dailyDepositLimit, dailyDepositUsage, dailyDepositPercent, dailyWithdrawLimit, dailyWithdrawUsage),
+                _buildDailyDepositCard(
+                  dailyDepositLimit,
+                  dailyDepositUsage,
+                  dailyDepositPercent,
+                  dailyWithdrawLimit,
+                  dailyWithdrawUsage,
+                ),
                 const SizedBox(height: 12),
                 _buildDailyTxCard(dailyTxLimit, dailyTxUsage, dailyTxPercent),
                 const SizedBox(height: 12),
@@ -167,8 +221,17 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
     );
   }
 
-  Widget _buildMonthlyCard(double limit, double usage, double percent, double specialLimit, double specialUsage, double specialPercent) {
-    final double displayPercent = _isSpecialServiceTabActive ? specialPercent : percent;
+  Widget _buildMonthlyCard(
+    double limit,
+    double usage,
+    double percent,
+    double specialLimit,
+    double specialUsage,
+    double specialPercent,
+  ) {
+    final double displayPercent = _isSpecialServiceTabActive
+        ? specialPercent
+        : percent;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -211,33 +274,56 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: !_isSpecialServiceTabActive ? Colors.pink.shade100 : Colors.grey.shade200, 
-                          width: !_isSpecialServiceTabActive ? 1.5 : 1.0),
+                        color: !_isSpecialServiceTabActive
+                            ? Colors.pink.shade100
+                            : Colors.grey.shade200,
+                        width: !_isSpecialServiceTabActive ? 1.5 : 1.0,
+                      ),
                       borderRadius: BorderRadius.circular(12),
-                      color: !_isSpecialServiceTabActive ? Colors.white : Colors.grey.shade50,
+                      color: !_isSpecialServiceTabActive
+                          ? Colors.white
+                          : Colors.grey.shade50,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.monetization_on_outlined, size: 14, color: Colors.grey.shade600),
+                            Icon(
+                              Icons.monetization_on_outlined,
+                              size: 14,
+                              color: Colors.grey.shade600,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Dịch vụ thường',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: !_isSpecialServiceTabActive ? Colors.black : Colors.black87),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: !_isSpecialServiceTabActive
+                                    ? Colors.black
+                                    : Colors.black87,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(
                           CurrencyFormatter.format(usage.toString()),
-                          style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                            color: Colors.green.shade600,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Giới hạn:\n${CurrencyFormatter.format(limit.toString())}',
-                          style: const TextStyle(color: Colors.black54, fontSize: 12, height: 1.4),
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
                         ),
                       ],
                     ),
@@ -256,42 +342,65 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: _isSpecialServiceTabActive ? Colors.pink.shade100 : Colors.grey.shade200, 
-                          width: _isSpecialServiceTabActive ? 1.5 : 1.0),
+                        color: _isSpecialServiceTabActive
+                            ? Colors.pink.shade100
+                            : Colors.grey.shade200,
+                        width: _isSpecialServiceTabActive ? 1.5 : 1.0,
+                      ),
                       borderRadius: BorderRadius.circular(12),
-                      color: _isSpecialServiceTabActive ? Colors.white : Colors.grey.shade50,
+                      color: _isSpecialServiceTabActive
+                          ? Colors.white
+                          : Colors.grey.shade50,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.diamond_outlined, size: 14, color: Colors.grey.shade600),
+                            Icon(
+                              Icons.diamond_outlined,
+                              size: 14,
+                              color: Colors.grey.shade600,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Dịch vụ đặc biệt',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _isSpecialServiceTabActive ? Colors.black : Colors.black87),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: _isSpecialServiceTabActive
+                                    ? Colors.black
+                                    : Colors.black87,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(
                           CurrencyFormatter.format(specialUsage.toString()),
-                          style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                            color: Colors.green.shade600,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Giới hạn:\n${CurrencyFormatter.format(specialLimit.toString())}',
-                          style: const TextStyle(color: Colors.black54, fontSize: 12, height: 1.4),
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
@@ -301,12 +410,20 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: Colors.blue.shade700),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Colors.blue.shade700,
+                ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'Hạn mức trên được quy định theo luật của Ngân Hàng Nhà Nước đối với Ví điện tử.',
-                    style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -318,7 +435,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
               children: [
                 Text(
                   '${(displayPercent * 100).toStringAsFixed(2)}%',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 CircularPercentIndicator(
@@ -332,7 +453,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                 const SizedBox(height: 8),
                 Text(
                   '${((1 - displayPercent) * 100).toStringAsFixed(2)}%',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -342,9 +467,13 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
     );
   }
 
-
-
-  Widget _buildDailyDepositCard(double depLimit, double depUsage, double depPercent, double withLimit, double withUsage) {
+  Widget _buildDailyDepositCard(
+    double depLimit,
+    double depUsage,
+    double depPercent,
+    double withLimit,
+    double withUsage,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -364,7 +493,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   color: Colors.pink.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.pink, size: 24),
+                child: const Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: Colors.pink,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -373,7 +506,10 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   children: [
                     Text(
                       'Hạn mức nạp/rút tiền trong ngày',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 4),
                     Text(
@@ -397,15 +533,28 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
               Container(
                 width: 6,
                 height: 6,
-                decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
-              const Text('Bạn đang liên kết với ngân hàng:', style: TextStyle(color: Colors.black87, fontSize: 14)),
+              const Text(
+                'Bạn đang liên kết với ngân hàng:',
+                style: TextStyle(color: Colors.black87, fontSize: 14),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           if (_linkedBanks.isEmpty)
-            const Text('Chưa có ngân hàng liên kết', style: TextStyle(color: Colors.black54, fontSize: 13, fontStyle: FontStyle.italic)),
+            const Text(
+              'Chưa có ngân hàng liên kết',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ..._linkedBanks.map((bank) {
             final String name = bank['name'] ?? 'Ngân hàng';
             final originalData = bank['original_data'] ?? {};
@@ -441,7 +590,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.receipt_long_rounded, color: Colors.blue, size: 24),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: Colors.blue,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -450,15 +603,28 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   children: [
                     const Text(
                       'Hạn mức giao dịch trong ngày',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
                         children: [
-                          const TextSpan(text: 'Xem chi tiết các loại giao dịch và hạn mức. '),
-                          TextSpan(text: 'Xem thêm', style: TextStyle(color: Colors.blue.shade700)),
+                          const TextSpan(
+                            text:
+                                'Xem chi tiết các loại giao dịch và hạn mức. ',
+                          ),
+                          TextSpan(
+                            text: 'Xem thêm',
+                            style: TextStyle(color: Colors.blue.shade700),
+                          ),
                         ],
                       ),
                     ),
@@ -494,7 +660,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   color: Colors.teal.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.account_balance_wallet, color: Colors.teal, size: 24),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.teal,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -503,12 +673,19 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   children: [
                     Text(
                       'Hạn mức sức chứa ví',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Sức chứa tối đa của Ví Mio.',
-                      style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -542,7 +719,11 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.attach_money_rounded, color: Colors.orange, size: 24),
+                child: const Icon(
+                  Icons.attach_money_rounded,
+                  color: Colors.orange,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -551,12 +732,19 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
                   children: [
                     Text(
                       'Hạn mức nhận tiền trong ngày',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Hạn mức nhận tiền từ ví Mio khác.',
-                      style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -620,15 +808,29 @@ class _LimitInfoScreenState extends State<LimitInfoScreen> {
               CircleAvatar(
                 backgroundColor: Colors.grey.shade100,
                 radius: 16,
-                child: const Icon(Icons.account_balance, size: 18, color: Colors.grey),
+                child: const Icon(
+                  Icons.account_balance,
+                  size: 18,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(width: 12),
-              Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
             ],
           ),
           Text(
             'Xem hạn mức',
-            style: TextStyle(color: Colors.pink.shade400, fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              color: Colors.pink.shade400,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
         ],
       ),

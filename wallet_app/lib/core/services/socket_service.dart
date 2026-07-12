@@ -65,7 +65,10 @@ class SocketService {
     }
 
     if (_onMerchantBalanceUpdate != null) {
-      _socket!.on('merchant_balance_update', (data) => _onMerchantBalanceUpdate?.call(data));
+      _socket!.on(
+        'merchant_balance_update',
+        (data) => _onMerchantBalanceUpdate?.call(data),
+      );
     }
 
     _socket!.on('force_logout', (data) {
@@ -142,7 +145,10 @@ class SocketService {
     _onMerchantBalanceUpdate = callback;
     if (_socket != null) {
       _socket!.off('merchant_balance_update');
-      _socket!.on('merchant_balance_update', (data) => _onMerchantBalanceUpdate?.call(data));
+      _socket!.on(
+        'merchant_balance_update',
+        (data) => _onMerchantBalanceUpdate?.call(data),
+      );
     }
   }
 

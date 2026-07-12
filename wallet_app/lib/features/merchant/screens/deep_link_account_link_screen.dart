@@ -11,13 +11,11 @@ import 'package:url_launcher/url_launcher.dart';
 class DeepLinkAccountLinkScreen extends StatefulWidget {
   final String merchantName;
 
-  const DeepLinkAccountLinkScreen({
-    super.key,
-    required this.merchantName,
-  });
+  const DeepLinkAccountLinkScreen({super.key, required this.merchantName});
 
   @override
-  State<DeepLinkAccountLinkScreen> createState() => _DeepLinkAccountLinkScreenState();
+  State<DeepLinkAccountLinkScreen> createState() =>
+      _DeepLinkAccountLinkScreenState();
 }
 
 class _DeepLinkAccountLinkScreenState extends State<DeepLinkAccountLinkScreen> {
@@ -61,9 +59,9 @@ class _DeepLinkAccountLinkScreenState extends State<DeepLinkAccountLinkScreen> {
   Future<void> _authenticatePassword() async {
     final password = _passwordController.text;
     if (password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập mật khẩu')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng nhập mật khẩu')));
       return;
     }
 
@@ -78,10 +76,7 @@ class _DeepLinkAccountLinkScreenState extends State<DeepLinkAccountLinkScreen> {
       final client = CustomHttpClient();
       final response = await client.post(
         Uri.parse(ApiConfig.login),
-        body: jsonEncode({
-          'phone': phone,
-          'password': password,
-        }),
+        body: jsonEncode({'phone': phone, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -92,9 +87,9 @@ class _DeepLinkAccountLinkScreenState extends State<DeepLinkAccountLinkScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã có lỗi xảy ra')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã có lỗi xảy ra')));
     } finally {
       if (mounted) {
         setState(() {
@@ -108,13 +103,15 @@ class _DeepLinkAccountLinkScreenState extends State<DeepLinkAccountLinkScreen> {
     final prefs = await SharedPreferences.getInstance();
     final phone = prefs.getString('user_phone') ?? '';
     // Xử lý che số điện thoại (ví dụ: *******089)
-    String maskedPhone = phone.length >= 4 
-      ? '*******${phone.substring(phone.length - 3)}' 
-      : '*******';
+    String maskedPhone = phone.length >= 4
+        ? '*******${phone.substring(phone.length - 3)}'
+        : '*******';
 
     final status = success ? 'success' : 'failed';
-    final url = Uri.parse('tiktokshop://link-result?status=$status&phone=$maskedPhone');
-    
+    final url = Uri.parse(
+      'tiktokshop://link-result?status=$status&phone=$maskedPhone',
+    );
+
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
       if (mounted) {
@@ -213,7 +210,10 @@ class _DeepLinkAccountLinkScreenState extends State<DeepLinkAccountLinkScreen> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Xác nhận mật khẩu', style: TextStyle(fontSize: 16)),
+                    : const Text(
+                        'Xác nhận mật khẩu',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
             ),
             const SizedBox(height: 24),

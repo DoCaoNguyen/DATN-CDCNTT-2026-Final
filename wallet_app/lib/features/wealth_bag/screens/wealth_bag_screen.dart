@@ -39,8 +39,9 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
         setState(() {
           _isActive = data['is_active'] ?? false;
           _balance = double.tryParse(data['balance']?.toString() ?? '0') ?? 0.0;
-          _profit = double.tryParse(data['total_profit']?.toString() ?? '0') ?? 0.0;
-          
+          _profit =
+              double.tryParse(data['total_profit']?.toString() ?? '0') ?? 0.0;
+
           if (_balance > 0 || _profit > 0) _isActive = true;
           _isLoading = false;
         });
@@ -51,7 +52,7 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
     }
     if (mounted) setState(() => _isLoading = false);
   }
-  
+
   String _formatAmount(double amount) {
     if (amount == amount.toInt()) {
       return "${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ";
@@ -64,7 +65,10 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
       formatted = formatted.substring(0, formatted.length - 1);
     }
     List<String> parts = formatted.split('.');
-    String intPart = parts[0].replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    String intPart = parts[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
     if (parts.length > 1) return "$intPart,${parts[1]}đ";
     return "$intPartđ";
   }
@@ -84,9 +88,12 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
           _currentIndex == 1
               ? "Lịch sử giao dịch"
               : _currentIndex == 2
-                  ? "Túi+"
-                  : "Túi Thần Tài",
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ? "Túi+"
+              : "Túi Thần Tài",
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -103,13 +110,13 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
           ),
         ],
       ),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator()) 
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
           : (_currentIndex == 1
-              ? const WealthBagHistoryTab()
-              : _currentIndex == 2
-                  ? const BagPlusTab()
-                  : (_isActive ? _buildDashboard() : _buildWelcome())),
+                ? const WealthBagHistoryTab()
+                : _currentIndex == 2
+                ? const BagPlusTab()
+                : (_isActive ? _buildDashboard() : _buildWelcome())),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (idx) => setState(() => _currentIndex = idx),
@@ -124,14 +131,8 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
             activeIcon: Icon(Icons.account_balance_wallet),
             label: "Tổng quan",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: "Lịch sử",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_task),
-            label: "Túi+",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: "Lịch sử"),
+          BottomNavigationBarItem(icon: Icon(Icons.add_task), label: "Túi+"),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: "Tôi",
@@ -162,7 +163,11 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -171,7 +176,10 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                       Align(
                         alignment: Alignment.topRight,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: const BoxDecoration(
                             color: Color(0xFFFFEDD5),
                             borderRadius: BorderRadius.only(
@@ -179,26 +187,58 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                               bottomLeft: Radius.circular(16),
                             ),
                           ),
-                          child: const Text("Cơ hội sinh lời đến 4%/năm", style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            "Cơ hội sinh lời đến 4%/năm",
+                            style: TextStyle(
+                              color: Colors.deepOrange,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Tiền trong Túi", style: TextStyle(color: Colors.black54, fontSize: 14)),
+                            const Text(
+                              "Tiền trong Túi",
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
                                 Text(
-                                  _isBalanceVisible ? _formatAmount(_balance) : '******',
-                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                                  _isBalanceVisible
+                                      ? _formatAmount(_balance)
+                                      : '******',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 GestureDetector(
-                                  onTap: () => setState(() => _isBalanceVisible = !_isBalanceVisible),
-                                  child: Icon(_isBalanceVisible ? Icons.visibility : Icons.visibility_off, color: Colors.black54, size: 20),
+                                  onTap: () => setState(
+                                    () =>
+                                        _isBalanceVisible = !_isBalanceVisible,
+                                  ),
+                                  child: Icon(
+                                    _isBalanceVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    color: Colors.black54,
+                                    size: 20,
+                                  ),
                                 ),
                               ],
                             ),
@@ -208,30 +248,73 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                             Row(
                               children: [
                                 const Expanded(
-                                  child: Text("Tiền lời sẽ được cộng vào Túi\nsau 2-4 ngày", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                                  child: Text(
+                                    "Tiền lời sẽ được cộng vào Túi\nsau 2-4 ngày",
+                                    style: TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
-                                Container(width: 1, height: 24, color: Colors.grey.shade300),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: Colors.grey.shade300,
+                                ),
                                 const SizedBox(width: 12),
-                                const Text("Xem tổng hợp\ntiền lời", style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                const Text(
+                                  "Xem tổng hợp\ntiền lời",
+                                  style: TextStyle(
+                                    color: Colors.deepOrange,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                                 const SizedBox(width: 4),
-                                const Icon(Icons.arrow_forward_rounded, color: Colors.deepOrange, size: 16),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.deepOrange,
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
-                          borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(16),
+                            bottomRight: Radius.circular(16),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.add_circle, color: Colors.grey, size: 20),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
-                            const Expanded(child: Text("Thêm Túi+, thêm quyền lợi", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
-                            Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                            const Expanded(
+                              child: Text(
+                                "Thêm Túi+, thêm quyền lợi",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Colors.grey.shade400,
+                            ),
                           ],
                         ),
                       ),
@@ -244,12 +327,40 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _buildActionItem(Icons.swap_horiz, "Nạp/Rút", onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const WealthBagTransactionScreen())).then((_) => _fetchStatus());
-                    })),
-                    Expanded(child: _buildActionItem(Icons.account_balance, "Chuyển khoản\nvào Túi")),
-                    Expanded(child: _buildActionItem(Icons.receipt_long, "Chuyển tiền\nThanh toán")),
-                    Expanded(child: _buildActionItem(Icons.chat_bubble_outline, "Tin nhắn", hasNotification: true)),
+                    Expanded(
+                      child: _buildActionItem(
+                        Icons.swap_horiz,
+                        "Nạp/Rút",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const WealthBagTransactionScreen(),
+                            ),
+                          ).then((_) => _fetchStatus());
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildActionItem(
+                        Icons.account_balance,
+                        "Chuyển khoản\nvào Túi",
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildActionItem(
+                        Icons.receipt_long,
+                        "Chuyển tiền\nThanh toán",
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildActionItem(
+                        Icons.chat_bubble_outline,
+                        "Tin nhắn",
+                        hasNotification: true,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -257,9 +368,16 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.verified_user_outlined, size: 16, color: Colors.black54),
+                    const Icon(
+                      Icons.verified_user_outlined,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
                     const SizedBox(width: 4),
-                    const Text("Tài sản của bạn được lưu ký tại Vietcombank", style: TextStyle(color: Colors.black54, fontSize: 13)),
+                    const Text(
+                      "Tài sản của bạn được lưu ký tại Vietcombank",
+                      style: TextStyle(color: Colors.black54, fontSize: 13),
+                    ),
                   ],
                 ),
               ],
@@ -272,7 +390,10 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Túi Thần Tài là sản phẩm của Công ty Cổ phần Finsight (chi tiết bên dưới)", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                const Text(
+                  "Túi Thần Tài là sản phẩm của Công ty Cổ phần Finsight (chi tiết bên dưới)",
+                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                ),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -284,10 +405,23 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                     children: [
                       RichText(
                         text: const TextSpan(
-                          style: TextStyle(color: Colors.black87, fontSize: 13, height: 1.5),
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
                           children: [
-                            TextSpan(text: "✨ Tiền lời lần đầu sẽ được cộng vào Túi sau 2 - 4 ngày. Sau lần đầu, bạn sẽ nhận tiền lời mỗi ngày. "),
-                            TextSpan(text: "Xem cách tính tiền lời", style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold)),
+                            TextSpan(
+                              text:
+                                  "✨ Tiền lời lần đầu sẽ được cộng vào Túi sau 2 - 4 ngày. Sau lần đầu, bạn sẽ nhận tiền lời mỗi ngày. ",
+                            ),
+                            TextSpan(
+                              text: "Xem cách tính tiền lời",
+                              style: TextStyle(
+                                color: Colors.deepOrange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -300,8 +434,18 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                             right: 45,
                             child: Row(
                               children: [
-                                Expanded(child: Container(height: 2, color: Colors.deepOrange)),
-                                Expanded(child: Container(height: 2, color: Colors.deepOrange.shade100)),
+                                Expanded(
+                                  child: Container(
+                                    height: 2,
+                                    color: Colors.deepOrange,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    height: 2,
+                                    color: Colors.deepOrange.shade100,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -309,9 +453,28 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildStepItem(0, "Mở Túi", Icons.check_circle, Colors.deepOrange, true),
-                              _buildStepItem(1, "Nạp tiền từ\n20.000đ", Icons.check_circle, Colors.deepOrange, true, isCenter: true),
-                              _buildStepItem(2, "Nhận tiền lời", Icons.radio_button_checked, Colors.deepOrange, false),
+                              _buildStepItem(
+                                0,
+                                "Mở Túi",
+                                Icons.check_circle,
+                                Colors.deepOrange,
+                                true,
+                              ),
+                              _buildStepItem(
+                                1,
+                                "Nạp tiền từ\n20.000đ",
+                                Icons.check_circle,
+                                Colors.deepOrange,
+                                true,
+                                isCenter: true,
+                              ),
+                              _buildStepItem(
+                                2,
+                                "Nhận tiền lời",
+                                Icons.radio_button_checked,
+                                Colors.deepOrange,
+                                false,
+                              ),
                             ],
                           ),
                         ],
@@ -331,24 +494,61 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.money, color: Colors.orange, size: 20),
+                          const Icon(
+                            Icons.money,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
-                          const Expanded(child: Text("Tối ưu tiền của bạn", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
-                          Icon(Icons.chevron_right, color: Colors.pink.shade300, size: 20),
+                          const Expanded(
+                            child: Text(
+                              "Tối ưu tiền của bạn",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            color: Colors.pink.shade300,
+                            size: 20,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text("Phân chia, tích lũy và sinh lời", style: TextStyle(color: Colors.black54, fontSize: 13)),
+                      const Text(
+                        "Phân chia, tích lũy và sinh lời",
+                        style: TextStyle(color: Colors.black54, fontSize: 13),
+                      ),
                       const SizedBox(height: 16),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _buildFeatureCard("Tích lũy lâu dài", "7% cho 6 th...", "Gửi tiết kiệm", Colors.pink.shade50, Colors.pink),
+                            _buildFeatureCard(
+                              "Tích lũy lâu dài",
+                              "7% cho 6 th...",
+                              "Gửi tiết kiệm",
+                              Colors.pink.shade50,
+                              Colors.pink,
+                            ),
                             const SizedBox(width: 12),
-                            _buildFeatureCard("Nhiều mục đích", "Chia từng ...", "Tạo Quỹ ng...", Colors.purple.shade50, Colors.purple),
+                            _buildFeatureCard(
+                              "Nhiều mục đích",
+                              "Chia từng ...",
+                              "Tạo Quỹ ng...",
+                              Colors.purple.shade50,
+                              Colors.purple,
+                            ),
                             const SizedBox(width: 12),
-                            _buildFeatureCard("Tài sản của bạn", "Cập nhật n...", "Mọi nguồn ...", Colors.green.shade50, Colors.green),
+                            _buildFeatureCard(
+                              "Tài sản của bạn",
+                              "Cập nhật n...",
+                              "Mọi nguồn ...",
+                              Colors.green.shade50,
+                              Colors.green,
+                            ),
                           ],
                         ),
                       ),
@@ -364,11 +564,20 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
     );
   }
 
-  Widget _buildActionItem(IconData icon, String title, {bool hasNotification = false, VoidCallback? onTap}) {
+  Widget _buildActionItem(
+    IconData icon,
+    String title, {
+    bool hasNotification = false,
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
-      onTap: onTap ?? () {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tính năng đang phát triển")));
-      },
+      onTap:
+          onTap ??
+          () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Tính năng đang phát triển")),
+            );
+          },
       child: Column(
         children: [
           Stack(
@@ -398,13 +607,23 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(String title, String highlight, String subtitle, Color bgColor, Color iconColor) {
+  Widget _buildFeatureCard(
+    String title,
+    String highlight,
+    String subtitle,
+    Color bgColor,
+    Color iconColor,
+  ) {
     return Container(
       width: 140,
       padding: const EdgeInsets.all(12),
@@ -416,14 +635,27 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
           const SizedBox(height: 4),
-          Text(highlight, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: iconColor)),
+          Text(
+            highlight,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: iconColor,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
               Icon(Icons.stars, color: iconColor.withOpacity(0.5), size: 24),
             ],
           ),
@@ -451,15 +683,25 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Chào mừng bạn đến với Túi Thần Tài", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Chào mừng bạn đến với Túi Thần Tài",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
-                  const Text("Nạp ít nhất 20.000đ vào Túi để nhận tiền lời mỗi ngày. Bạn có thể rút tiền bất kỳ lúc nào.", style: TextStyle(color: Colors.black87, fontSize: 14)),
+                  const Text(
+                    "Nạp ít nhất 20.000đ vào Túi để nhận tiền lời mỗi ngày. Bạn có thể rút tiền bất kỳ lúc nào.",
+                    style: TextStyle(color: Colors.black87, fontSize: 14),
+                  ),
                   const SizedBox(height: 24),
                   Stack(
                     children: [
@@ -469,8 +711,18 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                         right: 45,
                         child: Row(
                           children: [
-                            Expanded(child: Container(height: 2, color: Colors.deepOrange)),
-                            Expanded(child: Container(height: 2, color: Colors.grey.shade300)),
+                            Expanded(
+                              child: Container(
+                                height: 2,
+                                color: Colors.deepOrange,
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                height: 2,
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -478,9 +730,28 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildStepItem(0, "Mở Túi", Icons.check_circle, Colors.deepOrange, true),
-                          _buildStepItem(1, "Nạp tiền từ\n20.000đ", Icons.radio_button_checked, Colors.deepOrange, false, isCenter: true),
-                          _buildStepItem(2, "Nhận tiền lời", Icons.check_circle, Colors.grey.shade300, false),
+                          _buildStepItem(
+                            0,
+                            "Mở Túi",
+                            Icons.check_circle,
+                            Colors.deepOrange,
+                            true,
+                          ),
+                          _buildStepItem(
+                            1,
+                            "Nạp tiền từ\n20.000đ",
+                            Icons.radio_button_checked,
+                            Colors.deepOrange,
+                            false,
+                            isCenter: true,
+                          ),
+                          _buildStepItem(
+                            2,
+                            "Nhận tiền lời",
+                            Icons.check_circle,
+                            Colors.grey.shade300,
+                            false,
+                          ),
                         ],
                       ),
                     ],
@@ -492,13 +763,31 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const WealthBagTransactionScreen())).then((_) => _fetchStatus());
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const WealthBagTransactionScreen(),
+                          ),
+                        ).then((_) => _fetchStatus());
                       },
-                      icon: const Icon(Icons.login_rounded, color: Colors.white),
-                      label: const Text("Nạp tiền ngay", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      icon: const Icon(
+                        Icons.login_rounded,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        "Nạp tiền ngay",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -510,9 +799,16 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.verified_user_outlined, size: 16, color: Colors.black54),
+                Icon(
+                  Icons.verified_user_outlined,
+                  size: 16,
+                  color: Colors.black54,
+                ),
                 SizedBox(width: 4),
-                Text("Tài sản của bạn được lưu ký tại Vietcombank", style: TextStyle(color: Colors.black54, fontSize: 13)),
+                Text(
+                  "Tài sản của bạn được lưu ký tại Vietcombank",
+                  style: TextStyle(color: Colors.black54, fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -521,7 +817,11 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
             color: Colors.grey.shade100,
             child: const Text(
               "Túi Thần Tài là sản phẩm tài chính của Công ty Cổ phần Finsight giúp người dùng góp vốn hợp tác kinh doanh với Finsight trên nền tảng ứng dụng Mio. Vốn được ủy thác cho CTCP Quản lý quỹ Thiên Việt và lưu ký an toàn tại Vietcombank. Đây là đầu tư linh hoạt, không phải tiền gửi tiết kiệm – bạn nhớ đọc kỹ thông tin.",
-              style: TextStyle(color: Colors.black54, fontSize: 12, height: 1.5),
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 12,
+                height: 1.5,
+              ),
               textAlign: TextAlign.justify,
             ),
           ),
@@ -530,7 +830,14 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
     );
   }
 
-  Widget _buildStepItem(int index, String title, IconData icon, Color color, bool isCompleted, {bool isCenter = false}) {
+  Widget _buildStepItem(
+    int index,
+    String title,
+    IconData icon,
+    Color color,
+    bool isCompleted, {
+    bool isCenter = false,
+  }) {
     Widget topIcon;
     if (index == 0) {
       topIcon = Transform.translate(
@@ -555,9 +862,21 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
         clipBehavior: Clip.none,
         children: [
           const Icon(Icons.savings, color: Colors.red, size: 36),
-          const Positioned(top: -4, left: -8, child: Icon(Icons.star, color: Colors.amber, size: 12)),
-          const Positioned(top: -12, right: -4, child: Icon(Icons.monetization_on, color: Colors.amber, size: 14)),
-          const Positioned(top: 8, right: -12, child: Icon(Icons.monetization_on, color: Colors.amber, size: 16)),
+          const Positioned(
+            top: -4,
+            left: -8,
+            child: Icon(Icons.star, color: Colors.amber, size: 12),
+          ),
+          const Positioned(
+            top: -12,
+            right: -4,
+            child: Icon(Icons.monetization_on, color: Colors.amber, size: 14),
+          ),
+          const Positioned(
+            top: 8,
+            right: -12,
+            child: Icon(Icons.monetization_on, color: Colors.amber, size: 16),
+          ),
         ],
       );
     }
@@ -565,10 +884,7 @@ class _WealthBagScreenState extends State<WealthBagScreen> {
     return Expanded(
       child: Column(
         children: [
-          SizedBox(
-            height: 48,
-            child: Center(child: topIcon),
-          ),
+          SizedBox(height: 48, child: Center(child: topIcon)),
           const SizedBox(height: 8),
           Container(
             color: Colors.white,

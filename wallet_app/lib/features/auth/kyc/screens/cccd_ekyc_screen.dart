@@ -28,7 +28,9 @@ class _CccdEkycScreenState extends State<CccdEkycScreen> {
   String? _errorMessage;
 
   // Điều khiển Camera
-  final MobileScannerController _cameraController = MobileScannerController(formats: const [BarcodeFormat.qrCode]);
+  final MobileScannerController _cameraController = MobileScannerController(
+    formats: const [BarcodeFormat.qrCode],
+  );
 
   @override
   void dispose() {

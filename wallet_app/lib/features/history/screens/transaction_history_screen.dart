@@ -365,8 +365,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final result = await Navigator.push<TransactionFilterConfig>(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            TransactionHistoryFilterScreen(initialConfig: _currentFilter, token: widget.token),
+        builder: (context) => TransactionHistoryFilterScreen(
+          initialConfig: _currentFilter,
+          token: widget.token,
+        ),
       ),
     );
 
@@ -554,6 +556,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final String entryType = tx['entry_type'] ?? 'DEBIT';
     final String note = tx['transfer_note'] ?? tx['description'] ?? 'Giao dịch';
     final String extRef =
+        tx['transaction_no']?.toString() ??
         tx['external_reference']?.toString() ??
         tx['transaction_id']?.toString() ??
         'Không có';
@@ -571,10 +574,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         typeLabel = "Chuyển tiền";
       }
     } else if (tx['transaction_type'] == 'PAYMENT') {
-      final bool isTopup = (note.toLowerCase().contains('mã thẻ') || 
-        note.toLowerCase().contains('thẻ cào') || 
-        note.toLowerCase().contains('nạp tiền điện thoại') || 
-        note.toLowerCase().contains('nạp gói data'));
+      final bool isTopup =
+          (note.toLowerCase().contains('mã thẻ') ||
+          note.toLowerCase().contains('thẻ cào') ||
+          note.toLowerCase().contains('nạp tiền điện thoại') ||
+          note.toLowerCase().contains('nạp gói data'));
       if (isTopup) {
         typeLabel = note.isNotEmpty ? note : "Giao dịch nạp tiền";
       } else {
@@ -778,12 +782,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
               ListTile(
                 leading: Icon(
-                  _isBalanceVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  _isBalanceVisible
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
                   color: Colors.black87,
                 ),
                 title: Text(
-                  _isBalanceVisible ? 'Ẩn số dư' : 'Hiện số dư', 
-                  style: const TextStyle(fontSize: 15)
+                  _isBalanceVisible ? 'Ẩn số dư' : 'Hiện số dư',
+                  style: const TextStyle(fontSize: 15),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -1321,12 +1327,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                       "Nhận tiền từ ${tx['sender_name'] ?? tx['sender_phone'] ?? 'Người dùng'}";
                                 }
                               } else if (tx['transaction_type'] == 'PAYMENT') {
-                                final bool isTopup = (note.toLowerCase().contains('mã thẻ') || 
-                                  note.toLowerCase().contains('thẻ cào') || 
-                                  note.toLowerCase().contains('nạp tiền điện thoại') || 
-                                  note.toLowerCase().contains('nạp gói data'));
+                                final bool isTopup =
+                                    (note.toLowerCase().contains('mã thẻ') ||
+                                    note.toLowerCase().contains('thẻ cào') ||
+                                    note.toLowerCase().contains(
+                                      'nạp tiền điện thoại',
+                                    ) ||
+                                    note.toLowerCase().contains(
+                                      'nạp gói data',
+                                    ));
                                 if (isTopup) {
-                                  title = note.isNotEmpty ? note : "Giao dịch nạp tiền";
+                                  title = note.isNotEmpty
+                                      ? note
+                                      : "Giao dịch nạp tiền";
                                 } else {
                                   title =
                                       "Thanh toán tại ${tx['receiver_name'] ?? 'Cửa hàng'}";
@@ -1341,16 +1354,16 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                   );
                               final bool isCredit = entryType == 'CREDIT';
                               final bool isPoint = tx['currency'] == 'POINT';
-                              
-                              final String displayAmount = isPoint 
-                                  ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+
+                              final String displayAmount = isPoint
+                                  ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu"
                                   : "${CurrencyFormatter.format(amountRaw)}";
-                                  
-                              final String balanceValue = _isBalanceVisible 
-                                  ? CurrencyFormatter.format(balanceAfterRaw) 
+
+                              final String balanceValue = _isBalanceVisible
+                                  ? CurrencyFormatter.format(balanceAfterRaw)
                                   : '******';
-                              final String displayBalance = isPoint 
-                                  ? "Số dư Xu: ${balanceValue.replaceAll('đ', '').replaceAll('₫', '').trim()}${_isBalanceVisible ? ' Xu' : ''}" 
+                              final String displayBalance = isPoint
+                                  ? "Số dư Xu: ${balanceValue.replaceAll('đ', '').replaceAll('₫', '').trim()}${_isBalanceVisible ? ' Xu' : ''}"
                                   : "Số dư ví: $balanceValue";
 
                               return InkWell(

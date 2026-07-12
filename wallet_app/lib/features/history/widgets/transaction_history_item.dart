@@ -39,15 +39,17 @@ class TransactionHistoryItem extends StatelessWidget {
             "Nhận tiền từ ${tx['sender_name'] ?? tx['sender_phone'] ?? 'Người dùng'}";
       }
     } else if (tx['transaction_type'] == 'PAYMENT') {
-      final bool isTopup = (note.toLowerCase().contains('mã thẻ') || 
-        note.toLowerCase().contains('thẻ cào') || 
-        note.toLowerCase().contains('nạp tiền điện thoại') || 
-        note.toLowerCase().contains('nạp gói data'));
+      final bool isTopup =
+          (note.toLowerCase().contains('mã thẻ') ||
+          note.toLowerCase().contains('thẻ cào') ||
+          note.toLowerCase().contains('nạp tiền điện thoại') ||
+          note.toLowerCase().contains('nạp gói data'));
       if (isTopup) {
         title = note.isNotEmpty ? note : "Giao dịch nạp tiền";
       } else {
         final rName = tx['receiver_name'];
-        title = "Thanh toán tại ${rName != null && rName.toString().isNotEmpty ? rName : 'Cửa hàng'}";
+        title =
+            "Thanh toán tại ${rName != null && rName.toString().isNotEmpty ? rName : 'Cửa hàng'}";
       }
     } else if (tx['transaction_type'] == 'LOYALTY_REDEEM') {
       title = note.isNotEmpty ? note : "Đổi thẻ cào";
@@ -58,13 +60,13 @@ class TransactionHistoryItem extends StatelessWidget {
     final String tag = TransactionCategoryHelper.determineCategoryTag(tx);
     final bool isCredit = entryType == 'CREDIT';
     final bool isPoint = tx['currency'] == 'POINT';
-    
-    final String displayAmount = isPoint 
-        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+
+    final String displayAmount = isPoint
+        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu"
         : CurrencyFormatter.format(amountRaw);
-        
-    final String displayBalance = isPoint 
-        ? "${CurrencyFormatter.format(balanceAfterRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+
+    final String displayBalance = isPoint
+        ? "${CurrencyFormatter.format(balanceAfterRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu"
         : CurrencyFormatter.format(balanceAfterRaw);
 
     return InkWell(

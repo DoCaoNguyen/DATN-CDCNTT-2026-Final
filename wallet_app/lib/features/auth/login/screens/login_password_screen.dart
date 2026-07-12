@@ -304,7 +304,14 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context); // Đóng dialog
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => ActivationOtpScreen(phoneNumber: widget.phoneNumber)));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ActivationOtpScreen(
+                                phoneNumber: widget.phoneNumber,
+                              ),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),

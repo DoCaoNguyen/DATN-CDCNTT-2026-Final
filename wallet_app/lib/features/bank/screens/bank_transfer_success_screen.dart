@@ -317,8 +317,12 @@ class BankTransferSuccessScreen extends StatelessWidget {
                                       width: 20,
                                       height: 20,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Icon(Icons.account_balance, size: 20),
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(
+                                                Icons.account_balance,
+                                                size: 20,
+                                              ),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -339,7 +343,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    
+
                     // Box "Tạo mẫu"
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -372,7 +376,11 @@ class BankTransferSuccessScreen extends StatelessWidget {
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.note_add_outlined, size: 14, color: Color(0xFFE91E63)),
+                                Icon(
+                                  Icons.note_add_outlined,
+                                  size: 14,
+                                  color: Color(0xFFE91E63),
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Tạo mẫu',
@@ -402,7 +410,9 @@ class BankTransferSuccessScreen extends StatelessWidget {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFE91E63)),
@@ -462,13 +472,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
         const SizedBox(width: 16),
         Expanded(
           child: Text(

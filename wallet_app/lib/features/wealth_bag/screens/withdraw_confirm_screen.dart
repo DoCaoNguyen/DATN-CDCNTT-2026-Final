@@ -26,7 +26,8 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
   final String _idempotencyKey = const Uuid().v7();
 
   String _formatAmount(int amount) {
-    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ';
+    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') +
+        'đ';
   }
 
   void _handleConfirm() {
@@ -68,6 +69,9 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
+        final txId =
+            data['data']?['id']?.toString() ??
+            data['data']?['transaction_id']?.toString();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -75,11 +79,15 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
               amount: widget.amount,
               isWithdraw: true,
               methodName: widget.method == 'wallet' ? 'Ví Mio' : 'Ngân hàng',
+              transactionId: txId,
             ),
           ),
         );
       } else {
-        SnackbarUtils.showError(context, data['message'] ?? 'Lỗi không xác định');
+        SnackbarUtils.showError(
+          context,
+          data['message'] ?? 'Lỗi không xác định',
+        );
       }
     } catch (e) {
       Navigator.pop(context); // close loading
@@ -100,7 +108,11 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
         ),
         title: const Text(
           "Xác nhận giao dịch",
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -109,7 +121,8 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_outlined, color: Colors.black87),
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () =>
+                Navigator.popUntil(context, (route) => route.isFirst),
           ),
         ],
       ),
@@ -131,10 +144,21 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text("Rút tiền về", style: TextStyle(color: Colors.black54, fontSize: 14)),
+                            const Text(
+                              "Rút tiền về",
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
                             Text(
-                              widget.method == 'wallet' ? "Ví Mio" : "Ngân hàng",
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              widget.method == 'wallet'
+                                  ? "Ví Mio"
+                                  : "Ngân hàng",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                           ],
                         ),
@@ -144,20 +168,36 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
                         const Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Phí giao dịch", style: TextStyle(color: Colors.black54, fontSize: 14)),
-                            Text("Miễn phí", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(
+                              "Phí giao dịch",
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              "Miễn phí",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
                   // SSL Secure fake text
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.lock_outline, color: Colors.grey.shade400, size: 32),
+                      Icon(
+                        Icons.lock_outline,
+                        color: Colors.grey.shade400,
+                        size: 32,
+                      ),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
@@ -171,7 +211,7 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
               ),
             ),
           ),
-          
+
           // Bottom button
           Container(
             padding: EdgeInsets.only(
@@ -182,7 +222,13 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
             ),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, -2),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -190,10 +236,16 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Số tiền rút từ Túi Thần Tài", style: TextStyle(color: Colors.black54, fontSize: 14)),
+                    const Text(
+                      "Số tiền rút từ Túi Thần Tài",
+                      style: TextStyle(color: Colors.black54, fontSize: 14),
+                    ),
                     Text(
                       _formatAmount(widget.amount),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                   ],
                 ),
@@ -204,16 +256,22 @@ class _WithdrawConfirmScreenState extends State<WithdrawConfirmScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepOrange,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: _handleConfirm,
-                    icon: const Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                    icon: const Icon(
+                      Icons.lock_outline,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     label: const Text(
                       "Xác nhận",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
-                        fontWeight: FontWeight.bold
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

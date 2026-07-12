@@ -72,7 +72,8 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
         final data = jsonDecode(response.body);
         if (data['isExist'] == true) {
           if (mounted) {
-            if (data['status'] == 'PENDING_VERIFY' && data['user_type'] == 'USER') {
+            if (data['status'] == 'PENDING_VERIFY' &&
+                data['user_type'] == 'USER') {
               _showPendingVerifyDialog(phone, lang);
             } else {
               Navigator.push(
@@ -255,9 +256,8 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ActivationOtpScreen(
-                                phoneNumber: phone,
-                              ),
+                              builder: (context) =>
+                                  ActivationOtpScreen(phoneNumber: phone),
                             ),
                           );
                         },

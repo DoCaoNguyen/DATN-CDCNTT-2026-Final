@@ -14,13 +14,22 @@ class FinancialCenterAppBarActions extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.support_agent_rounded, color: Colors.black87, size: 20),
+          const Icon(
+            Icons.support_agent_rounded,
+            color: Colors.black87,
+            size: 20,
+          ),
           const SizedBox(width: 4),
           Container(width: 1, height: 16, color: Colors.grey.shade400),
           const SizedBox(width: 4),
           GestureDetector(
-            onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Icon(Icons.home_outlined, color: Colors.black87, size: 20),
+            onTap: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+            child: const Icon(
+              Icons.home_outlined,
+              color: Colors.black87,
+              size: 20,
+            ),
           ),
         ],
       ),

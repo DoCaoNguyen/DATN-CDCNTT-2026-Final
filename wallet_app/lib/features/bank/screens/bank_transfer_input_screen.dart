@@ -24,7 +24,8 @@ class BankTransferInputScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<BankTransferInputScreen> createState() => _BankTransferInputScreenState();
+  State<BankTransferInputScreen> createState() =>
+      _BankTransferInputScreenState();
 }
 
 class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
@@ -44,7 +45,8 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
     if (widget.prefilledAccountNumber != null) {
       _accountController.text = widget.prefilledAccountNumber!;
     }
-    _noteController.text = "${widget.cardHolderName ?? 'PHAN VAN THONG'} chuyen tien qua Mio";
+    _noteController.text =
+        "${widget.cardHolderName ?? 'PHAN VAN THONG'} chuyen tien qua Mio";
     _fetchSenderProfile();
     _fetchMioBalance();
   }
@@ -59,12 +61,11 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
 
   Future<void> _fetchMioBalance() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getWalletBalance),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getWalletBalance));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final rawBalance = data['data']?['available_balance']?.toString() ?? "0";
+        final rawBalance =
+            data['data']?['available_balance']?.toString() ?? "0";
         if (mounted) {
           setState(() {
             _rawBalanceInt = int.tryParse(rawBalance) ?? 0;
@@ -80,9 +81,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
   Future<void> _fetchSenderProfile() async {
     setState(() => _isLoadingProfile = true);
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getMyProfile),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getMyProfile));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final name = data['data']?['full_name']?.toString() ?? "NGUYEN VAN A";
@@ -107,9 +106,31 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
 
   String _convertNumberToVietnameseWords(int number) {
     if (number == 0) return '';
-    final units = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
-    final tens = ['', 'mười', 'hai mươi', 'ba mươi', 'bốn mươi', 'năm mươi', 'sáu mươi', 'bảy mươi', 'tám mươi', 'chín mươi'];
-    
+    final units = [
+      '',
+      'một',
+      'hai',
+      'ba',
+      'bốn',
+      'năm',
+      'sáu',
+      'bảy',
+      'tám',
+      'chín',
+    ];
+    final tens = [
+      '',
+      'mười',
+      'hai mươi',
+      'ba mươi',
+      'bốn mươi',
+      'năm mươi',
+      'sáu mươi',
+      'bảy mươi',
+      'tám mươi',
+      'chín mươi',
+    ];
+
     String convertGroup(int n) {
       int h = n ~/ 100;
       int t = (n % 100) ~/ 10;
@@ -155,7 +176,7 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
       temp = temp ~/ 1000;
       scaleIdx++;
     }
-    
+
     String result = groups.join(' ').trim();
     if (result.isNotEmpty) {
       result = result[0].toUpperCase() + result.substring(1) + ' đồng';
@@ -224,8 +245,13 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
 
   bool get _isValid {
     final text = _accountController.text.trim();
-    final isAccountValid = widget.prefilledAccountNumber != null || (text.length >= 8 && text.length <= 19);
-    return isAccountValid && _parsedAmount >= 1000 && _parsedAmount <= 50000000 && _parsedAmount <= _rawBalanceInt;
+    final isAccountValid =
+        widget.prefilledAccountNumber != null ||
+        (text.length >= 8 && text.length <= 19);
+    return isAccountValid &&
+        _parsedAmount >= 1000 &&
+        _parsedAmount <= 50000000 &&
+        _parsedAmount <= _rawBalanceInt;
   }
 
   void _onContinue() {
@@ -249,14 +275,15 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
   }
 
   Future<void> _openContacts() async {
-    final PermissionStatus permissionStatus = await Permission.contacts.request();
+    final PermissionStatus permissionStatus = await Permission.contacts
+        .request();
     if (permissionStatus == PermissionStatus.granted) {
       try {
         final Contact? contact = await FlutterContacts.openExternalPick();
         if (contact != null && contact.phones.isNotEmpty) {
           String phone = contact.phones.first.number;
           phone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-          
+
           setState(() {
             _accountController.text = phone;
           });
@@ -267,7 +294,11 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vui lòng cấp quyền truy cập danh bạ để sử dụng tính năng này')),
+          const SnackBar(
+            content: Text(
+              'Vui lòng cấp quyền truy cập danh bạ để sử dụng tính năng này',
+            ),
+          ),
         );
       }
     }
@@ -289,7 +320,11 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
         ),
         title: const Text(
           'Đến ngân hàng',
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -303,7 +338,8 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_rounded, color: Colors.black87),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -312,173 +348,322 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFE4EE),
-              Color(0xFFFFF0F5),
-              Color(0xFFF5F5F9),
-            ],
+            colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
           ),
         ),
         child: Column(
           children: [
             Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Bank information banner (Mockup Blue Card)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F3B99),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundColor: Colors.white,
-                          child: ClipOval(
-                            child: Image.network(
-                              'https://api.vietqr.io/img/${widget.bankCode}.png',
-                              width: 32,
-                              height: 32,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => Text(
-                                widget.bankCode,
-                                style: const TextStyle(
-                                  color: Color(0xFF0F3B99),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // Bank information banner (Mockup Blue Card)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F3B99),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: Colors.white,
+                            child: ClipOval(
+                              child: Image.network(
+                                'https://api.vietqr.io/img/${widget.bankCode}.png',
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Text(
+                                      widget.bankCode,
+                                      style: const TextStyle(
+                                        color: Color(0xFF0F3B99),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
                               ),
                             ),
                           ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayNickname,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  displayName.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${widget.prefilledAccountNumber ?? _accountController.text} - ${widget.bankName}',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Green Shield Check Banner
+                    Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.verified_user_rounded,
+                            color: Colors.green,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Người nhận chưa ghi nhận rủi ro',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Bảo mật bởi AI',
+                              style: TextStyle(
+                                color: Colors.purple,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Card/Account Number Input (Only if not prefilled)
+                    if (widget.prefilledAccountNumber == null) ...[
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.pink.shade100,
+                            width: 1,
+                          ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Số thẻ/tài khoản *',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _accountController,
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
+                                      isDense: true,
+                                    ),
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.contact_phone_rounded,
+                                    color: Colors.pink,
+                                  ),
+                                  onPressed: _openContacts,
+                                  constraints: const BoxConstraints(),
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_accountError != null) ...[
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
                             children: [
-                              Text(
-                                displayNickname,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                color: Colors.red,
+                                size: 14,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                displayName.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${widget.prefilledAccountNumber ?? _accountController.text} - ${widget.bankName}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  _accountError!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded, color: Colors.white),
                       ],
-                    ),
-                  ),
-                  
-                  // Green Shield Check Banner
-                  Container(
-                    margin: const EdgeInsets.only(top: 8, bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.verified_user_rounded, color: Colors.green, size: 16),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Người nhận chưa ghi nhận rủi ro',
-                          style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.purple.shade50,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Bảo mật bởi AI',
-                            style: TextStyle(color: Colors.purple, fontSize: 10, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      const SizedBox(height: 16),
+                    ],
 
-                  // Card/Account Number Input (Only if not prefilled)
-                  if (widget.prefilledAccountNumber == null) ...[
+                    // Số tiền chuyển
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.pink.shade100, width: 1),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Số thẻ/tài khoản *',
-                            style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
+                            'Số tiền chuyển *',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
                               Expanded(
                                 child: TextField(
-                                  controller: _accountController,
+                                  controller: _amountController,
                                   keyboardType: TextInputType.number,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     contentPadding: EdgeInsets.zero,
                                     isDense: true,
                                   ),
-                                  onChanged: (_) => setState(() {}),
+                                  onChanged: _onAmountChanged,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.contact_phone_rounded, color: Colors.pink),
-                                onPressed: _openContacts,
-                                constraints: const BoxConstraints(),
-                                padding: EdgeInsets.zero,
-                              )
+                              Container(
+                                height: 24,
+                                width: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey.shade100,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'đ',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
+                          if (_amountController.text.isNotEmpty &&
+                              _parsedAmount > 0) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              _convertNumberToVietnameseWords(_parsedAmount),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    if (_accountError != null) ...[
+                    if (_amountError != null) ...[
                       const SizedBox(height: 6),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 14),
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: Colors.red,
+                              size: 14,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                _accountError!,
-                                style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
+                                _amountError!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
@@ -486,198 +671,161 @@ class _BankTransferInputScreenState extends State<BankTransferInputScreen> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                  ],
 
-                  // Số tiền chuyển
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Số tiền chuyển *',
-                          style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _amountController,
-                                keyboardType: TextInputType.number,
-                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                  isDense: true,
+                    // Note Input
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Lời nhắn (${_noteController.text.length}/70)',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                onChanged: _onAmountChanged,
                               ),
+                            ],
+                          ),
+                          TextField(
+                            controller: _noteController,
+                            maxLength: 70,
+                            maxLines: null,
+                            style: const TextStyle(fontSize: 14),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                              counterText: '',
                             ),
-                            Container(
-                              height: 24,
-                              width: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey.shade100,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'đ',
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_amountController.text.isNotEmpty && _parsedAmount > 0) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            _convertNumberToVietnameseWords(_parsedAmount),
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontStyle: FontStyle.italic),
+                            onChanged: (val) {
+                              setState(() {});
+                            },
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  if (_amountError != null) ...[
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    const SizedBox(height: 16),
+
+                    // AI classification banner
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.purple.shade50, Colors.pink.shade50],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 14),
-                          const SizedBox(width: 6),
-                          Expanded(
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            color: Colors.purple.shade300,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
                             child: Text(
-                              _amountError!,
-                              style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
+                              'AI sẽ tự động phân loại giao dịch này giúp bạn',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
                             ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.deepPurple,
+                            size: 18,
                           ),
                         ],
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                  // Note Input
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Terms info text
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: RichText(
+                        text: const TextSpan(
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                            height: 1.4,
+                          ),
                           children: [
-                            Text(
-                              'Lời nhắn (${_noteController.text.length}/70)',
-                              style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
+                            TextSpan(
+                              text:
+                                  'Dịch vụ thu hộ chi hộ do Mio hỗ trợ các Ngân hàng đối tác cung cấp. ',
+                            ),
+                            TextSpan(
+                              text: 'Xem hạn mức và phí',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
-                        TextField(
-                          controller: _noteController,
-                          maxLength: 70,
-                          maxLines: null,
-                          style: const TextStyle(fontSize: 14),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                            counterText: '',
-                          ),
-                          onChanged: (val) {
-                            setState(() {});
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // AI classification banner
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.purple.shade50, Colors.pink.shade50],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Icon(Icons.auto_awesome_rounded, color: Colors.purple.shade300, size: 20),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'AI sẽ tự động phân loại giao dịch này giúp bạn',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.deepPurple),
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right_rounded, color: Colors.deepPurple, size: 18),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Terms info text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(color: Colors.grey, fontSize: 11, height: 1.4),
-                        children: [
-                          TextSpan(text: 'Dịch vụ thu hộ chi hộ do Mio hỗ trợ các Ngân hàng đối tác cung cấp. '),
-                          TextSpan(
-                            text: 'Xem hạn mức và phí',
-                            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                          ),
-                        ],
                       ),
                     ),
-                  )
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          
-          // Next button container
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isValid ? _onContinue : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isValid ? Colors.pink : Colors.grey.shade200,
-                    foregroundColor: _isValid ? Colors.white : Colors.grey.shade400,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+            // Next button container
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isValid ? _onContinue : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isValid
+                          ? Colors.pink
+                          : Colors.grey.shade200,
+                      foregroundColor: _isValid
+                          ? Colors.white
+                          : Colors.grey.shade400,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Tiếp tục',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    child: const Text(
+                      'Tiếp tục',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 }

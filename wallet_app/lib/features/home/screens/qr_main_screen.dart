@@ -17,13 +17,12 @@ import 'package:flutter/services.dart';
 import '../../../core/widgets/pin_confirm_bottom_sheet.dart';
 import 'package:intl/intl.dart';
 
-
-
 class QrMainScreen extends StatefulWidget {
   final String token;
   final int initialIndex;
 
-  const QrMainScreen({Key? key, required this.token, this.initialIndex = 0}) : super(key: key);
+  const QrMainScreen({Key? key, required this.token, this.initialIndex = 0})
+    : super(key: key);
 
   @override
   State<QrMainScreen> createState() => _QrMainScreenState();
@@ -46,7 +45,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // Scanner Controller điều khiển bật/tắt flash, quét mã
   final MobileScannerController _scannerController = MobileScannerController();
   bool _isScannerActive = true;
-  
+
   StreamSubscription<RemoteMessage>? _fcmSubscription;
 
   @override
@@ -58,7 +57,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
   }
 
   void _listenToLoyaltyPoints() {
-    _fcmSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    _fcmSubscription = FirebaseMessaging.onMessage.listen((
+      RemoteMessage message,
+    ) {
       if (message.data['type'] == 'LOYALTY_POINTS') {
         final earnedPoints = message.data['earned_points'] ?? '0';
         if (mounted) {
@@ -83,7 +84,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
               backgroundColor: AppColors.primaryPink,
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               duration: const Duration(seconds: 4),
               elevation: 6,
             ),
@@ -103,9 +106,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // Gọi API lấy thông tin Profile (Họ tên, SĐT) để vẽ mã QR
   Future<void> _fetchMyProfile() async {
     try {
-      final response = await _client.get(
-        Uri.parse(ApiConfig.getMyProfile),
-      );
+      final response = await _client.get(Uri.parse(ApiConfig.getMyProfile));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['data'];
@@ -146,7 +147,8 @@ class _QrMainScreenState extends State<QrMainScreen> {
             _scannerController.stop();
 
             final String? qrAmt = qrData['amount']?.toString();
-            final String? qrNote = qrData['description']?.toString() ?? qrData['note']?.toString();
+            final String? qrNote =
+                qrData['description']?.toString() ?? qrData['note']?.toString();
 
             // Nếu QR có amount thì lock, không cho chỉnh sửa
             final bool shouldLock = qrAmt != null && qrAmt.isNotEmpty;
@@ -193,7 +195,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
           }
 
           // Nếu có thông tin người nhận (SĐT và Tên) thì điều hướng sang trang chuyển tiền thông thường
-          if (phone != null && phone.isNotEmpty && name != null && name.isNotEmpty) {
+          if (phone != null &&
+              phone.isNotEmpty &&
+              name != null &&
+              name.isNotEmpty) {
             if (phone == _phone) {
               _showErrorDialog('Bạn không thể quét mã QR của chính mình.');
               return;
@@ -230,27 +235,29 @@ class _QrMainScreenState extends State<QrMainScreen> {
     }
   }
 
-
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Thông báo', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Thông báo',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Future.delayed(
-                const Duration(milliseconds: 800),
-                () {
-                  _isScannerActive = true;
-                  _scannerController.start();
-                },
-              );
+              Future.delayed(const Duration(milliseconds: 800), () {
+                _isScannerActive = true;
+                _scannerController.start();
+              });
             },
-            child: const Text('Quét lại', style: TextStyle(color: AppColors.primaryPink)),
+            child: const Text(
+              'Quét lại',
+              style: TextStyle(color: AppColors.primaryPink),
+            ),
           ),
         ],
       ),
@@ -260,12 +267,18 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // ============================================================
   // LẤY THÔNG TIN ĐƠN HÀNG TRƯỚC KHI THANH TOÁN (PREVIEW)
   // ============================================================
-  Future<void> _fetchPaymentPreviewAndShowConfirm(String token, int fallbackAmount, String fallbackDesc) async {
+  Future<void> _fetchPaymentPreviewAndShowConfirm(
+    String token,
+    int fallbackAmount,
+    String fallbackDesc,
+  ) async {
     try {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) => const Center(child: CircularProgressIndicator(color: AppColors.primaryPink)),
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryPink),
+        ),
       );
 
       final response = await _client.get(
@@ -278,19 +291,22 @@ class _QrMainScreenState extends State<QrMainScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['data'];
-        
+
         if (data['is_expired'] == true || data['can_pay'] == false) {
-           _showErrorDialog('Mã QR thanh toán đã hết hạn hoặc đã được xử lý.');
-           return;
+          _showErrorDialog('Mã QR thanh toán đã hết hạn hoặc đã được xử lý.');
+          return;
         }
 
-        final amount = int.tryParse(data['amount'].toString()) ?? fallbackAmount;
+        final amount =
+            int.tryParse(data['amount'].toString()) ?? fallbackAmount;
         final description = data['description'] ?? fallbackDesc;
         final merchantName = data['merchant_name'] ?? 'Cửa hàng / Đối tác';
-        
+
         _showPaymentConfirmSheet(token, amount, description, merchantName);
       } else {
-        final error = jsonDecode(response.body)['error'] ?? 'Không lấy được thông tin đơn hàng.';
+        final error =
+            jsonDecode(response.body)['error'] ??
+            'Không lấy được thông tin đơn hàng.';
         _showErrorDialog(error);
       }
     } catch (e) {
@@ -302,10 +318,16 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // ============================================================
   // BOTTOM SHEET XÁC NHẬN THANH TOÁN QR
   // ============================================================
-  void _showPaymentConfirmSheet(String qrToken, int amount, String description, String merchantName) {
-    String fmtAmt(int v) => v
-        .toString()
-        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+  void _showPaymentConfirmSheet(
+    String qrToken,
+    int amount,
+    String description,
+    String merchantName,
+  ) {
+    String fmtAmt(int v) => v.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
 
     bool isPaying = false;
     final String idempotencyKey = const Uuid().v7();
@@ -321,13 +343,19 @@ class _QrMainScreenState extends State<QrMainScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            16,
+            24,
+            MediaQuery.of(context).padding.bottom + 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Handle bar
               Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
@@ -342,7 +370,11 @@ class _QrMainScreenState extends State<QrMainScreen> {
                   color: Colors.pink.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primaryPink, size: 36),
+                child: const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  color: AppColors.primaryPink,
+                  size: 36,
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -360,7 +392,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
               // Amount card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.pink.shade50,
                   borderRadius: BorderRadius.circular(14),
@@ -390,7 +425,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
                       const SizedBox(height: 6),
                       Text(
                         description,
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -404,63 +442,91 @@ class _QrMainScreenState extends State<QrMainScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: isPaying ? null : () {
-                        Navigator.pop(sheetCtx);
-                        Future.delayed(
-                          const Duration(milliseconds: 300),
-                          () {
-                            _isScannerActive = true;
-                            _scannerController.start();
-                          },
-                        );
-                      },
+                      onPressed: isPaying
+                          ? null
+                          : () {
+                              Navigator.pop(sheetCtx);
+                              Future.delayed(
+                                const Duration(milliseconds: 300),
+                                () {
+                                  _isScannerActive = true;
+                                  _scannerController.start();
+                                },
+                              );
+                            },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         side: BorderSide(color: Colors.grey.shade300),
                       ),
-                      child: const Text('Hủy', style: TextStyle(color: Colors.black54, fontSize: 15)),
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(color: Colors.black54, fontSize: 15),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: isPaying ? null : () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (pinSheetCtx) => PinConfirmBottomSheet(
-                            onPinEntered: (pin) async {
-                              try {
-                                // Xác thực PIN sẽ được backend thực hiện trực tiếp trong API thanh toán
-                                if (!mounted) return null;
-                                Navigator.pop(pinSheetCtx); // Đóng Bottom Sheet nhập PIN
-                                setSheetState(() => isPaying = true);
-                                await _processQrPayment(sheetCtx, qrToken, amount, pin, idempotencyKey, merchantName);
-                                return null;
-                              } catch (e) {
-                                return "Lỗi kết nối máy chủ";
-                              }
+                      onPressed: isPaying
+                          ? null
+                          : () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (pinSheetCtx) => PinConfirmBottomSheet(
+                                  onPinEntered: (pin) async {
+                                    try {
+                                      // Xác thực PIN sẽ được backend thực hiện trực tiếp trong API thanh toán
+                                      if (!mounted) return null;
+                                      Navigator.pop(
+                                        pinSheetCtx,
+                                      ); // Đóng Bottom Sheet nhập PIN
+                                      setSheetState(() => isPaying = true);
+                                      await _processQrPayment(
+                                        sheetCtx,
+                                        qrToken,
+                                        amount,
+                                        pin,
+                                        idempotencyKey,
+                                        merchantName,
+                                      );
+                                      return null;
+                                    } catch (e) {
+                                      return "Lỗi kết nối máy chủ";
+                                    }
+                                  },
+                                ),
+                              );
                             },
-                          ),
-                        );
-                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryPink,
                         disabledBackgroundColor: Colors.grey.shade300,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
                       child: isPaying
                           ? const SizedBox(
-                              width: 20, height: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
                           : const Text(
                               'Thanh toán ngay',
-                              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ),
@@ -476,7 +542,14 @@ class _QrMainScreenState extends State<QrMainScreen> {
   // ============================================================
   // GỌI API THANH TOÁN QR
   // ============================================================
-  Future<void> _processQrPayment(BuildContext sheetCtx, String qrToken, int amount, String pin, String idempotencyKey, String merchantName) async {
+  Future<void> _processQrPayment(
+    BuildContext sheetCtx,
+    String qrToken,
+    int amount,
+    String pin,
+    String idempotencyKey,
+    String merchantName,
+  ) async {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.processPayment),
@@ -492,7 +565,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['data'];
-        
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -502,13 +575,19 @@ class _QrMainScreenState extends State<QrMainScreen> {
               receiverPhone: "Thanh toán dịch vụ",
               amount: amount.toString(),
               note: "Thanh toán qua mã QR",
-              referenceCode: data['reference_code'] ?? data['transaction_id'] ?? 'N/A',
-              paymentTime: DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(data['timestamp'] ?? DateTime.now().toIso8601String())),
+              referenceCode:
+                  data['reference_code'] ?? data['transaction_id'] ?? 'N/A',
+              paymentTime: DateFormat('HH:mm - dd/MM/yyyy').format(
+                DateTime.parse(
+                  data['timestamp'] ?? DateTime.now().toIso8601String(),
+                ),
+              ),
             ),
           ),
         );
       } else {
-        final errMsg = jsonDecode(response.body)['error'] ?? 'Thanh toán thất bại';
+        final errMsg =
+            jsonDecode(response.body)['error'] ?? 'Thanh toán thất bại';
         _showErrorDialog(errMsg);
       }
     } catch (e) {
@@ -516,8 +595,6 @@ class _QrMainScreenState extends State<QrMainScreen> {
       _showErrorDialog('Lỗi kết nối. Vui lòng thử lại.');
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -598,105 +675,115 @@ class _QrMainScreenState extends State<QrMainScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light, // White icons for dark camera screen
+        statusBarIconBrightness:
+            Brightness.light, // White icons for dark camera screen
       ),
       child: Stack(
         children: [
-        MobileScanner(controller: _scannerController, onDetect: _onDetectQR),
+          MobileScanner(controller: _scannerController, onDetect: _onDetectQR),
 
-        // Khung quét (chỉ có 4 góc)
-        Center(
-          child: SizedBox(
-            width: 260,
-            height: 260,
-            child: CustomPaint(
-              painter: _ScannerCornerPainter(),
+          // Khung quét (chỉ có 4 góc)
+          Center(
+            child: SizedBox(
+              width: 260,
+              height: 260,
+              child: CustomPaint(painter: _ScannerCornerPainter()),
             ),
           ),
-        ),
 
-        // Thanh Header
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Quét mã',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+          // Thanh Header
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: ValueListenableBuilder(
-                        valueListenable:
-                            _scannerController,
-                        builder: (context, state, child) {
-                          return Icon(
-                            state.torchState == TorchState.on
-                                ? Icons.flash_on_rounded
-                                : Icons.flash_off_rounded,
-                            color: Colors.white,
-                          );
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Quét mã',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: ValueListenableBuilder(
+                          valueListenable: _scannerController,
+                          builder: (context, state, child) {
+                            return Icon(
+                              state.torchState == TorchState.on
+                                  ? Icons.flash_on_rounded
+                                  : Icons.flash_off_rounded,
+                              color: Colors.white,
+                            );
+                          },
+                        ),
+                        onPressed: () => _scannerController.toggleTorch(),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.photo_library_rounded,
+                          color: Colors.white,
+                        ),
+                        onPressed: () async {
+                          try {
+                            final picker = ImagePicker();
+                            final XFile? image = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
+                            if (image != null) {
+                              final BarcodeCapture? capture =
+                                  await _scannerController.analyzeImage(
+                                    image.path,
+                                  );
+                              if (capture != null &&
+                                  capture.barcodes.isNotEmpty) {
+                                _onDetectQR(capture);
+                              } else {
+                                if (mounted)
+                                  _showErrorDialog(
+                                    'Không tìm thấy mã QR trong ảnh.',
+                                  );
+                              }
+                            }
+                          } catch (e) {
+                            if (mounted) _showErrorDialog('Lỗi khi đọc ảnh.');
+                          }
                         },
                       ),
-                      onPressed: () => _scannerController.toggleTorch(),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.photo_library_rounded,
-                        color: Colors.white,
-                      ),
-                      onPressed: () async {
-                        try {
-                          final picker = ImagePicker();
-                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                          if (image != null) {
-                            final BarcodeCapture? capture = await _scannerController.analyzeImage(image.path);
-                            if (capture != null && capture.barcodes.isNotEmpty) {
-                              _onDetectQR(capture);
-                            } else {
-                              if (mounted) _showErrorDialog('Không tìm thấy mã QR trong ảnh.');
-                            }
-                          }
-                        } catch (e) {
-                          if (mounted) _showErrorDialog('Lỗi khi đọc ảnh.');
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
-        const Positioned(
-          bottom: 120,
-          left: 0,
-          right: 0,
-          child: Text(
-            'Di chuyển Camera đến vùng chứa mã QR',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white),
+          const Positioned(
+            bottom: 120,
+            left: 0,
+            right: 0,
+            child: Text(
+              'Di chuyển Camera đến vùng chứa mã QR',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white),
+            ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 
@@ -714,7 +801,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.black,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 8),
@@ -807,11 +897,13 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                   alignment: Alignment.center,
                                   children: [
                                     QrImageView(
-                                      data: _customQrContent ?? jsonEncode({
-                                        "action": "TRANSFER",
-                                        "phone": _phone,
-                                        "name": _fullName,
-                                      }),
+                                      data:
+                                          _customQrContent ??
+                                          jsonEncode({
+                                            "action": "TRANSFER",
+                                            "phone": _phone,
+                                            "name": _fullName,
+                                          }),
                                       version: QrVersions.auto,
                                       size: 220.0,
                                       backgroundColor: Colors.white,
@@ -822,7 +914,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                         height: 220,
                                         color: Colors.white.withOpacity(0.8),
                                         child: const Center(
-                                          child: CircularProgressIndicator(color: Colors.pink),
+                                          child: CircularProgressIndicator(
+                                            color: Colors.pink,
+                                          ),
                                         ),
                                       ),
                                   ],
@@ -833,11 +927,16 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                 if (_customAmount != null)
                                   Container(
                                     margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.pink.shade50,
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: Colors.pink.shade200),
+                                      border: Border.all(
+                                        color: Colors.pink.shade200,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -857,7 +956,11 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                             _customQrContent = null;
                                             _customDescription = '';
                                           }),
-                                          child: const Icon(Icons.close_rounded, size: 16, color: Colors.pink),
+                                          child: const Icon(
+                                            Icons.close_rounded,
+                                            size: 16,
+                                            color: Colors.pink,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -866,7 +969,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                 GestureDetector(
                                   onTap: _showAmountBottomSheet,
                                   child: Text(
-                                    _customAmount == null ? '+ Thêm số tiền' : 'Sửa số tiền',
+                                    _customAmount == null
+                                        ? '+ Thêm số tiền'
+                                        : 'Sửa số tiền',
                                     style: const TextStyle(
                                       color: Colors.blue,
                                       fontWeight: FontWeight.bold,
@@ -1035,13 +1140,19 @@ class _QrMainScreenState extends State<QrMainScreen> {
 
                   // Title
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           'Tuỳ chỉnh số tiền',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close_rounded, size: 22),
@@ -1066,7 +1177,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
                           decoration: InputDecoration(
                             labelText: 'Số tiền',
                             labelStyle: TextStyle(
-                              color: sheetAmountError != null ? Colors.red : Colors.pink,
+                              color: sheetAmountError != null
+                                  ? Colors.red
+                                  : Colors.pink,
                               fontWeight: FontWeight.w500,
                             ),
                             hintText: '0đ',
@@ -1074,45 +1187,75 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                 ? GestureDetector(
                                     onTap: () {
                                       amountController.clear();
-                                      setSheetState(() => sheetAmountError = null);
+                                      setSheetState(
+                                        () => sheetAmountError = null,
+                                      );
                                     },
-                                    child: const Icon(Icons.cancel_rounded, size: 18, color: Colors.grey),
+                                    child: const Icon(
+                                      Icons.cancel_rounded,
+                                      size: 18,
+                                      color: Colors.grey,
+                                    ),
                                   )
                                 : null,
                             errorText: sheetAmountError,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.pink, width: 1.5),
+                              borderSide: const BorderSide(
+                                color: Colors.pink,
+                                width: 1.5,
+                              ),
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                                width: 1.5,
+                              ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                                width: 1.5,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                           ),
                           onChanged: (val) {
                             final digits = val.replaceAll('.', '');
-                            final formatted = digits.isEmpty ? '' : int.tryParse(digits)?.toString().replaceAllMapped(
-                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                              (m) => '${m[1]}.',
-                            ) ?? val;
+                            final formatted = digits.isEmpty
+                                ? ''
+                                : int.tryParse(
+                                        digits,
+                                      )?.toString().replaceAllMapped(
+                                        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                                        (m) => '${m[1]}.',
+                                      ) ??
+                                      val;
                             amountController.value = TextEditingValue(
                               text: formatted,
-                              selection: TextSelection.collapsed(offset: formatted.length),
+                              selection: TextSelection.collapsed(
+                                offset: formatted.length,
+                              ),
                             );
-                            final raw = int.tryParse(formatted.replaceAll('.', '')) ?? 0;
+                            final raw =
+                                int.tryParse(formatted.replaceAll('.', '')) ??
+                                0;
                             setSheetState(() {
                               if (formatted.isNotEmpty && raw < 1000) {
                                 sheetAmountError = 'Số tiền tối thiểu 1.000đ';
-                              } else if (formatted.isNotEmpty && raw > 50000000) {
+                              } else if (formatted.isNotEmpty &&
+                                  raw > 50000000) {
                                 sheetAmountError = 'Số tiền tối đa 50.000.000đ';
                               } else {
                                 sheetAmountError = null;
@@ -1129,21 +1272,33 @@ class _QrMainScreenState extends State<QrMainScreen> {
                           maxLength: 50,
                           decoration: InputDecoration(
                             labelText: 'Lời nhắn-Slogan (${noteLength}/50)',
-                            labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                            labelStyle: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
                             hintText: 'Nhập lời nhắn',
                             hintStyle: const TextStyle(color: Colors.grey),
                             counterText: '',
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.pink, width: 1.5),
+                              borderSide: const BorderSide(
+                                color: Colors.pink,
+                                width: 1.5,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                           ),
-                          onChanged: (val) => setSheetState(() => noteLength = val.length),
+                          onChanged: (val) =>
+                              setSheetState(() => noteLength = val.length),
                         ),
 
                         const SizedBox(height: 12),
@@ -1152,25 +1307,42 @@ class _QrMainScreenState extends State<QrMainScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 6,
-                          children: [
-                            'Chuyển tiền cho mình nhé',
-                            'Tiền nước',
-                            'Tiền cơm trưa',
-                          ].map((label) => GestureDetector(
-                            onTap: () {
-                              noteController.text = label;
-                              setSheetState(() => noteLength = label.length);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(20),
-                                color: Colors.grey.shade50,
-                              ),
-                              child: Text(label, style: const TextStyle(fontSize: 13)),
-                            ),
-                          )).toList(),
+                          children:
+                              [
+                                    'Chuyển tiền cho mình nhé',
+                                    'Tiền nước',
+                                    'Tiền cơm trưa',
+                                  ]
+                                  .map(
+                                    (label) => GestureDetector(
+                                      onTap: () {
+                                        noteController.text = label;
+                                        setSheetState(
+                                          () => noteLength = label.length,
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          color: Colors.grey.shade50,
+                                        ),
+                                        child: Text(
+                                          label,
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                         ),
 
                         const SizedBox(height: 20),
@@ -1190,35 +1362,57 @@ class _QrMainScreenState extends State<QrMainScreen> {
                                 },
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(color: Colors.grey.shade300),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                 ),
-                                child: const Text('Xóa tất cả', style: TextStyle(color: Colors.black54)),
+                                child: const Text(
+                                  'Xóa tất cả',
+                                  style: TextStyle(color: Colors.black54),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: sheetAmountError != null || amountController.text.isEmpty
+                                onPressed:
+                                    sheetAmountError != null ||
+                                        amountController.text.isEmpty
                                     ? null
                                     : () async {
                                         final rawAmount = int.parse(
-                                          amountController.text.replaceAll('.', ''),
+                                          amountController.text.replaceAll(
+                                            '.',
+                                            '',
+                                          ),
                                         );
                                         final note = noteController.text;
                                         Navigator.pop(sheetCtx);
-                                        await _createRequestMoneyQR(rawAmount, note);
+                                        await _createRequestMoneyQR(
+                                          rawAmount,
+                                          note,
+                                        );
                                       },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.pink,
                                   disabledBackgroundColor: Colors.grey.shade300,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   elevation: 0,
                                 ),
                                 child: const Text(
                                   'Lưu',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1247,9 +1441,7 @@ class _QrMainScreenState extends State<QrMainScreen> {
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.requestMoneyQR),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'amount': amount, 'description': description}),
       );
 
@@ -1266,7 +1458,9 @@ class _QrMainScreenState extends State<QrMainScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(jsonDecode(response.body)['error'] ?? 'Tạo QR thất bại'),
+              content: Text(
+                jsonDecode(response.body)['error'] ?? 'Tạo QR thất bại',
+              ),
               backgroundColor: Colors.red,
             ),
           );

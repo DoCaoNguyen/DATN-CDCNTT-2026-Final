@@ -89,7 +89,10 @@ class ChatInputArea extends StatelessWidget {
                   decoration: const InputDecoration(
                     hintText: 'Nhập câu hỏi của bạn...',
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     isDense: true,
                   ),
                 ),
@@ -104,7 +107,11 @@ class ChatInputArea extends StatelessWidget {
                   color: AppColors.primaryPink,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.send_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ],

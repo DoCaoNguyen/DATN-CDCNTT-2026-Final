@@ -40,7 +40,7 @@ class _OtpInputWidgetState extends State<OtpInputWidget> {
       return node;
     });
     _controllers = List.generate(widget.length, (_) => TextEditingController());
-    
+
     // Auto focus first node
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -75,27 +75,35 @@ class _OtpInputWidgetState extends State<OtpInputWidget> {
       children: List.generate(widget.length, (index) {
         final isFocused = _currentIndex == index;
         final hasValue = _controllers[index].text.isNotEmpty;
-        
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: 48,
           height: 56,
           decoration: BoxDecoration(
-            color: isFocused ? Colors.white : (hasValue ? Colors.white : Colors.grey.shade100),
+            color: isFocused
+                ? Colors.white
+                : (hasValue ? Colors.white : Colors.grey.shade100),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: widget.hasError
                   ? Colors.red
-                  : (isFocused ? AppColors.primaryPink : (hasValue ? AppColors.primaryPink.withOpacity(0.5) : Colors.transparent)),
+                  : (isFocused
+                        ? AppColors.primaryPink
+                        : (hasValue
+                              ? AppColors.primaryPink.withOpacity(0.5)
+                              : Colors.transparent)),
               width: isFocused ? 2 : 1,
             ),
-            boxShadow: isFocused ? [
-              BoxShadow(
-                color: AppColors.primaryPink.withOpacity(0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ] : [],
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: AppColors.primaryPink.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
           ),
           child: Center(
             child: TextField(
@@ -116,9 +124,7 @@ class _OtpInputWidgetState extends State<OtpInputWidget> {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               onChanged: (value) {
                 if (value.isNotEmpty) {
                   if (index < widget.length - 1) {

@@ -31,8 +31,11 @@ class TransactionHistoryFilterScreen extends StatefulWidget {
   final TransactionFilterConfig initialConfig;
   final String token;
 
-  const TransactionHistoryFilterScreen({Key? key, required this.initialConfig, required this.token})
-    : super(key: key);
+  const TransactionHistoryFilterScreen({
+    Key? key,
+    required this.initialConfig,
+    required this.token,
+  }) : super(key: key);
 
   @override
   State<TransactionHistoryFilterScreen> createState() =>

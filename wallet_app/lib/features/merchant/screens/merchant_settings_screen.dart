@@ -58,16 +58,23 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   }
 
   void _toggleKeysVisibility() {
-      setState(() {
-        _keysVisible = !_keysVisible;
-      });
+    setState(() {
+      _keysVisible = !_keysVisible;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cài đặt Cửa hàng', style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Cài đặt Cửa hàng',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
@@ -77,18 +84,37 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Cấu hình Webhook", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              "Cấu hình Webhook",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField("Callback URL", _webhookController, Icons.link_rounded),
+                  child: _buildTextField(
+                    "Callback URL",
+                    _webhookController,
+                    Icons.link_rounded,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pink,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onPressed: _updateWebhook,
-                  child: const Text("Lưu", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "Lưu",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -96,17 +122,28 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("API Keys", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text(
+                  "API Keys",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 TextButton.icon(
                   onPressed: _toggleKeysVisibility,
-                  icon: Icon(_keysVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 18),
+                  icon: Icon(
+                    _keysVisible
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    size: 18,
+                  ),
                   label: Text(_keysVisible ? "Ẩn Keys" : "Xem Keys"),
                   style: TextButton.styleFrom(foregroundColor: Colors.pink),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildKeyItem("Merchant ID (Partner Code)", widget.merchantData['merchant_id']),
+            _buildKeyItem(
+              "Merchant ID (Partner Code)",
+              widget.merchantData['merchant_id'],
+            ),
             const SizedBox(height: 16),
             _buildKeyItem("API Key", widget.merchantData['api_key']),
             const SizedBox(height: 16),
@@ -115,13 +152,21 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             Center(
               child: OutlinedButton.icon(
                 onPressed: _showIntegrationGuide,
-                icon: const Icon(Icons.integration_instructions_rounded, size: 20),
+                icon: const Icon(
+                  Icons.integration_instructions_rounded,
+                  size: 20,
+                ),
                 label: const Text("Hướng dẫn tích hợp API"),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.pink,
                   side: const BorderSide(color: Colors.pink),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -149,7 +194,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               margin: const EdgeInsets.only(top: 12, bottom: 16),
               width: 40,
               height: 4,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const Text(
               "Hướng dẫn tích hợp API",
@@ -158,21 +206,51 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
             const Divider(height: 32),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 children: [
-                  _buildGuideSection("1. Xác thực (Authentication)", "Mọi request gọi tới API của Mio Wallet đều phải gửi kèm API Key trong Header."),
-                  _buildCodeBlock("Headers:\n  x-api-key: <API_KEY>\n  Content-Type: application/json"),
+                  _buildGuideSection(
+                    "1. Xác thực (Authentication)",
+                    "Mọi request gọi tới API của Mio Wallet đều phải gửi kèm API Key trong Header.",
+                  ),
+                  _buildCodeBlock(
+                    "Headers:\n  x-api-key: <API_KEY>\n  Content-Type: application/json",
+                  ),
                   const SizedBox(height: 20),
-                  _buildGuideSection("2. Tạo Link Thanh Toán", "Gọi API POST để tạo một phiên thanh toán mới cho khách hàng."),
-                  _buildCodeBlock("POST ${ApiConfig.baseUrl}/payment/create\n\n{\n  \"amount\": 50000,\n  \"description\": \"Thanh toan don hang #123\",\n  \"merchant_order_id\": \"123\"\n}"),
+                  _buildGuideSection(
+                    "2. Tạo Link Thanh Toán",
+                    "Gọi API POST để tạo một phiên thanh toán mới cho khách hàng.",
+                  ),
+                  _buildCodeBlock(
+                    "POST ${ApiConfig.baseUrl}/payment/create\n\n{\n  \"amount\": 50000,\n  \"description\": \"Thanh toan don hang #123\",\n  \"merchant_order_id\": \"123\"\n}",
+                  ),
                   const SizedBox(height: 20),
-                  _buildGuideSection("3. Nhận Webhook", "Sau khi khách hàng thanh toán thành công, hệ thống sẽ gửi một POST request về Callback URL của bạn."),
-                  _buildCodeBlock("POST <Webhook URL>\n\n{\n  \"merchant_order_id\": \"123\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 50000,\n  \"signature\": \"...\"\n}"),
+                  _buildGuideSection(
+                    "3. Nhận Webhook",
+                    "Sau khi khách hàng thanh toán thành công, hệ thống sẽ gửi một POST request về Callback URL của bạn.",
+                  ),
+                  _buildCodeBlock(
+                    "POST <Webhook URL>\n\n{\n  \"merchant_order_id\": \"123\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 50000,\n  \"signature\": \"...\"\n}",
+                  ),
                   const SizedBox(height: 8),
-                  const Text("Sử dụng Secret Key để giải mã hoặc đối chiếu chữ ký (Signature) nhằm đảm bảo tính toàn vẹn của dữ liệu webhook.", style: TextStyle(color: Colors.black87, fontSize: 13, height: 1.5)),
+                  const Text(
+                    "Sử dụng Secret Key để giải mã hoặc đối chiếu chữ ký (Signature) nhằm đảm bảo tính toàn vẹn của dữ liệu webhook.",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
                   const SizedBox(height: 20),
-                  _buildGuideSection("4. Kiểm tra Trạng thái (Pull API)", "Gọi API GET để chủ động kiểm tra trạng thái đơn hàng (Dùng khi rớt mạng hoặc Cronjob)."),
-                  _buildCodeBlock("GET ${ApiConfig.baseUrl}/payment/status?merchant_order_id=123\n\nHeaders:\n  x-api-key: <API_KEY>"),
+                  _buildGuideSection(
+                    "4. Kiểm tra Trạng thái (Pull API)",
+                    "Gọi API GET để chủ động kiểm tra trạng thái đơn hàng (Dùng khi rớt mạng hoặc Cronjob).",
+                  ),
+                  _buildCodeBlock(
+                    "GET ${ApiConfig.baseUrl}/payment/status?merchant_order_id=123\n\nHeaders:\n  x-api-key: <API_KEY>",
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -187,9 +265,23 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.pink)),
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: Colors.pink,
+          ),
+        ),
         const SizedBox(height: 6),
-        Text(desc, style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.5)),
+        Text(
+          desc,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.black87,
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 12),
       ],
     );
@@ -207,14 +299,23 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
           ),
           child: Text(
             code,
-            style: const TextStyle(color: Colors.greenAccent, fontFamily: 'monospace', fontSize: 12, height: 1.5),
+            style: const TextStyle(
+              color: Colors.greenAccent,
+              fontFamily: 'monospace',
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
         ),
         Positioned(
           top: 0,
           right: 0,
           child: IconButton(
-            icon: const Icon(Icons.copy_rounded, color: Colors.white54, size: 18),
+            icon: const Icon(
+              Icons.copy_rounded,
+              color: Colors.white54,
+              size: 18,
+            ),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: code));
               SnackbarUtils.showSuccess(context, "Đã sao chép đoạn code");
@@ -239,7 +340,14 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -256,7 +364,11 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               ),
               if (!isHidden)
                 IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 20, color: Colors.grey),
+                  icon: const Icon(
+                    Icons.copy_rounded,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
@@ -271,7 +383,12 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
     );
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller, IconData icon, {bool isNumber = false}) {
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller,
+    IconData icon, {
+    bool isNumber = false,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
@@ -280,9 +397,18 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
         prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.pink, width: 1.5)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.pink, width: 1.5),
+        ),
       ),
     );
   }

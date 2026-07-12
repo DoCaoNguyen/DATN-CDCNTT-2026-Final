@@ -238,9 +238,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final String note =
         _tx['transfer_note'] ?? _tx['description'] ?? 'Giao dịch';
     final String extRef = _formatTransactionId(
-        _tx['external_reference']?.toString() ??
-        _tx['transaction_id']?.toString() ??
-        '');
+      _tx['transaction_no']?.toString() ??
+          _tx['external_reference']?.toString() ??
+          _tx['transaction_id']?.toString() ??
+          '',
+    );
     final bool isCredit = entryType == 'CREDIT';
     final String txType = _tx['transaction_type'] ?? 'TRANSFER';
 
@@ -255,22 +257,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         metadata = Map<String, dynamic>.from(metadataRaw);
       }
     }
-    final bool isCardTopup = metadata != null && metadata.containsKey('card_code');
-    final bool isTopup = txType == 'PAYMENT' && (
-      note.toLowerCase().contains('mã thẻ') || 
-      note.toLowerCase().contains('thẻ cào') || 
-      note.toLowerCase().contains('nạp tiền điện thoại') || 
-      note.toLowerCase().contains('nạp gói data')
-    );
-    
+    final bool isCardTopup =
+        metadata != null && metadata.containsKey('card_code');
+    final bool isTopup =
+        txType == 'PAYMENT' &&
+        (note.toLowerCase().contains('mã thẻ') ||
+            note.toLowerCase().contains('thẻ cào') ||
+            note.toLowerCase().contains('nạp tiền điện thoại') ||
+            note.toLowerCase().contains('nạp gói data'));
+
     String topupShortTitle = "Nạp tiền điện thoại";
-    if (note.toLowerCase().contains('mã thẻ') || note.toLowerCase().contains('thẻ cào')) {
+    if (note.toLowerCase().contains('mã thẻ') ||
+        note.toLowerCase().contains('thẻ cào')) {
       topupShortTitle = "Mua thẻ cào";
     } else if (note.toLowerCase().contains('nạp gói data')) {
       topupShortTitle = "Nạp data 3G/4G";
     }
-    final bool isRedPacket = note.toLowerCase().contains('lì xì') || 
-      (_tx['receiver_name'] ?? '').toString().toLowerCase().contains('lì xì');
+    final bool isRedPacket =
+        note.toLowerCase().contains('lì xì') ||
+        (_tx['receiver_name'] ?? '').toString().toLowerCase().contains('lì xì');
 
     // Receiver info if transfer or payment
     final String receiverName = _tx['receiver_name'] ?? '';
@@ -300,7 +305,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         typeLabelText = note.isNotEmpty ? note : "Giao dịch nạp tiền";
       } else {
         typeLabelHeader = "THANH TOÁN ${receiverName.toUpperCase()}".trim();
-        typeLabelText = "Thanh toán ${receiverName.isNotEmpty ? receiverName : 'cửa hàng'}";
+        typeLabelText =
+            "Thanh toán ${receiverName.isNotEmpty ? receiverName : 'cửa hàng'}";
       }
     } else if (txType == 'RECEIVE') {
       typeLabelHeader = "NHẬN LÌ XÌ";
@@ -320,12 +326,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     }
 
     final bool isPoint = _tx['currency'] == 'POINT';
-    final String formattedAmt = isPoint 
-        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu" 
+    final String formattedAmt = isPoint
+        ? "${CurrencyFormatter.format(amountRaw).replaceAll('đ', '').replaceAll('₫', '').trim()} Xu"
         : CurrencyFormatter.format(amountRaw);
-        
-    final String displayAmount =
-        "${isCredit ? '+' : '-'}$formattedAmt";
+
+    final String displayAmount = "${isCredit ? '+' : '-'}$formattedAmt";
 
     final String cardCode = metadata?['card_code']?.toString() ?? '';
     final String serial = metadata?['serial']?.toString() ?? '';
@@ -446,18 +451,24 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                       Text(
                                         (txType == 'PAYMENT' && !isTopup)
                                             ? receiverName
-                                            : (isTopup ? topupShortTitle : typeLabelHeader),
+                                            : (isTopup
+                                                  ? topupShortTitle
+                                                  : typeLabelHeader),
                                         style: TextStyle(
-                                          fontSize: (txType == 'PAYMENT' && !isTopup)
+                                          fontSize:
+                                              (txType == 'PAYMENT' && !isTopup)
                                               ? 16
                                               : 14,
-                                          fontWeight: (txType == 'PAYMENT' && !isTopup)
+                                          fontWeight:
+                                              (txType == 'PAYMENT' && !isTopup)
                                               ? FontWeight.bold
                                               : FontWeight.w600,
-                                          color: (txType == 'PAYMENT' && !isTopup)
+                                          color:
+                                              (txType == 'PAYMENT' && !isTopup)
                                               ? Colors.black87
                                               : Colors.grey[600],
-                                          letterSpacing: (txType == 'PAYMENT' && !isTopup)
+                                          letterSpacing:
+                                              (txType == 'PAYMENT' && !isTopup)
                                               ? 0
                                               : 0.5,
                                         ),
@@ -572,7 +583,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                     ),
                                   ),
                                 ),
-                                if ((txType == 'LOYALTY_REDEEM' || isCardTopup) && cardCode.isNotEmpty) ...[
+                                if ((txType == 'LOYALTY_REDEEM' ||
+                                        isCardTopup) &&
+                                    cardCode.isNotEmpty) ...[
                                   _buildDetailRow(
                                     "Mã thẻ",
                                     child: Row(
@@ -589,12 +602,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                         const SizedBox(width: 4),
                                         GestureDetector(
                                           onTap: () {
-                                            Clipboard.setData(ClipboardData(text: cardCode));
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text("Đã sao chép mã thẻ"), duration: Duration(seconds: 1)),
+                                            Clipboard.setData(
+                                              ClipboardData(text: cardCode),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Đã sao chép mã thẻ",
+                                                ),
+                                                duration: Duration(seconds: 1),
+                                              ),
                                             );
                                           },
-                                          child: const Icon(Icons.copy, size: 14, color: Colors.blue),
+                                          child: const Icon(
+                                            Icons.copy,
+                                            size: 14,
+                                            color: Colors.blue,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -614,12 +640,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                         const SizedBox(width: 4),
                                         GestureDetector(
                                           onTap: () {
-                                            Clipboard.setData(ClipboardData(text: serial));
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text("Đã sao chép số Serial"), duration: Duration(seconds: 1)),
+                                            Clipboard.setData(
+                                              ClipboardData(text: serial),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Đã sao chép số Serial",
+                                                ),
+                                                duration: Duration(seconds: 1),
+                                              ),
                                             );
                                           },
-                                          child: const Icon(Icons.copy, size: 14, color: Colors.grey),
+                                          child: const Icon(
+                                            Icons.copy,
+                                            size: 14,
+                                            color: Colors.grey,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -640,97 +679,103 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 if (!isPoint)
                                   _buildDetailRow(
                                     "Danh mục",
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      CategoryBottomSheet.show(
-                                        context,
-                                        currentCategory: _categoryName,
-                                        initialIsCounted: _isExpenseCounted,
-                                        onCategorySelected:
-                                            (categoryName, isCounted) async {
-                                              final transId =
-                                                  _tx['transaction_id']
-                                                      ?.toString() ??
-                                                  '';
-                                              final success =
-                                                  await updateTransactionCategory(
-                                                    transId,
-                                                    categoryName,
-                                                    isCounted,
-                                                  );
-                                              if (success && mounted) {
-                                                setState(() {
-                                                  _categoryName = categoryName;
-                                                  _isExpenseCounted = isCounted;
-                                                  _isUpdated = true;
-                                                });
-                                              }
-                                              return success;
-                                            },
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _categoryName == null
-                                            ? Colors.grey.shade100
-                                            : _getCategoryColor(
-                                                _categoryName,
-                                              ).withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        CategoryBottomSheet.show(
+                                          context,
+                                          currentCategory: _categoryName,
+                                          initialIsCounted: _isExpenseCounted,
+                                          onCategorySelected:
+                                              (categoryName, isCounted) async {
+                                                final transId =
+                                                    _tx['transaction_id']
+                                                        ?.toString() ??
+                                                    '';
+                                                final success =
+                                                    await updateTransactionCategory(
+                                                      transId,
+                                                      categoryName,
+                                                      isCounted,
+                                                    );
+                                                if (success && mounted) {
+                                                  setState(() {
+                                                    _categoryName =
+                                                        categoryName;
+                                                    _isExpenseCounted =
+                                                        isCounted;
+                                                    _isUpdated = true;
+                                                  });
+                                                }
+                                                return success;
+                                              },
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
                                           color: _categoryName == null
-                                              ? Colors.grey.shade300
+                                              ? Colors.grey.shade100
                                               : _getCategoryColor(
                                                   _categoryName,
-                                                ).withValues(alpha: 0.3),
+                                                ).withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: _categoryName == null
+                                                ? Colors.grey.shade300
+                                                : _getCategoryColor(
+                                                    _categoryName,
+                                                  ).withValues(alpha: 0.3),
+                                          ),
                                         ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (_categoryName != null &&
-                                              _getCategoryIcon(_categoryName) !=
-                                                  null) ...[
-                                            Icon(
-                                              _getCategoryIcon(_categoryName),
-                                              size: 14,
-                                              color: _getCategoryColor(
-                                                _categoryName,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (_categoryName != null &&
+                                                _getCategoryIcon(
+                                                      _categoryName,
+                                                    ) !=
+                                                    null) ...[
+                                              Icon(
+                                                _getCategoryIcon(_categoryName),
+                                                size: 14,
+                                                color: _getCategoryColor(
+                                                  _categoryName,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                            ],
+                                            Text(
+                                              _categoryName ?? "Chưa phân loại",
+                                              style: TextStyle(
+                                                color: _categoryName == null
+                                                    ? Colors.grey.shade600
+                                                    : _getCategoryColor(
+                                                        _categoryName,
+                                                      ),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                             ),
-                                            const SizedBox(width: 4),
-                                          ],
-                                          Text(
-                                            _categoryName ?? "Chưa phân loại",
-                                            style: TextStyle(
+                                            const SizedBox(width: 2),
+                                            Icon(
+                                              Icons.keyboard_arrow_down,
+                                              size: 14,
                                               color: _categoryName == null
                                                   ? Colors.grey.shade600
                                                   : _getCategoryColor(
                                                       _categoryName,
                                                     ),
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
                                             ),
-                                          ),
-                                          const SizedBox(width: 2),
-                                          Icon(
-                                            Icons.keyboard_arrow_down,
-                                            size: 14,
-                                            color: _categoryName == null
-                                                ? Colors.grey.shade600
-                                                : _getCategoryColor(
-                                                    _categoryName,
-                                                  ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           ),
@@ -741,7 +786,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     const SizedBox(height: 16),
 
                     // Receiver/Sender info card
-                    if ((txType == 'TRANSFER' || txType == 'RECEIVE') && !isRedPacket)
+                    if ((txType == 'TRANSFER' || txType == 'RECEIVE') &&
+                        !isRedPacket)
                       Container(
                         padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(
@@ -977,10 +1023,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(width: 16),
           Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: child,
-            ),
+            child: Align(alignment: Alignment.centerRight, child: child),
           ),
         ],
       ),

@@ -92,7 +92,10 @@ class _DataTopupTabState extends State<DataTopupTab> {
     if (await FlutterContacts.requestPermission()) {
       final contact = await FlutterContacts.openExternalPick();
       if (contact != null && contact.phones.isNotEmpty) {
-        String phone = contact.phones.first.number.replaceAll(RegExp(r'\D'), '');
+        String phone = contact.phones.first.number.replaceAll(
+          RegExp(r'\D'),
+          '',
+        );
         setState(() {
           _phoneController.text = phone;
         });
@@ -138,12 +141,17 @@ class _DataTopupTabState extends State<DataTopupTab> {
       );
 
       if (!mounted) return;
-      
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Nạp thành công', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-          content: Text('Bạn đã nạp thành công gói ${_selectedPackage!['name']} cho số điện thoại $phone.'),
+          title: const Text(
+            'Nạp thành công',
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Bạn đã nạp thành công gói ${_selectedPackage!['name']} cho số điện thoại $phone.',
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -167,7 +175,10 @@ class _DataTopupTabState extends State<DataTopupTab> {
   }
 
   String _formatNumber(int value) {
-    return value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    return value.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   @override
@@ -175,13 +186,16 @@ class _DataTopupTabState extends State<DataTopupTab> {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: Colors.pink));
     }
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Số điện thoại nạp Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Số điện thoại nạp Data',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -210,7 +224,10 @@ class _DataTopupTabState extends State<DataTopupTab> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Chọn gói Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Chọn gói Data',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           ListView.builder(
             shrinkWrap: true,
@@ -226,21 +243,40 @@ class _DataTopupTabState extends State<DataTopupTab> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.pink.shade50 : Colors.white,
-                    border: Border.all(color: isSelected ? Colors.pink : Colors.grey.shade300, width: isSelected ? 2 : 1),
+                    border: Border.all(
+                      color: isSelected ? Colors.pink : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.pink,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
                           children: [
-                            Text(pkg['data'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                            Text(pkg['duration'], style: const TextStyle(color: Colors.white, fontSize: 12)),
+                            Text(
+                              pkg['data'],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            Text(
+                              pkg['duration'],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -249,16 +285,35 @@ class _DataTopupTabState extends State<DataTopupTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(pkg['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isSelected ? Colors.pink : Colors.black87)),
+                            Text(
+                              pkg['name'],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isSelected
+                                    ? Colors.pink
+                                    : Colors.black87,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(pkg['description'], style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                            Text(
+                              pkg['description'],
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${_formatNumber(pkg['price'])}đ',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.pink),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.pink,
+                        ),
                       ),
                     ],
                   ),
@@ -274,11 +329,20 @@ class _DataTopupTabState extends State<DataTopupTab> {
               onPressed: (_selectedPackage != null) ? _showConfirmDialog : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Nạp ngay', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Nạp ngay',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

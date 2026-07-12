@@ -30,17 +30,19 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
 
   Future<void> _fetchProfile() async {
     try {
-      final response = await CustomHttpClient().get(Uri.parse(ApiConfig.getMyProfile));
+      final response = await CustomHttpClient().get(
+        Uri.parse(ApiConfig.getMyProfile),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['data'] != null && data['data']['full_name'] != null) {
           setState(() {
-            _receiverName = "MIO - TKTH ${data['data']['full_name'].toString().toUpperCase()}";
+            _receiverName =
+                "MIO - TKTH ${data['data']['full_name'].toString().toUpperCase()}";
           });
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> _fetchQrCode() async {
@@ -73,13 +75,14 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
 
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Đã sao chép vào bộ nhớ tạm")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Đã sao chép vào bộ nhớ tạm")));
   }
 
   String _formatAmount(int amount) {
-    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ';
+    return NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') +
+        'đ';
   }
 
   @override
@@ -95,14 +98,27 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
         ),
         title: const Text(
           "Chuyển khoản vào Túi",
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.info_outline, color: Colors.black87), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.home_outlined, color: Colors.black87), onPressed: () {
-            Navigator.popUntil(context, (route) => route.isFirst);
-          }),
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.black87),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+          ),
         ],
       ),
       body: Column(
@@ -120,7 +136,7 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -136,7 +152,11 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
                       children: [
                         const Text(
                           "Mã chuyển khoản vào Túi Thần Tài",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Container(
@@ -147,57 +167,94 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
-                          child: _isLoading 
-                            ? const CircularProgressIndicator(color: Colors.deepOrange)
-                            : _error != null 
-                              ? Text(_error!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center)
-                              : _qrDataURL != null 
-                                ? Image.memory(
-                                    base64Decode(_qrDataURL!.split(',').last),
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Icon(Icons.qr_code_2, size: 100, color: Colors.black87),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.deepOrange,
+                                )
+                              : _error != null
+                              ? Text(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red),
+                                  textAlign: TextAlign.center,
+                                )
+                              : _qrDataURL != null
+                              ? Image.memory(
+                                  base64Decode(_qrDataURL!.split(',').last),
+                                  fit: BoxFit.cover,
+                                )
+                              : const Icon(
+                                  Icons.qr_code_2,
+                                  size: 100,
+                                  color: Colors.black87,
+                                ),
                         ),
                         const SizedBox(height: 24),
-                        _buildInfoRow("Ngân hàng:", "VPBank", valueColor: Colors.green.shade700, isBold: true),
+                        _buildInfoRow(
+                          "Ngân hàng:",
+                          "VPBank",
+                          valueColor: Colors.green.shade700,
+                          isBold: true,
+                        ),
                         const SizedBox(height: 12),
-                        _buildInfoRow("Tên người nhận:", _receiverName, isBold: true),
+                        _buildInfoRow(
+                          "Tên người nhận:",
+                          _receiverName,
+                          isBold: true,
+                        ),
                         const SizedBox(height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(
                               width: 110,
-                              child: Text("Số tài khoản:", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                              child: Text(
+                                "Số tài khoản:",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                             Expanded(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   GestureDetector(
-                                    onTap: () => _copyToClipboard("01MMTTT0076501864"),
-                                    child: const Icon(Icons.copy, size: 16, color: Colors.deepOrange),
+                                    onTap: () =>
+                                        _copyToClipboard("01MMTTT0076501864"),
+                                    child: const Icon(
+                                      Icons.copy,
+                                      size: 16,
+                                      color: Colors.deepOrange,
+                                    ),
                                   ),
                                   const SizedBox(width: 4),
                                   const Flexible(
                                     child: Text(
-                                      "01MMTTT0076501864", 
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      "01MMTTT0076501864",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
                                       textAlign: TextAlign.right,
                                     ),
                                   ),
                                 ],
                               ),
-                            )
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildInfoRow("Số tiền nạp:", _formatAmount(widget.amount), isBold: true),
+                        _buildInfoRow(
+                          "Số tiền nạp:",
+                          _formatAmount(widget.amount),
+                          isBold: true,
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -207,17 +264,23 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildActionIcon(Icons.menu_book, "Hướng dẫn\nchuyển khoản"),
-                        _buildActionIcon(Icons.info_outline, "Chi tiết hạn mức"),
+                        _buildActionIcon(
+                          Icons.menu_book,
+                          "Hướng dẫn\nchuyển khoản",
+                        ),
+                        _buildActionIcon(
+                          Icons.info_outline,
+                          "Chi tiết hạn mức",
+                        ),
                         _buildActionIcon(Icons.support_agent, "Yêu cầu hỗ trợ"),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
           ),
-          
+
           Container(
             padding: EdgeInsets.only(
               left: 16,
@@ -227,7 +290,13 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
             ),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, -2),
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -237,13 +306,26 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepOrange,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () {
                       // Handle save QR and open bank
                     },
-                    icon: const Icon(Icons.download_rounded, color: Colors.white, size: 20),
-                    label: const Text("Tải mã QR và mở ứng dụng ngân hàng", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    icon: const Icon(
+                      Icons.download_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "Tải mã QR và mở ứng dụng ngân hàng",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -253,19 +335,32 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: const BorderSide(color: Colors.deepOrange),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () {
                       // Handle copy and open bank
                       _copyToClipboard("01MMTTT0076501864");
                     },
-                    icon: const Icon(Icons.copy, color: Colors.deepOrange, size: 20),
-                    label: const Text("Sao chép và mở ứng dụng ngân hàng", style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold, fontSize: 14)),
+                    icon: const Icon(
+                      Icons.copy,
+                      color: Colors.deepOrange,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "Sao chép và mở ứng dụng ngân hàng",
+                      style: TextStyle(
+                        color: Colors.deepOrange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -283,7 +378,14 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: Text(step.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            child: Text(
+              step.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -300,13 +402,21 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {Color? valueColor, bool isBold = false}) {
+  Widget _buildInfoRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isBold = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           width: 110,
-          child: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
+          ),
         ),
         Expanded(
           child: Text(
@@ -328,7 +438,11 @@ class _BankTransferQrScreenState extends State<BankTransferQrScreen> {
       children: [
         Icon(icon, color: Colors.black54, size: 24),
         const SizedBox(height: 8),
-        Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
+        ),
       ],
     );
   }

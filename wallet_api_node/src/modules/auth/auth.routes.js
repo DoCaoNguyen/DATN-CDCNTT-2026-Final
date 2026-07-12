@@ -34,7 +34,7 @@ const authLimiter = rateLimit({
 
 
 // --- OTP & Kiểm tra ---
-router.post('/check-phone', authController.checkPhone);
+router.post('/check-phone',authLimiter, authController.checkPhone);
 router.post('/send-otp', authLimiter, authController.sendOtp);
 router.post('/verify-otp', authLimiter, authController.verifyOtp);
 
@@ -65,8 +65,9 @@ const twilioResendLimiter = rateLimit({
         data: { cooldown_seconds: 60 }
     }),
     keyGenerator: (req) => {
-        const identifier = req.body.phone || req.ip;
-        return identifier ? String(identifier).trim() : 'anonymous';
+        const phone = req.body?.phone;
+        if (phone) return String(phone).trim();
+        return req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'anonymous';
     }
 });
 router.post('/verify-phone', authLimiter, authController.verifyPhone);

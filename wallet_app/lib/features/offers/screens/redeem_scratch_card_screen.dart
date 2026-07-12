@@ -20,27 +20,34 @@ class RedeemScratchCardScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<RedeemScratchCardScreen> createState() => _RedeemScratchCardScreenState();
+  State<RedeemScratchCardScreen> createState() =>
+      _RedeemScratchCardScreenState();
 }
 
 class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
   bool _isLoading = false;
-  final List<String> _providers = ['Viettel', 'Vinaphone', 'Mobifone', 'Vietnamobile'];
+  final List<String> _providers = [
+    'Viettel',
+    'Vinaphone',
+    'Mobifone',
+    'Vietnamobile',
+  ];
   final List<int> _values = [10000, 20000, 30000, 50000, 100000, 200000];
-  
+
   String? _selectedProvider;
   int? _selectedValue;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialProvider != null && _providers.contains(widget.initialProvider)) {
+    if (widget.initialProvider != null &&
+        _providers.contains(widget.initialProvider)) {
       _selectedProvider = widget.initialProvider;
     }
     if (widget.initialValue != null && _values.contains(widget.initialValue)) {
       _selectedValue = widget.initialValue;
     }
-    
+
     // Auto show confirm dialog if both are provided
     if (_selectedProvider != null && _selectedValue != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -53,7 +60,9 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
     final number = int.tryParse(value);
     if (number == null) return "0";
     return number.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   Widget _buildProviderLogo(String provider) {
@@ -61,27 +70,45 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
       case 'Viettel':
         return const Text(
           'viettel',
-          style: TextStyle(color: Color(0xFFEE0033), fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+            color: Color(0xFFEE0033),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         );
       case 'Vinaphone':
         return const Text(
           'vinaphone',
-          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+            color: Colors.blue,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         );
       case 'Mobifone':
         return RichText(
           text: const TextSpan(
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             children: [
-              TextSpan(text: 'mobi', style: TextStyle(color: Colors.blue)),
-              TextSpan(text: 'fone', style: TextStyle(color: Colors.red)),
+              TextSpan(
+                text: 'mobi',
+                style: TextStyle(color: Colors.blue),
+              ),
+              TextSpan(
+                text: 'fone',
+                style: TextStyle(color: Colors.red),
+              ),
             ],
           ),
         );
       case 'Vietnamobile':
         return const Text(
           'Vietnamobile',
-          style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+            color: Colors.deepOrange,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         );
       default:
         return const Icon(Icons.sim_card, size: 20, color: Colors.grey);
@@ -125,7 +152,11 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                   color: Colors.pink.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.card_giftcard_rounded, size: 48, color: Colors.pink),
+                child: const Icon(
+                  Icons.card_giftcard_rounded,
+                  size: 48,
+                  color: Colors.pink,
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -150,7 +181,10 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Nhà mạng', style: TextStyle(color: Colors.black54)),
+                        const Text(
+                          'Nhà mạng',
+                          style: TextStyle(color: Colors.black54),
+                        ),
                         _buildProviderLogo(_selectedProvider!),
                       ],
                     ),
@@ -161,10 +195,16 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Mệnh giá thẻ', style: TextStyle(color: Colors.black54)),
+                        const Text(
+                          'Mệnh giá thẻ',
+                          style: TextStyle(color: Colors.black54),
+                        ),
                         Text(
                           '${_formatNumber(_selectedValue.toString())}đ',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -177,11 +217,18 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                       children: [
                         const Text(
                           'Xu thanh toán',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.stars, color: Colors.amber, size: 20),
+                            const Icon(
+                              Icons.stars,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               _formatNumber(requiredPoints.toString()),
@@ -206,10 +253,18 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                       onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         side: const BorderSide(color: Colors.grey),
                       ),
-                      child: const Text('Hủy', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -225,9 +280,11 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                           builder: (pinSheetCtx) => PinConfirmBottomSheet(
                             onPinEntered: (pin) async {
                               try {
-                                final prefs = await SharedPreferences.getInstance();
-                                final token = prefs.getString('auth_token') ?? '';
-                                
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                final token =
+                                    prefs.getString('auth_token') ?? '';
+
                                 final client = CustomHttpClient();
                                 final verifyResp = await client.post(
                                   Uri.parse(ApiConfig.verifyPin),
@@ -238,7 +295,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                                   },
                                   body: jsonEncode({'pin': pin}),
                                 );
-                                
+
                                 if (verifyResp.statusCode == 200) {
                                   if (!mounted) return null;
                                   Navigator.pop(pinSheetCtx);
@@ -246,7 +303,8 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                                   return null;
                                 } else {
                                   final data = jsonDecode(verifyResp.body);
-                                  return data['error'] ?? "Mã PIN không chính xác";
+                                  return data['error'] ??
+                                      "Mã PIN không chính xác";
                                 }
                               } catch (e) {
                                 return "Lỗi kết nối máy chủ";
@@ -258,10 +316,18 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pink,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
-                      child: const Text('Xác nhận', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Xác nhận',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -277,7 +343,10 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
     setState(() => _isLoading = true);
     try {
       final offersService = OffersService(token: token);
-      final result = await offersService.redeemScratchCard(_selectedProvider!, _selectedValue!);
+      final result = await offersService.redeemScratchCard(
+        _selectedProvider!,
+        _selectedValue!,
+      );
 
       if (!mounted) return;
 
@@ -318,7 +387,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
           runSpacing: 12,
           children: _providers.map((provider) {
             final isSelected = _selectedProvider == provider;
-            
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -326,9 +395,14 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.white,
+                  color: isSelected
+                      ? Colors.blue.withOpacity(0.1)
+                      : Colors.white,
                   border: Border.all(
                     color: isSelected ? Colors.blue : Colors.grey.shade300,
                     width: 2,
@@ -367,7 +441,7 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
             final value = _values[index];
             final isSelected = _selectedValue == value;
             final requiredPoints = (value * 0.95).toInt();
-            
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -376,7 +450,9 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.pink.withOpacity(0.05) : Colors.white,
+                  color: isSelected
+                      ? Colors.pink.withOpacity(0.05)
+                      : Colors.white,
                   border: Border.all(
                     color: isSelected ? Colors.pink : Colors.grey.shade300,
                     width: 2,
@@ -442,7 +518,11 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFFFE4EE), Color(0xFFFFF0F5), Color(0xFFF5F5F9)],
+                colors: [
+                  Color(0xFFFFE4EE),
+                  Color(0xFFFFF0F5),
+                  Color(0xFFF5F5F9),
+                ],
               ),
             ),
             child: SingleChildScrollView(
@@ -456,16 +536,30 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Số dư Xu:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                        const Text(
+                          'Số dư Xu:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         Row(
                           children: [
-                            const Icon(Icons.stars, color: Colors.amber, size: 24),
+                            const Icon(
+                              Icons.stars,
+                              color: Colors.amber,
+                              size: 24,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               _formatNumber(widget.loyaltyPoints),
@@ -511,7 +605,11 @@ class _RedeemScratchCardScreenState extends State<RedeemScratchCardScreen> {
             ),
             child: const Text(
               'Xác nhận đổi',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),

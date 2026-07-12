@@ -20,11 +20,18 @@ class WealthBagTransactionScreen extends StatelessWidget {
           ),
           title: const Text(
             "Nạp/Rút",
-            style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.headset_mic_outlined, color: Colors.black87),
+              icon: const Icon(
+                Icons.headset_mic_outlined,
+                color: Colors.black87,
+              ),
               onPressed: () {},
             ),
             IconButton(
@@ -46,7 +53,10 @@ class WealthBagTransactionScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.login_rounded, size: 18),
                     SizedBox(width: 8),
-                    Text("Nạp tiền", style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      "Nạp tiền",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
@@ -56,19 +66,17 @@ class WealthBagTransactionScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.download_rounded, size: 18),
                     SizedBox(width: 8),
-                    Text("Rút tiền", style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      "Rút tiền",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            DepositTab(),
-            WithdrawTab(),
-          ],
-        ),
+        body: const TabBarView(children: [DepositTab(), WithdrawTab()]),
       ),
     );
   }

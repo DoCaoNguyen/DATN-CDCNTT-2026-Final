@@ -108,7 +108,7 @@ class TransactionDetailsCard extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 12),
           _buildDetailRow('Số tiền', amountFormatted),
-          _buildDetailRow('Tên gợi nhớ', nickname),
+          _buildDetailRow('Tên người nhận', nickname),
           _buildDetailRow('Tin nhắn', note),
           _buildDetailRow('Phí giao dịch', 'Miễn phí'),
         ],

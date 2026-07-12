@@ -13,10 +13,12 @@ class DeepLinkPaymentConfirmScreen extends StatefulWidget {
   const DeepLinkPaymentConfirmScreen({super.key, required this.qrToken});
 
   @override
-  State<DeepLinkPaymentConfirmScreen> createState() => _DeepLinkPaymentConfirmScreenState();
+  State<DeepLinkPaymentConfirmScreen> createState() =>
+      _DeepLinkPaymentConfirmScreenState();
 }
 
-class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScreen> {
+class _DeepLinkPaymentConfirmScreenState
+    extends State<DeepLinkPaymentConfirmScreen> {
   bool _isLoading = true;
   bool _isProcessing = false;
   Map<String, dynamic>? _orderData;
@@ -43,7 +45,9 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
         });
       } else {
         setState(() {
-          _errorMessage = jsonDecode(response.body)['error'] ?? 'Không thể lấy thông tin đơn hàng';
+          _errorMessage =
+              jsonDecode(response.body)['error'] ??
+              'Không thể lấy thông tin đơn hàng';
           _isLoading = false;
         });
       }
@@ -64,27 +68,25 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
       final client = CustomHttpClient();
       final response = await client.post(
         Uri.parse(ApiConfig.processPayment),
-        body: jsonEncode({
-          'qr_token': widget.qrToken,
-          'pin': pin,
-        }),
+        body: jsonEncode({'qr_token': widget.qrToken, 'pin': pin}),
       );
 
       if (response.statusCode == 200) {
         _showSuccessAndReturn();
       } else {
-        final error = jsonDecode(response.body)['error'] ?? 'Thanh toán thất bại';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error)),
-        );
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Thanh toán thất bại';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
         setState(() {
           _isProcessing = false;
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lỗi kết nối mạng')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lỗi kết nối mạng')));
       setState(() {
         _isProcessing = false;
       });
@@ -140,10 +142,14 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
       final orderCode = _orderData?['order_code'] ?? '';
       final merchantOrderId = _orderData?['merchant_order_id'] ?? '';
       // Ưu tiên merchant_order_id nếu có
-      final idToReturn = merchantOrderId.isNotEmpty ? merchantOrderId : orderCode;
-      
-      final returnUrl = Uri.parse('tiktokshop://payment-result?status=success&order_code=$idToReturn');
-      
+      final idToReturn = merchantOrderId.isNotEmpty
+          ? merchantOrderId
+          : orderCode;
+
+      final returnUrl = Uri.parse(
+        'tiktokshop://payment-result?status=success&order_code=$idToReturn',
+      );
+
       if (await canLaunchUrl(returnUrl)) {
         await launchUrl(returnUrl, mode: LaunchMode.externalApplication);
       } else {
@@ -155,8 +161,10 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
 
   void _cancelPayment() async {
     final orderCode = _orderData?['order_code'] ?? '';
-    final returnUrl = Uri.parse('tiktokshop://payment-result?status=cancelled&order_code=$orderCode');
-    
+    final returnUrl = Uri.parse(
+      'tiktokshop://payment-result?status=cancelled&order_code=$orderCode',
+    );
+
     if (await canLaunchUrl(returnUrl)) {
       await launchUrl(returnUrl, mode: LaunchMode.externalApplication);
     } else {
@@ -167,9 +175,7 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_errorMessage != null) {
@@ -186,20 +192,27 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Đóng'),
-              )
+              ),
             ],
           ),
         ),
       );
     }
 
-    final currencyFormatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
-    final double amount = double.tryParse(_orderData?['amount']?.toString() ?? '0') ?? 0;
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: 'đ',
+    );
+    final double amount =
+        double.tryParse(_orderData?['amount']?.toString() ?? '0') ?? 0;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Xác nhận thanh toán', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Xác nhận thanh toán',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -223,7 +236,7 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
                     color: Colors.grey.withOpacity(0.1),
                     spreadRadius: 1,
                     blurRadius: 10,
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -235,12 +248,19 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
                       color: AppColors.primaryPink.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.store, color: AppColors.primaryPink, size: 32),
+                    child: Icon(
+                      Icons.store,
+                      color: AppColors.primaryPink,
+                      size: 32,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     _orderData?['merchant_name'] ?? 'TikTok Shop',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -250,7 +270,10 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 24),
-                  const Text('Tổng thanh toán', style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    'Tổng thanh toán',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     currencyFormatter.format(amount),
@@ -280,11 +303,17 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
                     ? const SizedBox(
                         height: 24,
                         width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : const Text(
                         'Xác nhận thanh toán',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
             ),
@@ -300,7 +329,10 @@ class _DeepLinkPaymentConfirmScreenState extends State<DeepLinkPaymentConfirmScr
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Hủy giao dịch', style: TextStyle(fontSize: 16)),
+                child: const Text(
+                  'Hủy giao dịch',
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
             ),
             const SizedBox(height: 24),

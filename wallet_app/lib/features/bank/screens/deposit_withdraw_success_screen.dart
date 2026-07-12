@@ -120,7 +120,9 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.grey, fontSize: 15),
                         ),
                         Text(
-                          isDeposit ? 'Nạp tiền vào ví' : 'Rút tiền về ngân hàng',
+                          isDeposit
+                              ? 'Nạp tiền vào ví'
+                              : 'Rút tiền về ngân hàng',
                           style: const TextStyle(
                             color: Colors.black87,
                             fontWeight: FontWeight.w500,
@@ -187,7 +189,9 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFE91E63)),
@@ -255,10 +259,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
-                        child: Text(
-                          '🎁',
-                          style: TextStyle(fontSize: 20),
-                        ),
+                        child: Text('🎁', style: TextStyle(fontSize: 20)),
                       ),
                     ),
                     const SizedBox(width: 12),

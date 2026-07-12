@@ -16,7 +16,12 @@ class FinancialCenterScreen extends StatefulWidget {
   final String token;
   final int initialTabIndex;
 
-  const FinancialCenterScreen({Key? key, required this.balance, required this.token, this.initialTabIndex = 0}) : super(key: key);
+  const FinancialCenterScreen({
+    Key? key,
+    required this.balance,
+    required this.token,
+    this.initialTabIndex = 0,
+  }) : super(key: key);
 
   @override
   State<FinancialCenterScreen> createState() => _FinancialCenterScreenState();
@@ -37,8 +42,10 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
 
   Future<void> _fetchLinkedBanks() async {
     try {
-      final sortedBanks = await FinancialCenterApi.getSortedLinkedBanks(widget.token);
-      
+      final sortedBanks = await FinancialCenterApi.getSortedLinkedBanks(
+        widget.token,
+      );
+
       if (mounted) {
         setState(() {
           // filter out the ones that are not enabled or keep them depending on logic
@@ -65,12 +72,18 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final displayBalance = _isBalanceVisible ? _formatCurrency(widget.balance) : "******";
+    final displayBalance = _isBalanceVisible
+        ? _formatCurrency(widget.balance)
+        : "******";
 
     return Scaffold(
       backgroundColor: _selectedIndex == 0 ? Colors.white : Colors.grey.shade50,
-      appBar: _selectedIndex == 0 ? _buildOverviewAppBar() : _buildAccountAppBar(),
-      body: _selectedIndex == 0 ? _buildOverviewBody(displayBalance) : _buildAccountManagementBody(displayBalance),
+      appBar: _selectedIndex == 0
+          ? _buildOverviewAppBar()
+          : _buildAccountAppBar(),
+      body: _selectedIndex == 0
+          ? _buildOverviewBody(displayBalance)
+          : _buildAccountManagementBody(displayBalance),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -120,7 +133,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
       ),
       title: const Text(
         'Trung Tâm Tài Chính',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
       ),
       centerTitle: true,
       actions: [
@@ -130,7 +147,8 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
         ),
         IconButton(
           icon: const Icon(Icons.home_outlined, color: Colors.white),
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       ],
     );
@@ -146,12 +164,14 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
       ),
       title: const Text(
         'Quản lý tài khoản',
-        style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
       ),
       centerTitle: false,
-      actions: const [
-        FinancialCenterAppBarActions(),
-      ],
+      actions: const [FinancialCenterAppBarActions()],
     );
   }
 
@@ -174,7 +194,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
               const SizedBox(height: 24),
               const Text(
                 'Tổng tài sản',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -182,7 +206,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                 children: [
                   Text(
                     displayBalance,
-                    style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
@@ -192,7 +220,9 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                       });
                     },
                     child: Icon(
-                      _isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _isBalanceVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: Colors.white,
                       size: 24,
                     ),
@@ -202,7 +232,7 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
             ],
           ),
         ),
-        
+
         // List content
         Expanded(
           child: SingleChildScrollView(
@@ -226,7 +256,10 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     children: [
                       // Header card
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.shade50,
                           borderRadius: const BorderRadius.only(
@@ -239,16 +272,28 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                           children: [
                             Text(
                               'So với ${DateFormat('dd/MM/yyyy').format(DateTime.now())} --',
-                              style: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             Row(
                               children: [
                                 Text(
                                   'Thu gọn',
-                                  style: TextStyle(color: Colors.blue.shade700, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                    color: Colors.blue.shade700,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(width: 4),
-                                Icon(Icons.keyboard_arrow_up_rounded, color: Colors.blue.shade700, size: 16),
+                                Icon(
+                                  Icons.keyboard_arrow_up_rounded,
+                                  color: Colors.blue.shade700,
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ],
@@ -265,7 +310,12 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                       if (_isLoading)
                         const Padding(
                           padding: EdgeInsets.all(16.0),
-                          child: Center(child: CircularProgressIndicator(color: AppColors.primaryPink, strokeWidth: 2)),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryPink,
+                              strokeWidth: 2,
+                            ),
+                          ),
                         ),
                       ..._linkedBanks.map((bank) {
                         return Column(
@@ -283,7 +333,6 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                           ],
                         );
                       }).toList(),
-
                     ],
                   ),
                 ),
@@ -310,7 +359,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
               child: Column(
@@ -321,16 +374,38 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Số dư khả dụng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),
+                        const Text(
+                          'Số dư khả dụng',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
                         Row(
                           children: [
-                            Text(displayBalance, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                            Text(
+                              displayBalance,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             GestureDetector(
                               onTap: () {
-                                setState(() { _isBalanceVisible = !_isBalanceVisible; });
+                                setState(() {
+                                  _isBalanceVisible = !_isBalanceVisible;
+                                });
                               },
-                              child: Icon(_isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.black87, size: 20),
+                              child: Icon(
+                                _isBalanceVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: Colors.black87,
+                                size: 20,
+                              ),
                             ),
                           ],
                         ),
@@ -338,11 +413,22 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     ),
                   ),
                   // account items inside the card
-                  _buildAccountItem(iconData: Icons.account_balance_wallet, iconColor: Colors.pink, title: 'Ví Mio', value: displayBalance, valueColor: Colors.black87),
+                  _buildAccountItem(
+                    iconData: Icons.account_balance_wallet,
+                    iconColor: Colors.pink,
+                    title: 'Ví Mio',
+                    value: displayBalance,
+                    valueColor: Colors.black87,
+                  ),
                   if (_isLoading)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryPink, strokeWidth: 2)),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryPink,
+                          strokeWidth: 2,
+                        ),
+                      ),
                     ),
                   ..._linkedBanks.map((bank) {
                     return _buildAccountItem(
@@ -353,14 +439,19 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                       value: 'Xem số dư >',
                       valueColor: Colors.black87,
                       isBoldValue: true,
-                      highlightText: 'Bật xem số dư để tiện quản lý & giao dịch',
+                      highlightText:
+                          'Bật xem số dư để tiện quản lý & giao dịch',
                       highlightColor: Colors.blue.shade50,
                       highlightTextColor: Colors.blue.shade700,
                     );
                   }).toList(),
                   // Add new button
                   Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -368,16 +459,30 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => BankLinkScreen(token: widget.token),
+                              builder: (_) =>
+                                  BankLinkScreen(token: widget.token),
                             ),
                           );
                         },
-                        icon: const Icon(Icons.add, color: Colors.white, size: 20),
-                        label: const Text('Thêm mới tài khoản/thẻ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                        icon: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Thêm mới tài khoản/thẻ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryPink,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
                       ),
@@ -386,19 +491,30 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
-            const Text('Tiện ích thêm', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+
+            const Text(
+              'Tiện ích thêm',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
             const SizedBox(height: 12),
-            
+
             // Utilities card
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
               child: Column(
@@ -411,30 +527,34 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => PaymentOrderScreen(token: widget.token)),
-                      );
-                    },
-                  ),
-                  _buildDivider(),
-                  _buildUtilityRow(
-                    iconData: Icons.credit_score, 
-                    iconColor: Colors.pink, 
-                    title: 'Thông tin hạn mức', 
-                    subtitle: 'Quản lý hạn mức giao dịch và nạp rút',
-                    onTap: () {
-                      Navigator.push(
-                        context,
                         MaterialPageRoute(
-                          builder: (context) => LimitInfoScreen(token: widget.token),
+                          builder: (_) =>
+                              PaymentOrderScreen(token: widget.token),
                         ),
                       );
                     },
                   ),
                   _buildDivider(),
                   _buildUtilityRow(
-                    iconData: Icons.receipt_long_rounded, 
-                    iconColor: Colors.pinkAccent, 
-                    title: 'Dịch vụ liên kết & Hóa đơn định kỳ', 
+                    iconData: Icons.credit_score,
+                    iconColor: Colors.pink,
+                    title: 'Thông tin hạn mức',
+                    subtitle: 'Quản lý hạn mức giao dịch và nạp rút',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              LimitInfoScreen(token: widget.token),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDivider(),
+                  _buildUtilityRow(
+                    iconData: Icons.receipt_long_rounded,
+                    iconColor: Colors.pinkAccent,
+                    title: 'Dịch vụ liên kết & Hóa đơn định kỳ',
                     subtitle: 'Quản lý dịch vụ liên kết và hóa đơn định kỳ',
                     onTap: () {
                       Navigator.push(
@@ -491,7 +611,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
           const SizedBox(width: 12),
           Text(
             title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
           const Spacer(),
           Column(
@@ -508,7 +632,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600, size: 16),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.grey.shade600,
+                    size: 16,
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -569,7 +697,14 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
                     : Icon(iconData, color: iconColor, size: 22),
               ),
               const SizedBox(width: 12),
-              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
               const Spacer(),
               Text(
                 value,
@@ -591,7 +726,11 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
               ),
               child: Text(
                 highlightText,
-                style: TextStyle(fontSize: 12, color: highlightTextColor, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: highlightTextColor,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -612,31 +751,45 @@ class _FinancialCenterScreenState extends State<FinancialCenterScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade100),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade100),
+              ),
+              child: Icon(iconData, color: iconColor, size: 24),
             ),
-            child: Icon(iconData, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 20),
-        ],
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey.shade400,
+              size: 20,
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 

@@ -19,7 +19,8 @@ class _HelpCenterChatScreenState extends State<HelpCenterChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [
     ChatMessage(
-      text: 'Xin chào, mình là Trợ thủ AI Mio247! Mình có thể giúp gì cho bạn hôm nay?',
+      text:
+          'Xin chào, mình là Trợ thủ AI Mio247! Mình có thể giúp gì cho bạn hôm nay?',
       isUser: false,
     ),
   ];
@@ -45,16 +46,28 @@ class _HelpCenterChatScreenState extends State<HelpCenterChatScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          _messages.add(ChatMessage(text: data['answer'] ?? 'Có lỗi xảy ra', isUser: false));
+          _messages.add(
+            ChatMessage(text: data['answer'] ?? 'Có lỗi xảy ra', isUser: false),
+          );
         });
       } else {
         setState(() {
-          _messages.add(ChatMessage(text: 'Xin lỗi, hệ thống đang bận. Bạn vui lòng thử lại sau nhé.', isUser: false));
+          _messages.add(
+            ChatMessage(
+              text: 'Xin lỗi, hệ thống đang bận. Bạn vui lòng thử lại sau nhé.',
+              isUser: false,
+            ),
+          );
         });
       }
     } catch (e) {
       setState(() {
-        _messages.add(ChatMessage(text: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.', isUser: false));
+        _messages.add(
+          ChatMessage(
+            text: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.',
+            isUser: false,
+          ),
+        );
       });
     } finally {
       setState(() {
@@ -103,7 +116,11 @@ class _HelpCenterChatScreenState extends State<HelpCenterChatScreen> {
               children: [
                 const Text(
                   'Trợ thủ AI Mio247',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 Text(
                   'Sẵn sàng hỗ trợ bạn',
@@ -114,7 +131,11 @@ class _HelpCenterChatScreenState extends State<HelpCenterChatScreen> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black87,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -143,13 +164,19 @@ class _HelpCenterChatScreenState extends State<HelpCenterChatScreen> {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryPink),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primaryPink,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Đang trả lời...',
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ],
                 ),

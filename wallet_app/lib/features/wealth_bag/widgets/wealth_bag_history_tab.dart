@@ -19,7 +19,10 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
   final List<Map<String, String>> _filters = [
     {'label': 'Tất cả', 'value': 'ALL'},
     {'label': 'Tiền lời', 'value': 'PROFIT'},
-    {'label': 'Nhận tiền', 'value': 'RECEIVE'}, // Not fully implemented in backend, using placeholder
+    {
+      'label': 'Nhận tiền',
+      'value': 'RECEIVE',
+    }, // Not fully implemented in backend, using placeholder
     {'label': 'Nạp tiền', 'value': 'DEPOSIT'},
     {'label': 'Rút tiền', 'value': 'WITHDRAW'},
   ];
@@ -33,9 +36,11 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
   Future<void> _fetchHistory() async {
     setState(() => _isLoading = true);
     try {
-      final uri = Uri.parse('${ApiConfig.wealthBagHistory}?type=$_selectedFilter');
+      final uri = Uri.parse(
+        '${ApiConfig.wealthBagHistory}?type=$_selectedFilter',
+      );
       final response = await CustomHttpClient().get(uri);
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
@@ -57,7 +62,8 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
 
   String _formatAmount(dynamic amount) {
     double val = double.tryParse(amount.toString()) ?? 0;
-    return NumberFormat('#,###', 'vi_VN').format(val).replaceAll(',', '.') + 'đ';
+    return NumberFormat('#,###', 'vi_VN').format(val).replaceAll(',', '.') +
+        'đ';
   }
 
   String _formatDate(String dateStr) {
@@ -129,10 +135,13 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
   }
 
   Widget _buildTransactionItem(dynamic tx) {
-    final bool isDepositOrProfit = tx['transaction_type'] == 'DEPOSIT' || tx['transaction_type'] == 'PROFIT';
+    final bool isDepositOrProfit =
+        tx['transaction_type'] == 'DEPOSIT' ||
+        tx['transaction_type'] == 'PROFIT';
     final String sign = isDepositOrProfit ? '+' : '-';
-    final IconData icon = tx['transaction_type'] == 'WITHDRAW' 
-        ? Icons.currency_exchange // Example icon for withdraw
+    final IconData icon = tx['transaction_type'] == 'WITHDRAW'
+        ? Icons
+              .currency_exchange // Example icon for withdraw
         : Icons.monetization_on_outlined; // Example icon for deposit/profit
 
     return Container(
@@ -159,7 +168,10 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
               children: [
                 Text(
                   tx['description'] ?? 'Giao dịch',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -200,17 +212,25 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
               : ListView.builder(
                   itemCount: groupedTransactions.length,
                   itemBuilder: (context, index) {
-                    String monthYear = groupedTransactions.keys.elementAt(index);
+                    String monthYear = groupedTransactions.keys.elementAt(
+                      index,
+                    );
                     List<dynamic> monthTxs = groupedTransactions[monthYear]!;
-                    
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
                           child: Text(
                             monthYear,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                         Container(
@@ -219,11 +239,17 @@ class _WealthBagHistoryTabState extends State<WealthBagHistoryTab> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
                             ],
                           ),
                           child: Column(
-                            children: monthTxs.map((tx) => _buildTransactionItem(tx)).toList(),
+                            children: monthTxs
+                                .map((tx) => _buildTransactionItem(tx))
+                                .toList(),
                           ),
                         ),
                         const SizedBox(height: 16),

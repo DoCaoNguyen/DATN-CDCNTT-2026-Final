@@ -378,7 +378,7 @@ class TransactionQueriesSection extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    'Mã giao dịch: ${tx['transaction_code'] ?? 'N/A'}',
+                                    'Mã giao dịch: ${tx['transaction_no'] ?? tx['transaction_code'] ?? 'N/A'}',
                                     style: const TextStyle(
                                       color: Colors.grey,
                                       fontSize: 11,

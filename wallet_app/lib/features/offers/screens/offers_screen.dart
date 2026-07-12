@@ -21,7 +21,8 @@ class OffersScreen extends StatefulWidget {
   State<OffersScreen> createState() => _OffersScreenState();
 }
 
-class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderStateMixin {
+class _OffersScreenState extends State<OffersScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final LoyaltyService _loyaltyService = LoyaltyService();
   Map<String, dynamic> _summary = {};
@@ -61,7 +62,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
       final data = result['data'];
       final isGift = data['isGift'] ?? false;
       final reward = data['rewardPoints'] ?? 50;
-      
+
       setState(() {
         _checkedInToday = true;
         _currentStreak = data['newStreak'] ?? _currentStreak + 1;
@@ -72,10 +73,13 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
         _showGiftAnimation(reward);
       } else {
         if (mounted) {
-          SnackbarUtils.showSuccess(context, 'Điểm danh thành công! +$reward Xu');
+          SnackbarUtils.showSuccess(
+            context,
+            'Điểm danh thành công! +$reward Xu',
+          );
         }
       }
-      
+
       // Refresh balance
       widget.onRefresh();
       _fetchData();
@@ -109,7 +113,9 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
     final number = int.tryParse(value);
     if (number == null) return "0";
     return number.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   @override
@@ -123,10 +129,8 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             // Custom Header & Balance Section
-            SliverToBoxAdapter(
-              child: _buildHeaderSection(),
-            ),
-            
+            SliverToBoxAdapter(child: _buildHeaderSection()),
+
             // TabBar Sticky
             SliverPersistentHeader(
               pinned: true,
@@ -139,8 +143,14 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                     indicatorWeight: 3,
                     labelColor: Colors.pink,
                     unselectedLabelColor: Colors.grey.shade600,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16),
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.normal,
+                      fontSize: 16,
+                    ),
                     tabs: [
                       const Tab(
                         child: Row(
@@ -158,10 +168,24 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                           children: [
                             Container(
                               padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade400, width: 1.5)),
-                              child: const Text('m', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, height: 1, color: Colors.grey)),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.grey.shade400,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: const Text(
+                                'm',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  height: 1,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ),
-  
+
                             const SizedBox(width: 8),
                             Text('Tích Xu'),
                           ],
@@ -177,10 +201,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             SliverFillRemaining(
               child: TabBarView(
                 controller: _tabController,
-                children: [
-                  _buildTabSanQua(),
-                  _buildTabTichXu(),
-                ],
+                children: [_buildTabSanQua(), _buildTabTichXu()],
               ),
             ),
           ],
@@ -195,7 +216,10 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFE3F2FD), Color(0xFFF5F5F9)], // Light blue to very light grey/pinkish
+          colors: [
+            Color(0xFFE3F2FD),
+            Color(0xFFF5F5F9),
+          ], // Light blue to very light grey/pinkish
         ),
       ),
       child: Column(
@@ -204,7 +228,10 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -219,7 +246,13 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                           const SizedBox(width: 12),
                           Icon(Icons.search, color: Colors.grey.shade500),
                           const SizedBox(width: 8),
-                          Text('Tìm kiếm ưu đãi...', style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+                          Text(
+                            'Tìm kiếm ưu đãi...',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 14,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -227,20 +260,34 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                    child: const Icon(Icons.notifications_none, color: Colors.black87, size: 20),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_none,
+                      color: Colors.black87,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                    child: const Icon(Icons.chat_bubble_outline, color: Colors.black87, size: 20),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: const Icon(
+                      Icons.chat_bubble_outline,
+                      color: Colors.black87,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          
+
           // Balance Card
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -249,7 +296,11 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
               child: Column(
@@ -263,14 +314,31 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
-                              child: const Text('m', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.amber,
+                              ),
+                              child: const Text(
+                                'm',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               _formatNumber(widget.loyaltyPoints),
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -287,14 +355,21 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                             );
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.pink.shade50,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               'Lịch sử Xu',
-                              style: TextStyle(color: Colors.pink.shade600, fontWeight: FontWeight.bold, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.pink.shade600,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ),
@@ -303,19 +378,31 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Builder(builder: (context) {
-                      final int expiringPoints = _summary['expiringPoints'] ?? 0;
-                      final String nearestExpiration = _summary['nearestExpiration'] ?? '';
-                      if (expiringPoints > 0 && nearestExpiration.isNotEmpty) {
-                        final DateTime date = DateTime.parse(nearestExpiration);
-                        final formattedDate = DateFormat('dd-MM-yyyy').format(date);
-                        return Text(
-                          '$expiringPoints xu sẽ hết hạn vào $formattedDate',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }),
+                    child: Builder(
+                      builder: (context) {
+                        final int expiringPoints =
+                            _summary['expiringPoints'] ?? 0;
+                        final String nearestExpiration =
+                            _summary['nearestExpiration'] ?? '';
+                        if (expiringPoints > 0 &&
+                            nearestExpiration.isNotEmpty) {
+                          final DateTime date = DateTime.parse(
+                            nearestExpiration,
+                          );
+                          final formattedDate = DateFormat(
+                            'dd-MM-yyyy',
+                          ).format(date);
+                          return Text(
+                            '$expiringPoints xu sẽ hết hạn vào $formattedDate',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 13,
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: Colors.grey.shade200),
@@ -327,35 +414,66 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.card_giftcard, size: 18, color: Colors.black54),
+                              const Icon(
+                                Icons.card_giftcard,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
                               const SizedBox(width: 8),
-                              const Text('Quà của tôi', style: TextStyle(fontWeight: FontWeight.w500)),
+                              const Text(
+                                'Quà của tôi',
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10)),
-                                child: const Text('34', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  '34',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      Container(width: 1, height: 20, color: Colors.grey.shade300),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: Colors.grey.shade300,
+                      ),
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.qr_code_scanner, size: 18, color: Colors.black54),
+                              const Icon(
+                                Icons.qr_code_scanner,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
                               const SizedBox(width: 8),
-                              const Text('Nhập mã', style: TextStyle(fontWeight: FontWeight.w500)),
+                              const Text(
+                                'Nhập mã',
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
                             ],
                           ),
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -380,27 +498,48 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCategoryItem(Icons.vibration, 'Lắc ngay\ntrúng quà', Colors.blue),
-                _buildCategoryItem(Icons.account_balance_wallet, 'Hoàn tiền\nmua sắm', Colors.green),
-                _buildCategoryItem(Icons.receipt_long, 'Thanh toán\nhóa đơn', Colors.pink),
-                _buildCategoryItem(Icons.emoji_events, 'Nhiệm vụ\nsăn quà', Colors.purple),
-                _buildCategoryItem(Icons.card_giftcard, 'Đổi thẻ cào', Colors.orange, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RedeemScratchCardScreen(
-                        loyaltyPoints: widget.loyaltyPoints.toString(),
+                _buildCategoryItem(
+                  Icons.vibration,
+                  'Lắc ngay\ntrúng quà',
+                  Colors.blue,
+                ),
+                _buildCategoryItem(
+                  Icons.account_balance_wallet,
+                  'Hoàn tiền\nmua sắm',
+                  Colors.green,
+                ),
+                _buildCategoryItem(
+                  Icons.receipt_long,
+                  'Thanh toán\nhóa đơn',
+                  Colors.pink,
+                ),
+                _buildCategoryItem(
+                  Icons.emoji_events,
+                  'Nhiệm vụ\nsăn quà',
+                  Colors.purple,
+                ),
+                _buildCategoryItem(
+                  Icons.card_giftcard,
+                  'Đổi thẻ cào',
+                  Colors.orange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RedeemScratchCardScreen(
+                          loyaltyPoints: widget.loyaltyPoints.toString(),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ],
             ),
           ),
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Banner 1
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -408,7 +547,9 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             width: double.infinity,
             height: 100,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.orange.shade100, Colors.orange.shade50]),
+              gradient: LinearGradient(
+                colors: [Colors.orange.shade100, Colors.orange.shade50],
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -422,15 +563,29 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                       children: [
                         Text.rich(
                           TextSpan(
-                            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                             children: [
                               const TextSpan(text: 'Ví Trả Sau - Hoàn tiền'),
-                              TextSpan(text: ' 50%', style: TextStyle(color: Colors.pink.shade600, fontSize: 20)),
-                            ]
-                          )
+                              TextSpan(
+                                text: ' 50%',
+                                style: TextStyle(
+                                  color: Colors.pink.shade600,
+                                  fontSize: 20,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 4),
-                        const Text('Tối đa 10K/giao dịch tại 500K+ cửa hàng khắp phố phường.', style: TextStyle(fontSize: 12, color: Colors.black54), maxLines: 2),
+                        const Text(
+                          'Tối đa 10K/giao dịch tại 500K+ cửa hàng khắp phố phường.',
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                          maxLines: 2,
+                        ),
                       ],
                     ),
                   ),
@@ -441,12 +596,26 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                     alignment: Alignment.bottomRight,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.pink.shade200)),
-                      child: Text('Khám phá', style: TextStyle(color: Colors.pink.shade600, fontWeight: FontWeight.bold, fontSize: 12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.pink.shade200),
+                      ),
+                      child: Text(
+                        'Khám phá',
+                        style: TextStyle(
+                          color: Colors.pink.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -465,24 +634,49 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(4)),
-                      child: const Text('Mio Day', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'Mio Day',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    const Text('xả Xu đón hè\nSăn deal đồng giá cực xịn', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text(
+                      'xả Xu đón hè\nSăn deal đồng giá cực xịn',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    const Text('Ngày 25 hằng tháng', style: TextStyle(fontSize: 12)),
+                    const Text(
+                      'Ngày 25 hằng tháng',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.beach_access, size: 60, color: Colors.orangeAccent),
+              const Icon(
+                Icons.beach_access,
+                size: 60,
+                color: Colors.orangeAccent,
+              ),
             ],
           ),
         ),
 
         const SizedBox(height: 16),
-        
+
         // Deals List
         SizedBox(
           height: 220,
@@ -490,9 +684,32 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              _buildDealCard('Ví Trả Sau', 'Hoàn 35K', 'Cho đơn từ 35K', 'Thu thập', Colors.pink.shade50, true),
-              _buildDealCard('GS25', 'Ưu đãi 5K', 'Cho đơn từ 30K tại ...', '50', Colors.white, false, originalPrice: '5.000'),
-              _buildDealCard('Hóa đơn', 'Ưu đãi 3K', 'Cho đơn từ 100K', '10', Colors.white, false, originalPrice: '3.000'),
+              _buildDealCard(
+                'Ví Trả Sau',
+                'Hoàn 35K',
+                'Cho đơn từ 35K',
+                'Thu thập',
+                Colors.pink.shade50,
+                true,
+              ),
+              _buildDealCard(
+                'GS25',
+                'Ưu đãi 5K',
+                'Cho đơn từ 30K tại ...',
+                '50',
+                Colors.white,
+                false,
+                originalPrice: '5.000',
+              ),
+              _buildDealCard(
+                'Hóa đơn',
+                'Ưu đãi 3K',
+                'Cho đơn từ 100K',
+                '10',
+                Colors.white,
+                false,
+                originalPrice: '3.000',
+              ),
             ],
           ),
         ),
@@ -501,7 +718,12 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildCategoryItem(IconData icon, String title, Color color, {VoidCallback? onTap}) {
+  Widget _buildCategoryItem(
+    IconData icon,
+    String title,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -518,14 +740,26 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 8),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDealCard(String brand, String title, String subtitle, String actionText, Color bgColor, bool isActionButton, {String? originalPrice}) {
+  Widget _buildDealCard(
+    String brand,
+    String title,
+    String subtitle,
+    String actionText,
+    Color bgColor,
+    bool isActionButton, {
+    String? originalPrice,
+  }) {
     return Container(
       width: 150,
       margin: const EdgeInsets.only(right: 12),
@@ -541,14 +775,26 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             height: 90,
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
             ),
             alignment: Alignment.topRight,
             padding: const EdgeInsets.all(8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(4)),
-              child: Text(brand, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                brand,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
           Padding(
@@ -556,9 +802,20 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 12),
                 if (isActionButton)
                   Container(
@@ -569,28 +826,63 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                       borderRadius: BorderRadius.circular(6),
                     ),
                     alignment: Alignment.center,
-                    child: Text(actionText, style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.w500, fontSize: 12)),
+                    child: Text(
+                      actionText,
+                      style: const TextStyle(
+                        color: Colors.pink,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
                   )
                 else
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
-                        child: const Text('m', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, height: 1)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.amber,
+                        ),
+                        child: const Text(
+                          'm',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            height: 1,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 4),
-                      Text(actionText, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        actionText,
+                        style: const TextStyle(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                       if (originalPrice != null) ...[
                         const SizedBox(width: 4),
-                        Text(originalPrice, style: const TextStyle(color: Colors.grey, fontSize: 10, decoration: TextDecoration.lineThrough)),
-                      ]
+                        Text(
+                          originalPrice,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
                     ],
-                  )
+                  ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -607,7 +899,13 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,7 +914,10 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 children: [
                   Icon(Icons.calendar_today, color: Colors.orange, size: 20),
                   SizedBox(width: 8),
-                  Text('Điểm danh mỗi ngày nhận quà', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(
+                    'Điểm danh mỗi ngày nhận quà',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -625,27 +926,29 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 child: Row(
                   children: List.generate(7, (index) {
                     int dayIndex = index + 1; // 1 to 7
-                    
+
                     // Correct logic for check-in days
                     bool isPast = dayIndex <= _currentStreak;
-                    bool isToday = !_checkedInToday && dayIndex == (_currentStreak + 1);
-                    
-                    bool isGift = dayIndex == 3 || dayIndex == 5 || dayIndex == 7;
-                    
+                    bool isToday =
+                        !_checkedInToday && dayIndex == (_currentStreak + 1);
+
+                    bool isGift =
+                        dayIndex == 3 || dayIndex == 5 || dayIndex == 7;
+
                     String dayLabel = isToday ? 'Hôm nay' : 'Ngày $dayIndex';
                     String value = isGift ? '???' : '+50';
-                    
+
                     return _buildCheckinDay(
-                      dayLabel, 
-                      value, 
-                      isToday, 
-                      isGift, 
+                      dayLabel,
+                      value,
+                      isToday,
+                      isGift,
                       isPast: isPast,
                       index: index,
                     );
                   }),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -653,16 +956,31 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
         const SizedBox(height: 24),
 
         // Info Section
-        const Text('Tìm hiểu về Xu trên Mio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const Text(
+          'Tìm hiểu về Xu trên Mio',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 80,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _buildInfoCard('Tích Xu với\nmọi giao dịch', Colors.orange.shade50, Colors.orange.shade800),
-              _buildInfoCard('Đổi Xu nhận\nưu đãi', Colors.pink.shade50, Colors.pink.shade800),
-              _buildInfoCard('Đổi Xu\nthanh toán', Colors.blue.shade50, Colors.blue.shade800),
+              _buildInfoCard(
+                'Tích Xu với\nmọi giao dịch',
+                Colors.orange.shade50,
+                Colors.orange.shade800,
+              ),
+              _buildInfoCard(
+                'Đổi Xu nhận\nưu đãi',
+                Colors.pink.shade50,
+                Colors.pink.shade800,
+              ),
+              _buildInfoCard(
+                'Đổi Xu\nthanh toán',
+                Colors.blue.shade50,
+                Colors.blue.shade800,
+              ),
             ],
           ),
         ),
@@ -673,8 +991,15 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Đủ Xu đổi liền', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade600),
+            const Text(
+              'Đủ Xu đổi liền',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: Colors.grey.shade600,
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -694,54 +1019,109 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                     ),
                   );
                 },
-                child: _buildDealCard('Đổi Thẻ Cào', 'Đổi thẻ cào ĐT', 'Mệnh giá 10K - 100K', '10.000', Colors.pink.shade50, false),
+                child: _buildDealCard(
+                  'Đổi Thẻ Cào',
+                  'Đổi thẻ cào ĐT',
+                  'Mệnh giá 10K - 100K',
+                  '10.000',
+                  Colors.pink.shade50,
+                  false,
+                ),
               ),
-              _buildDealCard('Gong Cha', 'Ưu đãi 20K', 'Cho đơn từ 120K', '39', Colors.pink.shade50, false, originalPrice: '20.000'),
-              _buildDealCard('Long Châu', 'Ưu đãi 30K', 'Cho đơn từ 549K', '79', Colors.blue.shade50, false, originalPrice: '30.000'),
+              _buildDealCard(
+                'Gong Cha',
+                'Ưu đãi 20K',
+                'Cho đơn từ 120K',
+                '39',
+                Colors.pink.shade50,
+                false,
+                originalPrice: '20.000',
+              ),
+              _buildDealCard(
+                'Long Châu',
+                'Ưu đãi 30K',
+                'Cho đơn từ 549K',
+                '79',
+                Colors.blue.shade50,
+                false,
+                originalPrice: '30.000',
+              ),
             ],
           ),
         ),
 
         const SizedBox(height: 24),
-        
+
         // Tasks Section
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.orange.shade50, shape: BoxShape.circle),
-                child: const Icon(Icons.track_changes, color: Colors.orange, size: 28),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.track_changes,
+                  color: Colors.orange,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Nhiệm vụ Tích Xu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(
+                      'Nhiệm vụ Tích Xu',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
                     SizedBox(height: 4),
-                    Text('Nhận 10.000 Xu cực dễ', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text(
+                      'Nhận 10.000 Xu cực dễ',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade600),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.grey.shade600,
+              ),
             ],
           ),
         ),
-        
+
         const SizedBox(height: 40),
       ],
     );
   }
 
-  Widget _buildCheckinDay(String dayLabel, String value, bool isToday, bool isGift, {bool isPast = false, int index = 0}) {
-    
+  Widget _buildCheckinDay(
+    String dayLabel,
+    String value,
+    bool isToday,
+    bool isGift, {
+    bool isPast = false,
+    int index = 0,
+  }) {
     Widget content = Padding(
       padding: const EdgeInsets.only(right: 12.0),
       child: Column(
@@ -752,23 +1132,50 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             decoration: BoxDecoration(
               color: isToday ? Colors.white : Colors.grey.shade50,
               shape: BoxShape.circle,
-              border: Border.all(color: isToday ? Colors.green : Colors.grey.shade300, width: isToday ? 2 : 1),
+              border: Border.all(
+                color: isToday ? Colors.green : Colors.grey.shade300,
+                width: isToday ? 2 : 1,
+              ),
             ),
             alignment: Alignment.center,
-            child: isPast 
-              ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
-              : isGift 
+            child: isPast
+                ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+                : isGift
                 ? const Icon(Icons.card_giftcard, color: Colors.pink, size: 20)
                 : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.amber),
-                    child: const Text('m', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, height: 1)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.amber,
+                    ),
+                    child: const Text(
+                      'm',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
+                    ),
                   ),
           ),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: isToday ? FontWeight.bold : FontWeight.normal, color: isToday ? Colors.green : Colors.grey)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+              color: isToday ? Colors.green : Colors.grey,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(dayLabel, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+          Text(
+            dayLabel,
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+          ),
         ],
       ),
     );
@@ -777,10 +1184,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
       return InkWell(
         onTap: _isLoadingCheckin ? null : _handleCheckin,
         borderRadius: BorderRadius.circular(12),
-        child: Opacity(
-          opacity: _isLoadingCheckin ? 0.5 : 1.0,
-          child: content,
-        ),
+        child: Opacity(opacity: _isLoadingCheckin ? 0.5 : 1.0, child: content),
       );
     }
     return content;
@@ -795,7 +1199,14 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 12)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }
@@ -812,7 +1223,11 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 48.0;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return child;
   }
 
@@ -825,13 +1240,16 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 class _GiftBoxAnimationDialog extends StatefulWidget {
   final int rewardPoints;
 
-  const _GiftBoxAnimationDialog({Key? key, required this.rewardPoints}) : super(key: key);
+  const _GiftBoxAnimationDialog({Key? key, required this.rewardPoints})
+    : super(key: key);
 
   @override
-  State<_GiftBoxAnimationDialog> createState() => _GiftBoxAnimationDialogState();
+  State<_GiftBoxAnimationDialog> createState() =>
+      _GiftBoxAnimationDialogState();
 }
 
-class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with SingleTickerProviderStateMixin {
+class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _shakeAnimation;
   late Animation<double> _scaleAnimation;
@@ -840,18 +1258,27 @@ class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with S
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
-    
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0, end: 0.1), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -0.1, end: 0.1), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -0.1, end: 0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6)));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _shakeAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0, end: 0.1), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -0.1, end: 0.1), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -0.1, end: 0), weight: 1),
+        ]).animate(
+          CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6)),
+        );
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 1.0, curve: Curves.elasticOut))
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 1.0, curve: Curves.elasticOut),
+      ),
     );
 
     _controller.forward().then((_) {
@@ -891,7 +1318,11 @@ class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with S
                         scale: value,
                         child: Column(
                           children: [
-                            const Icon(Icons.stars, color: Colors.amber, size: 80),
+                            const Icon(
+                              Icons.stars,
+                              color: Colors.amber,
+                              size: 80,
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               '+${widget.rewardPoints} Xu',
@@ -899,7 +1330,13 @@ class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with S
                                 color: Colors.white,
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
-                                shadows: [Shadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))]
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -912,12 +1349,23 @@ class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with S
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.pink,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Nhận quà', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  )
+                    child: const Text(
+                      'Nhận quà',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
                 ],
               );
             }
@@ -926,7 +1374,11 @@ class _GiftBoxAnimationDialogState extends State<_GiftBoxAnimationDialog> with S
               scale: _scaleAnimation.value,
               child: Transform.rotate(
                 angle: _shakeAnimation.value,
-                child: const Icon(Icons.card_giftcard, color: Colors.pinkAccent, size: 100),
+                child: const Icon(
+                  Icons.card_giftcard,
+                  color: Colors.pinkAccent,
+                  size: 100,
+                ),
               ),
             );
           },

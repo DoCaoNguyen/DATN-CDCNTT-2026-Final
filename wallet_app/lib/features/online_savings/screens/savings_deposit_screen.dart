@@ -12,16 +12,19 @@ class SavingsDepositScreen extends StatefulWidget {
 
 class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
   final TextEditingController _amountController = TextEditingController();
-  final NumberFormat _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
-  
+  final NumberFormat _currencyFormat = NumberFormat.currency(
+    locale: 'vi_VN',
+    symbol: 'đ',
+  );
+
   int _selectedTermMonths = 1;
   int _selectedBankIndex = 2; // Default to Bản Việt Bank
   bool _isAgreed = false;
-  
+
   String _rawAmount = '';
-  
+
   final List<int> _terms = [1, 2, 3, 4, 6, 9, 12, 24];
-  
+
   final List<Map<String, dynamic>> _banks = [
     {
       'name': 'MBV Bank',
@@ -65,7 +68,7 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
       setState(() => _rawAmount = '');
       return;
     }
-    
+
     // Format back with dots
     final formatted = NumberFormat('#,###', 'vi_VN').format(int.parse(text));
     if (formatted != _amountController.text) {
@@ -119,11 +122,30 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Gửi Tiết Kiệm Online', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Gửi Tiết Kiệm Online',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.star_border, color: Colors.black87), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.support_agent_outlined, color: Colors.black87), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.home_outlined, color: Colors.black87), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.star_border, color: Colors.black87),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.support_agent_outlined,
+              color: Colors.black87,
+            ),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            onPressed: () {},
+          ),
         ],
       ),
       body: Column(
@@ -175,36 +197,58 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              border: Border.all(color: hasError ? Colors.red : const Color(0xFFD81B60), width: 1.5),
+              border: Border.all(
+                color: hasError ? Colors.red : const Color(0xFFD81B60),
+                width: 1.5,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Số tiền gửi tiết kiệm', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                Text(
+                  'Số tiền gửi tiết kiệm',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Nhập số tiền',
-                          hintStyle: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.normal),
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontWeight: FontWeight.normal,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
                           suffixText: 'đ',
-                          suffixStyle: const TextStyle(fontSize: 22, color: Colors.black87),
+                          suffixStyle: const TextStyle(
+                            fontSize: 22,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),
                     if (_rawAmount.isNotEmpty)
                       GestureDetector(
                         onTap: () => _amountController.clear(),
-                        child: const Icon(Icons.cancel, color: Colors.grey, size: 20),
+                        child: const Icon(
+                          Icons.cancel,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                       ),
                   ],
                 ),
@@ -218,17 +262,31 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
                 children: [
                   const Icon(Icons.info_outline, color: Colors.red, size: 16),
                   const SizedBox(width: 4),
-                  Expanded(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13))),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ),
                 ],
               ),
             ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Lãi khi đáo hạn: ', style: TextStyle(fontSize: 14, color: Colors.black87)),
+              const Text(
+                'Lãi khi đáo hạn: ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
               Text(
-                _currentProfit > 0 ? '+${_currencyFormat.format(_currentProfit.floor())}' : '0đ',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF00A651)),
+                _currentProfit > 0
+                    ? '+${_currencyFormat.format(_currentProfit.floor())}'
+                    : '0đ',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF00A651),
+                ),
               ),
             ],
           ),
@@ -248,9 +306,19 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Gói tiết kiệm', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const Text(
+            'Gói tiết kiệm',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text('Chọn kỳ hạn gửi và ngân hàng', style: TextStyle(fontSize: 13, color: Colors.black54)),
+          const Text(
+            'Chọn kỳ hạn gửi và ngân hàng',
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
           const SizedBox(height: 16),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -261,17 +329,30 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
                   onTap: () => setState(() => _selectedTermMonths = term),
                   child: Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFFF0F6) : Colors.white,
-                      border: Border.all(color: isSelected ? const Color(0xFFE91E63) : Colors.grey.shade300),
+                      color: isSelected
+                          ? const Color(0xFFFFF0F6)
+                          : Colors.white,
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFE91E63)
+                            : Colors.grey.shade300,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '$term tháng',
                       style: TextStyle(
-                        color: isSelected ? const Color(0xFFE91E63) : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? const Color(0xFFE91E63)
+                            : Colors.black87,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -291,7 +372,11 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: isSelected ? const Color(0xFFE91E63) : Colors.grey.shade300),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFE91E63)
+                          : Colors.grey.shade300,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -310,14 +395,19 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
                           child: Image.network(
                             'https://api.vietqr.io/img/${bank['code']}.png',
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: bank['color'].withOpacity(0.1),
-                              alignment: Alignment.center,
-                              child: Text(
-                                bank['code'],
-                                style: TextStyle(color: bank['color'], fontSize: 10, fontWeight: FontWeight.bold),
-                              ),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: bank['color'].withOpacity(0.1),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    bank['code'],
+                                    style: TextStyle(
+                                      color: bank['color'],
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                           ),
                         ),
                       ),
@@ -325,9 +415,22 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('${bank['rate']}%', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text(
+                            '${bank['rate']}%',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 2),
-                          Text(bank['name'], style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                          Text(
+                            bank['name'],
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -352,13 +455,27 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Phương thức đáo hạn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const Text(
+            'Phương thức đáo hạn',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Gửi tiếp cả tiền gốc và lãi', style: TextStyle(fontSize: 15, color: Colors.black87)),
+              const Text(
+                'Gửi tiếp cả tiền gốc và lãi',
+                style: TextStyle(fontSize: 15, color: Colors.black87),
+              ),
               const SizedBox(width: 6),
-              Icon(Icons.info_outline, size: 16, color: const Color(0xFFD81B60).withOpacity(0.6)),
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: const Color(0xFFD81B60).withOpacity(0.6),
+              ),
             ],
           ),
         ],
@@ -379,17 +496,29 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
               value: _isAgreed,
               onChanged: (val) => setState(() => _isAgreed = val ?? false),
               activeColor: const Color(0xFFE91E63),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  height: 1.4,
+                ),
                 children: [
-                  const TextSpan(text: 'Tôi đã đọc và đồng ý với các nội dung của '),
-                  const TextSpan(text: 'Sản phẩm tiền gửi có kỳ hạn, Bảo vệ & xử lý dữ liệu cá nhân', style: TextStyle(color: Colors.blue)),
+                  const TextSpan(
+                    text: 'Tôi đã đọc và đồng ý với các nội dung của ',
+                  ),
+                  const TextSpan(
+                    text:
+                        'Sản phẩm tiền gửi có kỳ hạn, Bảo vệ & xử lý dữ liệu cá nhân',
+                    style: TextStyle(color: Colors.blue),
+                  ),
                   TextSpan(text: ' của ${_banks[_selectedBankIndex]['name']}.'),
                 ],
               ),
@@ -406,7 +535,13 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -425,30 +560,41 @@ class _SavingsDepositScreenState extends State<SavingsDepositScreen> {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: _isValid ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SavingsConfirmScreen(
-                      bankName: _banks[_selectedBankIndex]['name'],
-                      bankCode: _banks[_selectedBankIndex]['code'],
-                      amount: _currentAmount,
-                      term: _selectedTermMonths,
-                      rate: _banks[_selectedBankIndex]['rate'],
-                      profit: _currentProfit,
-                    ),
-                  ),
-                );
-              } : null,
+              onPressed: _isValid
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SavingsConfirmScreen(
+                            bankName: _banks[_selectedBankIndex]['name'],
+                            bankCode: _banks[_selectedBankIndex]['code'],
+                            amount: _currentAmount,
+                            term: _selectedTermMonths,
+                            rate: _banks[_selectedBankIndex]['rate'],
+                            profit: _currentProfit,
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE91E63),
                 disabledBackgroundColor: Colors.grey.shade300,
                 disabledForegroundColor: Colors.grey.shade500,
                 minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 elevation: 0,
               ),
-              child: const Text('Tiếp tục', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text(
+                'Tiếp tục',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),

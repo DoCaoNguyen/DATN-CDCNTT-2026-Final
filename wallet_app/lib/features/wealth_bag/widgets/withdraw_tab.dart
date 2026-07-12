@@ -16,7 +16,7 @@ class WithdrawTab extends StatefulWidget {
 
 class _WithdrawTabState extends State<WithdrawTab> {
   final TextEditingController _amountController = TextEditingController();
-  
+
   double _wealthBagBalance = 0;
   int _rawAmount = 0;
   String? _errorMessage;
@@ -30,13 +30,17 @@ class _WithdrawTabState extends State<WithdrawTab> {
 
   Future<void> _fetchBalance() async {
     try {
-      final response = await CustomHttpClient().get(Uri.parse(ApiConfig.wealthBagStatus));
+      final response = await CustomHttpClient().get(
+        Uri.parse(ApiConfig.wealthBagStatus),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['data'] != null) {
           if (mounted) {
             setState(() {
-              _wealthBagBalance = double.tryParse(data['data']['balance']?.toString() ?? '0') ?? 0.0;
+              _wealthBagBalance =
+                  double.tryParse(data['data']['balance']?.toString() ?? '0') ??
+                  0.0;
               _isLoadingBalance = false;
             });
             _validateAmount(); // re-validate just in case user typed before balance loaded
@@ -64,7 +68,10 @@ class _WithdrawTabState extends State<WithdrawTab> {
       formatted = formatted.substring(0, formatted.length - 1);
     }
     List<String> parts = formatted.split('.');
-    String intPart = parts[0].replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    String intPart = parts[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
     if (parts.length > 1) return "$intPart,${parts[1]}đ";
     return "$intPartđ";
   }
@@ -77,7 +84,8 @@ class _WithdrawTabState extends State<WithdrawTab> {
       if (val > 50000000) {
         _errorMessage = "Số tiền rút tối đa 1 lần là 50.000.000đ";
       } else if (val > _wealthBagBalance) {
-        _errorMessage = "Số dư Túi Thần Tài của bạn là ${_formatAmount(_wealthBagBalance)}, bạn không thể rút tiền khỏi Túi.";
+        _errorMessage =
+            "Số dư Túi Thần Tài của bạn là ${_formatAmount(_wealthBagBalance)}, bạn không thể rút tiền khỏi Túi.";
       } else if (val > 0 && val < 10000) {
         _errorMessage = "Số tiền rút tối thiểu là 10.000đ";
       } else {
@@ -86,14 +94,20 @@ class _WithdrawTabState extends State<WithdrawTab> {
     });
   }
 
-  bool get _isValid => _rawAmount >= 10000 && _rawAmount <= 50000000 && _rawAmount <= _wealthBagBalance;
+  bool get _isValid =>
+      _rawAmount >= 10000 &&
+      _rawAmount <= 50000000 &&
+      _rawAmount <= _wealthBagBalance;
 
   Widget _buildQuickAmount(int amount) {
     return Expanded(
       child: InkWell(
         onTap: () {
           setState(() {
-            _amountController.text = NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.');
+            _amountController.text = NumberFormat(
+              '#,###',
+              'vi_VN',
+            ).format(amount).replaceAll(',', '.');
             _validateAmount();
           });
         },
@@ -105,7 +119,8 @@ class _WithdrawTabState extends State<WithdrawTab> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') + 'đ',
+            NumberFormat('#,###', 'vi_VN').format(amount).replaceAll(',', '.') +
+                'đ',
             style: const TextStyle(color: Colors.black87, fontSize: 13),
           ),
         ),
@@ -135,13 +150,20 @@ class _WithdrawTabState extends State<WithdrawTab> {
                       RichText(
                         text: TextSpan(
                           text: "Tiền trong Túi: ",
-                          style: const TextStyle(color: Colors.black87, fontSize: 15),
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 15,
+                          ),
                           children: [
                             TextSpan(
-                              text: _isLoadingBalance ? "Đang tải..." : _formatAmount(_wealthBagBalance),
-                              style: const TextStyle(fontWeight: FontWeight.bold)
+                              text: _isLoadingBalance
+                                  ? "Đang tải..."
+                                  : _formatAmount(_wealthBagBalance),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ]
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -151,9 +173,11 @@ class _WithdrawTabState extends State<WithdrawTab> {
                         keyboardType: TextInputType.number,
                         inputFormatters: [CurrencyInputFormatter()],
                         style: TextStyle(
-                          fontSize: 24, 
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: _errorMessage != null ? Colors.red : Colors.black87
+                          color: _errorMessage != null
+                              ? Colors.red
+                              : Colors.black87,
                         ),
                         decoration: InputDecoration(
                           labelText: "Số tiền cần rút",
@@ -161,17 +185,32 @@ class _WithdrawTabState extends State<WithdrawTab> {
                           floatingLabelBehavior: FloatingLabelBehavior.always,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: _errorMessage != null ? Colors.red : Colors.grey.shade300),
+                            borderSide: BorderSide(
+                              color: _errorMessage != null
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: _errorMessage != null ? Colors.red : Colors.grey.shade300),
+                            borderSide: BorderSide(
+                              color: _errorMessage != null
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: _errorMessage != null ? Colors.red : Colors.deepOrange),
+                            borderSide: BorderSide(
+                              color: _errorMessage != null
+                                  ? Colors.red
+                                  : Colors.deepOrange,
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
                         onChanged: (val) => _validateAmount(),
                       ),
@@ -181,9 +220,21 @@ class _WithdrawTabState extends State<WithdrawTab> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
-                              Expanded(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13))),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -191,14 +242,24 @@ class _WithdrawTabState extends State<WithdrawTab> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 GestureDetector(
                   onTap: () => showWithdrawLimitSheet(context),
                   child: const Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.deepOrange, size: 16),
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.deepOrange,
+                        size: 16,
+                      ),
                       SizedBox(width: 4),
-                      Text("Xem chi tiết hạn mức rút", style: TextStyle(color: Colors.deepOrange, fontSize: 13)),
+                      Text(
+                        "Xem chi tiết hạn mức rút",
+                        style: TextStyle(
+                          color: Colors.deepOrange,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -215,7 +276,13 @@ class _WithdrawTabState extends State<WithdrawTab> {
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, -2),
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -234,31 +301,38 @@ class _WithdrawTabState extends State<WithdrawTab> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isValid ? Colors.deepOrange : Colors.grey.shade300,
+                    backgroundColor: _isValid
+                        ? Colors.deepOrange
+                        : Colors.grey.shade300,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  onPressed: _isValid ? () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => WithdrawMethodScreen(amount: _rawAmount),
-                      ),
-                    );
-                  } : null,
+                  onPressed: _isValid
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  WithdrawMethodScreen(amount: _rawAmount),
+                            ),
+                          );
+                        }
+                      : null,
                   child: Text(
                     "Tiếp tục",
                     style: TextStyle(
                       color: _isValid ? Colors.white : Colors.grey,
                       fontSize: 16,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }

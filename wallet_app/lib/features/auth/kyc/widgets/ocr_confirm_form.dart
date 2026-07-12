@@ -26,7 +26,10 @@ class OcrConfirmForm extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Xác nhận thông tin', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Xác nhận thông tin',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -45,7 +48,10 @@ class OcrConfirmForm extends StatelessWidget {
               controller: idNumberController,
               readOnly: true,
               decoration: InputDecoration(
-                labelText: "Số CCCD", border: const OutlineInputBorder(), filled: true, fillColor: Colors.grey.shade100,
+                labelText: "Số CCCD",
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey.shade100,
               ),
             ),
             const SizedBox(height: 16),
@@ -53,7 +59,8 @@ class OcrConfirmForm extends StatelessWidget {
               controller: fullNameController,
               readOnly: false,
               decoration: const InputDecoration(
-                labelText: "Họ và Tên", border: OutlineInputBorder(),
+                labelText: "Họ và Tên",
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -65,7 +72,10 @@ class OcrConfirmForm extends StatelessWidget {
                     controller: dobController,
                     readOnly: true,
                     decoration: InputDecoration(
-                      labelText: "Ngày sinh (DD/MM/YYYY)", border: const OutlineInputBorder(), filled: true, fillColor: Colors.grey.shade100,
+                      labelText: "Ngày sinh (DD/MM/YYYY)",
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
                     ),
                   ),
                 ),
@@ -76,7 +86,8 @@ class OcrConfirmForm extends StatelessWidget {
                     controller: genderController,
                     readOnly: false,
                     decoration: const InputDecoration(
-                      labelText: "Giới tính", border: OutlineInputBorder(),
+                      labelText: "Giới tính",
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -99,7 +110,8 @@ class OcrConfirmForm extends StatelessWidget {
               readOnly: false,
               maxLines: 2,
               decoration: const InputDecoration(
-                labelText: "Quê quán / Nơi thường trú", border: OutlineInputBorder(),
+                labelText: "Quê quán / Nơi thường trú",
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 32),
@@ -107,33 +119,58 @@ class OcrConfirmForm extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryPink),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryPink,
+                ),
                 onPressed: () {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: const Text("Xác nhận thông tin", style: TextStyle(fontWeight: FontWeight.bold)),
-                      content: const Text("Bạn có chắc chắn các thông tin trên đã chính xác?\n\nLưu ý: Thông tin này sẽ được dùng để định danh tài khoản và không thể tự ý thay đổi sau này.", style: TextStyle(height: 1.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      title: const Text(
+                        "Xác nhận thông tin",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      content: const Text(
+                        "Bạn có chắc chắn các thông tin trên đã chính xác?\n\nLưu ý: Thông tin này sẽ được dùng để định danh tài khoản và không thể tự ý thay đổi sau này.",
+                        style: TextStyle(height: 1.5),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: const Text("Kiểm tra lại", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            "Kiểm tra lại",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         TextButton(
                           onPressed: () {
                             Navigator.pop(ctx);
                             onSubmit();
                           },
-                          child: const Text("Đồng ý", style: TextStyle(color: AppColors.primaryPink, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            "Đồng ý",
+                            style: TextStyle(
+                              color: AppColors.primaryPink,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   );
                 },
-                child: const Text('Thông tin hợp lệ, Quét khuôn mặt', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Text(
+                  'Thông tin hợp lệ, Quét khuôn mặt',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

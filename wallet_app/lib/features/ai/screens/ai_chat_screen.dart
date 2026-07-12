@@ -65,7 +65,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   int _parseAmount(String amountStr) {
-    String cleanStr = amountStr.toLowerCase().replaceAll(',', '').replaceAll('.', '');
+    String cleanStr = amountStr
+        .toLowerCase()
+        .replaceAll(',', '')
+        .replaceAll('.', '');
     int multiplier = 1;
     if (cleanStr.endsWith('k')) {
       multiplier = 1000;
@@ -79,9 +82,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (text.isEmpty) return;
 
     // Kiểm tra nhanh local ý định nạp/rút/chuyển tiền
-    final transferMatch = RegExp(r'^(chuyển|ck)\s+([\d\.\,kK]+)', caseSensitive: false).firstMatch(text);
-    final depositMatch = RegExp(r'^nạp\s+([\d\.\,kK]+)', caseSensitive: false).firstMatch(text);
-    final withdrawMatch = RegExp(r'^rút\s+([\d\.\,kK]+)', caseSensitive: false).firstMatch(text);
+    final transferMatch = RegExp(
+      r'^(chuyển|ck)\s+([\d\.\,kK]+)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final depositMatch = RegExp(
+      r'^nạp\s+([\d\.\,kK]+)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final withdrawMatch = RegExp(
+      r'^rút\s+([\d\.\,kK]+)',
+      caseSensitive: false,
+    ).firstMatch(text);
 
     int? amount;
     String? intent;
@@ -100,29 +112,63 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (amount != null && intent != null) {
       if (intent == 'TRANSFER') {
         if (amount < 1000) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số tiền chuyển tối thiểu là 1.000đ'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Số tiền chuyển tối thiểu là 1.000đ'),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
         if (amount > 50000000) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hạn mức chuyển tiền tối đa là 50.000.000đ/ngày'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Hạn mức chuyển tiền tối đa là 50.000.000đ/ngày'),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
         if (amount > _mioBalance) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số dư không đủ để thực hiện giao dịch này'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Số dư không đủ để thực hiện giao dịch này'),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
       } else {
         // Nạp / Rút
         if (amount < 10000) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Số tiền ${intent == 'DEPOSIT' ? 'nạp' : 'rút'} tối thiểu là 10.000đ'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Số tiền ${intent == 'DEPOSIT' ? 'nạp' : 'rút'} tối thiểu là 10.000đ',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
         if (amount > 50000000) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Số tiền ${intent == 'DEPOSIT' ? 'nạp' : 'rút'} vượt quá hạn mức 50.000.000đ/ngày'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Số tiền ${intent == 'DEPOSIT' ? 'nạp' : 'rút'} vượt quá hạn mức 50.000.000đ/ngày',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
         if (intent == 'WITHDRAW' && amount > _mioBalance) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số dư không đủ để thực hiện giao dịch này'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Số dư không đủ để thực hiện giao dịch này'),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
 
@@ -171,9 +217,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       try {
         final helpResponse = await client.post(
           Uri.parse(ApiConfig.askHelpCenter),
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'question': text}),
         );
 
@@ -194,15 +238,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
       if (aiAnswer == null) {
         final aiResponse = await client.post(
           Uri.parse(ApiConfig.chatWithAI),
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'message': text}),
         );
 
         if (aiResponse.statusCode == 200) {
           final data = jsonDecode(aiResponse.body);
-          aiAnswer = data['data']?.toString() ?? 'Xin lỗi, mình không hiểu câu hỏi.';
+          aiAnswer =
+              data['data']?.toString() ?? 'Xin lỗi, mình không hiểu câu hỏi.';
         }
       }
 
@@ -217,7 +260,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
         setState(() {
           _messages.add(
             ChatMessage(
-              text: "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.",
+              text:
+                  "Xin lỗi, hiện tại tôi không thể kết nối. Vui lòng thử lại sau.",
               isUser: false,
             ),
           );
@@ -292,16 +336,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   "Trợ thủ AI - Mio247",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16, 
+                    fontSize: 16,
                     color: Colors.black87,
                   ),
                 ),
                 Text(
                   "Trung tâm trợ giúp",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -319,7 +360,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 color: Colors.white.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.home_rounded, color: Colors.black87, size: 18),
+              child: const Icon(
+                Icons.home_rounded,
+                color: Colors.black87,
+                size: 18,
+              ),
             ),
           ),
         ],
@@ -391,20 +436,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
       ),
       child: SafeArea(
         child: Row(
           children: [
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Icon(
-                Icons.more_horiz,
-                color: Colors.pinkAccent,
-                size: 28,
-              ),
+              child: Icon(Icons.more_horiz, color: Colors.pinkAccent, size: 28),
             ),
             const SizedBox(width: 4),
             Expanded(

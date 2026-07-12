@@ -26,8 +26,12 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
   int _gender = 0; // 0 = Nam, 1 = Nữ
   bool _isConfirmed = false;
 
-  final TextEditingController _emailController = TextEditingController(text: 'gfffccvgg86cvgg@gmail.com');
-  final TextEditingController _addressController = TextEditingController(text: 'BẮC HÒA, HUYỆN TÂN THẠNH, TỈNH LONG AN');
+  final TextEditingController _emailController = TextEditingController(
+    text: 'gfffccvgg86cvgg@gmail.com',
+  );
+  final TextEditingController _addressController = TextEditingController(
+    text: 'BẮC HÒA, HUYỆN TÂN THẠNH, TỈNH LONG AN',
+  );
 
   @override
   void dispose() {
@@ -47,10 +51,26 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Xác nhận thông tin', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Xác nhận thông tin',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.support_agent_outlined, color: Colors.black87), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.home_outlined, color: Colors.black87), onPressed: () {}),
+          IconButton(
+            icon: const Icon(
+              Icons.support_agent_outlined,
+              color: Colors.black87,
+            ),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.home_outlined, color: Colors.black87),
+            onPressed: () {},
+          ),
         ],
       ),
       body: Column(
@@ -94,7 +114,13 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -117,7 +143,11 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
                   alignment: Alignment.center,
                   child: Text(
                     widget.bankCode,
-                    style: const TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -127,9 +157,19 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.bankName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text(
+                widget.bankName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text('Ngân hàng ${widget.bankName.replaceAll(' Bank', '')}', style: const TextStyle(fontSize: 13, color: Colors.black54)),
+              Text(
+                'Ngân hàng ${widget.bankName.replaceAll(' Bank', '')}',
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
+              ),
             ],
           ),
         ],
@@ -148,7 +188,14 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Thông tin đăng ký', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const Text(
+            'Thông tin đăng ký',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 16),
           _buildInfoRow('Họ và tên', 'Phan Văn Thống'),
           const Divider(height: 24, color: Color(0xFFF0F0F0)),
@@ -166,8 +213,18 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black54)),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
       ],
     );
   }
@@ -184,11 +241,21 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bạn cần bổ sung thông tin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const Text(
+            'Bạn cần bổ sung thông tin',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text('Giới tính', style: TextStyle(fontSize: 14, color: Colors.black54)),
+              const Text(
+                'Giới tính',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
               const Spacer(),
               Row(
                 children: [
@@ -199,7 +266,10 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
                     activeColor: const Color(0xFFE91E63),
                     visualDensity: VisualDensity.compact,
                   ),
-                  const Text('Nam', style: TextStyle(fontSize: 14, color: Colors.black87)),
+                  const Text(
+                    'Nam',
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                   const SizedBox(width: 16),
                   Radio<int>(
                     value: 1,
@@ -208,7 +278,10 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
                     activeColor: const Color(0xFFE91E63),
                     visualDensity: VisualDensity.compact,
                   ),
-                  const Text('Nữ', style: TextStyle(fontSize: 14, color: Colors.black87)),
+                  const Text(
+                    'Nữ',
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                 ],
               ),
             ],
@@ -224,7 +297,10 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
               controller: _emailController,
               decoration: InputDecoration(
                 labelText: 'Email*',
-                labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                labelStyle: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -242,7 +318,10 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
               controller: _addressController,
               decoration: InputDecoration(
                 labelText: 'Địa chỉ*',
-                labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                labelStyle: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -267,14 +346,20 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
               value: _isConfirmed,
               onChanged: (val) => setState(() => _isConfirmed = val ?? false),
               activeColor: const Color(0xFFE91E63),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Tôi xác nhận thông tin trên là hoàn toàn chính xác và chịu trách nhiệm về các thông tin này. Tôi đồng ý cung cấp cho ${widget.bankName} để thực hiện việc gửi tiết kiệm.',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -287,15 +372,23 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: ElevatedButton(
-        onPressed: _isConfirmed ? () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tạo sổ tiết kiệm thành công!')),
-          );
-          Navigator.popUntil(context, (route) => route.isFirst);
-        } : null,
+        onPressed: _isConfirmed
+            ? () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Tạo sổ tiết kiệm thành công!')),
+                );
+                Navigator.popUntil(context, (route) => route.isFirst);
+              }
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFE91E63),
           disabledBackgroundColor: Colors.grey.shade300,
@@ -304,7 +397,10 @@ class _SavingsConfirmScreenState extends State<SavingsConfirmScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),
-        child: const Text('Xác nhận', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        child: const Text(
+          'Xác nhận',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }

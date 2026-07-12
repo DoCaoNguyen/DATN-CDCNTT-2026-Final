@@ -35,7 +35,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
         final data = jsonDecode(response.body);
         if (mounted) {
           setState(() {
-            _chatList = data['data'] ?? [];
+            final List<dynamic> rawChats = data['data'] ?? [];
+            final uniqueChats = <String, dynamic>{};
+            for (var chat in rawChats) {
+              final phone = chat['counterparty_phone'];
+              if (phone != null && !uniqueChats.containsKey(phone)) {
+                uniqueChats[phone] = chat;
+              }
+            }
+            _chatList = uniqueChats.values.toList();
             _isLoading = false;
           });
         }
@@ -177,12 +185,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text("Sorry", style: TextStyle(fontWeight: FontWeight.bold)),
-                          content: const Text("Tính năng sắp sửa ra mắt bạn vui lòng quay lại sau nhé!"),
+                          title: const Text(
+                            "Sorry",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          content: const Text(
+                            "Tính năng sắp sửa ra mắt bạn vui lòng quay lại sau nhé!",
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text("OK", style: TextStyle(color: Colors.pink)),
+                              child: const Text(
+                                "OK",
+                                style: TextStyle(color: Colors.pink),
+                              ),
                             ),
                           ],
                         ),
@@ -203,7 +219,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => QrMainScreen(token: widget.token, initialIndex: 0),
+                          builder: (context) => QrMainScreen(
+                            token: widget.token,
+                            initialIndex: 0,
+                          ),
                         ),
                       );
                     },
@@ -213,7 +232,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         color: Colors.white.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+                      child: const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

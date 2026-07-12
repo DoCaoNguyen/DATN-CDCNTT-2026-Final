@@ -3,7 +3,7 @@ class ApiConfig {
   // Dùng 10.0.2.2 cho máy ảo Android
   // Dùng IP WiFi (VD: 192.168.1.x) nếu chạy trên máy thật
   static const String baseUrl =
-      'https://carol-trimming-napkin.ngrok-free.dev/api/v1';
+      'https://orectic-noctilucent-ronan.ngrok-free.dev/api/v1';
 
   static String get socketUrl {
     final uri = Uri.parse(baseUrl);
@@ -25,7 +25,8 @@ class ApiConfig {
 
   // --- TWILIO AUTH ENDPOINTS (ADMIN CREATED USER) ---
   static const String verifyPhone = '$baseUrl/auth/verify-phone';
-  static const String setPasswordAfterVerify = '$baseUrl/auth/set-password-after-verify';
+  static const String setPasswordAfterVerify =
+      '$baseUrl/auth/set-password-after-verify';
   static const String resendVerifyPhone = '$baseUrl/auth/resend-verify-phone';
 
   // --- WEALTH BAG ENDPOINTS ---
@@ -54,9 +55,12 @@ class ApiConfig {
   static const String processPayment = '$baseUrl/payment/process';
   static const String getLinkedBanks = '$baseUrl/wallet/linked-banks';
   static const String getLinkedServices = '$baseUrl/wallet/linked-services';
-  static String updateLinkedServiceLimits(String id) => '$baseUrl/wallet/linked-services/$id/limits';
-  static String unlinkService(String id) => '$baseUrl/wallet/linked-services/$id';
-  static String getLinkedServiceTransactions(String id) => '$baseUrl/wallet/linked-services/$id/transactions';
+  static String updateLinkedServiceLimits(String id) =>
+      '$baseUrl/wallet/linked-services/$id/limits';
+  static String unlinkService(String id) =>
+      '$baseUrl/wallet/linked-services/$id';
+  static String getLinkedServiceTransactions(String id) =>
+      '$baseUrl/wallet/linked-services/$id/transactions';
   static const String linkBank = '$baseUrl/wallet/link-bank';
   static const String verifyPin = '$baseUrl/wallet/verify-pin';
   static const String deposit = '$baseUrl/transaction/deposit';

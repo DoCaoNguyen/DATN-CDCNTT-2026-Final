@@ -3,7 +3,7 @@ const pool = require('../../config/db');
 const userRepository = {
     searchUsers: async (searchQuery, currentUserId) => {
         const query = `
-            SELECT u.id, u.full_name, u.phone, u.email
+            SELECT DISTINCT u.id, u.full_name, u.phone, u.email
             FROM users u
             JOIN wallets w ON u.id = w.user_id
             WHERE u.id != $1 
@@ -18,7 +18,7 @@ const userRepository = {
     getUsersByPhones: async (phones, currentUserId) => {
         if (!phones || phones.length === 0) return [];
         const query = `
-            SELECT u.id, u.full_name, u.phone, u.email
+            SELECT DISTINCT u.id, u.full_name, u.phone, u.email
             FROM users u
             JOIN wallets w ON u.id = w.user_id
             WHERE u.id != $1 AND u.phone = ANY($2::text[])

@@ -30,13 +30,13 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
     try {
       const secureStorage = FlutterSecureStorage();
       final token = await secureStorage.read(key: 'access_token');
-      
+
       if (token != null) {
         final response = await CustomHttpClient().get(
           Uri.parse(ApiConfig.getLinkedServices),
           headers: {'Authorization': 'Bearer $token'},
         );
-        
+
         if (response.statusCode == 200) {
           final jsonResp = jsonDecode(response.body);
           if (jsonResp['data'] != null) {
@@ -70,7 +70,11 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
         ),
         title: const Text(
           'Hoá đơn định kỳ & Dịch vụ đã liê...',
-          style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           Container(
@@ -87,24 +91,24 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
                 Icon(Icons.home_outlined, size: 18, color: Colors.black87),
               ],
             ),
-          )
+          ),
         ],
       ),
-      body: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  
+
                   _buildSectionTitle('Dịch vụ đã liên kết'),
                   _buildLinkedServicesList(),
-                  
+
                   const SizedBox(height: 24),
                   _buildSectionTitle('Hóa đơn định kỳ'),
                   _buildEmptyRecurringBills(),
-                  
+
                   const SizedBox(height: 24),
                   _buildSectionTitle('Tài khoản/thẻ thanh toán'),
                   _buildPaymentAccounts(),
@@ -115,13 +119,16 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
     );
   }
 
-
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
       ),
     );
   }
@@ -152,9 +159,13 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
         final item = _linkedServices[index];
         final serviceName = item['service_name'] ?? 'Unknown';
         final limit = item['limit_per_day'] ?? 5000000;
-        final formattedLimit = currencyFormatter.format(num.tryParse(limit.toString()) ?? 5000000);
-        final iconUrl = item['service_icon'] ?? 'https://cdn-icons-png.flaticon.com/512/2875/2875364.png';
-        
+        final formattedLimit = currencyFormatter.format(
+          num.tryParse(limit.toString()) ?? 5000000,
+        );
+        final iconUrl =
+            item['service_icon'] ??
+            'https://cdn-icons-png.flaticon.com/512/2875/2875364.png';
+
         return InkWell(
           onTap: () async {
             final shouldRefresh = await Navigator.push(
@@ -174,52 +185,79 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  iconUrl,
-                  width: 40,
-                  height: 40,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.apps, size: 40),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(serviceName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    const SizedBox(height: 2),
-                    const Text('Tên gợi nhớ', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('Hạn mức $formattedLimit/ngày', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ), 
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Đang sử dụng',
-                      style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    iconUrl,
+                    width: 40,
+                    height: 40,
+                    errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.apps, size: 40),
                   ),
-                  const SizedBox(height: 12),
-                  const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-                ],
-              )
-            ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        serviceName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Tên gợi nhớ',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      Text(
+                        'Hạn mức $formattedLimit/ngày',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'Đang sử dụng',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    },
+        );
+      },
     );
   }
 
@@ -234,9 +272,11 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
       child: Column(
         children: [
           Image.network(
-            'https://cdn-icons-png.flaticon.com/512/10339/10339678.png', 
-            width: 80, height: 80,
-            errorBuilder: (_, __, ___) => const Icon(Icons.receipt_long, size: 80, color: Colors.grey),
+            'https://cdn-icons-png.flaticon.com/512/10339/10339678.png',
+            width: 80,
+            height: 80,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.receipt_long, size: 80, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -256,10 +296,17 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
               children: const [
                 Icon(Icons.add, color: Colors.pink, size: 16),
                 SizedBox(width: 4),
-                Text('Thêm hóa đơn', style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(
+                  'Thêm hóa đơn',
+                  style: TextStyle(
+                    color: Colors.pink,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -286,20 +333,32 @@ class _LinkedServicesScreenState extends State<LinkedServicesScreen> {
           child: Row(
             children: [
               Container(
-                width: 32, height: 32,
+                width: 32,
+                height: 32,
                 decoration: const BoxDecoration(
                   color: AppColors.primaryPink,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
-                child: Text('Ví Mio', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Ví Mio',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
               const Text(
                 'Tuỳ chỉnh',
-                style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(
+                  color: Colors.pink,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(width: 4),
               const Icon(Icons.chevron_right, color: Colors.pink, size: 16),

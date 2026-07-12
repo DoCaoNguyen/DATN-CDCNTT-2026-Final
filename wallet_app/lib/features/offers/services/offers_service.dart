@@ -7,7 +7,10 @@ class OffersService {
 
   OffersService({required this.token});
 
-  Future<Map<String, dynamic>> redeemScratchCard(String provider, int faceValue) async {
+  Future<Map<String, dynamic>> redeemScratchCard(
+    String provider,
+    int faceValue,
+  ) async {
     try {
       final client = CustomHttpClient();
       final response = await client.post(
@@ -16,10 +19,7 @@ class OffersService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'provider': provider,
-          'faceValue': faceValue,
-        }),
+        body: jsonEncode({'provider': provider, 'faceValue': faceValue}),
       );
 
       final responseData = jsonDecode(response.body);
@@ -27,7 +27,9 @@ class OffersService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return responseData['data'];
       } else {
-        throw Exception(responseData['error'] ?? 'Lỗi không xác định khi đổi thẻ');
+        throw Exception(
+          responseData['error'] ?? 'Lỗi không xác định khi đổi thẻ',
+        );
       }
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));

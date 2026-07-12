@@ -61,7 +61,9 @@ class CustomHttpClient extends http.BaseClient {
       _refreshCompleter = Completer<bool>();
 
       // Concurrency check: Kiểm tra xem token đã được cập nhật bởi một request nào đó trước khi ta tạo Lock chưa
-      final currentTokenInStorage = await _secureStorage.read(key: 'access_token');
+      final currentTokenInStorage = await _secureStorage.read(
+        key: 'access_token',
+      );
       if (currentTokenInStorage != null && currentTokenInStorage != token) {
         _refreshCompleter!.complete(true);
         _refreshCompleter = null;
@@ -83,7 +85,10 @@ class CustomHttpClient extends http.BaseClient {
     return response;
   }
 
-  Future<http.StreamedResponse> _retryRequest(http.BaseRequest request, String? newToken) async {
+  Future<http.StreamedResponse> _retryRequest(
+    http.BaseRequest request,
+    String? newToken,
+  ) async {
     final newRequest = http.Request(request.method, request.url);
     newRequest.headers.addAll(request.headers);
     if (newToken != null && newToken.isNotEmpty) {
@@ -105,7 +110,9 @@ class CustomHttpClient extends http.BaseClient {
 
   static Future<bool> _tryRefreshToken() async {
     try {
-      final String? refreshToken = await _secureStorage.read(key: 'refresh_token');
+      final String? refreshToken = await _secureStorage.read(
+        key: 'refresh_token',
+      );
       if (refreshToken == null || refreshToken.isEmpty) return false;
 
       final response = await http.post(
@@ -131,12 +138,15 @@ class CustomHttpClient extends http.BaseClient {
         if (newToken.isNotEmpty) {
           await _secureStorage.write(key: 'access_token', value: newToken);
           if (newRefreshToken.isNotEmpty) {
-            await _secureStorage.write(key: 'refresh_token', value: newRefreshToken);
+            await _secureStorage.write(
+              key: 'refresh_token',
+              value: newRefreshToken,
+            );
           }
-          
+
           // Cập nhật SocketService với token mới
           SocketService().updateToken(newToken);
-          
+
           return true;
         }
       }
@@ -148,7 +158,9 @@ class CustomHttpClient extends http.BaseClient {
           final errorData = jsonDecode(response.body);
           final errorCode = errorData['error_code'] ?? '';
           if (errorCode == 'REFRESH_TOKEN_REUSED') {
-            debugPrint('[SECURITY] Refresh token reuse detected! Xóa token cục bộ ngay.');
+            debugPrint(
+              '[SECURITY] Refresh token reuse detected! Xóa token cục bộ ngay.',
+            );
             await _secureStorage.delete(key: 'access_token');
             await _secureStorage.delete(key: 'refresh_token');
           }
@@ -210,7 +222,8 @@ class CustomHttpClient extends http.BaseClient {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogCtx), // Chỉ cần đóng Dialog
+                  onPressed: () =>
+                      Navigator.pop(dialogCtx), // Chỉ cần đóng Dialog
                   child: const Text(
                     'Đã hiểu',
                     style: TextStyle(

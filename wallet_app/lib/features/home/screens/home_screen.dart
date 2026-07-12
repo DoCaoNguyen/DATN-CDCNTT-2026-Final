@@ -279,7 +279,10 @@ class _HomeScreenState extends State<HomeScreen> {
       formatted = formatted.substring(0, formatted.length - 1);
     }
     List<String> parts = formatted.split('.');
-    String intPart = parts[0].replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    String intPart = parts[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
     if (parts.length > 1) return "$intPart,${parts[1]}đ";
     return "$intPartđ";
   }
@@ -289,26 +292,26 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _isLoadingBalance = false);
       return;
     }
-    
+
     // Fetch wallet balance
     final data = await _homeService.fetchBalance(widget.token);
-    
+
     // Fetch wealth bag status
     final WealthBagService wealthBagService = WealthBagService();
     final wealthBagData = await wealthBagService.getStatus(widget.token);
-    
+
     if (data != null && mounted) {
       setState(() {
         _balance = data['available_balance']?.toString() ?? "0";
         _loyaltyPoints = data['loyalty_points']?.toString() ?? "0";
         _walletCode = data['wallet_code'];
         _isPinSet = data['is_pin_set'] ?? false;
-        
+
         if (wealthBagData != null) {
           _hasWealthBag = wealthBagData['is_active'] ?? false;
           _wealthBagBalance = wealthBagData['balance']?.toString() ?? "0";
         }
-        
+
         _isLoadingBalance = false;
       });
       if (widget.isVerified && !_isPinSet) {
@@ -372,7 +375,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => WealthBagScreen(token: widget.token),
+                        builder: (context) =>
+                            WealthBagScreen(token: widget.token),
                       ),
                     ).then((_) => _fetchBalance());
                   }
@@ -386,7 +390,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => WealthBagScreen(token: widget.token),
+                      builder: (context) =>
+                          WealthBagScreen(token: widget.token),
                     ),
                   ).then((_) => _fetchBalance());
                 }
@@ -481,7 +486,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => KycFlowScreen(userId: widget.userId, token: widget.token),
+                  builder: (_) =>
+                      KycFlowScreen(userId: widget.userId, token: widget.token),
                 ),
               );
             },
@@ -606,7 +612,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => FinancialCenterScreen(balance: _balance, token: widget.token),
+                                  builder: (context) => FinancialCenterScreen(
+                                    balance: _balance,
+                                    token: widget.token,
+                                  ),
                                 ),
                               );
                             },
@@ -619,11 +628,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0xFFF5F5F5),
-                                Colors.white,
-                              ],
-                              stops: [0.0, 0.05], // Chuyển màu trong 5% chiều cao đầu tiên
+                              colors: [Color(0xFFF5F5F5), Colors.white],
+                              stops: [
+                                0.0,
+                                0.05,
+                              ], // Chuyển màu trong 5% chiều cao đầu tiên
                             ),
                           ),
                           child: Column(
@@ -637,20 +646,35 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onRequireWalletCode: _showSetWalletCodeDialog,
                                 onRefreshBalance: _fetchBalance,
                               ),
-                              HomeEventBanner(activeLang: activeLang, token: widget.token, me: _meData),
-                              HomeRecommendations(activeLang: activeLang, token: widget.token, me: _meData),
+                              HomeEventBanner(
+                                activeLang: activeLang,
+                                token: widget.token,
+                                me: _meData,
+                              ),
+                              HomeRecommendations(
+                                activeLang: activeLang,
+                                token: widget.token,
+                                me: _meData,
+                              ),
                             ],
                           ),
                         ),
-                        
-                        HomeMonthlyExpense(activeLang: activeLang, token: widget.token),
+
+                        HomeMonthlyExpense(
+                          activeLang: activeLang,
+                          token: widget.token,
+                        ),
                         const SizedBox(height: 80),
                       ],
                     ),
                   ),
                 )
               : _selectedIndex == 1
-              ? OffersScreen(token: widget.token, loyaltyPoints: _loyaltyPoints, onRefresh: _fetchBalance)
+              ? OffersScreen(
+                  token: widget.token,
+                  loyaltyPoints: _loyaltyPoints,
+                  onRefresh: _fetchBalance,
+                )
               : _selectedIndex == 2
               ? TransactionHistoryScreen(token: widget.token)
               : ProfileScreen(token: widget.token),

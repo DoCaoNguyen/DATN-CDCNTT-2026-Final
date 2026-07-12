@@ -55,7 +55,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
   // Biến alias cho dropdown UI
   String _selectedMonth = "Tất cả";
   String? _filterType; // null = Tất cả, 'CREDIT' = Nhận, 'DEBIT' = Rút
-  final TextEditingController _searchStatementController = TextEditingController();
+  final TextEditingController _searchStatementController =
+      TextEditingController();
   final ScrollController _statementScrollController = ScrollController();
 
   @override
@@ -71,14 +72,18 @@ class _MerchantScreenState extends State<MerchantScreen> {
         _fetchStatement(loadMore: true);
       }
     });
-    
+
     // Đăng ký nhận sự kiện cập nhật số dư merchant qua Socket
     SocketService().onMerchantBalanceUpdate((data) {
       if (mounted && _isMerchant) {
         setState(() {
-          _merchantData['available_balance'] = data['newBalance']?.toString() ?? _merchantData['available_balance'];
+          _merchantData['available_balance'] =
+              data['newBalance']?.toString() ??
+              _merchantData['available_balance'];
         });
-        debugPrint('Merchant balance updated via Socket: ${data['newBalance']}');
+        debugPrint(
+          'Merchant balance updated via Socket: ${data['newBalance']}',
+        );
       }
     });
   }
@@ -105,24 +110,29 @@ class _MerchantScreenState extends State<MerchantScreen> {
         _isEmailVerified = _userEmail.isNotEmpty;
         _userFullName = userData['data']['full_name'] ?? '';
         _userPhone = userData['data']['phone'] ?? '';
-        
+
         if (_phoneController.text.isEmpty) {
           _phoneController.text = _userPhone;
         }
       }
 
       // Fetch Merchant Info
-      final merchantRes = await _client.get(Uri.parse('${ApiConfig.baseUrl}/merchant/me'));
+      final merchantRes = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/merchant/me'),
+      );
       if (merchantRes.statusCode == 200) {
         final merchantData = jsonDecode(merchantRes.body);
         _merchantData = merchantData['data'];
         _isMerchant = true;
 
         // Fetch Balance
-        final balanceRes = await _client.get(Uri.parse('${ApiConfig.baseUrl}/merchant/balance'));
+        final balanceRes = await _client.get(
+          Uri.parse('${ApiConfig.baseUrl}/merchant/balance'),
+        );
         if (balanceRes.statusCode == 200) {
           final balanceData = jsonDecode(balanceRes.body);
-          _merchantData['available_balance'] = balanceData['data']['available_balance'];
+          _merchantData['available_balance'] =
+              balanceData['data']['available_balance'];
         }
       } else if (merchantRes.statusCode == 404) {
         _isMerchant = false;
@@ -153,20 +163,25 @@ class _MerchantScreenState extends State<MerchantScreen> {
       });
     }
 
-    String url = '${ApiConfig.baseUrl}/merchant/balance/statement?page=$_statementPage&limit=10';
-    
+    String url =
+        '${ApiConfig.baseUrl}/merchant/balance/statement?page=$_statementPage&limit=10';
+
     if (_filterMonth != "Tất cả") {
       final timeStr = _filterMonth.replaceAll("Tháng ", "");
       final parts = timeStr.split("/");
       if (parts.length == 2) {
         final month = int.tryParse(parts[0]) ?? 1;
         final year = int.tryParse(parts[1]) ?? 2026;
-        final startStr = DateFormat('yyyy-MM-dd').format(DateTime(year, month, 1));
-        final endStr = DateFormat('yyyy-MM-dd').format(DateTime(year, month + 1, 0));
+        final startStr = DateFormat(
+          'yyyy-MM-dd',
+        ).format(DateTime(year, month, 1));
+        final endStr = DateFormat(
+          'yyyy-MM-dd',
+        ).format(DateTime(year, month + 1, 0));
         url += "&date_from=$startStr&date_to=$endStr";
       }
     }
-    
+
     if (_filterType != null) {
       url += "&type=$_filterType";
     }
@@ -193,10 +208,11 @@ class _MerchantScreenState extends State<MerchantScreen> {
     } catch (e) {
       debugPrint("Error fetching statement: $e");
     } finally {
-      if (mounted) setState(() {
-        _isLoadingStatement = false;
-        _isFetchingMoreStatement = false;
-      });
+      if (mounted)
+        setState(() {
+          _isLoadingStatement = false;
+          _isFetchingMoreStatement = false;
+        });
     }
   }
 
@@ -208,13 +224,15 @@ class _MerchantScreenState extends State<MerchantScreen> {
         final note = (tx['description'] ?? '').toString().toLowerCase();
         final paymentNo = (tx['payment_no'] ?? '').toString().toLowerCase();
         final amount = tx['amount']?.toString() ?? '';
-        final matchesKeyword = keyword.isEmpty ||
+        final matchesKeyword =
+            keyword.isEmpty ||
             note.contains(keyword) ||
             paymentNo.contains(keyword) ||
             amount.replaceAll(RegExp(r'[^0-9]'), '').contains(keyword) ||
             amount.contains(keyword);
         // Lọc theo loại giao dịch
-        final matchesType = _filterType == null ||
+        final matchesType =
+            _filterType == null ||
             (_filterType == 'CREDIT' && tx['entry_type'] == 'CREDIT') ||
             (_filterType == 'DEBIT' && tx['entry_type'] == 'DEBIT');
         return matchesKeyword && matchesType;
@@ -248,7 +266,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
               // Handle bar
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(2),
@@ -260,27 +279,39 @@ class _MerchantScreenState extends State<MerchantScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Lọc giao dịch",
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Lọc giao dịch",
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.pop(ctx),
                     child: const Icon(Icons.close_rounded),
-                  )
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
               // --- Phần 1: Lọc theo tháng ---
-              const Text("Theo tháng",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54)),
+              const Text(
+                "Theo tháng",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 8, runSpacing: 8,
+                spacing: 8,
+                runSpacing: 8,
                 children: _getFilterMonths().map((m) {
                   final selected = tempMonth == m;
                   return GestureDetector(
                     onTap: () => setSheet(() => tempMonth = m),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: selected ? Colors.pink : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(20),
@@ -288,12 +319,15 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           color: selected ? Colors.pink : Colors.grey.shade300,
                         ),
                       ),
-                      child: Text(m,
+                      child: Text(
+                        m,
                         style: TextStyle(
                           color: selected ? Colors.white : Colors.black87,
-                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           fontSize: 13,
-                        )
+                        ),
                       ),
                     ),
                   );
@@ -301,15 +335,36 @@ class _MerchantScreenState extends State<MerchantScreen> {
               ),
               const SizedBox(height: 24),
               // --- Phần 2: Lọc theo loại ---
-              const Text("Theo loại giao dịch",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54)),
+              const Text(
+                "Theo loại giao dịch",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 children: [
-                  _typeChip(null, "Tất cả", tempType, (v) => setSheet(() => tempType = v)),
-                  _typeChip('CREDIT', "Nhận tiền", tempType, (v) => setSheet(() => tempType = v)),
-                  _typeChip('DEBIT', "Rút tiền", tempType, (v) => setSheet(() => tempType = v)),
+                  _typeChip(
+                    null,
+                    "Tất cả",
+                    tempType,
+                    (v) => setSheet(() => tempType = v),
+                  ),
+                  _typeChip(
+                    'CREDIT',
+                    "Nhận tiền",
+                    tempType,
+                    (v) => setSheet(() => tempType = v),
+                  ),
+                  _typeChip(
+                    'DEBIT',
+                    "Rút tiền",
+                    tempType,
+                    (v) => setSheet(() => tempType = v),
+                  ),
                 ],
               ),
               const SizedBox(height: 28),
@@ -319,15 +374,25 @@ class _MerchantScreenState extends State<MerchantScreen> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        setSheet(() { tempMonth = "Tất cả"; tempType = null; });
+                        setSheet(() {
+                          tempMonth = "Tất cả";
+                          tempType = null;
+                        });
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.pink),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text("Xoá bộ lọc",
-                        style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        "Xoá bộ lọc",
+                        style: TextStyle(
+                          color: Colors.pink,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -343,12 +408,19 @@ class _MerchantScreenState extends State<MerchantScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pink,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      child: const Text("Áp dụng",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        "Áp dụng",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -360,7 +432,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
     );
   }
 
-  Widget _typeChip(String? value, String label, String? currentValue, void Function(String?) onTap) {
+  Widget _typeChip(
+    String? value,
+    String label,
+    String? currentValue,
+    void Function(String?) onTap,
+  ) {
     final selected = currentValue == value;
     return GestureDetector(
       onTap: () => onTap(value),
@@ -369,14 +446,17 @@ class _MerchantScreenState extends State<MerchantScreen> {
         decoration: BoxDecoration(
           color: selected ? Colors.pink : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? Colors.pink : Colors.grey.shade300),
+          border: Border.all(
+            color: selected ? Colors.pink : Colors.grey.shade300,
+          ),
         ),
-        child: Text(label,
+        child: Text(
+          label,
           style: TextStyle(
             color: selected ? Colors.white : Colors.black87,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             fontSize: 13,
-          )
+          ),
         ),
       ),
     );
@@ -491,7 +571,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
                             ? null
                             : () async {
                                 if (currentOtp.length != 6) {
-                                  SnackbarUtils.showError(context, "Mã OTP phải gồm 6 số");
+                                  SnackbarUtils.showError(
+                                    context,
+                                    "Mã OTP phải gồm 6 số",
+                                  );
                                   return;
                                 }
 
@@ -499,42 +582,67 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
                                 try {
                                   final verifyRes = await _client.post(
-                                    Uri.parse('${ApiConfig.baseUrl}/users/email/verify-otp'),
-                                    headers: {"Content-Type": "application/json"},
-                                    body: jsonEncode({"email": _userEmail, "otp": currentOtp}),
+                                    Uri.parse(
+                                      '${ApiConfig.baseUrl}/users/email/verify-otp',
+                                    ),
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: jsonEncode({
+                                      "email": _userEmail,
+                                      "otp": currentOtp,
+                                    }),
                                   );
 
                                   if (!mounted) return;
 
                                   if (verifyRes.statusCode == 200) {
                                     final regRes = await _client.post(
-                                      Uri.parse('${ApiConfig.baseUrl}/merchant/register'),
-                                      headers: {"Content-Type": "application/json"},
+                                      Uri.parse(
+                                        '${ApiConfig.baseUrl}/merchant/register',
+                                      ),
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
                                       body: jsonEncode({
                                         "merchant_name": name,
                                         "contact_phone": phone,
                                         "callback_url": webhook,
                                       }),
                                     );
-                                    
+
                                     if (!mounted) return;
 
                                     if (regRes.statusCode == 201) {
-                                      Navigator.pop(context); // Đóng bottom sheet
-                                      SnackbarUtils.showSuccess(context, "Đăng ký Merchant thành công!");
+                                      Navigator.pop(
+                                        context,
+                                      ); // Đóng bottom sheet
+                                      SnackbarUtils.showSuccess(
+                                        context,
+                                        "Đăng ký Merchant thành công!",
+                                      );
                                       _fetchData(); // Load lại dữ liệu
                                     } else {
-                                      final err = jsonDecode(regRes.body)['error'] ?? "Đăng ký thất bại";
+                                      final err =
+                                          jsonDecode(regRes.body)['error'] ??
+                                          "Đăng ký thất bại";
                                       SnackbarUtils.showError(context, err);
                                     }
                                   } else {
-                                    final err = jsonDecode(verifyRes.body)['error'] ?? "Mã OTP không hợp lệ";
+                                    final err =
+                                        jsonDecode(verifyRes.body)['error'] ??
+                                        "Mã OTP không hợp lệ";
                                     SnackbarUtils.showError(context, err);
                                   }
                                 } catch (e) {
-                                  if (mounted) SnackbarUtils.showError(context, "Lỗi kết nối máy chủ");
+                                  if (mounted)
+                                    SnackbarUtils.showError(
+                                      context,
+                                      "Lỗi kết nối máy chủ",
+                                    );
                                 } finally {
-                                  if (mounted) setSheetState(() => isVerifying = false);
+                                  if (mounted)
+                                    setSheetState(() => isVerifying = false);
                                 }
                               },
                         child: isVerifying
@@ -626,7 +734,14 @@ class _MerchantScreenState extends State<MerchantScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Đối tác kinh doanh', style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Đối tác kinh doanh',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
@@ -634,10 +749,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.pink))
           : _isMerchant
-              ? _buildMerchantInfo()
-              : _isEmailVerified
-                  ? _buildRegistrationForm()
-                  : _buildRequireEmail(),
+          ? _buildMerchantInfo()
+          : _isEmailVerified
+          ? _buildRegistrationForm()
+          : _buildRequireEmail(),
     );
   }
 
@@ -648,7 +763,11 @@ class _MerchantScreenState extends State<MerchantScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.mark_email_unread_rounded, size: 80, color: Colors.orange),
+            const Icon(
+              Icons.mark_email_unread_rounded,
+              size: 80,
+              color: Colors.orange,
+            ),
             const SizedBox(height: 24),
             const Text(
               "Xác thực Email",
@@ -667,7 +786,9 @@ class _MerchantScreenState extends State<MerchantScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -682,7 +803,14 @@ class _MerchantScreenState extends State<MerchantScreen> {
                     ),
                   ).then((_) => _fetchData());
                 },
-                child: const Text('Cập nhật Email ngay', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: const Text(
+                  'Cập nhật Email ngay',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
@@ -699,7 +827,11 @@ class _MerchantScreenState extends State<MerchantScreen> {
         children: [
           const Text(
             "Đăng ký Merchant",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -707,11 +839,24 @@ class _MerchantScreenState extends State<MerchantScreen> {
             style: TextStyle(color: Colors.black54, fontSize: 14),
           ),
           const SizedBox(height: 32),
-          _buildTextField("Tên doanh nghiệp / Cửa hàng", _nameController, Icons.storefront_rounded),
+          _buildTextField(
+            "Tên doanh nghiệp / Cửa hàng",
+            _nameController,
+            Icons.storefront_rounded,
+          ),
           const SizedBox(height: 20),
-          _buildTextField("Số điện thoại liên hệ", _phoneController, Icons.phone_rounded, isNumber: true),
+          _buildTextField(
+            "Số điện thoại liên hệ",
+            _phoneController,
+            Icons.phone_rounded,
+            isNumber: true,
+          ),
           const SizedBox(height: 20),
-          _buildTextField("Webhook URL (Tùy chọn)", _webhookController, Icons.link_rounded),
+          _buildTextField(
+            "Webhook URL (Tùy chọn)",
+            _webhookController,
+            Icons.link_rounded,
+          ),
           const SizedBox(height: 40),
           SizedBox(
             width: double.infinity,
@@ -719,15 +864,24 @@ class _MerchantScreenState extends State<MerchantScreen> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 0,
               ),
               onPressed: _isRegistering ? null : _handleRegister,
               child: _isRegistering
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Đăng ký ngay", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  : const Text(
+                      "Đăng ký ngay",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -749,14 +903,31 @@ class _MerchantScreenState extends State<MerchantScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_merchantData['merchant_name'] ?? 'Merchant', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    Text(
+                      _merchantData['merchant_name'] ?? 'Merchant',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text("SĐT: ${_merchantData['contact_phone']}", style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                    Text(
+                      "SĐT: ${_merchantData['contact_phone']}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                    ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.settings_rounded, color: Colors.pink, size: 28),
+                icon: const Icon(
+                  Icons.settings_rounded,
+                  color: Colors.pink,
+                  size: 28,
+                ),
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
@@ -774,7 +945,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           if (response.statusCode == 200) {
                             Navigator.pop(ctx); // Đóng bottom sheet
                             if (!mounted) return null;
-                            
+
                             // Điều hướng qua màn hình settings
                             Navigator.push(
                               context,
@@ -785,7 +956,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                                 ),
                               ),
                             ).then((_) => _fetchData());
-                            
+
                             return null; // Return null = success
                           } else {
                             final data = jsonDecode(response.body);
@@ -806,17 +977,39 @@ class _MerchantScreenState extends State<MerchantScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFE91E63), Color(0xFFF06292)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE91E63), Color(0xFFF06292)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.pink.withAlpha(76), blurRadius: 10, offset: const Offset(0, 5))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.pink.withAlpha(76),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               children: [
-                const Text("SỐ DƯ DOANH THU", style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+                const Text(
+                  "SỐ DƯ DOANH THU",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Text(
                   formattedBalance,
-                  style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -826,11 +1019,22 @@ class _MerchantScreenState extends State<MerchantScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.pink,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
-                    icon: const Icon(Icons.account_balance_wallet_rounded, size: 20),
-                    label: const Text("Rút Doanh Thu", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    icon: const Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "Rút Doanh Thu",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -901,9 +1105,13 @@ class _MerchantScreenState extends State<MerchantScreen> {
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: _hasActiveFilter() ? Colors.pink.shade50 : const Color(0xFFF5F5F5),
+              color: _hasActiveFilter()
+                  ? Colors.pink.shade50
+                  : const Color(0xFFF5F5F5),
               shape: BoxShape.circle,
-              border: _hasActiveFilter() ? Border.all(color: Colors.pink.shade200) : null,
+              border: _hasActiveFilter()
+                  ? Border.all(color: Colors.pink.shade200)
+                  : null,
             ),
             child: Icon(
               Icons.tune_rounded,
@@ -933,16 +1141,32 @@ class _MerchantScreenState extends State<MerchantScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("Lịch sử giao dịch",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+            const Text(
+              "Lịch sử giao dịch",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
             if (_hasActiveFilter())
               GestureDetector(
                 onTap: () {
-                  setState(() { _filterMonth = "Tất cả"; _selectedMonth = "Tất cả"; _filterType = null; });
+                  setState(() {
+                    _filterMonth = "Tất cả";
+                    _selectedMonth = "Tất cả";
+                    _filterType = null;
+                  });
                   _fetchStatement();
                 },
-                child: const Text("Xóa lọc",
-                  style: TextStyle(color: Colors.pink, fontSize: 13, fontWeight: FontWeight.w500)),
+                child: const Text(
+                  "Xóa lọc",
+                  style: TextStyle(
+                    color: Colors.pink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
           ],
         ),
@@ -962,48 +1186,65 @@ class _MerchantScreenState extends State<MerchantScreen> {
             ],
           ),
           child: _isLoadingStatement
-              ? const Center(child: CircularProgressIndicator(color: Colors.pink))
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.pink),
+                )
               : _filteredStatementList.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey),
-                          SizedBox(height: 12),
-                          Text("Không có giao dịch nào.",
-                            style: TextStyle(color: Colors.grey)),
-                        ],
+              ? const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 48,
+                        color: Colors.grey,
                       ),
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: ListView.separated(
-                        controller: _statementScrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemCount: _filteredStatementList.length + (_isFetchingMoreStatement ? 1 : 0),
-                        separatorBuilder: (_, __) => const Divider(height: 1, indent: 70),
-                        itemBuilder: (context, index) {
-                          if (index == _filteredStatementList.length) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.pink)),
-                            );
-                          }
-                          return _buildHistoryItem(_filteredStatementList[index]);
-                        },
+                      SizedBox(height: 12),
+                      Text(
+                        "Không có giao dịch nào.",
+                        style: TextStyle(color: Colors.grey),
                       ),
-                    ),
+                    ],
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListView.separated(
+                    controller: _statementScrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount:
+                        _filteredStatementList.length +
+                        (_isFetchingMoreStatement ? 1 : 0),
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 70),
+                    itemBuilder: (context, index) {
+                      if (index == _filteredStatementList.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.pink,
+                            ),
+                          ),
+                        );
+                      }
+                      return _buildHistoryItem(_filteredStatementList[index]);
+                    },
+                  ),
+                ),
         ),
       ],
     );
   }
 
-
   Widget _buildHistoryItem(dynamic tx) {
     final bool isCredit = tx['entry_type'] == 'CREDIT';
     final String amountRaw = tx['amount']?.toString() ?? '0';
     final String balanceAfterRaw = tx['balance_after']?.toString() ?? '0';
-    final String date = tx['created_at'] != null ? DateFormatter.format(tx['created_at']) : '';
+    final String date = tx['created_at'] != null
+        ? DateFormatter.format(tx['created_at'])
+        : '';
     final String note = tx['description'] ?? 'Giao d\u1ecbch';
 
     // Xác định tiêu đề rõ ràng & icon theo loại
@@ -1012,10 +1253,13 @@ class _MerchantScreenState extends State<MerchantScreen> {
     Color iconColor;
     if (isCredit) {
       final String paymentNo = tx['payment_no']?.toString() ?? '';
-      title = paymentNo.isNotEmpty ? "\u0110\u01a1n h\u00e0ng $paymentNo" : "Nh\u1eadn doanh thu \u0111\u01a1n h\u00e0ng";
+      title = paymentNo.isNotEmpty
+          ? "\u0110\u01a1n h\u00e0ng $paymentNo"
+          : "Nh\u1eadn doanh thu \u0111\u01a1n h\u00e0ng";
       iconData = Icons.call_received_rounded;
       iconColor = Colors.green;
-    } else if (note.toLowerCase().contains('ng\u00e2n h\u00e0ng') || note.toLowerCase().contains('bank')) {
+    } else if (note.toLowerCase().contains('ng\u00e2n h\u00e0ng') ||
+        note.toLowerCase().contains('bank')) {
       title = "R\u00fat ti\u1ec1n v\u1ec1 ng\u00e2n h\u00e0ng";
       iconData = Icons.account_balance_rounded;
       iconColor = Colors.orange.shade700;
@@ -1041,7 +1285,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
                 children: [
                   Center(
                     child: Container(
-                      width: 40, height: 5,
+                      width: 40,
+                      height: 5,
                       decoration: BoxDecoration(
                         color: Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(2.5),
@@ -1049,19 +1294,36 @@ class _MerchantScreenState extends State<MerchantScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     "${isCredit ? '+' : '-'}${CurrencyFormatter.format(amountRaw)}",
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold,
-                        color: isCredit ? Colors.green.shade700 : Colors.black87),
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: isCredit ? Colors.green.shade700 : Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 8),
-                  _buildStatementDetailRow("Trạng thái", "Thành công", isStatus: true),
+                  _buildStatementDetailRow(
+                    "Trạng thái",
+                    "Thành công",
+                    isStatus: true,
+                  ),
                   _buildStatementDetailRow("Thời gian", date),
-                  _buildStatementDetailRow("Số dư sau GD", CurrencyFormatter.format(balanceAfterRaw)),
+                  _buildStatementDetailRow(
+                    "Số dư sau GD",
+                    CurrencyFormatter.format(balanceAfterRaw),
+                  ),
                   // Thông tin bên gửi/nhận
                   if (isCredit) ...[
                     if (tx['payer_name'] != null)
@@ -1070,12 +1332,21 @@ class _MerchantScreenState extends State<MerchantScreen> {
                         "${tx['payer_name']}${tx['payer_phone'] != null ? '\n${tx['payer_phone']}' : ''}",
                       ),
                     if (tx['payment_no'] != null)
-                      _buildStatementDetailRow("Mã đơn hàng", tx['payment_no'].toString()),
+                      _buildStatementDetailRow(
+                        "Mã đơn hàng",
+                        tx['payment_no'].toString(),
+                      ),
                   ] else ...[
                     if (tx['bank_code'] != null)
-                      _buildStatementDetailRow("Ngân hàng", tx['bank_code'].toString()),
+                      _buildStatementDetailRow(
+                        "Ngân hàng",
+                        tx['bank_code'].toString(),
+                      ),
                     if (tx['bank_account_number'] != null)
-                      _buildStatementDetailRow("Số tài khoản", tx['bank_account_number'].toString()),
+                      _buildStatementDetailRow(
+                        "Số tài khoản",
+                        tx['bank_account_number'].toString(),
+                      ),
                     if (tx['wallet_owner_name'] != null)
                       _buildStatementDetailRow(
                         "Ví nhận",
@@ -1091,9 +1362,17 @@ class _MerchantScreenState extends State<MerchantScreen> {
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pink,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text("Đóng", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        "Đóng",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1110,7 +1389,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
           children: [
             // Icon tròn viền xám - giống màn hình lịch sử giao dịch
             Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -1124,23 +1404,41 @@ class _MerchantScreenState extends State<MerchantScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
-                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
-                  Text(date, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                  Text(
+                    date,
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: isCredit ? Colors.green.shade50 : Colors.orange.shade50,
+                      color: isCredit
+                          ? Colors.green.shade50
+                          : Colors.orange.shade50,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       isCredit ? "Doanh thu" : "R\u00fat ti\u1ec1n",
                       style: TextStyle(
-                        color: isCredit ? Colors.green.shade700 : Colors.orange.shade700,
-                        fontSize: 10, fontWeight: FontWeight.bold,
+                        color: isCredit
+                            ? Colors.green.shade700
+                            : Colors.orange.shade700,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -1156,7 +1454,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
                 Text(
                   "${isCredit ? '+' : '-'}${CurrencyFormatter.format(amountRaw)}",
                   style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                     color: isCredit ? Colors.green.shade700 : Colors.black87,
                   ),
                 ),
@@ -1173,7 +1472,11 @@ class _MerchantScreenState extends State<MerchantScreen> {
     );
   }
 
-  Widget _buildStatementDetailRow(String label, String value, {bool isStatus = false}) {
+  Widget _buildStatementDetailRow(
+    String label,
+    String value, {
+    bool isStatus = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -1186,15 +1489,34 @@ class _MerchantScreenState extends State<MerchantScreen> {
             child: Align(
               alignment: Alignment.centerRight,
               child: isStatus
-                  ? Row(mainAxisSize: MainAxisSize.min, children: const [
-                      Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
-                      SizedBox(width: 4),
-                      Text("Th\u00e0nh c\u00f4ng",
-                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14)),
-                    ])
-                  : Text(value,
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.green,
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          "Th\u00e0nh c\u00f4ng",
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      value,
                       textAlign: TextAlign.end,
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 14)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -1202,7 +1524,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
     );
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller, IconData icon, {bool isNumber = false}) {
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller,
+    IconData icon, {
+    bool isNumber = false,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
@@ -1211,9 +1538,18 @@ class _MerchantScreenState extends State<MerchantScreen> {
         prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.pink, width: 1.5)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.pink, width: 1.5),
+        ),
       ),
     );
   }

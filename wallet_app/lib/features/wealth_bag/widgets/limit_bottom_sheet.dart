@@ -46,26 +46,32 @@ void showDepositLimitSheet(BuildContext context) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Hạn mức nạp tiền vào Túi", style: TextStyle(fontSize: 14, color: Colors.black87)),
+                const Text(
+                  "Hạn mức nạp tiền vào Túi",
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                ),
                 const SizedBox(height: 12),
                 _buildLimitCard(
                   "Nạp từ Mio/ngân hàng liên kết",
                   "Đã nạp: 0đ",
                   "Còn lại: 50 triệu",
                   "Nạp từ Mio/ngân hàng liên kết tối đa: 50 triệu/tháng",
-                  Colors.white
+                  Colors.white,
                 ),
                 const SizedBox(height: 12),
                 _buildBankLimitCard(),
                 const SizedBox(height: 16),
-                const Text("Sức chứa tối đa của Túi Thần Tài", style: TextStyle(fontSize: 14, color: Colors.black87)),
+                const Text(
+                  "Sức chứa tối đa của Túi Thần Tài",
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                ),
                 const SizedBox(height: 12),
                 _buildLimitCard(
                   null,
                   "Đang chứa: 0đ",
                   "Còn lại: 500 triệu",
                   "Số tiền lớn nhất có thể duy trì trong Túi: 500 triệu",
-                  Colors.white
+                  Colors.white,
                 ),
                 const SizedBox(height: 24),
               ],
@@ -77,15 +83,27 @@ void showDepositLimitSheet(BuildContext context) {
   );
 }
 
-Widget _buildLimitCard(String? title, String leftText, String rightText, String subtext, Color bgColor) {
+Widget _buildLimitCard(
+  String? title,
+  String leftText,
+  String rightText,
+  String subtext,
+  Color bgColor,
+) {
   return Container(
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(12),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (title != null) ...[
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
           const SizedBox(height: 12),
         ],
         Row(
@@ -93,7 +111,14 @@ Widget _buildLimitCard(String? title, String leftText, String rightText, String 
           children: [
             Row(
               children: [
-                Container(width: 4, height: 4, decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle)),
+                Container(
+                  width: 4,
+                  height: 4,
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: 4),
                 Text(leftText, style: const TextStyle(color: Colors.black87)),
               ],
@@ -105,7 +130,10 @@ Widget _buildLimitCard(String? title, String leftText, String rightText, String 
         Container(
           width: double.infinity,
           height: 4,
-          decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
         const SizedBox(height: 12),
         Text(subtext, style: const TextStyle(color: Colors.grey, fontSize: 13)),
@@ -117,17 +145,26 @@ Widget _buildLimitCard(String? title, String leftText, String rightText, String 
 Widget _buildBankLimitCard() {
   return Container(
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Chuyển khoản từ ngân hàng", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        const Text(
+          "Chuyển khoản từ ngân hàng",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
         const SizedBox(height: 16),
         _buildDottedRow("Số lần nạp mỗi ngày:", "3 lần"),
         _buildDottedRow("Số tiền mỗi giao dịch:", "Không giới hạn*"),
         _buildDottedRow("Số tiền nạp mỗi tháng:", "Không giới hạn*"),
         const SizedBox(height: 8),
-        const Text("* Không vượt quá sức chứa tối đa của Túi", style: TextStyle(color: Colors.grey, fontSize: 12)),
+        const Text(
+          "* Không vượt quá sức chứa tối đa của Túi",
+          style: TextStyle(color: Colors.grey, fontSize: 12),
+        ),
       ],
     ),
   );
@@ -180,7 +217,10 @@ void showWithdrawLimitSheet(BuildContext context) {
           Container(
             width: 40,
             height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade400,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(height: 16),
           Padding(
@@ -189,8 +229,14 @@ void showWithdrawLimitSheet(BuildContext context) {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const SizedBox(width: 24),
-                const Text("Hạn mức rút trong ngày", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close)),
+                const Text(
+                  "Hạn mức rút trong ngày",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close),
+                ),
               ],
             ),
           ),
@@ -200,20 +246,44 @@ void showWithdrawLimitSheet(BuildContext context) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildLimitCard("Rút về Ví Mio", "Đã rút: 0đ", "Còn lại: 50 triệu", "Hạn mức rút trong ngày: 50 triệu", Colors.white),
+                _buildLimitCard(
+                  "Rút về Ví Mio",
+                  "Đã rút: 0đ",
+                  "Còn lại: 50 triệu",
+                  "Hạn mức rút trong ngày: 50 triệu",
+                  Colors.white,
+                ),
                 const SizedBox(height: 12),
-                _buildLimitCard("Rút về ngân hàng", "Đã rút: 0đ", "Còn lại: 50 triệu", "Hạn mức rút trong ngày: 50 triệu", Colors.white),
+                _buildLimitCard(
+                  "Rút về ngân hàng",
+                  "Đã rút: 0đ",
+                  "Còn lại: 50 triệu",
+                  "Hạn mức rút trong ngày: 50 triệu",
+                  Colors.white,
+                ),
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Thông tin thêm", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(
+                        "Thông tin thêm",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                       SizedBox(height: 8),
-                      Text("• Số tiền rút tối đa mỗi giao dịch: 50 triệu.", style: TextStyle(color: Colors.black87, fontSize: 14)),
+                      Text(
+                        "• Số tiền rút tối đa mỗi giao dịch: 50 triệu.",
+                        style: TextStyle(color: Colors.black87, fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
