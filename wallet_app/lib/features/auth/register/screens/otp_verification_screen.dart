@@ -198,8 +198,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         Uri.parse(ApiConfig.sendOtp),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email':
-              '${widget.phoneNumber}@wallet.com', // Dùng email giả để qua được Validate như lúc Đăng ký
           'phone': widget.phoneNumber,
         }),
       );

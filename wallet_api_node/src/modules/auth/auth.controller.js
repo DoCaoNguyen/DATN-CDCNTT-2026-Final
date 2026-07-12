@@ -1,11 +1,6 @@
 const { success } = require('../../utils/response.util');
-
 const authService = require('./auth.service');
 const authRepository = require('./auth.repository');
-
-
-
-
 
 
 
@@ -15,7 +10,6 @@ function requestMeta(req) {
         userAgent: req.headers['user-agent'] || null
     };
 }
-
 
 
 const authController = {

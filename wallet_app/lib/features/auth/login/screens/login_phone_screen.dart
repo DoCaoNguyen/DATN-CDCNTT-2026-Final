@@ -125,7 +125,7 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': '$phone@wallet.com', 'phone': phone}),
+        body: jsonEncode({'phone': phone}),
       );
 
       if (!isDialogClosed && mounted) {
