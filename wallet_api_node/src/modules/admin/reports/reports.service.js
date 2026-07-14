@@ -154,6 +154,14 @@ const reportsService = {
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
+
+        const adminNotificationService = require('../notifications/admin_notifications.service');
+        adminNotificationService.createNotification(
+            'Báo cáo xuất thành công',
+            `Báo cáo ${sheetName} (từ ${from} đến ${to || 'nay'}) đã được xuất thành công.`,
+            'INFO'
+        );
+
         return { buffer, sheetName };
     }
 };

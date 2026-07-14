@@ -39,44 +39,6 @@ const notImplemented = require('../../../utils/notImplemented');
  *     responses:
  *       200:
  *         description: Danh sach user
- *   post:
- *     summary: Admin tao nguoi dung vi
- *     description: Tao nguoi dung vi moi, he thong tu dong tao vi mac dinh va gan role USER.
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [full_name]
- *             properties:
- *               full_name:
- *                 type: string
- *               username:
- *                 type: string
- *               email:
- *                 type: string
- *               phone:
- *                 type: string
- *               status:
- *                 type: string
- *                 enum: [ACTIVE, LOCKED]
- *     responses:
- *       201:
- *         description: Wallet User created. Tra ve temporary_password, sms_sent, sms_provider
- *         content:
- *           application/json:
- *             example:
- *               success: true
- *               data:
- *                 id: "uuid"
- *                 temporary_password: "123456"
- *                 sms_sent: false
- *                 sms_mocked: true
- *                 sms_provider: "MOCK"
  * /api/v1/admin/staffs:
  *   post:
  *     summary: Admin tao nhan vien
@@ -306,7 +268,6 @@ const notImplemented = require('../../../utils/notImplemented');
 
 
 router.get('/users', requirePermission('admin.users.read'), usersController.listUsers);
-router.post('/users', requirePermission('admin.users.create'), usersValidator.validateCreateWalletUser, usersController.createWalletUser);
 router.post('/staffs', requirePermission('admin.staffs.create'), usersValidator.validateCreateStaff, usersController.createStaff);
 router.get('/users/:id', requirePermission('admin.users.read'), usersValidator.validateIdParam, usersController.getUserDetail);
 router.patch('/users/:id', requirePermission('admin.users.update'), usersValidator.validateIdParam, usersController.updateUser);

@@ -141,6 +141,15 @@ const authService = {
             ipAddress,
             userAgent
         });
+
+        // Gửi thông báo cho Admin
+        const adminNotificationService = require('../admin/notifications/admin_notifications.service');
+        adminNotificationService.createNotification(
+            'Người dùng mới đăng ký',
+            `Người dùng mới "${fullName}" (${phone || email}) vừa đăng ký tài khoản.`,
+            'INFO'
+        ).catch(err => console.error(err));
+
         return created;
     },
 

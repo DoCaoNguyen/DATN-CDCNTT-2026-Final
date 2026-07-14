@@ -205,6 +205,10 @@ router.get('/topups/:id', READ_PERM, transactionsValidator.validateIdParam, tran
 router.get('/transfers', READ_PERM, transactionsController.listTransfers);
 router.get('/transfers/:id', READ_PERM, transactionsValidator.validateIdParam, transactionsController.getTransferDetail);
 
+// Withdrawals — Rút tiền
+router.get('/withdrawals', READ_PERM, transactionsController.listWithdrawals);
+router.get('/withdrawals/:id', READ_PERM, transactionsValidator.validateIdParam, transactionsController.getWithdrawalDetail);
+
 // Ledger Transactions
 router.get('/ledger', READ_PERM, transactionsController.listLedgerTransactions);
 router.get('/ledger/:id', READ_PERM, transactionsValidator.validateIdParam, transactionsController.getLedgerTransactionDetail);

@@ -80,4 +80,29 @@ function mapLedgerEntryRow(row) {
     };
 }
 
-module.exports = { mapTopupRow, mapTransferRow, mapLedgerTransactionRow, mapLedgerEntryRow };
+function mapWithdrawalRow(row) {
+    return {
+        id: row.id,
+        withdrawal_no: row.withdrawal_no,
+        user_id: row.user_id,
+        user_name: row.user_name || null,
+        user_phone: row.user_phone || null,
+        wallet_id: row.wallet_id,
+        wallet_no: row.wallet_no || null,
+        amount: Number(row.amount || 0),
+        currency: row.currency || 'VND',
+        withdrawal_method: row.withdrawal_method || null,
+        linked_bank_id: row.linked_bank_id || null,
+        bank_code: row.bank_code || null,
+        account_number: row.account_number || null,
+        external_reference: row.external_reference || null,
+        status: row.status,
+        failure_reason: row.failure_reason || null,
+        description: row.description || null,
+        completed_at: row.completed_at || null,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+    };
+}
+
+module.exports = { mapTopupRow, mapTransferRow, mapWithdrawalRow, mapLedgerTransactionRow, mapLedgerEntryRow };

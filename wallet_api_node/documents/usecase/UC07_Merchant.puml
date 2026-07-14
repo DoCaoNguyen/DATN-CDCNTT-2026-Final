@@ -1,0 +1,44 @@
+@startuml UC06_Merchant
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 12
+}
+
+actor "Admin" as Admin
+
+rectangle "Phân hệ: Quản lý Đối tác (Merchants)" {
+    usecase "Xem danh sách Merchant\n(Tìm kiếm)" as UC1
+    usecase "Đăng ký Merchant mới\n(Kèm tài khoản Owner & API Key)" as UC2
+    usecase "Xem chi tiết Merchant\n(Tab: Thông tin, Webhook, API Keys)" as UC3
+    usecase "Duyệt Merchant" as UC4
+    usecase "Từ chối Merchant\n(Kèm lý do)" as UC5
+    usecase "Tạm ngưng Merchant\n(Kèm lý do)" as UC6
+    usecase "Kích hoạt lại Merchant" as UC7
+    usecase "Cấu hình Webhook Merchant\n(Callback URL, Redirect URL)" as UC8
+    usecase "Cấp API Key\n(SANDBOX / PRODUCTION)" as UC9
+    usecase "Xoay vòng API Key (Rotate)" as UC10
+    usecase "Thu hồi API Key (Revoke)" as UC11
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+
+UC4 .up.> UC3 : <<extend>>
+UC5 .up.> UC3 : <<extend>>
+UC6 .up.> UC3 : <<extend>>
+UC7 .up.> UC3 : <<extend>>
+UC10 .up.> UC9 : <<extend>>
+UC11 .up.> UC9 : <<extend>>
+
+@enduml

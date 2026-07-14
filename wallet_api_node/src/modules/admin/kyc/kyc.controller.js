@@ -26,6 +26,17 @@ const kycController = {
         }
     },
 
+    getByUserId: async (req, res) => {
+        try {
+            const userId = req.params.userId;
+            const data = await kycService.getKycByUserId(userId);
+            res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('Lỗi lấy chi tiết KYC theo User:', error);
+            res.status(404).json({ error: error.message || 'Lỗi máy chủ nội bộ' });
+        }
+    },
+
     approve: async (req, res) => {
         try {
             const id = req.params.id;

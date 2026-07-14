@@ -45,6 +45,20 @@ const kycRepository = {
         return result.rows[0];
     },
 
+    getKycByUserId: async (userId) => {
+        const query = `
+            SELECT 
+                k.*, u.phone AS phone_number, u.email 
+            FROM user_kyc k
+            JOIN users u ON k.user_id = u.id
+            WHERE k.user_id = $1
+            ORDER BY k.created_at DESC
+            LIMIT 1
+        `;
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
+    },
+
     approveKyc: async (id) => {
         const client = await pool.connect();
         try {

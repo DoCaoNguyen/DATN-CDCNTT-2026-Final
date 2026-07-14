@@ -1,0 +1,32 @@
+@startuml UC08_BaoCao
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 12
+}
+
+actor "Admin" as Admin
+
+rectangle "Phân hệ: Báo cáo & Xuất dữ liệu" {
+    usecase "Xem báo cáo nạp tiền" as UC1
+    usecase "Xem báo cáo chuyển tiền" as UC2
+    usecase "Xem báo cáo thanh toán" as UC3
+    usecase "Xem báo cáo hoàn tiền" as UC4
+    usecase "Xem báo cáo đối tác" as UC5
+    usecase "Xem báo cáo doanh thu phí MDR" as UC6
+    usecase "Xuất báo cáo (Export Excel)" as UC7
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+
+UC7 .up.> UC1 : <<extend>>
+UC7 .up.> UC3 : <<extend>>
+
+@enduml

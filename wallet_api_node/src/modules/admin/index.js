@@ -45,5 +45,6 @@ router.use('/reports', require('./reports/reports.routes'));      // /admin/repo
 router.use('/settings', require('./settings/settings.routes'));    // /admin/settings
 router.use('/logs', require('./logs/logs.routes'));            // /admin/logs/api, /admin/logs/system
 router.use('/kyc', require('./kyc/kyc.routes'));              // /admin/kyc
+router.use('/notifications', require('./notifications/admin_notifications.routes')); // /admin/notifications
 
 module.exports = router;

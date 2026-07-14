@@ -1,0 +1,68 @@
+@startuml UC00_Admin_TongQuan
+' ============================================================
+' BIỂU ĐỒ USE CASE TỔNG QUAN - ADMIN E-WALLET
+' Dựa trên code thực tế: ewallet-FE/src/pages/admin/*
+' ============================================================
+
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    ArrowColor DimGray
+    FontSize 12
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+}
+skinparam rectangle {
+    BackgroundColor #FAFAFA
+    BorderColor #616161
+    FontSize 14
+    FontStyle bold
+}
+
+actor "Admin" as Admin
+
+rectangle "HỆ THỐNG QUẢN TRỊ VÍ ĐIỆN TỬ" {
+    usecase "Đăng nhập / Đổi mật khẩu" as UC_Auth
+    usecase "Xem Dashboard thống kê" as UC_Dash
+    usecase "Quản lý Người dùng ví" as UC_User
+    usecase "Quản lý Nhân viên" as UC_Staff
+    usecase "Duyệt KYC" as UC_KYC
+    usecase "Quản lý Ví điện tử" as UC_Wallet
+    usecase "Quản lý Giao dịch" as UC_Trans
+    usecase "Quản lý Thanh toán" as UC_Pay
+    usecase "Quản lý Đối tác Merchant" as UC_Merchant
+    usecase "Quản lý Sổ cái (Ledger)" as UC_Ledger
+    usecase "Quản lý Webhooks" as UC_Webhook
+    usecase "Xem Báo cáo & Xuất file" as UC_Report
+    usecase "Phân quyền (Roles)" as UC_Role
+    usecase "Cấu hình Hệ thống" as UC_Setting
+    usecase "Xem Nhật ký (Logs)" as UC_Log
+    usecase "Xem hồ sơ cá nhân" as UC_Profile
+}
+
+Admin --> UC_Auth
+Admin --> UC_Dash
+Admin --> UC_User
+Admin --> UC_Staff
+Admin --> UC_KYC
+Admin --> UC_Wallet
+Admin --> UC_Trans
+Admin --> UC_Pay
+Admin --> UC_Merchant
+Admin --> UC_Ledger
+Admin --> UC_Webhook
+Admin --> UC_Report
+Admin --> UC_Role
+Admin --> UC_Setting
+Admin --> UC_Log
+Admin --> UC_Profile
+
+UC_KYC ..> UC_User : <<include>>\nCập nhật trạng thái
+UC_User ..> UC_Wallet : <<include>>\nTự động tạo ví
+UC_Setting ..> UC_Log : <<include>>\nGhi lịch sử thay đổi
+UC_Merchant ..> UC_Webhook : <<include>>\nCấu hình callback
+
+@enduml

@@ -32,100 +32,6 @@ const usersService = {
         return user;
     },
 
-    createWalletUser: async ({ actor, payload, actorId, ipAddress, userAgent }) => {
-        ensureWriteAccess(actor);
-        const data = sanitizeUserInput(payload);
-
-        const conflict = await usersRepository.checkUserConflict({
-            username: data.username,
-            email: data.email,
-            phone: data.phone
-        });
-        if (conflict) throw new Error('User_Conflict');
-
-        const crypto = require('crypto');
-        const rawPassword = String(Math.floor(100000 + Math.random() * 900000));
-        const passwordHash = await bcrypt.hash(rawPassword, 10);
-        
-        const derivedUserType = 'USER';
-        const roleCodes = ['USER'];
-        
-        const isForceChangePassword = true;
-        const temporaryPasswordExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-        const created = await withTransaction(async (client) => {
-            const userId = await usersRepository.createUser(client, {
-                fullName: data.fullName,
-                username: data.username,
-                email: data.email,
-                phone: data.phone,
-                passwordHash,
-                userType: derivedUserType,
-                status: data.status || 'ACTIVE',
-                isForceChangePassword,
-                temporaryPasswordExpiresAt
-            });
-
-            const rolesAssigned = await usersRepository.replaceRolesByCodes(client, userId, roleCodes);
-            if (!rolesAssigned) throw new Error('Role_Not_Found');
-
-            const authRepository = require('../../auth/auth.repository');
-            const walletId = await authRepository.createWallet(client, userId);
-
-            return { userId, walletId };
-        });
-
-        await writeAuditLog({
-            actorId: actorId || actor.userId || actor.id,
-            action: 'admin.wallet_user_created',
-            entityType: 'users',
-            entityId: created.userId,
-            newData: {
-                user_type: derivedUserType,
-                roles: roleCodes,
-                status: data.status || 'ACTIVE',
-                wallet_id: created.walletId
-            },
-            ipAddress,
-            userAgent
-        });
-
-        const user = await usersService.getUserDetail(created.userId);
-        
-        if (process.env.SMS_PROVIDER === 'TWILIO_VERIFY') {
-            const twilioVerifyService = require('../../../shared/services/twilio-verify.service');
-            let verifyResult = { verification_sent: false, verification_provider: 'TWILIO_VERIFY' };
-            
-            if (user.phone) {
-                const verifyRes = await twilioVerifyService.sendVerification({ phone: user.phone });
-                verifyResult.verification_sent = verifyRes.success;
-                if (verifyRes.status) verifyResult.verification_status = verifyRes.status;
-                if (verifyRes.error_code) verifyResult.verification_error_code = verifyRes.error_code;
-                if (verifyRes.error_message) verifyResult.verification_error_message = verifyRes.error_message;
-            } else {
-                verifyResult.verification_skipped_reason = 'NO_PHONE';
-            }
-            
-            return { ...user, ...verifyResult };
-        }
-
-        const smsService = require('../../../shared/services/sms.service');
-        let smsResult = { sms_sent: false };
-        if (user.phone) {
-            const content = `${rawPassword} la ma xac minh dang ky Baotrixemay cua ban\nCam on quy khach da su dung dich vu cua chung toi. Chuc quy khach mot ngay tot lanh!`;
-            const sms = await smsService.sendSms({ phone: user.phone, content, requestId: `CREATE_WU_${created.userId}` });
-            smsResult.sms_sent = sms.success;
-            if (sms.mocked !== undefined) smsResult.sms_mocked = sms.mocked;
-            if (sms.provider) smsResult.sms_provider = sms.provider;
-            if (sms.error_code) smsResult.sms_error_code = sms.error_code;
-            if (sms.error_message) smsResult.sms_error_message = sms.error_message;
-        } else {
-            smsResult.sms_skipped_reason = 'NO_PHONE';
-        }
-
-        return { ...user, temporary_password: rawPassword, ...smsResult };
-    },
-
     createStaff: async ({ actor, payload, actorId, ipAddress, userAgent }) => {
         ensureWriteAccess(actor);
         const data = sanitizeUserInput(payload);
@@ -234,6 +140,14 @@ const usersService = {
         if (process.env.RETURN_TEMP_PASSWORD === 'true') {
             responseData.temporary_password = rawPassword;
         }
+
+        const adminNotificationService = require('../notifications/admin_notifications.service');
+        await adminNotificationService.createNotification(
+            'Tạo nhân viên mới',
+            `Nhân viên mới "${user.full_name}" (${user.username}) đã được tạo.`,
+            'INFO',
+            `/admin/staffs/${created.userId}`
+        ).catch(err => console.error('Failed to create notification:', err));
         
         return responseData;
     },

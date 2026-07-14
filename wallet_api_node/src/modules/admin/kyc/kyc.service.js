@@ -23,6 +23,14 @@ const kycService = {
         return kyc;
     },
 
+    getKycByUserId: async (userId) => {
+        const kyc = await kycRepository.getKycByUserId(userId);
+        if (!kyc) {
+            throw new Error('Không tìm thấy hồ sơ KYC của người dùng này');
+        }
+        return kyc;
+    },
+
     approveKyc: async (id, adminId) => {
         const kyc = await kycRepository.getKycById(id);
         if (!kyc) {

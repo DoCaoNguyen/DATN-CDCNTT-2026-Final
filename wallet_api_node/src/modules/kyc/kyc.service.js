@@ -10,7 +10,7 @@ const kycService = {
     },
 
     processEKYC: async (userId, ocrData, idFrontPath, idBackPath, faceImagePath, hasCachedOcr = false) => {
-        
+
         if (!hasCachedOcr) {
             console.log(`[1/4] Gọi FPT.AI để bóc tách OCR từ ảnh CCCD...`);
             const fptOcrResult = await kycService.extractOcrFptAi(idFrontPath);
@@ -51,27 +51,37 @@ const kycService = {
 
         console.log(`[3/4] Đang gọi FPT.AI để so khớp khuôn mặt...`);
         const matchResult = await kycService.verifyFaceMatchFptAi(idFrontPath, faceImagePath);
-        
+
         let status = 'PENDING';
         if (matchResult.isMatch) {
             status = 'APPROVED';
             console.log(`=> KHUÔN MẶT KHỚP! Độ chính xác: ${matchResult.score}%`);
         } else {
-            status = 'REJECTED'; 
+            status = 'REJECTED';
             console.log(`=> KHUÔN MẶT KHÔNG KHỚP! Chỉ đạt: ${matchResult.score}%`);
             throw new Error('Khuôn mặt không khớp với ảnh trên thẻ CCCD.');
         }
 
         console.log(`[4/4] Đang lưu hồ sơ vào Database...`);
         const savedKyc = await kycRepository.saveKYCResult(
-            userId, 
-            ocrData, 
-            idFrontPath, 
-            idBackPath, 
-            faceImagePath, 
-            status, 
+            userId,
+            ocrData,
+            idFrontPath,
+            idBackPath,
+            faceImagePath,
+            status,
             matchResult.score
         );
+
+        const adminNotificationService = require('../admin/notifications/admin_notifications.service');
+        if (status === 'PENDING' || status === 'APPROVED') {
+            // Trong thực tế, 'PENDING' mới cần duyệt thủ công. Ở đây gửi cho cả 2 trường hợp để Admin dễ nắm bắt.
+            adminNotificationService.createNotification(
+                'Hồ sơ KYC mới',
+                `User ${ocrData.full_name || ocrData.name} vừa nộp hồ sơ KYC (${status === 'PENDING' ? 'Cần duyệt thủ công' : 'Đã duyệt tự động'}).`,
+                status === 'PENDING' ? 'WARNING' : 'INFO'
+            ).catch(err => console.error(err));
+        }
 
         return {
             ocrInfo: ocrData,
@@ -85,14 +95,14 @@ const kycService = {
         try {
             const form = new FormData();
             form.append('image', fs.createReadStream(imagePath));
-            
+
             const response = await axios.post('https://api.fpt.ai/vision/idr/vnm', form, {
                 headers: {
                     'api-key': process.env.FPT_AI_API_KEY,
                     ...form.getHeaders()
                 }
             });
-            
+
             if (response.data.errorCode !== 0) {
                 return { success: false, message: response.data.errorMessage };
             }
@@ -107,20 +117,20 @@ const kycService = {
         try {
             const form = new FormData();
             form.append('image', fs.createReadStream(faceImagePath));
-            
+
             const response = await axios.post('https://api.fpt.ai/dmp/liveness/v3', form, {
                 headers: {
                     'api-key': process.env.FPT_AI_API_KEY,
                     ...form.getHeaders()
                 }
             });
-            
+
             // Expected response: { code: 200, data: { liveness: "live", score: 0.99 } }
             if (response.data.code === 200 && response.data.data) {
                 const isLive = response.data.data.liveness === "live";
                 return { isLive, score: response.data.data.score };
             }
-            
+
             // Fallback for demo purposes if endpoint is different
             return { isLive: true, score: 0.99 };
         } catch (error) {

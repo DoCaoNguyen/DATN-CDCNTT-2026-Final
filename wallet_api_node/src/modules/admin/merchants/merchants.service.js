@@ -102,6 +102,14 @@ const merchantsService = {
                     responseData.owner_password = rawPassword;
                 }
 
+                // Gửi thông báo cho Admin
+                const adminNotificationService = require('../notifications/admin_notifications.service');
+                adminNotificationService.createNotification(
+                    'Merchant Mới Đăng Ký',
+                    `Merchant mới "${merchant.merchant_name}" vừa được tạo thành công trên hệ thống.`,
+                    'INFO'
+                ).catch(err => console.error(err));
+
                 return responseData;
             } catch (error) {
                 await client.query('ROLLBACK');

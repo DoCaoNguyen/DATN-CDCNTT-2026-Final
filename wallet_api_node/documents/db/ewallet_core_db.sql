@@ -42,8 +42,8 @@ INSERT INTO public.permissions (id, code, name, description)
 VALUES
 (
   '02000000-0000-0000-0000-000000000044',
-  'admin.customers.create',
-  'Admin create customers',
+  'admin.users.create',
+  'Admin create users',
   'Admin tao khach hang dung vi'
 ),
 (
@@ -57,7 +57,7 @@ INSERT INTO public.role_permissions (role_id, permission_id, created_at)
 SELECT r.id, p.id, NOW()
 FROM public.roles r
 JOIN public.permissions p
-  ON p.code IN ('admin.customers.create', 'admin.staffs.create')
+  ON p.code IN ('admin.users.create', 'admin.staffs.create', 'admin.merchants.manage')
 WHERE r.code IN ('SUPER_ADMIN', 'ADMIN')
 AND NOT EXISTS (
   SELECT 1

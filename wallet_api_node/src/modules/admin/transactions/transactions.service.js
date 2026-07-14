@@ -1,5 +1,5 @@
 const transactionsRepository = require('./transactions.repository');
-const { mapTopupRow, mapTransferRow, mapLedgerTransactionRow, mapLedgerEntryRow } = require('./transactions.mapper');
+const { mapTopupRow, mapTransferRow, mapWithdrawalRow, mapLedgerTransactionRow, mapLedgerEntryRow } = require('./transactions.mapper');
 
 const transactionsService = {
     listTopups: async (query) => {
@@ -46,6 +46,29 @@ const transactionsService = {
         const row = await transactionsRepository.findTransferById(id);
         if (!row) throw new Error('Transfer_Not_Found');
         return mapTransferRow(row);
+    },
+
+    listWithdrawals: async (query) => {
+        const { rows, total, page, limit } = await transactionsRepository.listWithdrawals({
+            q: query.q || query.search,
+            status: query.status,
+            userId: query.user_id,
+            walletId: query.wallet_id,
+            dateFrom: query.date_from,
+            dateTo: query.date_to,
+            page: query.page,
+            limit: query.limit
+        });
+        return {
+            items: rows.map(mapWithdrawalRow),
+            pagination: { page, limit, total, total_pages: Math.ceil(total / limit) }
+        };
+    },
+
+    getWithdrawalDetail: async (id) => {
+        const row = await transactionsRepository.findWithdrawalById(id);
+        if (!row) throw new Error('Withdrawal_Not_Found');
+        return mapWithdrawalRow(row);
     },
 
     listLedgerTransactions: async (query) => {

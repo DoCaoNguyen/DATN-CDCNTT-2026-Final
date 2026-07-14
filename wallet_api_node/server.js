@@ -24,6 +24,7 @@ const connectMongoDB = require('./src/config/mongodb');
 require('./src/cron/token_cleanup.cron');
 require('./src/cron/loyaltySyncRetry.cron');
 require('./src/cron/profit.cron');
+require('./src/cron/errorRateMonitor.cron');
 require('./src/modules/webhook/webhook.consumer');
 
 const app = express();

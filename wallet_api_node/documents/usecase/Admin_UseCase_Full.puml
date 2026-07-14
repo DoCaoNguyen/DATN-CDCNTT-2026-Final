@@ -1,0 +1,261 @@
+@startuml Admin_UseCase_Full
+' ============================================================
+' BIỂU ĐỒ USE CASE - ADMIN HỆ THỐNG VÍ ĐIỆN TỬ
+' Dựa trên code thực tế: ewallet-FE/src/pages/admin/*
+' ============================================================
+
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    ArrowColor DimGray
+    FontSize 11
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+}
+skinparam package {
+    BackgroundColor #FAFAFA
+    BorderColor #90A4AE
+    FontSize 12
+}
+
+actor "Admin" as Admin
+
+rectangle "HỆ THỐNG QUẢN TRỊ VÍ ĐIỆN TỬ (E-WALLET)" {
+
+    ' ─── Xác thực ───
+    package "Xác thực" {
+        usecase "Đăng nhập hệ thống" as UC_Login
+        usecase "Đổi mật khẩu" as UC_ChangePwd
+        usecase "Xem hồ sơ cá nhân" as UC_Profile
+    }
+
+    ' ─── Dashboard ───
+    package "Dashboard" {
+        usecase "Xem Dashboard" as UC_Dash
+        usecase "Xem KPIs tổng quan" as UC_KPI
+        usecase "Xem biểu đồ giao dịch" as UC_Chart
+        usecase "Xem giao dịch gần đây" as UC_Recent
+    }
+
+    ' ─── Người dùng & Nhân viên ───
+    package "Quản lý Người dùng & Nhân viên" {
+        usecase "Quản lý Người dùng ví" as UC_User
+        usecase "Xem DS người dùng ví" as UC_ListUser
+        usecase "Xem chi tiết người dùng" as UC_DetailUser
+        usecase "Tạo người dùng ví mới" as UC_CreateUser
+        usecase "Khóa tài khoản" as UC_LockUser
+        usecase "Mở khóa tài khoản" as UC_UnlockUser
+        
+        usecase "Quản lý Nhân viên" as UC_Staff
+        usecase "Xem DS nhân viên" as UC_ListStaff
+        usecase "Tạo nhân viên mới" as UC_CreateStaff
+        usecase "Xem chi tiết nhân viên" as UC_DetailStaff
+    }
+
+    ' ─── KYC ───
+    package "Xác minh KYC" {
+        usecase "Quản lý KYC" as UC_KYC
+        usecase "Xem DS hồ sơ KYC" as UC_ListKYC
+        usecase "Xem chi tiết hồ sơ KYC" as UC_DetailKYC
+        usecase "Duyệt KYC" as UC_ApproveKYC
+        usecase "Từ chối KYC" as UC_RejectKYC
+    }
+
+    ' ─── Ví ───
+    package "Quản lý Ví điện tử" {
+        usecase "Quản lý Ví điện tử" as UC_Wallet
+        usecase "Xem DS ví" as UC_ListWallet
+        usecase "Xem chi tiết ví\n(Số dư, lịch sử)" as UC_DetailWallet
+        usecase "Khóa ví" as UC_LockWallet
+        usecase "Mở khóa ví" as UC_UnlockWallet
+    }
+
+    ' ─── Giao dịch & Thanh toán ───
+    package "Giao dịch & Thanh toán" {
+        usecase "Quản lý Giao dịch" as UC_Trans
+        usecase "Xem DS giao dịch\n(Nạp tiền / Chuyển khoản)" as UC_ListTx
+        usecase "Xem chi tiết giao dịch" as UC_DetailTx
+        
+        usecase "Quản lý Thanh toán" as UC_Payment
+        usecase "Xem DS lệnh thanh toán" as UC_ListPO
+        usecase "Xem chi tiết lệnh thanh toán\n(Timeline, Sổ cái, Callback)" as UC_DetailPO
+        usecase "Xem DS thanh toán QR" as UC_ListQR
+        usecase "Xem chi tiết thanh toán QR" as UC_DetailQR
+        usecase "Xem DS hoàn tiền" as UC_ListRefund
+        
+        usecase "Quản lý Sổ cái (Ledger)" as UC_Ledger
+        usecase "Xem DS sổ cái (Ledger)" as UC_ListLedger
+        usecase "Xem chi tiết sổ cái" as UC_DetailLedger
+    }
+
+    ' ─── Merchant ───
+    package "Quản lý Đối tác (Merchants)" {
+        usecase "Quản lý Đối tác Merchant" as UC_Merchant
+        usecase "Xem DS Merchant" as UC_ListMC
+        usecase "Đăng ký Merchant mới" as UC_CreateMC
+        usecase "Xem chi tiết Merchant" as UC_DetailMC
+        usecase "Duyệt Merchant" as UC_ApproveMC
+        usecase "Từ chối Merchant" as UC_RejectMC
+        usecase "Tạm ngưng Merchant" as UC_SuspendMC
+        usecase "Kích hoạt lại Merchant" as UC_ActivateMC
+        usecase "Cấu hình Webhook" as UC_ConfigWH
+        usecase "Cấp API Key" as UC_CreateKey
+        usecase "Xoay vòng API Key" as UC_RotateKey
+        usecase "Thu hồi API Key" as UC_RevokeKey
+    }
+
+    ' ─── Webhook ───
+    package "Quản lý Webhooks" {
+        usecase "Quản lý Webhooks" as UC_Webhook
+        usecase "Xem DS Webhook" as UC_ListWH
+        usecase "Xem chi tiết Webhook" as UC_DetailWH
+        usecase "Retry Webhook" as UC_RetryWH
+    }
+
+    ' ─── Báo cáo ───
+    package "Báo cáo" {
+        usecase "Xem Báo cáo" as UC_Report
+        usecase "Xem chi tiết báo cáo\n(Nạp/Chuyển/Thanh toán\nHoàn tiền/Merchant/Phí)" as UC_ViewReport
+        usecase "Xuất báo cáo Excel" as UC_Export
+    }
+
+    ' ─── Hệ thống ───
+    package "Phân quyền & Cấu hình" {
+        usecase "Quản lý Phân quyền (Roles)" as UC_Role
+        usecase "Tạo Role mới" as UC_CreateRole
+        usecase "Sửa Role" as UC_EditRole
+        usecase "Xóa Role" as UC_DeleteRole
+        
+        usecase "Cấu hình Hệ thống" as UC_Setting
+        usecase "Xem/Sửa cấu hình hệ thống" as UC_UpdateSetting
+        usecase "Xem lịch sử thay đổi cấu hình" as UC_SettingHist
+        
+        usecase "Xem Nhật ký (Logs)" as UC_Log
+        usecase "Xem API Logs" as UC_ApiLog
+        usecase "Xem Payment Traces" as UC_PayTrace
+        usecase "Xem System Logs" as UC_SysLog
+        usecase "Xem Webhook Logs" as UC_WHLog
+        usecase "Xem Audit Logs" as UC_AuditLog
+    }
+}
+
+' ═══════════════════════════════════════
+' KẾT NỐI ADMIN → USE CASE
+' ═══════════════════════════════════════
+Admin --> UC_ChangePwd
+Admin --> UC_Profile
+
+Admin --> UC_Dash
+Admin --> UC_User
+Admin --> UC_Staff
+Admin --> UC_KYC
+Admin --> UC_Wallet
+Admin --> UC_Trans
+Admin --> UC_Payment
+Admin --> UC_Merchant
+Admin --> UC_Ledger
+Admin --> UC_Webhook
+Admin --> UC_Report
+Admin --> UC_Role
+Admin --> UC_Setting
+Admin --> UC_Log
+Admin --> UC_Login
+
+' ═══════════════════════════════════════
+' BẮT BUỘC ĐĂNG NHẬP (INCLUDE)
+' ═══════════════════════════════════════
+UC_ChangePwd ..> UC_Login : <<include>>
+UC_Profile ..> UC_Login : <<include>>
+UC_Dash ..> UC_Login : <<include>>
+UC_User ..> UC_Login : <<include>>
+UC_Staff ..> UC_Login : <<include>>
+UC_KYC ..> UC_Login : <<include>>
+UC_Wallet ..> UC_Login : <<include>>
+UC_Trans ..> UC_Login : <<include>>
+UC_Payment ..> UC_Login : <<include>>
+UC_Merchant ..> UC_Login : <<include>>
+UC_Webhook ..> UC_Login : <<include>>
+UC_Ledger ..> UC_Login : <<include>>
+UC_Report ..> UC_Login : <<include>>
+UC_Role ..> UC_Login : <<include>>
+UC_Setting ..> UC_Login : <<include>>
+UC_Log ..> UC_Login : <<include>>
+
+' ═══════════════════════════════════════
+' MỐI QUAN HỆ INCLUDE CẤP DƯỚI
+' ═══════════════════════════════════════
+UC_Dash ..> UC_KPI : <<include>>
+UC_Dash ..> UC_Chart : <<include>>
+UC_Dash ..> UC_Recent : <<include>>
+
+UC_User ..> UC_ListUser : <<include>>
+UC_Staff ..> UC_ListStaff : <<include>>
+UC_KYC ..> UC_ListKYC : <<include>>
+UC_Wallet ..> UC_ListWallet : <<include>>
+UC_Trans ..> UC_ListTx : <<include>>
+UC_Payment ..> UC_ListPO : <<include>>
+UC_Merchant ..> UC_ListMC : <<include>>
+UC_Webhook ..> UC_ListWH : <<include>>
+UC_Ledger ..> UC_ListLedger : <<include>>
+UC_Report ..> UC_ViewReport : <<include>>
+UC_Setting ..> UC_UpdateSetting : <<include>>
+UC_UpdateSetting ..> UC_SettingHist : <<include>>
+
+' ═══════════════════════════════════════
+' MỐI QUAN HỆ EXTEND
+' ═══════════════════════════════════════
+UC_DetailUser .up.> UC_ListUser : <<extend>>
+UC_CreateUser .up.> UC_ListUser : <<extend>>
+UC_LockUser .up.> UC_DetailUser : <<extend>>
+UC_UnlockUser .up.> UC_DetailUser : <<extend>>
+
+UC_DetailStaff .up.> UC_ListStaff : <<extend>>
+UC_CreateStaff .up.> UC_ListStaff : <<extend>>
+
+UC_DetailKYC .up.> UC_ListKYC : <<extend>>
+UC_ApproveKYC .up.> UC_DetailKYC : <<extend>>
+UC_RejectKYC .up.> UC_DetailKYC : <<extend>>
+
+UC_DetailWallet .up.> UC_ListWallet : <<extend>>
+UC_LockWallet .up.> UC_ListWallet : <<extend>>
+UC_UnlockWallet .up.> UC_ListWallet : <<extend>>
+
+UC_DetailTx .up.> UC_ListTx : <<extend>>
+
+UC_DetailPO .up.> UC_ListPO : <<extend>>
+UC_ListQR .up.> UC_Payment : <<extend>>
+UC_DetailQR .up.> UC_ListQR : <<extend>>
+UC_ListRefund .up.> UC_Payment : <<extend>>
+
+UC_DetailLedger .up.> UC_ListLedger : <<extend>>
+
+UC_CreateMC .up.> UC_ListMC : <<extend>>
+UC_DetailMC .up.> UC_ListMC : <<extend>>
+UC_ApproveMC .up.> UC_DetailMC : <<extend>>
+UC_RejectMC .up.> UC_DetailMC : <<extend>>
+UC_SuspendMC .up.> UC_DetailMC : <<extend>>
+UC_ActivateMC .up.> UC_DetailMC : <<extend>>
+UC_ConfigWH .up.> UC_DetailMC : <<extend>>
+UC_CreateKey .up.> UC_DetailMC : <<extend>>
+UC_RotateKey .up.> UC_CreateKey : <<extend>>
+UC_RevokeKey .up.> UC_CreateKey : <<extend>>
+
+UC_DetailWH .up.> UC_ListWH : <<extend>>
+UC_RetryWH .up.> UC_DetailWH : <<extend>>
+
+UC_Export .up.> UC_ViewReport : <<extend>>
+
+UC_CreateRole .up.> UC_Role : <<extend>>
+UC_EditRole .up.> UC_Role : <<extend>>
+UC_DeleteRole .up.> UC_Role : <<extend>>
+
+UC_ApiLog .up.> UC_Log : <<extend>>
+UC_PayTrace .up.> UC_Log : <<extend>>
+UC_SysLog .up.> UC_Log : <<extend>>
+UC_WHLog .up.> UC_Log : <<extend>>
+UC_AuditLog .up.> UC_Log : <<extend>>
+
+@enduml

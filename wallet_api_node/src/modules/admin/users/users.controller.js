@@ -11,19 +11,6 @@ const usersController = {
         }
     },
 
-    createWalletUser: async (req, res) => {
-        try {
-            const result = await usersService.createWalletUser({
-                ...getRequestMeta(req),
-                actor: req.user,
-                payload: req.body
-            });
-            return success(res, result, 'Tao nguoi dung vi thanh cong', 201);
-        } catch (err) {
-            return handleAdminError(res, err, 'Loi admin create wallet user:');
-        }
-    },
-
     createStaff: async (req, res) => {
         try {
             const result = await usersService.createStaff({

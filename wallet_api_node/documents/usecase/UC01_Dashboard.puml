@@ -1,0 +1,25 @@
+@startuml UC01_Dashboard
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 12
+}
+
+actor "Admin" as Admin
+
+rectangle "Phân hệ: Dashboard" {
+    usecase "Xem KPIs tổng quan\n(Tổng user, doanh thu, giao dịch)" as UC1
+    usecase "Xem biểu đồ giao dịch" as UC2
+    usecase "Xem giao dịch gần đây" as UC3
+    usecase "Nhận cập nhật realtime\n(Socket.io)" as UC4
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+
+UC4 ..> UC1 : <<include>>\nCập nhật KPI realtime
+
+@enduml

@@ -38,6 +38,26 @@ const transactionsController = {
         }
     },
 
+    // Danh sach rut tien
+    listWithdrawals: async (req, res) => {
+        try {
+            const result = await transactionsService.listWithdrawals(req.query);
+            return success(res, result, 'Lay danh sach rut tien thanh cong');
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin list withdrawals:');
+        }
+    },
+
+    // Chi tiet rut tien
+    getWithdrawalDetail: async (req, res) => {
+        try {
+            const result = await transactionsService.getWithdrawalDetail(req.params.id);
+            return success(res, result, 'Lay chi tiet rut tien thanh cong');
+        } catch (err) {
+            return handleAdminError(res, err, 'Loi admin get withdrawal detail:');
+        }
+    },
+
     listLedgerTransactions: async (req, res) => {
         try {
             const result = await transactionsService.listLedgerTransactions(req.query);

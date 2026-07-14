@@ -14,31 +14,6 @@ const usersValidator = {
         }
     },
 
-    validateCreateWalletUser: (req, res, next) => {
-        const { full_name, email, phone, username } = req.body || {};
-        
-        // Security: Remove password from body if FE sends it
-        if (req.body && req.body.password) {
-            delete req.body.password;
-        }
-
-        if (!full_name || !String(full_name).trim()) {
-            return res.status(400).json({
-                success: false,
-                code: 'VALIDATION_ERROR',
-                error: 'Thieu thong tin bat buoc'
-            });
-        }
-        if (!phone) {
-            return res.status(400).json({
-                success: false,
-                code: 'VALIDATION_ERROR',
-                error: 'So dien thoai la bat buoc'
-            });
-        }
-        next();
-    },
-
     validateCreateStaff: (req, res, next) => {
         const { full_name, email, phone, username, role_codes } = req.body || {};
 

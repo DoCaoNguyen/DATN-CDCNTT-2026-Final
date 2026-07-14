@@ -1,0 +1,38 @@
+@startuml UC05_GiaoDich_ThanhToan
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 12
+}
+
+actor "Admin" as Admin
+
+rectangle "Phân hệ: Giao dịch & Thanh toán" {
+    usecase "Xem DS giao dịch\n(Nạp tiền / Chuyển khoản\nLọc theo loại, trạng thái)" as UC1
+    usecase "Xem chi tiết giao dịch\n(Mở rộng dòng - Expanded Row)" as UC2
+    usecase "Xem DS lệnh thanh toán\n(Payment Orders)" as UC3
+    usecase "Xem chi tiết lệnh thanh toán\n(Info, Timeline, Sổ cái, Webhook)" as UC4
+    usecase "Xem DS thanh toán QR" as UC5
+    usecase "Xem chi tiết thanh toán QR\n(Hiển thị mã QR)" as UC6
+    usecase "Chạy Job hết hạn QR" as UC7
+    usecase "Xem DS hoàn tiền (Refunds)" as UC8
+    usecase "Xem DS sổ cái (Ledger)\n(Lọc theo loại giao dịch)" as UC9
+    usecase "Xem chi tiết sổ cái\n(Các bút toán Debit/Credit)" as UC10
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+
+UC2 .up.> UC1 : <<extend>>\nMở rộng dòng
+UC7 .up.> UC5 : <<extend>>\nChỉ khi có quyền manage
+
+@enduml

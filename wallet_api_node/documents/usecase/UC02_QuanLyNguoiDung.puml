@@ -1,0 +1,36 @@
+@startuml UC02_NguoiDung_NhanVien
+left to right direction
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 12
+}
+
+actor "Admin" as Admin
+
+rectangle "Phân hệ: Quản lý Người dùng & Nhân viên" {
+    usecase "Xem danh sách người dùng ví\n(Tìm kiếm, lọc trạng thái)" as UC1
+    usecase "Xem chi tiết người dùng\n(Thông tin, lịch sử GD, ví)" as UC2
+    usecase "Tạo người dùng ví mới" as UC3
+    usecase "Khóa tài khoản\n(Kèm lý do)" as UC4
+    usecase "Mở khóa tài khoản\n(Kèm lý do)" as UC5
+    usecase "Xem danh sách nhân viên\n(Lọc theo role)" as UC6
+    usecase "Tạo nhân viên mới\n(Chỉ định role RBAC)" as UC7
+    usecase "Xem chi tiết nhân viên" as UC8
+    usecase "Xem hồ sơ cá nhân" as UC9
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+
+UC4 .up.> UC2 : <<extend>>\nTừ trang chi tiết
+UC5 .up.> UC2 : <<extend>>\nTừ trang chi tiết
+
+@enduml

@@ -142,6 +142,87 @@ const transactionsRepository = {
         return rows[0] || null;
     },
 
+    // --- WITHDRAWALS (withdrawal_transactions) ---
+    listWithdrawals: async ({ q, status, userId, walletId, dateFrom, dateTo, page, limit }) => {
+        const { page: safePage, limit: safeLimit, offset } = buildPagination(page, limit);
+        const conditions = [];
+        const params = [];
+        let idx = 1;
+
+        if (q) {
+            conditions.push(`(w.withdrawal_no ILIKE $${idx} OR u.full_name ILIKE $${idx} OR u.phone ILIKE $${idx})`);
+            params.push(`%${q}%`);
+            idx++;
+        }
+        if (status) {
+            conditions.push(`w.status = $${idx}`);
+            params.push(status);
+            idx++;
+        }
+        if (userId) {
+            conditions.push(`w.user_id = $${idx}`);
+            params.push(userId);
+            idx++;
+        }
+        if (walletId) {
+            conditions.push(`w.wallet_id = $${idx}`);
+            params.push(walletId);
+            idx++;
+        }
+        if (dateFrom) {
+            conditions.push(`w.created_at >= $${idx}`);
+            params.push(dateFrom);
+            idx++;
+        }
+        if (dateTo) {
+            conditions.push(`w.created_at <= $${idx}`);
+            params.push(dateTo);
+            idx++;
+        }
+
+        const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        const countSql = `
+            SELECT COUNT(*)
+            FROM withdrawal_transactions w
+            LEFT JOIN users u ON u.id = w.user_id
+            ${where}
+        `;
+        const { rows: countRows } = await pool.query(countSql, params);
+        const total = Number(countRows[0].count);
+
+        const dataSql = `
+            SELECT w.*,
+                   u.full_name AS user_name,
+                   u.phone     AS user_phone,
+                   wl.wallet_no
+            FROM withdrawal_transactions w
+            LEFT JOIN users u  ON u.id  = w.user_id
+            LEFT JOIN wallets wl ON wl.id = w.wallet_id
+            ${where}
+            ORDER BY w.created_at DESC
+            LIMIT $${idx} OFFSET $${idx + 1}
+        `;
+        const { rows } = await pool.query(dataSql, [...params, safeLimit, offset]);
+
+        return { rows, total, page: safePage, limit: safeLimit };
+    },
+
+    findWithdrawalById: async (id) => {
+        const { rows } = await pool.query(`
+            SELECT w.*,
+                   u.full_name AS user_name,
+                   u.phone     AS user_phone,
+                   wl.wallet_no,
+                   wl.wallet_code
+            FROM withdrawal_transactions w
+            LEFT JOIN users u  ON u.id  = w.user_id
+            LEFT JOIN wallets wl ON wl.id = w.wallet_id
+            WHERE w.id = $1
+        `, [id]);
+        return rows[0] || null;
+    },
+
     // --- LEDGER TRANSACTIONS ---
     listLedgerTransactions: async ({ q, status, type, dateFrom, dateTo, page, limit }) => {
         const { page: safePage, limit: safeLimit, offset } = buildPagination(page, limit);

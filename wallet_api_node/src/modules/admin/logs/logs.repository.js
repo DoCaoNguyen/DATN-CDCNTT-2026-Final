@@ -25,15 +25,20 @@ const logsRepository = {
         if (actor_type) query.actor_type = actor_type;
         if (action) query.action = action;
         
+        const escapeRegex = (string) => {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        };
+
         // Tìm kiếm linh hoạt
         if (q) {
+            const safeQ = escapeRegex(q);
             query.$or = [
-                { trace_id: { $regex: q, $options: 'i' } },
-                { entity_id: { $regex: q, $options: 'i' } },
-                { action: { $regex: q, $options: 'i' } },
-                { actor_type: { $regex: q, $options: 'i' } },
-                { actor_id: { $regex: q, $options: 'i' } },
-                { entity_type: { $regex: q, $options: 'i' } }
+                { trace_id: { $regex: safeQ, $options: 'i' } },
+                { entity_id: { $regex: safeQ, $options: 'i' } },
+                { action: { $regex: safeQ, $options: 'i' } },
+                { actor_type: { $regex: safeQ, $options: 'i' } },
+                { actor_id: { $regex: safeQ, $options: 'i' } },
+                { entity_type: { $regex: safeQ, $options: 'i' } }
             ];
         }
         
@@ -66,12 +71,17 @@ const logsRepository = {
         if (level) query.level = level; // INFO, WARN, ERROR, CRITICAL
         if (module) query.module = module;
         
+        const escapeRegex = (string) => {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        };
+
         if (q) {
+            const safeQ = escapeRegex(q);
             query.$or = [
-                { message: { $regex: q, $options: 'i' } },
-                { trace_id: { $regex: q, $options: 'i' } },
-                { event: { $regex: q, $options: 'i' } },
-                { service_name: { $regex: q, $options: 'i' } }
+                { message: { $regex: safeQ, $options: 'i' } },
+                { trace_id: { $regex: safeQ, $options: 'i' } },
+                { event: { $regex: safeQ, $options: 'i' } },
+                { service_name: { $regex: safeQ, $options: 'i' } }
             ];
         }
         
@@ -97,14 +107,19 @@ const logsRepository = {
         const skip = (Math.max(1, page) - 1) * limit;
         const query = {};
         
+        const escapeRegex = (string) => {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        };
+
         const searchQuery = q || trace_id;
         
         if (searchQuery) {
+            const safeQ = escapeRegex(searchQuery);
             query.$or = [
-                { trace_id: { $regex: searchQuery, $options: 'i' } },
-                { entity_id: { $regex: searchQuery, $options: 'i' } },
-                { event: { $regex: searchQuery, $options: 'i' } },
-                { module: { $regex: searchQuery, $options: 'i' } }
+                { trace_id: { $regex: safeQ, $options: 'i' } },
+                { entity_id: { $regex: safeQ, $options: 'i' } },
+                { event: { $regex: safeQ, $options: 'i' } },
+                { module: { $regex: safeQ, $options: 'i' } }
             ];
         } else if (payment_no) {
             query.entity_id = { $regex: payment_no, $options: 'i' };
@@ -130,11 +145,18 @@ const logsRepository = {
         if (!db) throw new Error('Chưa kết nối MongoDB');
 
         const skip = (Math.max(1, page) - 1) * limit;
-        const query = q ? {
+        
+        const escapeRegex = (string) => {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+        };
+
+        const safeQ = q ? escapeRegex(q) : q;
+
+        const query = safeQ ? {
             $or: [
-                { path: { $regex: q, $options: 'i' } },
-                { method: { $regex: q, $options: 'i' } },
-                { ip_address: { $regex: q, $options: 'i' } }
+                { path: { $regex: safeQ, $options: 'i' } },
+                { method: { $regex: safeQ, $options: 'i' } },
+                { ip_address: { $regex: safeQ, $options: 'i' } }
             ]
         } : {};
         
@@ -155,8 +177,13 @@ const logsRepository = {
         const skip = (Math.max(1, page) - 1) * limit;
         const query = {}; // Bỏ service_name vì bảng này chỉ chứa webhook log
         
+        const escapeRegex = (string) => {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        };
+
         if (q) {
-            query['metadata.transaction_id'] = { $regex: q, $options: 'i' };
+            const safeQ = escapeRegex(q);
+            query['metadata.transaction_id'] = { $regex: safeQ, $options: 'i' };
         }
         
         const items = await db.collection('webhook_attempt_logs')
