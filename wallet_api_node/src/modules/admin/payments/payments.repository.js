@@ -184,7 +184,7 @@ const paymentsRepository = {
         let paramCount = 1;
 
         if (status) {
-            query += ` AND pq.status = $${paramCount++}::qr_status`;
+            query += ` AND pq.status = $${paramCount++}`;
             countQuery += ` AND pq.status = '${status}'`;
             params.push(status);
         }

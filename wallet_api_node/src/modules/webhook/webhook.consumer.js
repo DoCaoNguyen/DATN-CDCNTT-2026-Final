@@ -11,12 +11,13 @@ const RETRY_DELAYS_MINUTES = [1, 3, 5, 7, 9, 11, 13];
 
 /**
  * Generate HMAC SHA256 signature for the payload
+ * Luôn ký trên chuỗi JSON thực tế được gửi đi, không phải object
  */
-const generateSignature = (payload, secretKey) => {
+const generateSignature = (rawBodyString, secretKey) => {
     if (!secretKey) return '';
     return crypto
         .createHmac('sha256', secretKey)
-        .update(JSON.stringify(payload))
+        .update(rawBodyString)
         .digest('hex');
 };
 
@@ -25,7 +26,8 @@ const processWebhookJob = async (job) => {
     const startTime = Date.now();
     try {
         // 1. Get merchant callback info and secret key
-        const merchantInfo = await webhookService.getMerchantSecret(merchantId);
+        const environment = payload.environment || 'SANDBOX';
+        const merchantInfo = await webhookService.getMerchantSecret(merchantId, environment);
         
         const targetUrl = callbackUrl || (merchantInfo ? merchantInfo.callback_url : null);
 
@@ -46,7 +48,10 @@ const processWebhookJob = async (job) => {
         }
 
         // 2. Prepare request with signature
-        const signature = generateSignature(payload, secret_key);
+        // 2. Serialize payload thành string 1 lần duy nhất để ký và gửi
+        // (Tránh JSON.stringify được gọi nhiều lần với key order khác nhau)
+        const rawBody = JSON.stringify(payload);
+        const signature = generateSignature(rawBody, secret_key);
         
         const headers = {
             'Content-Type': 'application/json',
@@ -63,7 +68,8 @@ const processWebhookJob = async (job) => {
         console.log(`- Generated Signature: ${signature}`);
         console.log(`- Callback URL: ${targetUrl}`);
         
-        const response = await axios.post(targetUrl, payload, {
+        // Gửi rawBody string trực tiếp thay vì object để Axios không serialize lại
+        const response = await axios.post(targetUrl, rawBody, {
             headers,
             timeout: 10000 // 10 seconds timeout
         });

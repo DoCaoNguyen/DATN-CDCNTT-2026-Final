@@ -3,15 +3,16 @@ const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 
 const paymentRepository = {
-    createOrder: async (client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId = null) => {
+    createOrder: async (client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId = null, environment = 'SANDBOX') => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO payment_orders (id, merchant_id, payment_no, amount, callback_url, description, status, expired_at, merchant_order_id, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9) 
+            INSERT INTO payment_orders (id, merchant_id, payment_no, amount, callback_url, description, status, expired_at, merchant_order_id, idempotency_key, metadata)
+            VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10) 
             RETURNING id;
         `;
+        const metadata = JSON.stringify({ environment });
         const result = await client.query(query, [
-            newId, merchantId, orderCode, amount, callbackUrl || '', description, expiredAt, merchantOrderId || orderCode, newId
+            newId, merchantId, orderCode, amount, callbackUrl || '', description, expiredAt, merchantOrderId || orderCode, newId, metadata
         ]);
         return result.rows[0].id;
     },
@@ -43,7 +44,7 @@ const paymentRepository = {
     lockAndGetOrder: async (client, qrToken) => {
         const query = `
             SELECT po.id AS order_id, po.amount, po.status, po.merchant_id, 
-                   po.callback_url, po.merchant_order_id, po.payment_no AS order_code, pq.expired_at
+                   po.callback_url, po.merchant_order_id, po.payment_no AS order_code, po.metadata, pq.expired_at
             FROM payment_qr_codes pq
             JOIN payment_orders po ON pq.payment_order_id = po.id
             WHERE pq.qr_token = $1
@@ -63,16 +64,22 @@ const paymentRepository = {
         await client.query(query, [status, qrToken]);
     },
 
-    createPaymentTransaction: async (client, orderId, userId, payerWalletId, amount, preGeneratedId = null) => {
-        const newId = preGeneratedId || uuidv7();
+    recordPaymentTransaction: async (client, id, orderId, userId, payerWalletId, amount, idempotencyKey) => {
+        
+        const metadata = JSON.stringify({
+            payment_order_id: orderId
+        });
+        
         const query = `
-            INSERT INTO payment_transactions (id, payment_order_id, payer_user_id, payer_wallet_id, amount, status, paid_at, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, 'SUCCESS', CURRENT_TIMESTAMP, $6)
-            RETURNING id;
+            INSERT INTO transactions (id, transaction_no, transaction_type, user_id, wallet_id, amount, status, metadata, idempotency_key)
+            VALUES ($1, nextval('transaction_ref_seq')::text, 'PAYMENT', $3, $4, $5, 'COMPLETED', $6::jsonb, $7)
+            RETURNING id; 
         `;
-        const result = await client.query(query, [newId, orderId, userId, payerWalletId, amount, newId]);
+        
+        const result = await client.query(query, [id, orderId, userId, payerWalletId, amount.toString(), metadata, idempotencyKey]);
         return result.rows[0].id;
     },
+
 
     // ===== NEW: Preview đơn hàng từ QR Token (không lock) =====
     getOrderByQrToken: async (qrToken) => {

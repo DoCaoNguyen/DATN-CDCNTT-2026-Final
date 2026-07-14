@@ -13,6 +13,7 @@ import '../../chat/screens/help_center_screen.dart';
 import '../../merchant/screens/merchant_screen.dart';
 import '../../financial_center/screens/financial_center_screen.dart';
 import '../../home/screens/qr_main_screen.dart';
+import '../../auth/kyc/screens/kyc_flow_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -26,6 +27,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _client = CustomHttpClient();
   bool _isLoading = true;
+  bool _isKycVerified = false;
+  String _userId = '';
   String _fullName = '';
   String _phone = '';
   String? _email;
@@ -62,9 +65,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final jsonResp = jsonDecode(response.body);
         if (jsonResp['data'] != null) {
           setState(() {
+            _userId = jsonResp['data']['id'] ?? '';
             _fullName = jsonResp['data']['full_name'] ?? 'Người dùng';
             _phone = jsonResp['data']['phone'] ?? '';
             _email = jsonResp['data']['email'];
+            _isKycVerified = jsonResp['data']['is_kyc_verified'] == true;
             _isLoading = false;
           });
         }
@@ -75,6 +80,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Lỗi lấy thông tin profile: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  void _showKycDialog() {
+    String activeLang = AppState.currentLanguage.value;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          activeLang == 'VIE' ? 'Yêu cầu xác thực' : 'Authentication Required',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          activeLang == 'VIE'
+              ? 'Tài khoản của bạn chưa được xác thực danh tính. Vui lòng hoàn tất eKYC để sử dụng dịch vụ.'
+              : 'Your account is not verified. Please complete eKYC to use our services.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              activeLang == 'VIE' ? 'Để sau' : 'Later',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      KycFlowScreen(userId: _userId, token: widget.token),
+                ),
+              );
+            },
+            child: Text(
+              activeLang == 'VIE' ? 'Xác thực ngay' : 'Verify Now',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _getInitials(String name) {
@@ -606,6 +660,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.storefront_rounded,
               title: 'Đối tác kinh doanh',
               onTap: () {
+                if (!_isKycVerified) {
+                  _showKycDialog();
+                  return;
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(

@@ -57,7 +57,7 @@ async function verifyTransactionSecurity(amount, pin, faceImagePath, wallet, use
         if (!kycRecord || !kycRecord.face_image) {
             throw new Error('No_KYC_Record_Found');
         }
-        const matchResult = await kycService.verifyFaceMatchFptAi(kycRecord.face_image, faceImagePath);
+        const matchResult = await kycService.verifyFaceMatchViettelAI(kycRecord.face_image, faceImagePath);
         if (!matchResult.faceFound || !matchResult.isMatch) {
             throw new Error('Face_Verification_Failed');
         }

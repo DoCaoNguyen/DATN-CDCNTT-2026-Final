@@ -10,11 +10,11 @@ const walletsRepository = {
 
         if (q) {
             params.push(`%${q.trim()}%`);
-            where.push(`(w.wallet_no ILIKE $${params.length} OR w.wallet_code ILIKE $${params.length} OR u.full_name ILIKE $${params.length} OR u.phone ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+            where.push(`(u.full_name ILIKE $${params.length} OR u.phone ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
         }
         if (status) {
             params.push(status);
-            where.push(`w.status = $${params.length}::wallet_status`);
+            where.push(`w.status = $${params.length}`);
         }
         if (userId) {
             params.push(userId);
@@ -32,7 +32,7 @@ const walletsRepository = {
         params.push(pagination.limit, pagination.offset);
         const result = await pool.query(`
             SELECT
-                w.id, w.user_id, w.wallet_no, w.wallet_code, w.wallet_type, w.currency,
+                w.id, w.user_id, w.wallet_type, wb.currency,
                 w.status, w.lock_reason, w.locked_at, w.locked_by, w.pin_failed_attempts,
                 w.pin_locked_until, w.created_at, w.updated_at,
                 wb.available_balance, wb.locked_balance, wb.updated_at AS balance_updated_at,
@@ -58,7 +58,7 @@ const walletsRepository = {
     findWalletById: async (walletId) => {
         const result = await pool.query(`
             SELECT
-                w.id, w.user_id, w.wallet_no, w.wallet_code, w.wallet_type, w.currency,
+                w.id, w.user_id, w.wallet_type, wb.currency,
                 w.status, w.lock_reason, w.locked_at, w.locked_by, w.pin_failed_attempts,
                 w.pin_locked_until, w.created_at, w.updated_at,
                 wb.available_balance, wb.locked_balance, wb.updated_at AS balance_updated_at,

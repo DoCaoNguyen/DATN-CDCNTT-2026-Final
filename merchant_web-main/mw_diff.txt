@@ -1,0 +1,1090 @@
+﻿diff --git a/src/components/ui/Modal/OrderDetailModal.jsx b/src/components/ui/Modal/OrderDetailModal.jsx
+index d137b91..58f07a5 100644
+--- a/src/components/ui/Modal/OrderDetailModal.jsx
++++ b/src/components/ui/Modal/OrderDetailModal.jsx
+@@ -35,10 +35,10 @@ export const OrderDetailModal = ({ isOpen, onClose, order }) => {
+   return (
+     <Modal isOpen={isOpen} onClose={onClose} title={headerTitle} maxWidth="1000px">
+       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', alignItems: 'start' }}>
+-        
++
+         {/* Left Column - Main Content */}
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+-          
++
+           <Card style={{ boxShadow: 'none' }}>
+             <CardHeader style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-light)' }}>
+               <CardTitle>Th├┤ng tin chung</CardTitle>
+@@ -47,11 +47,11 @@ export const OrderDetailModal = ({ isOpen, onClose, order }) => {
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                 <div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú lß╗çnh (Payment No)</div>
+-                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.payment_no || ''}</div>
++                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.payment_no || ''}</div>
+                 </div>
+                 <div>
+-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú H Merchant</div>
+-                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.merchant_order_id || ''}</div>
++                  <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú ─ÉH Merchant</div>
++                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.merchant_order_id || '-'}</div>
+                 </div>
+                 <div style={{ gridColumn: '1 / -1' }}>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Nß╗Öi dung/M├┤ tß║ú</div>
+@@ -91,7 +91,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }) => {
+ 
+         {/* Right Column - Sticky Sidebar */}
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '0' }}>
+-          
++
+           <Card style={{ boxShadow: 'none', backgroundColor: 'var(--bg-main)', border: 'none' }}>
+             <CardContent style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+               <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tß╗òng thanh to├ín</div>
+@@ -129,7 +129,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }) => {
+               </Button>
+               {order.merchant_order_id && (
+                 <Button variant="ghost" size="sm" onClick={() => handleCopy(order.merchant_order_id)} style={{ width: '100%', justifyContent: 'center' }}>
+-                  Sao ch├⌐p M├ú H
++                  Sao ch├⌐p M├ú ─ÉH
+                 </Button>
+               )}
+             </CardContent>
+@@ -137,7 +137,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order }) => {
+ 
+         </div>
+       </div>
+-      
++
+       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
+         <Button onClick={onClose} variant="secondary">─É├│ng cß╗¡a sß╗ò</Button>
+       </div>
+diff --git a/src/components/ui/Modal/TransactionDetailModal.jsx b/src/components/ui/Modal/TransactionDetailModal.jsx
+index f5b90c9..a1e5a11 100644
+--- a/src/components/ui/Modal/TransactionDetailModal.jsx
++++ b/src/components/ui/Modal/TransactionDetailModal.jsx
+@@ -47,19 +47,19 @@ export const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                 <div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú Giao dß╗ïch (TX)</div>
+-                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.id || ''}</div>
++                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.id || '-'}</div>
+                 </div>
+                 <div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú Lß╗çnh TT (Payment No)</div>
+-                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.payment_no || ''}</div>
++                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.payment_no || '-'}</div>
+                 </div>
+                 <div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Loß║íi giao dß╗ïch</div>
+-                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.transaction_type || transaction.type || ''}</div>
++                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.transaction_type || transaction.type || '-'}</div>
+                 </div>
+                 <div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú Provider (Ref)</div>
+-                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.provider_ref_id || ''}</div>
++                  <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.provider_ref_id || '-'}</div>
+                 </div>
+               </div>
+             </CardContent>
+@@ -111,7 +111,7 @@ export const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
+               </div>
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <span style={{ color: 'var(--text-muted)' }}>Thanh to├ín l├║c:</span>
+-                <span style={{ fontWeight: 500 }}>{transaction.paid_at ? formatDate(transaction.paid_at) : ''}</span>
++                <span style={{ fontWeight: 500 }}>{transaction.paid_at ? formatDate(transaction.paid_at) : '-'}</span>
+               </div>
+             </CardContent>
+           </Card>
+diff --git a/src/components/ui/Modal/WebhookDetailModal.jsx b/src/components/ui/Modal/WebhookDetailModal.jsx
+index fbc5647..1d1d695 100644
+--- a/src/components/ui/Modal/WebhookDetailModal.jsx
++++ b/src/components/ui/Modal/WebhookDetailModal.jsx
+@@ -41,7 +41,7 @@ export const WebhookDetailModal = ({ isOpen, onClose, webhook, onRetry, onConfir
+           
+           <Card style={{ boxShadow: 'none' }}>
+             <CardHeader style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-light)' }}>
+-              <CardTitle>Payload Gß╗¡i i</CardTitle>
++              <CardTitle>Payload Gß╗¡i ─æi</CardTitle>
+             </CardHeader>
+             <CardContent style={{ padding: 0 }}>
+               <div style={{ background: '#1e293b', color: '#e2e8f0', padding: '1rem', overflowX: 'auto', maxHeight: '400px', fontSize: '0.875rem', borderBottomLeftRadius: 'var(--radius-lg)', borderBottomRightRadius: 'var(--radius-lg)' }}>
+@@ -94,7 +94,7 @@ export const WebhookDetailModal = ({ isOpen, onClose, webhook, onRetry, onConfir
+               </div>
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <span style={{ color: 'var(--text-muted)' }}>Lß║ºn thß╗¡ cuß╗æi:</span>
+-                <span style={{ fontWeight: 500 }}>{webhook.last_attempt_at ? formatDate(webhook.last_attempt_at) : ''}</span>
++                <span style={{ fontWeight: 500 }}>{webhook.last_attempt_at ? formatDate(webhook.last_attempt_at) : '-'}</span>
+               </div>
+             </CardContent>
+           </Card>
+diff --git a/src/index.css b/src/index.css
+index b98f5b4..39850cb 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -1,4 +1,4 @@
+-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
++@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap');
+ 
+ :root {
+   /* Colors */
+@@ -52,7 +52,7 @@
+   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+   --shadow-card: 0px 4px 12px rgba(0, 0, 0, 0.03);
+   
+-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
++  --font-family: 'Noto Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+   
+   /* Layout Constants */
+   --sidebar-width: 264px;
+diff --git a/src/layouts/MainLayout.jsx b/src/layouts/MainLayout.jsx
+index 109f058..269db19 100644
+--- a/src/layouts/MainLayout.jsx
++++ b/src/layouts/MainLayout.jsx
+@@ -1,11 +1,11 @@
+ 
+ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+-import { 
+-  LayoutDashboard, 
+-  CreditCard, 
+-  Key, 
+-  ArrowLeftRight, 
+-  Webhook, 
++import {
++  LayoutDashboard,
++  CreditCard,
++  Key,
++  ArrowLeftRight,
++  Webhook,
+   Wallet,
+   LogOut,
+   User
+@@ -40,14 +40,14 @@ const MainLayout = () => {
+           <div className={styles.logoIcon}>M</div>
+           <span className={styles.logoText}>Merchant Portal</span>
+         </div>
+-        
++
+         <nav className={styles.nav}>
+           <div className={styles.navGroup}>Chung</div>
+           {navigation.map((item) => (
+             <NavLink
+               key={item.name}
+               to={item.href}
+-              className={({ isActive }) => 
++              className={({ isActive }) =>
+                 clsx(styles.navItem, { [styles.active]: isActive })
+               }
+             >
+@@ -75,7 +75,7 @@ const MainLayout = () => {
+                 <span className={styles.userRole}>{user?.email || ''}</span>
+               </div>
+             </div>
+-            <button className={styles.logoutBtn} onClick={handleLogout} title="ng xuß║Ñt">
++            <button className={styles.logoutBtn} onClick={handleLogout} title="─É─âng xuß║Ñt">
+               <LogOut size={18} />
+             </button>
+           </div>
+diff --git a/src/pages/ApiKeys.jsx b/src/pages/ApiKeys.jsx
+index cf19ede..60148a1 100644
+--- a/src/pages/ApiKeys.jsx
++++ b/src/pages/ApiKeys.jsx
+@@ -32,7 +32,7 @@ const ApiKeys = () => {
+ 
+   const [isCreateOpen, setIsCreateOpen] = useState(false);
+   const [createName, setCreateName] = useState('');
+-  
++
+   const [confirmRotate, setConfirmRotate] = useState(null);
+   const [confirmRevoke, setConfirmRevoke] = useState(null);
+ 
+@@ -45,7 +45,7 @@ const ApiKeys = () => {
+   });
+ 
+   const keys = Array.isArray(keysData) ? keysData : (keysData?.data?.items || keysData?.items || keysData?.data || []);
+-  
++
+   useEffect(() => {
+     if (keysData?.pagination) {
+       setTotalPages(keysData.pagination.total_pages || 1);
+@@ -60,12 +60,12 @@ const ApiKeys = () => {
+       const result = data?.data || data;
+       const apiKey = result.api_key || result.key;
+       const apiSecret = result.api_secret || result.raw_secret || result.secret;
+-      
++
+       toast.success('Tß║ío API Key th├ánh c├┤ng');
+       setIsCreateOpen(false);
+       setCreateName('');
+       queryClient.invalidateQueries({ queryKey: ['merchantApiKeys'] });
+-      
++
+       if (apiSecret) {
+         setSecretModalData({ apiKey, apiSecret, title: 'Tß║ío API Key th├ánh c├┤ng' });
+       }
+@@ -83,11 +83,11 @@ const ApiKeys = () => {
+       const keyObj = keys.find(k => k.id === keyId);
+       // Backend returns the newly rotated API Key in result.api_key
+       const apiKey = result.api_key || keyObj?.api_key || 'Unknown';
+-      
++
+       toast.success('─Éß╗òi secret th├ánh c├┤ng');
+       setConfirmRotate(null);
+       queryClient.invalidateQueries({ queryKey: ['merchantApiKeys'] });
+-      
++
+       if (apiSecret) {
+         setSecretModalData({ apiKey, apiSecret, title: '─Éß╗òi Secret th├ánh c├┤ng' });
+       }
+@@ -127,47 +127,47 @@ const ApiKeys = () => {
+       />
+ 
+       <KpiGrid>
+-        <KPICard 
+-          title="Key tr├¬n trang" 
+-          value={keys.length} 
++        <KPICard
++          title="Key tr├¬n trang"
++          value={keys.length}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={Key} 
+-          iconColor="var(--primary-color)" 
+-          iconBg="var(--primary-light)" 
++          icon={Key}
++          iconColor="var(--primary-color)"
++          iconBg="var(--primary-light)"
+         />
+-        <KPICard 
+-          title="Hoß║ít ─æß╗Öng tr├¬n trang" 
+-          value={activeCount} 
++        <KPICard
++          title="Hoß║ít ─æß╗Öng tr├¬n trang"
++          value={activeCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={CheckCircle} 
+-          iconColor="var(--status-active)" 
+-          iconBg="var(--status-active-bg)" 
++          icon={CheckCircle}
++          iconColor="var(--status-active)"
++          iconBg="var(--status-active-bg)"
+         />
+-        <KPICard 
+-          title="Thß╗¡ nghiß╗çm tr├¬n trang" 
+-          value={sandboxCount} 
++        <KPICard
++          title="Thß╗¡ nghiß╗çm tr├¬n trang"
++          value={sandboxCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={ShieldAlert} 
+-          iconColor="var(--status-sandbox)" 
+-          iconBg="var(--status-sandbox-bg)" 
++          icon={ShieldAlert}
++          iconColor="var(--status-sandbox)"
++          iconBg="var(--status-sandbox-bg)"
+         />
+-        <KPICard 
+-          title="─É├ú thu hß╗ôi tr├¬n trang" 
+-          value={revokedCount} 
++        <KPICard
++          title="─É├ú thu hß╗ôi tr├¬n trang"
++          value={revokedCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={XCircle} 
+-          iconColor="var(--status-failed)" 
+-          iconBg="var(--status-failed-bg)" 
++          icon={XCircle}
++          iconColor="var(--status-failed)"
++          iconBg="var(--status-failed-bg)"
+         />
+       </KpiGrid>
+ 
+       <Card>
+         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', margin: '16px 24px', flexWrap: 'wrap', gap: '16px' }}>
+           <div style={{ width: '300px' }} title="T├¼m kiß║┐m API Key (Client-side)">
+-             <SearchInput 
+-              placeholder="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t..." 
++            <SearchInput
++              placeholder="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t..."
+               value=""
+-              onChange={() => {}}
++              onChange={() => { }}
+               disabled={true}
+             />
+           </div>
+@@ -211,18 +211,18 @@ const ApiKeys = () => {
+                       <TableCell>{k.created_at ? format(new Date(k.created_at), 'dd/MM/yyyy') : ' '}</TableCell>
+                       <TableCell style={{ textAlign: 'right' }}>
+                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+-                          <Button 
+-                            variant="secondary" 
+-                            size="sm" 
++                          <Button
++                            variant="secondary"
++                            size="sm"
+                             disabled={isRevoked || rotateMutation.isPending}
+                             onClick={() => setConfirmRotate(k.id)}
+                             title="─Éß╗òi secret"
+                           >
+                             <RotateCw size={14} />
+                           </Button>
+-                          <Button 
+-                            variant="danger" 
+-                            size="sm" 
++                          <Button
++                            variant="danger"
++                            size="sm"
+                             disabled={isRevoked || revokeMutation.isPending}
+                             onClick={() => setConfirmRevoke(k.id)}
+                             title="Thu hß╗ôi"
+@@ -236,7 +236,7 @@ const ApiKeys = () => {
+                 })}
+               </TableBody>
+             </Table>
+-            
++
+             {!isLoading && (
+               <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
+                 <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
+@@ -257,7 +257,13 @@ const ApiKeys = () => {
+               style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', outline: 'none' }}
+               value={createName}
+               onChange={e => setCreateName(e.target.value)}
++              maxLength={100}
+             />
++            {createName.trim() && createName.trim().length < 3 && (
++              <p style={{ color: 'var(--status-failed)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
++                T├¬n gß╗úi nhß╗¢ phß║úi tß╗½ 3 ─æß║┐n 100 k├╜ tß╗▒.
++              </p>
++            )}
+           </div>
+           <div>
+             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-main)' }}>M├┤i tr╞░ß╗¥ng</label>
+@@ -267,11 +273,11 @@ const ApiKeys = () => {
+         </div>
+         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+           <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={createMutation.isPending}>Hß╗ºy</Button>
+-          <Button 
+-            variant="primary" 
+-            onClick={() => createMutation.mutate({ key_name: createName, environment: 'SANDBOX' })} 
++          <Button
++            variant="primary"
++            onClick={() => createMutation.mutate({ key_name: createName.trim(), environment: 'SANDBOX' })}
+             isLoading={createMutation.isPending}
+-            disabled={!createName.trim()}
++            disabled={!createName.trim() || createName.trim().length < 3}
+           >
+             Tß║ío Key
+           </Button>
+@@ -283,7 +289,7 @@ const ApiKeys = () => {
+         onClose={() => setConfirmRotate(null)}
+         onConfirm={() => rotateMutation.mutate(confirmRotate)}
+         title="─Éß╗òi Secret Key"
+-        message="Bß║ín c├│ chß║»c chß║»n muß╗æn ─æß╗òi Secret Key kh├┤ng? Secret Key ci sß║╜ bß╗ï v├┤ hiß╗çu h├│a ngay lß║¡p tß╗⌐c v├á c├íc kß║┐t nß╗æi  ang sß╗¡ dß╗Ñng n├│ sß║╜ bß╗ï gi├ín  oß║ín."
++        message="Bß║ín c├│ chß║»c chß║»n muß╗æn ─æß╗òi Secret Key kh├┤ng? Secret Key c┼⌐ sß║╜ bß╗ï v├┤ hiß╗çu h├│a ngay lß║¡p tß╗⌐c v├á c├íc kß║┐t nß╗æi ─æang sß╗¡ dß╗Ñng n├│ sß║╜ bß╗ï gi├ín ─æoß║ín."
+         confirmText="─Éß╗òi Secret"
+         cancelText="Hß╗ºy"
+         type="warning"
+@@ -295,7 +301,7 @@ const ApiKeys = () => {
+         onClose={() => setConfirmRevoke(null)}
+         onConfirm={() => revokeMutation.mutate(confirmRevoke)}
+         title="Thu hß╗ôi API Key"
+-        message="Bß║ín c├│ chß║»c chß║»n muß╗æn thu hß╗ôi API Key n├áy kh├┤ng? H├ánh ─æß╗Öng n├áy kh├┤ng thß╗â ho├án t├íc v├á c├íc kß║┐t nß╗æi ang sß╗¡ dß╗Ñng key n├áy sß║╜ bß╗ï tß╗½ chß╗æi."
++        message="Bß║ín c├│ chß║»c chß║»n muß╗æn thu hß╗ôi API Key n├áy kh├┤ng? H├ánh ─æß╗Öng n├áy kh├┤ng thß╗â ho├án t├íc v├á c├íc kß║┐t nß╗æi ─æang sß╗¡ dß╗Ñng key n├áy sß║╜ bß╗ï tß╗½ chß╗æi."
+         confirmText="Thu hß╗ôi"
+         cancelText="Hß╗ºy"
+         type="danger"
+diff --git a/src/pages/ChangePassword.jsx b/src/pages/ChangePassword.jsx
+index ed4b881..af73d80 100644
+--- a/src/pages/ChangePassword.jsx
++++ b/src/pages/ChangePassword.jsx
+@@ -42,11 +42,11 @@ const ChangePassword = () => {
+         old_password: data.oldPassword,
+         new_password: data.newPassword
+       });
+-      
++
+       // Update store so user doesn't get blocked by ProtectedRoute anymore
+       setAuth(token, { ...user, is_force_change_password: false });
+       toast.success('─Éß╗òi mß║¡t khß║⌐u th├ánh c├┤ng');
+-      
++
+       navigate('/merchant/dashboard');
+     } catch (err) {
+       console.error('Change password error:', err);
+@@ -59,9 +59,9 @@ const ChangePassword = () => {
+   return (
+     <div>
+       <h3 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>
+-        Bß║ín cß║ºn ─æß╗òi mß║¡t khß║⌐u trong lß║ºn─âng nhß║¡p ─æß║ºu ti├¬n
++        Bß║ín cß║ºn ─æß╗òi mß║¡t khß║⌐u trong lß║ºn ─æ─âng nhß║¡p ─æß║ºu ti├¬n
+       </h3>
+-      
++
+       {error && (
+         <div style={{ padding: '0.75rem', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.875rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+           {error}
+@@ -83,7 +83,7 @@ const ChangePassword = () => {
+             <p className="text-danger" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>{errors.oldPassword.message}</p>
+           )}
+         </div>
+-        
++
+         <div>
+           <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-main)' }}>
+             Mß║¡t khß║⌐u mß╗¢i
+@@ -98,7 +98,7 @@ const ChangePassword = () => {
+             <p className="text-danger" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>{errors.newPassword.message}</p>
+           )}
+         </div>
+-        
++
+         <div>
+           <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-main)' }}>
+             X├íc nhß║¡n mß║¡t khß║⌐u mß╗¢i
+@@ -113,10 +113,10 @@ const ChangePassword = () => {
+             <p className="text-danger" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>{errors.confirmPassword.message}</p>
+           )}
+         </div>
+-        
+-        <Button 
+-          type="submit" 
+-          variant="primary" 
++
++        <Button
++          type="submit"
++          variant="primary"
+           size="lg"
+           style={{ width: '100%', marginTop: '0.5rem' }}
+           isLoading={isSubmitting}
+diff --git a/src/pages/Login.jsx b/src/pages/Login.jsx
+index 70aaa2b..2a7a560 100644
+--- a/src/pages/Login.jsx
++++ b/src/pages/Login.jsx
+@@ -101,7 +101,7 @@ const Login = () => {
+             type="password"
+             {...register('password')}
+             style={{ width: '100%', borderColor: errors.password ? 'var(--danger)' : undefined }}
+-            placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
++            placeholder="********"
+           />
+           {errors.password && (
+             <p className="text-danger" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
+diff --git a/src/pages/PaymentOrderDetail.jsx b/src/pages/PaymentOrderDetail.jsx
+index c57a84d..a3e0e0b 100644
+--- a/src/pages/PaymentOrderDetail.jsx
++++ b/src/pages/PaymentOrderDetail.jsx
+@@ -88,7 +88,7 @@ const PaymentOrderDetail = () => {
+             <StatusBadge status={order.status} />
+           </div>
+           <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: '0.875rem' }}>
+-            M├ú H Merchant: {order.merchant_order_id || ''}
++            M├ú ─ÉH Merchant: {order.merchant_order_id || '-'}
+           </p>
+         </div>
+       </div>
+@@ -110,15 +110,15 @@ const PaymentOrderDetail = () => {
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú lß╗çnh (Payment No)</div>
+-                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.payment_no || ''}</div>
++                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.payment_no || '-'}</div>
+                   </div>
+                   <div>
+-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú H Merchant</div>
+-                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.merchant_order_id || ''}</div>
++                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú ─ÉH Merchant</div>
++                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{order.merchant_order_id || '-'}</div>
+                   </div>
+                   <div style={{ gridColumn: '1 / -1' }}>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├┤ tß║ú</div>
+-                    <div style={{ fontWeight: 500 }}>{order.description || ''}</div>
++                    <div style={{ fontWeight: 500 }}>{order.description || '-'}</div>
+                   </div>
+                 </div>
+               </CardContent>
+@@ -180,11 +180,11 @@ const PaymentOrderDetail = () => {
+                 </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                   <span style={{ color: 'var(--text-muted)' }}>Hß║┐t hß║ín l├║c:</span>
+-                  <span style={{ fontWeight: 500 }}>{order.expired_at ? formatDate(order.expired_at) : ''}</span>
++                  <span style={{ fontWeight: 500 }}>{order.expired_at ? formatDate(order.expired_at) : '-'}</span>
+                 </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                   <span style={{ color: 'var(--text-muted)' }}>Cß║¡p nhß║¡t l├║c:</span>
+-                  <span style={{ fontWeight: 500 }}>{order.updated_at ? formatDate(order.updated_at) : ''}</span>
++                  <span style={{ fontWeight: 500 }}>{order.updated_at ? formatDate(order.updated_at) : '-'}</span>
+                 </div>
+               </CardContent>
+             </Card>
+@@ -197,8 +197,8 @@ const PaymentOrderDetail = () => {
+                 <Button variant="outline" size="sm" onClick={() => handleCopy(order.payment_no || order.id, 'M├ú lß╗çnh')} style={{ width: '100%', justifyContent: 'center' }}>
+                   Copy M├ú lß╗çnh <Copy size={14} style={{ marginLeft: '0.5rem' }} />
+                 </Button>
+-                <Button variant="ghost" size="sm" onClick={() => handleCopy(order.merchant_order_id, 'M├ú H Merchant')} style={{ width: '100%', justifyContent: 'center' }}>
+-                  Copy M├ú H Merchant
++                <Button variant="ghost" size="sm" onClick={() => handleCopy(order.merchant_order_id, 'M├ú ─ÉH Merchant')} style={{ width: '100%', justifyContent: 'center' }}>
++                  Copy M├ú ─ÉH Merchant
+                 </Button>
+               </CardContent>
+             </Card>
+diff --git a/src/pages/PaymentOrders.jsx b/src/pages/PaymentOrders.jsx
+index fcf9d9b..ee86e81 100644
+--- a/src/pages/PaymentOrders.jsx
++++ b/src/pages/PaymentOrders.jsx
+@@ -32,7 +32,7 @@ export default function PaymentOrders() {
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState('');
+-  
++
+   const [page, setPage] = useState(1);
+   const [limit, setLimit] = useState(10);
+   const [totalPages, setTotalPages] = useState(1);
+@@ -51,11 +51,11 @@ export default function PaymentOrders() {
+       if (keyword) params.keyword = keyword;
+ 
+       const res = await merchantApi.getPaymentOrders(params);
+-      
++
+       const responseData = res.data || res;
+       const items = responseData.items || responseData.data?.items || responseData.rows || [];
+       const pagination = responseData.pagination || responseData.data?.pagination || { total_pages: 1, total_items: 0 };
+-      
++
+       const processedItems = (Array.isArray(items) ? items : []).map(order => {
+         let currentStatus = order.status;
+         const exp = order.expired_at || order.expires_at;
+@@ -64,7 +64,7 @@ export default function PaymentOrders() {
+         }
+         return { ...order, status: currentStatus };
+       });
+-      
++
+       setData(processedItems);
+       setTotalPages(pagination.total_pages || 1);
+       setTotalItems(pagination.total_items || items.length || 0);
+@@ -145,7 +145,7 @@ export default function PaymentOrders() {
+           )}
+         </CardContent>
+       </Card>
+-      
++
+       <Card style={{ boxShadow: 'var(--shadow-sm)', border: 'none' }}>
+         <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+           <CardTitle style={{ fontSize: '0.875rem' }}>─É╞ín h├áng & M├┤ tß║ú</CardTitle>
+@@ -153,17 +153,17 @@ export default function PaymentOrders() {
+         <CardContent style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
+           <div className="flex justify-between">
+             <span className="text-muted">M├ú Merchant:</span>
+-            <span>{order.merchant_order_id || 'ΓÇö'}</span>
++            <span>{order.merchant_order_id || '-'}</span>
+           </div>
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+             <span className="text-muted">M├┤ tß║ú:</span>
+             <span style={{ backgroundColor: 'var(--bg-main)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
+-              {order.description || 'ΓÇö'}
++              {order.description || '-'}
+             </span>
+           </div>
+         </CardContent>
+       </Card>
+-      
++
+       <Card style={{ boxShadow: 'var(--shadow-sm)', border: 'none' }}>
+         <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+           <CardTitle style={{ fontSize: '0.875rem' }}>Thao t├íc & Ghi ch├║</CardTitle>
+@@ -188,37 +188,37 @@ export default function PaymentOrders() {
+       />
+ 
+       <KpiGrid>
+-        <KPICard 
+-          title="─É╞ín tr├¬n trang hiß╗çn tß║íi" 
+-          value={data.length} 
++        <KPICard
++          title="─É╞ín tr├¬n trang hiß╗çn tß║íi"
++          value={data.length}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={ShoppingCart} 
+-          iconColor="var(--primary-color)" 
+-          iconBg="var(--primary-light)" 
++          icon={ShoppingCart}
++          iconColor="var(--primary-color)"
++          iconBg="var(--primary-light)"
+         />
+-        <KPICard 
+-          title="Th├ánh c├┤ng tr├¬n trang" 
+-          value={successCount} 
++        <KPICard
++          title="Th├ánh c├┤ng tr├¬n trang"
++          value={successCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={CheckCircle} 
+-          iconColor="var(--status-active)" 
+-          iconBg="var(--status-active-bg)" 
++          icon={CheckCircle}
++          iconColor="var(--status-active)"
++          iconBg="var(--status-active-bg)"
+         />
+-        <KPICard 
+-          title="─Éang xß╗¡ l├╜ tr├¬n trang" 
+-          value={pendingCount} 
++        <KPICard
++          title="─Éang xß╗¡ l├╜ tr├¬n trang"
++          value={pendingCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={Clock} 
+-          iconColor="var(--status-warning)" 
+-          iconBg="var(--status-warning-bg)" 
++          icon={Clock}
++          iconColor="var(--status-warning)"
++          iconBg="var(--status-warning-bg)"
+         />
+-        <KPICard 
+-          title="Thß║Ñt bß║íi/Hß╗ºy tr├¬n trang" 
+-          value={failedCount} 
++        <KPICard
++          title="Thß║Ñt bß║íi/Hß╗ºy tr├¬n trang"
++          value={failedCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={XCircle} 
+-          iconColor="var(--status-failed)" 
+-          iconBg="var(--status-failed-bg)" 
++          icon={XCircle}
++          iconColor="var(--status-failed)"
++          iconBg="var(--status-failed-bg)"
+         />
+       </KpiGrid>
+ 
+@@ -226,8 +226,8 @@ export default function PaymentOrders() {
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid var(--border-light)' }}>
+           <Tabs tabs={TABS} activeTab={activeTab} onChange={handleTabChange} />
+           <div style={{ width: '300px' }}>
+-            <SearchInput 
+-              placeholder="T├¼m theo M├ú ─æ╞ín (Order ID)" 
++            <SearchInput
++              placeholder="T├¼m theo M├ú ─æ╞ín (Order ID)"
+               value={keyword}
+               onChange={handleSearch}
+             />
+@@ -267,8 +267,8 @@ export default function PaymentOrders() {
+                   ))
+                 ) : (
+                   data.map(order => (
+-                    <ExpandableTableRow 
+-                      key={order.id} 
++                    <ExpandableTableRow
++                      key={order.id}
+                       isExpanded={expandedRowId === order.id}
+                       onToggle={() => toggleRow(order.id)}
+                       colSpan={7}
+@@ -293,11 +293,11 @@ export default function PaymentOrders() {
+                 )}
+               </TableBody>
+             </Table>
+-            
++
+             {!loading && (
+-               <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
+-                 <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
+-               </div>
++              <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
++                <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
++              </div>
+             )}
+           </>
+         )}
+diff --git a/src/pages/Profile.jsx b/src/pages/Profile.jsx
+index f340896..a5b4e12 100644
+--- a/src/pages/Profile.jsx
++++ b/src/pages/Profile.jsx
+@@ -10,7 +10,7 @@ const Profile = () => {
+     }
+   });
+ 
+-  if (isLoading) return <p>ang tß║úi...</p>;
++  if (isLoading) return <p>─Éang tß║úi...</p>;
+ 
+   return (
+     <div>
+diff --git a/src/pages/TransactionDetail.jsx b/src/pages/TransactionDetail.jsx
+index 9d2a0f6..0c95fd5 100644
+--- a/src/pages/TransactionDetail.jsx
++++ b/src/pages/TransactionDetail.jsx
+@@ -101,19 +101,19 @@ const TransactionDetail = () => {
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                   <div>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú giao dß╗ïch (ID)</div>
+-                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.id || ''}</div>
++                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.id || '-'}</div>
+                   </div>
+                   <div>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú lß╗çnh (Payment No)</div>
+-                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.payment_no || ''}</div>
++                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.payment_no || '-'}</div>
+                   </div>
+                   <div>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>M├ú tham chiß║┐u (Ref ID)</div>
+-                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.provider_ref_id || transaction.reference_id || ''}</div>
++                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.provider_ref_id || transaction.reference_id || '-'}</div>
+                   </div>
+                   <div>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Loß║íi giao dß╗ïch</div>
+-                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.transaction_type || transaction.type || ''}</div>
++                    <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.transaction_type || transaction.type || '-'}</div>
+                   </div>
+                 </div>
+               </CardContent>
+@@ -131,11 +131,11 @@ const TransactionDetail = () => {
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                     <div>
+                       <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Nguß╗ôn ph├ít sinh</div>
+-                      <div style={{ fontWeight: 500 }}>{transaction.source_type || ''}</div>
++                      <div style={{ fontWeight: 500 }}>{transaction.source_type || '-'}</div>
+                     </div>
+                     <div>
+                       <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Nguß╗ôn ID</div>
+-                      <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.source_id || transaction.payment_order_id || ''}</div>
++                      <div style={{ fontWeight: 500, wordBreak: 'break-all' }}>{transaction.source_id || transaction.payment_order_id || '-'}</div>
+                     </div>
+                   </div>
+                 </div>
+@@ -185,11 +185,11 @@ const TransactionDetail = () => {
+                 </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                   <span style={{ color: 'var(--text-muted)' }}>Thanh to├ín l├║c:</span>
+-                  <span style={{ fontWeight: 500 }}>{transaction.paid_at ? formatDate(transaction.paid_at) : ''}</span>
++                  <span style={{ fontWeight: 500 }}>{transaction.paid_at ? formatDate(transaction.paid_at) : '-'}</span>
+                 </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                   <span style={{ color: 'var(--text-muted)' }}>Cß║¡p nhß║¡t l├║c:</span>
+-                  <span style={{ fontWeight: 500 }}>{transaction.updated_at ? formatDate(transaction.updated_at) : ''}</span>
++                  <span style={{ fontWeight: 500 }}>{transaction.updated_at ? formatDate(transaction.updated_at) : '-'}</span>
+                 </div>
+               </CardContent>
+             </Card>
+diff --git a/src/pages/Transactions.jsx b/src/pages/Transactions.jsx
+index e6578a0..14b6689 100644
+--- a/src/pages/Transactions.jsx
++++ b/src/pages/Transactions.jsx
+@@ -30,7 +30,7 @@ export default function Transactions() {
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState('');
+-  
++
+   const [page, setPage] = useState(1);
+   const [limit, setLimit] = useState(10);
+   const [totalPages, setTotalPages] = useState(1);
+@@ -45,11 +45,11 @@ export default function Transactions() {
+       if (activeTab) params.status = activeTab;
+ 
+       const res = await merchantApi.getTransactions(params);
+-      
++
+       const responseData = res.data || res;
+       const items = responseData.items || responseData.data?.items || responseData.rows || [];
+       const pagination = responseData.pagination || responseData.data?.pagination || { total_pages: 1, total_items: 0 };
+-      
++
+       setData(Array.isArray(items) ? items : []);
+       setTotalPages(pagination.total_pages || 1);
+       setTotalItems(pagination.total_items || items.length || 0);
+@@ -93,37 +93,37 @@ export default function Transactions() {
+       />
+ 
+       <KpiGrid>
+-        <KPICard 
+-          title="Giao dß╗ïch tr├¬n trang" 
+-          value={data.length} 
++        <KPICard
++          title="Giao dß╗ïch tr├¬n trang"
++          value={data.length}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={ArrowLeftRight} 
+-          iconColor="var(--primary-color)" 
+-          iconBg="var(--primary-light)" 
++          icon={ArrowLeftRight}
++          iconColor="var(--primary-color)"
++          iconBg="var(--primary-light)"
+         />
+-        <KPICard 
+-          title="Th├ánh c├┤ng tr├¬n trang" 
+-          value={successCount} 
++        <KPICard
++          title="Th├ánh c├┤ng tr├¬n trang"
++          value={successCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={CheckCircle} 
+-          iconColor="var(--status-active)" 
+-          iconBg="var(--status-active-bg)" 
++          icon={CheckCircle}
++          iconColor="var(--status-active)"
++          iconBg="var(--status-active-bg)"
+         />
+-        <KPICard 
+-          title="Thß║Ñt bß║íi tr├¬n trang" 
+-          value={failedCount} 
++        <KPICard
++          title="Thß║Ñt bß║íi tr├¬n trang"
++          value={failedCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={XCircle} 
+-          iconColor="var(--status-failed)" 
+-          iconBg="var(--status-failed-bg)" 
++          icon={XCircle}
++          iconColor="var(--status-failed)"
++          iconBg="var(--status-failed-bg)"
+         />
+-        <KPICard 
+-          title="Tß╗òng gi├í trß╗ï tr├¬n trang" 
+-          value={formatCurrency(totalAmount)} 
++        <KPICard
++          title="Tß╗òng gi├í trß╗ï tr├¬n trang"
++          value={formatCurrency(totalAmount)}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={ArrowLeftRight} 
+-          iconColor="var(--status-warning)" 
+-          iconBg="var(--status-warning-bg)" 
++          icon={ArrowLeftRight}
++          iconColor="var(--status-warning)"
++          iconBg="var(--status-warning-bg)"
+         />
+       </KpiGrid>
+ 
+@@ -131,10 +131,10 @@ export default function Transactions() {
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid var(--border-light)' }}>
+           <Tabs tabs={TABS} activeTab={activeTab} onChange={handleTabChange} />
+           <div style={{ width: '300px' }} title="Backend hiß╗çn ch╞░a hß╗ù trß╗ú t├¼m kiß║┐m cho Giao dß╗ïch">
+-            <SearchInput 
+-              placeholder="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t..." 
++            <SearchInput
++              placeholder="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t..."
+               value=""
+-              onChange={() => {}}
++              onChange={() => { }}
+               disabled={true}
+             />
+           </div>
+@@ -187,7 +187,7 @@ export default function Transactions() {
+                         <StatusBadge status={tx.status} />
+                       </TableCell>
+                       <TableCell>{formatDate(tx.created_at)}</TableCell>
+-                      <TableCell>{tx.paid_at ? formatDate(tx.paid_at) : 'ΓÇö'}</TableCell>
++                      <TableCell>{tx.paid_at ? formatDate(tx.paid_at) : '-'}</TableCell>
+                       <TableCell align="right">
+                         <Button size="sm" variant="ghost" onClick={() => handleViewDetail(tx.id)}>Chi tiß║┐t</Button>
+                       </TableCell>
+@@ -198,9 +198,9 @@ export default function Transactions() {
+             </Table>
+ 
+             {!loading && (
+-               <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
+-                 <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
+-               </div>
++              <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
++                <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
++              </div>
+             )}
+           </>
+         )}
+diff --git a/src/pages/WebhookDetail.jsx b/src/pages/WebhookDetail.jsx
+index db9f96b..da97630 100644
+--- a/src/pages/WebhookDetail.jsx
++++ b/src/pages/WebhookDetail.jsx
+@@ -153,12 +153,12 @@ const WebhookDetail = () => {
+                   </div>
+                   <div>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Lß║ºn thß╗¡ cuß╗æi (Last Attempt)</div>
+-                    <div style={{ fontWeight: 500 }}>{webhook.last_attempt_at ? formatDate(webhook.last_attempt_at) : ''}</div>
++                    <div style={{ fontWeight: 500 }}>{webhook.last_attempt_at ? formatDate(webhook.last_attempt_at) : '-'}</div>
+                   </div>
+                   <div style={{ gridColumn: '1 / -1' }}>
+                     <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>Lß╗ùi lß║ºn thß╗¡ cuß╗æi (Last Error)</div>
+                     <div style={{ fontWeight: 500, color: 'var(--danger-color)', wordBreak: 'break-word' }}>
+-                      {webhook.last_error || ''}
++                      {webhook.last_error || '-'}
+                     </div>
+                   </div>
+                 </div>
+@@ -176,7 +176,7 @@ const WebhookDetail = () => {
+                 <CardContent style={{ padding: 0 }}>
+                   <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+                     <span style={{ color: 'var(--text-muted)', marginRight: '8px' }}>HTTP Status:</span>
+-                    <span style={{ fontWeight: 600 }}>{webhook.response_status || ''}</span>
++                    <span style={{ fontWeight: 600 }}>{webhook.response_status || '-'}</span>
+                   </div>
+                   <div style={{ background: '#1e293b', color: '#e2e8f0', padding: '1rem', overflowX: 'auto', fontSize: '0.875rem', borderBottomLeftRadius: 'var(--radius-lg)', borderBottomRightRadius: 'var(--radius-lg)' }}>
+                     <pre style={{ margin: 0, fontFamily: 'monospace' }}>
+diff --git a/src/pages/Webhooks.jsx b/src/pages/Webhooks.jsx
+index e537755..7e51693 100644
+--- a/src/pages/Webhooks.jsx
++++ b/src/pages/Webhooks.jsx
+@@ -21,7 +21,7 @@ import KpiGrid from '../components/layout/KpiGrid';
+ const TABS = [
+   { label: 'Tß║Ñt cß║ú', value: '' },
+   { label: 'Th├ánh c├┤ng', value: 'SUCCESS' },
+-  { label: 'ang xß╗¡ l├╜', value: 'PENDING' },
++  { label: '─Éang xß╗¡ l├╜', value: 'PENDING' },
+   { label: 'Thß║Ñt bß║íi', value: 'FAILED' },
+ ];
+ 
+@@ -30,7 +30,7 @@ export default function Webhooks() {
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState('');
+-  
++
+   const [page, setPage] = useState(1);
+   const [limit, setLimit] = useState(10);
+   const [totalPages, setTotalPages] = useState(1);
+@@ -51,11 +51,11 @@ export default function Webhooks() {
+       if (activeTab) params.status = activeTab;
+ 
+       const res = await merchantApi.getWebhooks(params);
+-      
++
+       const responseData = res.data || res;
+       const items = responseData.items || responseData.data?.items || responseData.rows || [];
+       const pagination = responseData.pagination || responseData.data?.pagination || { total_pages: 1, total_items: 0 };
+-      
++
+       setData(Array.isArray(items) ? items : []);
+       setTotalPages(pagination.total_pages || 1);
+       setTotalItems(pagination.total_items || items.length || 0);
+@@ -154,7 +154,7 @@ export default function Webhooks() {
+           )}
+         </CardContent>
+       </Card>
+-      
++
+       <Card style={{ boxShadow: 'var(--shadow-sm)', border: 'none' }}>
+         <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+           <CardTitle style={{ fontSize: '0.875rem' }}>Lß╗ïch sß╗¡ gß╗¡i</CardTitle>
+@@ -166,7 +166,7 @@ export default function Webhooks() {
+           </div>
+           <div className="flex justify-between">
+             <span className="text-muted">Lß║ºn thß╗¡ cuß╗æi:</span>
+-            <span>{item.last_attempt_at ? formatDate(item.last_attempt_at) : ''}</span>
++            <span>{item.last_attempt_at ? formatDate(item.last_attempt_at) : '-'}</span>
+           </div>
+           {item.last_error && (
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '4px' }}>
+@@ -178,16 +178,16 @@ export default function Webhooks() {
+           )}
+         </CardContent>
+       </Card>
+-      
++
+       <Card style={{ boxShadow: 'var(--shadow-sm)', border: 'none' }}>
+         <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+           <CardTitle style={{ fontSize: '0.875rem' }}>Thao t├íc & Payload</CardTitle>
+         </CardHeader>
+         <CardContent style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+           {item.payload && (
+-             <div style={{ background: '#1e293b', color: '#e2e8f0', padding: '0.5rem', overflow: 'hidden', height: '40px', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
+-                <pre style={{ margin: 0 }}>{renderJson(item.payload).substring(0, 50)}...</pre>
+-             </div>
++            <div style={{ background: '#1e293b', color: '#e2e8f0', padding: '0.5rem', overflow: 'hidden', height: '40px', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
++              <pre style={{ margin: 0 }}>{renderJson(item.payload).substring(0, 50)}...</pre>
++            </div>
+           )}
+           <div style={{ display: 'flex', gap: '0.5rem' }}>
+             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleViewDetail(item.id); }} style={{ flex: 1, justifyContent: 'center' }}>
+@@ -215,37 +215,37 @@ export default function Webhooks() {
+       />
+ 
+       <KpiGrid>
+-        <KPICard 
+-          title="Webhook tr├¬n trang" 
+-          value={data.length} 
++        <KPICard
++          title="Webhook tr├¬n trang"
++          value={data.length}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={Webhook} 
+-          iconColor="var(--primary-color)" 
+-          iconBg="var(--primary-light)" 
++          icon={Webhook}
++          iconColor="var(--primary-color)"
++          iconBg="var(--primary-light)"
+         />
+-        <KPICard 
+-          title="Th├ánh c├┤ng tr├¬n trang" 
+-          value={successCount} 
++        <KPICard
++          title="Th├ánh c├┤ng tr├¬n trang"
++          value={successCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={CheckCircle} 
+-          iconColor="var(--status-active)" 
+-          iconBg="var(--status-active-bg)" 
++          icon={CheckCircle}
++          iconColor="var(--status-active)"
++          iconBg="var(--status-active-bg)"
+         />
+-        <KPICard 
+-          title="─Éang chß╗¥ tr├¬n trang" 
+-          value={pendingCount} 
++        <KPICard
++          title="─Éang chß╗¥ tr├¬n trang"
++          value={pendingCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={Clock} 
+-          iconColor="var(--status-warning)" 
+-          iconBg="var(--status-warning-bg)" 
++          icon={Clock}
++          iconColor="var(--status-warning)"
++          iconBg="var(--status-warning-bg)"
+         />
+-        <KPICard 
+-          title="Thß║Ñt bß║íi tr├¬n trang" 
+-          value={failedCount} 
++        <KPICard
++          title="Thß║Ñt bß║íi tr├¬n trang"
++          value={failedCount}
+           subtitle="Dß╗» liß╗çu dß╗▒a tr├¬n trang hiß╗çn tß║íi"
+-          icon={XCircle} 
+-          iconColor="var(--status-failed)" 
+-          iconBg="var(--status-failed-bg)" 
++          icon={XCircle}
++          iconColor="var(--status-failed)"
++          iconBg="var(--status-failed-bg)"
+         />
+       </KpiGrid>
+ 
+@@ -253,10 +253,10 @@ export default function Webhooks() {
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid var(--border-light)' }}>
+           <Tabs tabs={TABS} activeTab={activeTab} onChange={handleTabChange} />
+           <div style={{ width: '300px' }} title="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t">
+-            <SearchInput 
+-              placeholder="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t..." 
++            <SearchInput
++              placeholder="T├¡nh n─âng t├¼m kiß║┐m sß║»p ra mß║»t..."
+               value=""
+-              onChange={() => {}}
++              onChange={() => { }}
+               disabled={true}
+             />
+           </div>
+@@ -295,8 +295,8 @@ export default function Webhooks() {
+                   ))
+                 ) : (
+                   data.map(item => (
+-                    <ExpandableTableRow 
+-                      key={item.id} 
++                    <ExpandableTableRow
++                      key={item.id}
+                       isExpanded={expandedRowId === item.id}
+                       onToggle={() => toggleRow(item.id)}
+                       colSpan={7}
+@@ -325,9 +325,9 @@ export default function Webhooks() {
+             </Table>
+ 
+             {!loading && (
+-               <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
+-                 <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
+-               </div>
++              <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-light)' }}>
++                <Pagination currentPage={page} totalPages={totalPages} limit={limit} totalItems={totalItems} onPageChange={setPage} onLimitChange={(newLimit) => { setLimit(newLimit); setPage(1); }} />
++              </div>
+             )}
+           </>
+         )}

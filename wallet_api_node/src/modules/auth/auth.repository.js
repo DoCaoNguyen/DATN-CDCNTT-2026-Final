@@ -23,9 +23,8 @@ const authRepository = {
             FROM users
             WHERE ($1::text IS NOT NULL AND email = $1)
                OR ($2::text IS NOT NULL AND phone = $2)
-               OR ($3::text IS NOT NULL AND username = $3)
             LIMIT 1
-        `, [email || null, phone || null, username || null]);
+        `, [email || null, phone || null]);
         return result.rows.length > 0;
     },
 
@@ -33,10 +32,10 @@ const authRepository = {
         const id = uuidv7();
         const result = await client.query(`
             INSERT INTO users
-                (id, user_type, full_name, username, email, phone, password_hash, status)
-            VALUES ($1, 'USER', $2, $3, $4, $5, $6, 'ACTIVE')
+                (id, user_type, full_name, email, phone, password_hash, status)
+            VALUES ($1, 'USER', $2, $3, $4, $5, 'ACTIVE')
             RETURNING id, username, full_name, email, phone, status, created_at
-        `, [id, fullName, username || null, email || null, phone, passwordHash]);
+        `, [id, fullName, email || null, phone, passwordHash]);
         return result.rows[0];
     },
 
@@ -54,18 +53,18 @@ const authRepository = {
 
     createWallet: async (client, userId) => {
         const walletId = uuidv7();
-        const walletNo = `WAL${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
         const walletResult = await client.query(`
-            INSERT INTO wallets (id, user_id, wallet_no, wallet_type, currency, status)
-            VALUES ($1, $2, $3, 'PERSONAL', 'VND', 'ACTIVE')
-            RETURNING id, wallet_no, status, currency
-        `, [walletId, userId, walletNo]);
+            INSERT INTO wallets (id, user_id, wallet_type, status)
+            VALUES ($1, $2, 'PERSONAL', 'ACTIVE')
+            RETURNING id, status
+        `, [walletId, userId]);
         await client.query(`
-            INSERT INTO wallet_balances (wallet_id, available_balance, locked_balance)
-            VALUES ($1, 0, 0)
+            INSERT INTO wallet_balances (wallet_id, currency, available_balance, locked_balance)
+            VALUES ($1, 'VND', 0, 0)
         `, [walletId]);
         return {
             ...walletResult.rows[0],
+            currency: 'VND',
             available_balance: 0,
             locked_balance: 0
         };
@@ -73,12 +72,11 @@ const authRepository = {
 
     findByLoginId: async loginId => {
         const result = await pool.query(`
-            SELECT id, user_type, full_name, username, email, phone, password_hash,
+            SELECT id, user_type, full_name, email, phone, password_hash,
                    status, failed_login_attempts, locked_until, last_login_at,
-                   is_kyc_verified, token_version, created_at, updated_at,
-                   is_force_change_password, temporary_password_expires_at
+                   is_kyc_verified, token_version, created_at, updated_at
             FROM users
-            WHERE username = $1 OR LOWER(email) = LOWER($1) OR phone = $1
+            WHERE LOWER(email) = LOWER($1) OR phone = $1
             LIMIT 1
         `, [loginId]);
         return result.rows[0];
@@ -86,10 +84,9 @@ const authRepository = {
 
     findById: async userId => {
         const result = await pool.query(`
-            SELECT id, user_type, full_name, username, email, phone, password_hash,
+            SELECT id, user_type, full_name, email, phone, password_hash,
                    status, failed_login_attempts, locked_until, last_login_at,
-                   is_kyc_verified, token_version, created_at, updated_at,
-                   is_force_change_password, temporary_password_expires_at
+                   is_kyc_verified, token_version, created_at, updated_at
             FROM users
             WHERE id = $1
         `, [userId]);

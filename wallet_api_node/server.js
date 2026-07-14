@@ -23,7 +23,6 @@ const connectMongoDB = require('./src/config/mongodb');
 // Import Cron Jobs & Consumers
 require('./src/cron/token_cleanup.cron');
 require('./src/cron/loyaltySyncRetry.cron');
-require('./src/cron/profit.cron');
 require('./src/modules/webhook/webhook.consumer');
 
 const app = express();
@@ -54,7 +53,7 @@ app.use(cors({
         'https://merchant.yourdomain.com',
         'https://nonoily-overinfluential-deegan.ngrok-free.dev'
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Idempotency-Key']
 }));
 app.use(express.json({ limit: '100kb' })); // [SECURITY FIX] Giới hạn body size chống Memory DoS

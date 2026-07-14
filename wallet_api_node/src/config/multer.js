@@ -8,10 +8,10 @@ const multer = require('multer');
 const path = require('path');
 
 // Danh sách MIME type được phép upload
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg','application/octet-stream'];
 
 // Kích thước file tối đa (5MB)
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -25,9 +25,10 @@ const storage = multer.diskStorage({
 
 // Bộ lọc file: Chặn tất cả file không phải ảnh (chống upload mã độc .exe, .sh, .php, ...)
 const fileFilter = (req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype) || file.mimetype.includes('octet-stream')) {
         cb(null, true);
     } else {
+        console.log(file)
         cb(new Error('Upload_Invalid_File_Type'), false);
     }
 };

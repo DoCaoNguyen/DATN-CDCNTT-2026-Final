@@ -10,10 +10,9 @@ const verifyApiKey = async (req, res, next) => {
 
     try {
         const query = `
-            SELECT m.id AS merchant_id, m.status AS merchant_status, mak.status AS key_status
-            FROM merchant_api_keys mak
-            JOIN merchants m ON mak.merchant_id = m.id
-            WHERE mak.api_key = $1 AND (mak.expired_at IS NULL OR mak.expired_at > CURRENT_TIMESTAMP)
+            SELECT m.id AS merchant_id, m.status AS merchant_status, 'ACTIVE' AS key_status, 'PRODUCTION' as environment
+            FROM merchants m
+            WHERE m.webhook_config->>'api_key' = $1
         `;
         const result = await pool.query(query, [apiKey]);
 
@@ -37,7 +36,7 @@ const verifyApiKey = async (req, res, next) => {
             return res.status(403).json({ error: message });
         }
 
-        req.merchant = { merchant_id: row.merchant_id, status: row.merchant_status };
+        req.merchant = { merchant_id: row.merchant_id, status: row.merchant_status, environment: row.environment };
         next();
     } catch (error) {
         console.error('Lỗi xác thực API Key:', error);
@@ -71,11 +70,9 @@ const verifyApiKeyWithSignature = async (req, res, next) => {
     try {
         const query = `
             SELECT m.id AS merchant_id, m.status AS merchant_status,
-                   mak.status AS key_status, mak.api_secret_hash
-            FROM merchant_api_keys mak
-            JOIN merchants m ON mak.merchant_id = m.id
-            WHERE mak.api_key = $1
-            AND (mak.expired_at IS NULL OR mak.expired_at > CURRENT_TIMESTAMP)
+                   'ACTIVE' AS key_status, m.webhook_config->>'secret_hash' AS api_secret_hash
+            FROM merchants m
+            WHERE m.webhook_config->>'api_key' = $1
         `;
         const result = await pool.query(query, [apiKey]);
 
@@ -126,10 +123,9 @@ const resolveMerchantContext = async (req, res, next) => {
         const userId = req.user.id;
         
         const result = await pool.query(`
-            SELECT mu.merchant_id, mu.role_code, mu.is_owner, mu.is_active, m.status AS merchant_status
-            FROM merchant_users mu
-            JOIN merchants m ON m.id = mu.merchant_id
-            WHERE mu.user_id = $1 AND mu.is_active = true
+            SELECT m.id AS merchant_id, 'MERCHANT_OWNER' AS role_code, true AS is_owner, true AS is_active, m.status AS merchant_status
+            FROM merchants m
+            WHERE m.user_id = $1
             LIMIT 1
         `, [userId]);
 

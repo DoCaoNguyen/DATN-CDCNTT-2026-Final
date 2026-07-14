@@ -133,6 +133,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       else if (_currentFilter.service == "Nhận tiền" ||
           _currentFilter.service == "Chuyển tiền")
         type = "TRANSFER";
+      else if (_currentFilter.service == "Thanh toán")
+        type = "PAYMENT";
       else if ([
         "Chi tiêu sinh hoạt",
         "Hóa đơn & Tiện ích",
@@ -324,6 +326,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 tx['entry_type'] == 'DEBIT';
           } else if (_currentFilter.service == "Nạp tiền") {
             matchesService = tx['transaction_type'] == 'DEPOSIT';
+          } else if (_currentFilter.service == "Thanh toán") {
+            matchesService = tx['transaction_type'] == 'PAYMENT';
           } else if (_currentFilter.service == "Chi tiêu sinh hoạt") {
             matchesService = [
               "Ăn uống",

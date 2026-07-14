@@ -23,16 +23,19 @@ class MerchantSettingsScreen extends StatefulWidget {
 class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
   final _client = CustomHttpClient();
   final _webhookController = TextEditingController();
+  final _redirectUrlController = TextEditingController();
   bool _keysVisible = false;
 
   @override
   void initState() {
     super.initState();
     _webhookController.text = widget.merchantData['callback_url'] ?? '';
+    _redirectUrlController.text = widget.merchantData['default_redirect_url'] ?? '';
   }
 
   Future<void> _updateWebhook() async {
     final url = _webhookController.text.trim();
+    final redirectUrl = _redirectUrlController.text.trim();
     if (url.isEmpty) {
       SnackbarUtils.showError(context, 'Vui lòng nhập Webhook URL');
       return;
@@ -42,7 +45,10 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
       final res = await _client.patch(
         Uri.parse('${ApiConfig.baseUrl}/merchant/profile/callback'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"default_callback_url": url}),
+        body: jsonEncode({
+          "default_callback_url": url,
+          "default_redirect_url": redirectUrl,
+        }),
       );
 
       if (!mounted) return;
@@ -89,34 +95,55 @@ class _MerchantSettingsScreenState extends State<MerchantSettingsScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    "Callback URL",
-                    _webhookController,
-                    Icons.link_rounded,
+            const Text(
+              "Callback URL",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildTextField(
+              "Nhập Callback URL",
+              _webhookController,
+              Icons.link_rounded,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Redirect URL",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildTextField(
+              "Nhập Redirect URL",
+              _redirectUrlController,
+              Icons.link_rounded,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: _updateWebhook,
-                  child: const Text(
-                    "Lưu",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                onPressed: _updateWebhook,
+                child: const Text(
+                  "Lưu cấu hình",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 32),
             Row(

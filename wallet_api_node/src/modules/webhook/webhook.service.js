@@ -93,16 +93,14 @@ const webhookService = {
         }
     },
 
-    getMerchantSecret: async (merchantId) => {
+    getMerchantSecret: async (merchantId, environment = 'SANDBOX') => {
         const query = `
             SELECT 
-                mak.api_key,
-                mak.api_secret_hash,
-                mcc.default_callback_url as callback_url 
-            FROM merchant_callback_configs mcc 
-            LEFT JOIN merchant_api_keys mak ON mak.merchant_id = mcc.merchant_id AND mak.status = 'ACTIVE'
-            WHERE mcc.merchant_id = $1
-            ORDER BY mak.created_at DESC
+                webhook_config->>'api_key' as api_key,
+                webhook_config->>'secret_hash' as api_secret_hash,
+                webhook_config->>'callback_url' as callback_url 
+            FROM merchants 
+            WHERE id = $1
             LIMIT 1
         `;
         const result = await pool.query(query, [merchantId]);

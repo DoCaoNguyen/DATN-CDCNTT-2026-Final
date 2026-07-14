@@ -15,10 +15,10 @@ const transactionRepository = {
 
     getWalletByIdentifier: async (identifier) => {
         const query = `
-            SELECT w.id, w.status, w.user_id, u.is_kyc_verified, u.full_name
+            SELECT w.id, w.status, w.user_id, u.is_kyc_verified, u.full_name, u.phone
             FROM wallets w
             JOIN users u ON w.user_id = u.id
-            WHERE u.phone = $1 OR u.email = $1 OR w.wallet_code = $1
+            WHERE u.phone = $1 OR u.email = $1
         `;
         const result = await pool.query(query, [identifier]);
         return result.rows[0];
@@ -26,15 +26,15 @@ const transactionRepository = {
 
     lockAndGetBalance: async (client, walletId) => {
         await client.query(`
-            INSERT INTO wallet_balances (wallet_id, available_balance, locked_balance)
-            VALUES ($1, 0, 0)
-            ON CONFLICT (wallet_id) DO NOTHING;
+            INSERT INTO wallet_balances (wallet_id, currency, available_balance, locked_balance)
+            VALUES ($1, 'VND', 0, 0)
+            ON CONFLICT (wallet_id, currency) DO NOTHING;
         `, [walletId]);
 
         const query = `
             SELECT available_balance 
             FROM wallet_balances 
-            WHERE wallet_id = $1 
+            WHERE wallet_id = $1 AND currency = 'VND'
             FOR UPDATE;
         `;
         const result = await client.query(query, [walletId]);
@@ -45,64 +45,51 @@ const transactionRepository = {
         const query = `
             UPDATE wallet_balances 
             SET available_balance = available_balance + $1, updated_at = CURRENT_TIMESTAMP
-            WHERE wallet_id = $2
+            WHERE wallet_id = $2 AND currency = 'VND'
             RETURNING available_balance;
         `;
         const result = await client.query(query, [amount.toString(), walletId]);
         return BigInt(result.rows[0].available_balance);
     },
 
-    lockAndGetMerchantBalance: async (client, merchantId) => {
+    getWalletIdByMerchantId: async (merchantId) => {
         const query = `
-            SELECT available_balance 
-            FROM merchant_balances 
-            WHERE merchant_id = $1 
-            FOR UPDATE;
+            SELECT w.id 
+            FROM wallets w 
+            JOIN merchants m ON m.user_id = w.user_id 
+            WHERE m.id = $1 
+            LIMIT 1;
         `;
-        const result = await client.query(query, [merchantId]);
-        if (result.rows.length === 0) {
-            throw new Error(`Khong tim thay vi doanh nghiep cho merchant ${merchantId}`);
-        }
-        return BigInt(result.rows[0].available_balance); 
-    },
-
-    addMerchantBalance: async (client, merchantId, amount) => {
-        const query = `
-            UPDATE merchant_balances 
-            SET available_balance = available_balance + $1, updated_at = CURRENT_TIMESTAMP
-            WHERE merchant_id = $2
-            RETURNING available_balance;
-        `;
-        const result = await client.query(query, [amount.toString(), merchantId]);
-        return BigInt(result.rows[0].available_balance);
+        const result = await pool.query(query, [merchantId]);
+        return result.rows.length > 0 ? result.rows[0].id : null;
     },
 
     subtractBalance: async (client, walletId, amount) => {
         const query = `
             UPDATE wallet_balances 
             SET available_balance = available_balance - $1, updated_at = CURRENT_TIMESTAMP
-            WHERE wallet_id = $2
+            WHERE wallet_id = $2 AND currency = 'VND'
             RETURNING available_balance;
         `;
         const result = await client.query(query, [amount.toString(), walletId]);
         return BigInt(result.rows[0].available_balance);
     },
 
-    createLedgerTransaction: async (client, type, sourceId, sourceType, description, amount, currency = 'VND', metadata = null, idempotencyKey = null) => {
+    createLedgerTransaction: async (client, type, sourceId, sourceType, description, amount, currency = 'VND', metadata = null) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO ledger_transactions (id, transaction_no, transaction_type, source_id, source_type, status, description, amount, currency, completed_at, metadata, idempotency_key)
-            VALUES ($1, nextval('transaction_ref_seq')::text, $2, $3, $4, 'SUCCESS', $5, $6, $7, CURRENT_TIMESTAMP, $8, $9) RETURNING id, transaction_no;
+            INSERT INTO ledger_transactions (id, transaction_type, source_id, source_type, status, description, amount, currency, completed_at, metadata)
+            VALUES ($1, $2, $3, $4, 'SUCCESS', $5, $6, $7, CURRENT_TIMESTAMP, $8) RETURNING id;
         `;
-        const result = await client.query(query, [newId, type, sourceId, sourceType, description, amount.toString(), currency, metadata, idempotencyKey]);
+        const result = await client.query(query, [newId, type, sourceId, sourceType, description, amount.toString(), currency, metadata]);
         return result.rows[0].id;
     },
 
     createFailedLedgerTransaction: async (type, description, amount, createdBy = null) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO ledger_transactions (id, transaction_no, transaction_type, status, description, amount, created_by, completed_at)
-            VALUES ($1, nextval('transaction_ref_seq')::text, $2, 'FAILED', $3, $4, $5, CURRENT_TIMESTAMP) RETURNING id, transaction_no;
+            INSERT INTO ledger_transactions (id, transaction_type, status, description, amount, created_by, completed_at)
+            VALUES ($1, $2, 'FAILED', $3, $4, $5, CURRENT_TIMESTAMP) RETURNING id;
         `;
         const result = await pool.query(query, [newId, type, description, amount.toString(), createdBy]);
         return result.rows[0].id;
@@ -140,49 +127,78 @@ const transactionRepository = {
         return newId;
     },
 
-    recordDeposit: async (client, id, depositNo, userId, walletId, amount, ledgerId, depositMethod = 'LINKED_BANK', externalReference = null, idempotencyKey = null) => {
-        idempotencyKey = idempotencyKey || id; // Fallback idempotency key
+
+    recordDeposit: async (client, id, userId, walletId, amount, linkedBankId, externalReference = null, idempotencyKey) => {
+        const metadata = JSON.stringify({
+            linked_bank_id: linkedBankId,
+            external_reference: externalReference
+        });
         const query = `
-            INSERT INTO deposit_transactions (id, deposit_no, user_id, wallet_id, amount, deposit_method, status, external_reference, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, 'SUCCESS', $7, $8);
+            INSERT INTO transactions (id, transaction_no, transaction_type, user_id, wallet_id, amount, status, metadata, idempotency_key)
+            VALUES ($1, nextval('transaction_ref_seq')::text, 'DEPOSIT', $2, $3, $4, 'COMPLETED', $5::jsonb, $6)
+            RETURNING transaction_no;
         `;
-        await client.query(query, [id, depositNo, userId, walletId, amount.toString(), depositMethod, externalReference, idempotencyKey]);
+        const result = await client.query(query, [id, userId, walletId, amount.toString(), metadata, idempotencyKey]);
+        return result.rows[0].transaction_no;
+    },
+
+
+    recordWithdrawal: async (client, id, userId, walletId, amount, linkedBankId, externalReference = null, idempotencyKey) => {
+        const metadata = JSON.stringify({
+            linked_bank_id: linkedBankId,
+            external_reference: externalReference
+        });
+
+        const query = `
+            INSERT INTO transactions (id, transaction_no, transaction_type, user_id, wallet_id, amount, status, metadata, idempotency_key)
+            VALUES ($1, nextval('transaction_ref_seq')::text, 'WITHDRAWAL', $2, $3, $4, 'COMPLETED', $5::jsonb, $6)
+            RETURNING transaction_no;
+        `;
+        
+        const result = await client.query(query, [id, userId, walletId, amount.toString(), metadata, idempotencyKey]);
+        return result.rows[0].transaction_no;
+    },
+
+    recordBankTransfer: async (client, id, userId, walletId, amount, bankCode, accountNumber, externalReference = null, idempotencyKey) => {
+        const metadata = JSON.stringify({
+            bank_code: bankCode,
+            account_number: accountNumber,
+            external_reference: externalReference
+        });
+
+        const query = `
+            INSERT INTO transactions (id, transaction_no, transaction_type, user_id, wallet_id, amount, status, metadata, idempotency_key)
+            VALUES ($1, nextval('transaction_ref_seq')::text, 'WITHDRAWAL', $2, $3, $4, 'COMPLETED', $5::jsonb, $6)
+            RETURNING transaction_no;
+        `;
+        
+        const result = await client.query(query, [id, userId, walletId, amount.toString(), metadata, idempotencyKey]);
+        return result.rows[0].transaction_no;
+    },
+
+    recordTransfer: async (client, id, senderUserId, senderWalletId, receiverUserId, receiverWalletId, amount, description, idempotencyKey, receiverName = null, receiverPhone = null) => {
+        // Lưu metadata đầy đủ: receiver info để query lịch sử dùng được không cần JOIN bảng cũ
+        const metadata = JSON.stringify({
+            receiver_user_id: receiverUserId,
+            receiver_wallet_id: receiverWalletId,
+            receiver_name: receiverName,
+            receiver_phone: receiverPhone
+        });
+
+        const query = `
+            INSERT INTO transactions (id, transaction_no, transaction_type, user_id, wallet_id, amount, status, description, metadata, idempotency_key)
+            VALUES ($1, nextval('transaction_ref_seq')::text, 'TRANSFER', $2, $3, $4, 'COMPLETED', $5, $6::jsonb, $7);
+        `;
+
+        await client.query(query, [id, senderUserId, senderWalletId, amount.toString(), description, metadata, idempotencyKey]);
         return id;
     },
 
-    recordWithdrawal: async (client, id, withdrawalNo, userId, walletId, amount, ledgerId, linkedBankId, externalReference = null) => {
-        const idempotencyKey = id;
-        const query = `
-            INSERT INTO withdrawal_transactions (id, withdrawal_no, user_id, wallet_id, amount, withdrawal_method, status, linked_bank_id, external_reference, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, 'LINKED_BANK', 'SUCCESS', $6, $7, $8);
-        `;
-        await client.query(query, [id, withdrawalNo, userId, walletId, amount.toString(), linkedBankId, externalReference, idempotencyKey]);
-        return id;
-    },
-
-    recordBankTransfer: async (client, id, withdrawalNo, userId, walletId, amount, ledgerId, bankCode, accountNumber, externalReference = null) => {
-        const idempotencyKey = id;
-        const query = `
-            INSERT INTO withdrawal_transactions (id, withdrawal_no, user_id, wallet_id, amount, withdrawal_method, status, bank_code, account_number, external_reference, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, 'BANK_TRANSFER', 'SUCCESS', $6, $7, $8, $9);
-        `;
-        await client.query(query, [id, withdrawalNo, userId, walletId, amount.toString(), bankCode, accountNumber, externalReference, idempotencyKey]);
-        return id;
-    },
 
     getUserKycFaceImage: async (userId) => {
-        const query = `SELECT face_image FROM user_kyc WHERE user_id = $1 AND kyc_status = 'VERIFIED'`;
+        const query = `SELECT face_image FROM user_kyc WHERE user_id = $1 AND kyc_status = 'APPROVED'`;
         const result = await pool.query(query, [userId]);
         return result.rows[0];
-    },
-
-    recordTransfer: async (client, id, transferNo, senderUserId, senderWalletId, receiverUserId, receiverWalletId, amount, description, idempotencyKey) => {
-        const query = `
-            INSERT INTO wallet_transfers (id, transfer_no, sender_user_id, sender_wallet_id, receiver_user_id, receiver_wallet_id, amount, description, status, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'SUCCESS', $9);
-        `;
-        await client.query(query, [id, transferNo, senderUserId, senderWalletId, receiverUserId, receiverWalletId, amount.toString(), description, idempotencyKey]);
-        return id;
     },
 
     getWalletForPinCheck: async (userId) => {
@@ -190,7 +206,7 @@ const transactionRepository = {
             SELECT 
                 w.id, 
                 w.status,
-                COALESCE(w.wallet_code, u.phone) AS wallet_code, 
+                u.phone AS wallet_code, 
                 w.pin_failed_attempts, 
                 w.pin_locked_until,
                 u.pin_hash,
@@ -265,18 +281,18 @@ const transactionRepository = {
             params.push(filters.type.toUpperCase());
         }
 
-        // Filter theo ngày bắt đầu
+        
         if (filters.startDate) {
             paramIndex++;
             whereExtra += ` AND le.created_at >= $${paramIndex}`;
             params.push(new Date(filters.startDate));
         }
 
-        // Filter theo ngày kết thúc
+        
         if (filters.endDate) {
             paramIndex++;
             whereExtra += ` AND le.created_at <= $${paramIndex}`;
-            // Đặt endDate về cuối ngày
+            
             const endDate = new Date(filters.endDate);
             endDate.setHours(23, 59, 59, 999);
             params.push(endDate);
@@ -294,7 +310,8 @@ const transactionRepository = {
             SELECT 
                 le.id AS entry_id,
                 le.ledger_transaction_id AS transaction_id,
-                lt.transaction_no,
+                -- transaction_no lấy từ bảng transactions (nguồn chính thức)
+                tx.transaction_no,
                 lt.transaction_type,
                 COALESCE(lt.category_name, lt.transaction_type) AS category_name,
                 COALESCE(lt.is_expense_counted, true) AS is_expense_counted,
@@ -302,32 +319,33 @@ const transactionRepository = {
                 le.amount,
                 le.balance_before,
                 le.balance_after,
-                lt.description,
+                COALESCE(tx.description, lt.description) AS description,
                 lt.status,
                 lt.currency,
-                (SELECT metadata FROM ledger_transactions WHERE id = lt.id) AS metadata,
+                lt.metadata,
+                tx.metadata AS tx_metadata,
                 le.created_at,
-                wt.description AS transfer_note,
-                COALESCE(u_sender.full_name, u_payer.full_name, u_rp_creator.full_name) AS sender_name,
-                COALESCE(u_sender.phone, u_payer.phone, u_rp_creator.phone) AS sender_phone,
-                COALESCE(u_receiver.full_name, m.merchant_name, CASE WHEN gf.id IS NOT NULL THEN 'Bao lì xì' ELSE NULL END) AS receiver_name,
-                u_receiver.phone AS receiver_phone,
-                COALESCE(dt.external_reference, wt_act.external_reference, wt.transfer_no, po.payment_no) AS external_reference
+                -- Lấy thông tin người gửi qua tx.wallet_id (vì với TRANSFER thì tx.wallet_id là người gửi)
+                CASE WHEN lt.transaction_type = 'TRANSFER' THEN u_sender.full_name ELSE NULL END AS sender_name,
+                CASE WHEN lt.transaction_type = 'TRANSFER' THEN u_sender.phone ELSE NULL END AS sender_phone,
+                
+                CASE WHEN lt.transaction_type IN ('TRANSFER', 'PAYMENT') THEN
+                    COALESCE(
+                        (tx.metadata->>'receiver_name'),
+                        (SELECT m.merchant_name FROM payment_orders po JOIN merchants m ON po.merchant_id = m.id WHERE po.id = (tx.metadata->>'payment_order_id')::uuid)
+                    )
+                ELSE NULL END AS receiver_name,
+                (tx.metadata->>'receiver_phone') AS receiver_phone,
+                -- external_reference lấy từ metadata
+                COALESCE(tx.metadata->>'external_reference', tx.metadata->>'payment_no') AS external_reference
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
-            LEFT JOIN wallet_transfers wt ON lt.source_type = 'TRANSFER' AND lt.source_id = wt.id
-            LEFT JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
+            -- Join vào bảng transactions thống nhất qua source_id
+            LEFT JOIN transactions tx ON lt.source_id = tx.id
+            -- Lấy thông tin sender cho TRANSFER
+            LEFT JOIN wallets w_sender ON tx.wallet_id = w_sender.id
             LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
-            LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
-            LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
-            LEFT JOIN deposit_transactions dt ON lt.source_type = 'DEPOSIT' AND lt.source_id = dt.id
-            LEFT JOIN withdrawal_transactions wt_act ON lt.source_type = 'WITHDRAWAL' AND lt.source_id = wt_act.id
-            LEFT JOIN payment_transactions pt_pay ON lt.source_type = 'PAYMENT' AND lt.source_id = pt_pay.id
-            LEFT JOIN payment_orders po ON pt_pay.payment_order_id = po.id
-            LEFT JOIN merchants m ON po.merchant_id = m.id
-            LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
-            LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
-            
+            -- Red packet
             LEFT JOIN group_fundings gf ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'PAYMENT' AND lt.source_id = gf.id
             LEFT JOIN group_funding_members gfm ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'RECEIVE' AND lt.source_id = gfm.id
             LEFT JOIN group_fundings gf2 ON gfm.group_funding_id = gf2.id
@@ -352,30 +370,16 @@ const transactionRepository = {
                 le.amount,
                 le.balance_before,
                 le.balance_after,
-                lt.description,
+                COALESCE(tx.description, lt.description) AS description,
                 lt.status,
                 lt.currency,
                 le.created_at,
-                wt.description AS transfer_note,
-                COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,
-                COALESCE(u_sender.phone, u_payer.phone) AS sender_phone,
-                COALESCE(u_receiver.full_name, m.merchant_name) AS receiver_name,
-                u_receiver.phone AS receiver_phone,
-                COALESCE(dt.external_reference, wt_act.external_reference, wt.transfer_no, po.payment_no) AS external_reference
+                tx.transaction_no,
+                tx.metadata AS tx_metadata,
+                COALESCE(tx.metadata->>'external_reference', tx.metadata->>'payment_no') AS external_reference
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
-            LEFT JOIN wallet_transfers wt ON lt.source_type = 'TRANSFER' AND lt.source_id = wt.id
-            LEFT JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
-            LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
-            LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
-            LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
-            LEFT JOIN deposit_transactions dt ON lt.source_type = 'DEPOSIT' AND lt.source_id = dt.id
-            LEFT JOIN withdrawal_transactions wt_act ON lt.source_type = 'WITHDRAWAL' AND lt.source_id = wt_act.id
-            LEFT JOIN payment_transactions pt_pay ON lt.source_type = 'PAYMENT' AND lt.source_id = pt_pay.id
-            LEFT JOIN payment_orders po ON pt_pay.payment_order_id = po.id
-            LEFT JOIN merchants m ON po.merchant_id = m.id
-            LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
-            LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
+            LEFT JOIN transactions tx ON lt.source_id = tx.id
             WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT') AND le.created_at >= CURRENT_DATE - INTERVAL '3 months'
             ORDER BY le.created_at DESC
             LIMIT 50;
@@ -443,7 +447,7 @@ const transactionRepository = {
             SELECT 
                 le.id AS entry_id,
                 le.ledger_transaction_id AS transaction_id,
-                lt.transaction_no,
+                tx.transaction_no,
                 lt.transaction_type,
                 lt.transaction_type AS category_name,
                 true AS is_expense_counted,
@@ -451,29 +455,17 @@ const transactionRepository = {
                 le.amount,
                 le.balance_before,
                 le.balance_after,
-                lt.description,
+                COALESCE(tx.description, lt.description) AS description,
                 lt.status,
                 le.created_at,
-                wt.description AS transfer_note,
-                COALESCE(u_sender.full_name, u_payer.full_name) AS sender_name,
-                COALESCE(u_sender.phone, u_payer.phone) AS sender_phone,
-                COALESCE(u_receiver.full_name, m.merchant_name) AS receiver_name,
-                u_receiver.phone AS receiver_phone,
-                COALESCE(dt.external_reference, wt_act.external_reference, wt.transfer_no, po.payment_no) AS external_reference
+                -- Receiver info từ metadata
+                (tx.metadata->>'receiver_name') AS receiver_name,
+                (tx.metadata->>'receiver_phone') AS receiver_phone,
+                COALESCE(tx.metadata->>'external_reference', tx.metadata->>'payment_no') AS external_reference,
+                tx.metadata AS tx_metadata
             FROM ledger_entries le
             JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
-            LEFT JOIN wallet_transfers wt ON lt.source_type = 'TRANSFER' AND lt.source_id = wt.id
-            LEFT JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
-            LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
-            LEFT JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
-            LEFT JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
-            LEFT JOIN deposit_transactions dt ON lt.source_type = 'DEPOSIT' AND lt.source_id = dt.id
-            LEFT JOIN withdrawal_transactions wt_act ON lt.source_type = 'WITHDRAWAL' AND lt.source_id = wt_act.id
-            LEFT JOIN payment_transactions pt_pay ON lt.source_type = 'PAYMENT' AND lt.source_id = pt_pay.id
-            LEFT JOIN payment_orders po ON pt_pay.payment_order_id = po.id
-            LEFT JOIN merchants m ON po.merchant_id = m.id
-            LEFT JOIN wallets w_payer ON pt_pay.payer_wallet_id = w_payer.id
-            LEFT JOIN users u_payer ON w_payer.user_id = u_payer.id
+            LEFT JOIN transactions tx ON lt.source_id = tx.id
             WHERE le.wallet_id = $1 
               AND (lt.currency IS NULL OR lt.currency != 'POINT')
               AND EXTRACT(MONTH FROM le.created_at) = $2 
@@ -487,17 +479,22 @@ const transactionRepository = {
     getChatList: async (walletId) => {
         const query = `
             WITH CTE AS (
+                -- Lấy các giao dịch TRANSFER từ bảng transactions mới
                 SELECT 
-                    wt.id,
-                    wt.amount,
-                    lt.created_at,
-                    CASE WHEN wt.sender_wallet_id = $1 THEN wt.receiver_wallet_id ELSE wt.sender_wallet_id END as counterparty_wallet_id,
-                    CASE WHEN wt.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
-                    wt.description as note,
+                    tx.id,
+                    tx.amount,
+                    tx.created_at,
+                    -- Nếu là người gửi: lấy receiver, nếu là người nhận: lấy sender
+                    CASE WHEN tx.wallet_id = $1 
+                        THEN (tx.metadata->>'receiver_wallet_id')::uuid
+                        ELSE tx.wallet_id
+                    END as counterparty_wallet_id,
+                    CASE WHEN tx.wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
+                    tx.description as note,
                     'TRANSACTION' as message_type
-                FROM wallet_transfers wt
-                JOIN ledger_transactions lt ON lt.source_id = wt.id AND lt.source_type = 'TRANSFER'
-                WHERE wt.sender_wallet_id = $1 OR wt.receiver_wallet_id = $1
+                FROM transactions tx
+                WHERE tx.transaction_type = 'TRANSFER'
+                  AND (tx.wallet_id = $1 OR (tx.metadata->>'receiver_wallet_id')::uuid = $1)
                 
                 UNION ALL
                 
@@ -530,26 +527,35 @@ const transactionRepository = {
     getChatHistory: async (walletId, counterpartyPhone, limit = 20, offset = 0) => {
         const query = `
             WITH AllMessages AS (
+                -- Lấy giao dịch TRANSFER từ bảng transactions mới
                 SELECT 
-                    wt.id as transfer_id,
-                    wt.amount, 
-                    wt.description as note, 
-                    wt.created_at,
-                    CASE WHEN wt.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
-                    u_counterparty.full_name as counterparty_name,
-                    u_counterparty.phone as counterparty_phone,
+                    tx.id as transfer_id,
+                    tx.amount, 
+                    tx.description as note, 
+                    tx.created_at,
+                    CASE WHEN tx.wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
+                    COALESCE(
+                        CASE WHEN tx.wallet_id = $1 THEN tx.metadata->>'receiver_name' END,
+                        u_wallet.full_name
+                    ) as counterparty_name,
+                    COALESCE(
+                        CASE WHEN tx.wallet_id = $1 THEN tx.metadata->>'receiver_phone' END,
+                        u_wallet.phone
+                    ) as counterparty_phone,
                     'TRANSACTION' as message_type,
                     NULL::json as red_packet_info
-                FROM wallet_transfers wt
-                JOIN wallets w_sender ON wt.sender_wallet_id = w_sender.id
-                JOIN wallets w_receiver ON wt.receiver_wallet_id = w_receiver.id
-                JOIN users u_sender ON w_sender.user_id = u_sender.id
-                JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
-                JOIN users u_counterparty ON (CASE WHEN wt.sender_wallet_id = $1 THEN w_receiver.user_id ELSE w_sender.user_id END) = u_counterparty.id
-                WHERE 
-                    (wt.sender_wallet_id = $1 AND u_receiver.phone = $2)
-                    OR 
-                    (wt.receiver_wallet_id = $1 AND u_sender.phone = $2)
+                FROM transactions tx
+                LEFT JOIN wallets w_cp ON (tx.metadata->>'receiver_wallet_id')::uuid = w_cp.id AND tx.wallet_id = $1
+                LEFT JOIN wallets w_sender ON tx.wallet_id = w_sender.id AND tx.wallet_id != $1
+                LEFT JOIN users u_wallet ON COALESCE(w_cp.user_id, w_sender.user_id) = u_wallet.id
+                WHERE tx.transaction_type = 'TRANSFER'
+                  AND (
+                    -- Người gửi: lấy giao dịch mà receiver phone = $2
+                    (tx.wallet_id = $1 AND tx.metadata->>'receiver_phone' = $2)
+                    OR
+                    -- Người nhận: lấy giao dịch mà sender phone = $2
+                    ((tx.metadata->>'receiver_wallet_id')::uuid = $1 AND u_wallet.phone = $2)
+                  )
                 
                 UNION ALL
                 

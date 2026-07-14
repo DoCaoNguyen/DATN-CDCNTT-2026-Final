@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import '../../../core/constants/api_config.dart';
+import '../../../core/services/custom_http_client.dart';
 import 'transfer_confirm_screen.dart';
 
 class TransferAmountScreen extends StatefulWidget {
@@ -31,10 +34,13 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
   String? _amountError;
 
   final FocusNode _amountFocusNode = FocusNode();
+  int _walletBalance = 0;
+  bool _isLoadingBalance = true;
 
   @override
   void initState() {
     super.initState();
+    _fetchWalletBalance();
     if (widget.amount != null) {
       final cleanedAmount = widget.amount!.replaceAll(RegExp(r'[^\d]'), '');
       _amountController.text = _formatAmount(cleanedAmount);
@@ -45,6 +51,47 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
     _amountFocusNode.addListener(() {
       setState(() {});
     });
+  }
+
+  Future<void> _fetchWalletBalance() async {
+    try {
+      final response = await CustomHttpClient().get(
+        Uri.parse(ApiConfig.getWalletBalance),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['data'] != null && data['data']['available_balance'] != null) {
+          if (mounted) {
+            setState(() {
+              _walletBalance = int.tryParse(data['data']['available_balance'].toString()) ?? 0;
+              _isLoadingBalance = false;
+              _validateAmount();
+            });
+          }
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingBalance = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingBalance = false);
+    }
+  }
+
+  void _validateAmount() {
+    final rawAmount = _amountController.text.replaceAll(RegExp(r'[^\d]'), '');
+    final intAmount = int.tryParse(rawAmount) ?? 0;
+    
+    if (rawAmount.isEmpty) {
+      _amountError = null;
+    } else if (intAmount < 1000) {
+      _amountError = 'Số tiền chuyển tối thiểu là 1.000đ';
+    } else if (intAmount > 50000000) {
+      _amountError = 'Số tiền chuyển tối đa là 50.000.000đ';
+    } else if (!_isLoadingBalance && intAmount > _walletBalance) {
+      _amountError = 'Số dư không đủ để thực hiện giao dịch';
+    } else {
+      _amountError = null;
+    }
   }
 
   @override
@@ -185,22 +232,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
                                       ),
                                     );
                                     setState(() {
-                                      final rawAmount = formatted.replaceAll(
-                                        '.',
-                                        '',
-                                      );
-                                      final intAmount =
-                                          int.tryParse(rawAmount) ?? 0;
-                                      if (rawAmount.isNotEmpty &&
-                                          intAmount < 1000) {
-                                        _amountError =
-                                            'Số tiền chuyển tối thiểu là 1.000đ';
-                                      } else if (intAmount > 50000000) {
-                                        _amountError =
-                                            'Số tiền chuyển tối đa là 50.000.000đ/ngày';
-                                      } else {
-                                        _amountError = null;
-                                      }
+                                      _validateAmount();
                                     });
                                   },
                                 ),
@@ -431,7 +463,7 @@ class _TransferAmountScreenState extends State<TransferAmountScreen> {
       onPressed: () {
         setState(() {
           _amountController.text = amount;
-          _amountError = null;
+          _validateAmount();
         });
       },
       child: Text('${amount}đ'),

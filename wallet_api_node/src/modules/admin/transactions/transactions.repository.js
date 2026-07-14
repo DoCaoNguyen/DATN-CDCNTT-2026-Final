@@ -202,7 +202,7 @@ const transactionsRepository = {
     findLedgerEntriesByTransactionId: async (transactionId) => {
         const { rows } = await pool.query(`
             SELECT le.*, lt.transaction_no, 
-                   w.wallet_code, w.wallet_no, u.full_name as owner_name
+                   u.full_name as owner_name
             FROM ledger_entries le
             JOIN ledger_transactions lt ON lt.id = le.ledger_transaction_id
             LEFT JOIN wallets w ON w.id = le.wallet_id

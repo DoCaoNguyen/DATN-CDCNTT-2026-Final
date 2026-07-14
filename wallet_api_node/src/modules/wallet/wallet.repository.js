@@ -4,12 +4,7 @@ const { v7: uuidv7 } = require('uuid');
 
 const walletRepository = {
     
-    create: async (client, userId, walletNo) => {
-        const newId = uuidv7();
-        const query = `INSERT INTO wallets (id, user_id, wallet_no) VALUES ($1, $2, $3)`;
-        await client.query(query, [newId, userId, walletNo]);
-        return newId;
-    },
+
 
     findByUserId: async (userId) => {
         
@@ -21,8 +16,8 @@ const walletRepository = {
     getBalanceByUserId: async (userId) => {
         const query = `
             SELECT 
-                COALESCE(w.wallet_code, u.phone) AS wallet_code, 
-                w.currency, 
+                u.phone AS wallet_code, 
+                wb.currency, 
                 w.status, 
                 wb.available_balance, 
                 wb.locked_balance,
@@ -50,24 +45,14 @@ const walletRepository = {
         return result.rows[0];
     },
 
-    updateWalletCode: async (userId, walletCode) => {
-        const query = `
-            UPDATE wallets 
-            SET wallet_code = $1 
-            WHERE user_id = $2 
-            RETURNING wallet_code;
-        `;
-        const result = await pool.query(query, [walletCode, userId]);
-        return result.rows[0]; 
-    },
 
     updateBalanceWithClient: async (client, walletId, availableBalanceDiff, lockedBalanceDiff = 0n) => {
         const query = `
-            UPDATE wallets 
+            UPDATE wallet_balances 
             SET available_balance = available_balance + $2,
                 locked_balance = locked_balance + $3,
-                balance_updated_at = CURRENT_TIMESTAMP
-            WHERE id = $1
+                updated_at = CURRENT_TIMESTAMP
+            WHERE wallet_id = $1 AND currency = 'VND'
             RETURNING *
         `;
         const result = await client.query(query, [walletId, availableBalanceDiff, lockedBalanceDiff]);

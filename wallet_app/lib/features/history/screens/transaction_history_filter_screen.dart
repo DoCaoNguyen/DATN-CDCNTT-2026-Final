@@ -70,6 +70,11 @@ class _TransactionHistoryFilterScreenState
       "icon": Icons.account_balance_wallet_rounded,
       "color": Colors.blue,
     },
+    {
+      "label": "Thanh toán",
+      "icon": Icons.qr_code_scanner_rounded,
+      "color": Colors.orange,
+    },
   ];
 
   List<String> _getMonths() {

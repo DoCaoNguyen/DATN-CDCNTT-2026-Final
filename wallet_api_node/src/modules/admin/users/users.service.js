@@ -1,7 +1,5 @@
 const bcrypt = require('bcrypt');
 const usersRepository = require('./users.repository');
-const walletRepository = require('../../wallet/wallet.repository');
-const authService = require('../../auth/auth.service');
 const auditLogService = require('../../system/audit_log.service');
 const { ensureWriteAccess, sanitizeUserInput, normalizeOptional, SYSTEM_ROLES, withTransaction, isSuperAdmin, writeAuditLog } = require('../_shared');
 const { sendStaffOnboardingEmail } = require('../../../shared/services/email.service');
@@ -11,6 +9,7 @@ const {
     normalizeVietnamPhone,
     normalizeFullName
 } = require('../_shared/validation.util');
+const pool = require('../../../config/db');
 
 function deriveUserType(roleCodes) {
     if (!roleCodes || roleCodes.length === 0) return 'USER';
@@ -23,12 +22,20 @@ function deriveUserType(roleCodes) {
 
 const usersService = {
     listUsers: async (query) => {
+        let uType = query.user_type;
+        if (uType) {
+            if (typeof uType === 'string') {
+                uType = uType.replace(/PERSONAL/gi, 'USER');
+            } else if (Array.isArray(uType)) {
+                uType = uType.map(t => t.toUpperCase() === 'PERSONAL' ? 'USER' : t);
+            }
+        }
         return usersRepository.listUsers({
             page: query.page,
             limit: query.limit,
             q: query.q || query.search,
             status: query.status,
-            userType: query.user_type
+            userType: uType
         });
     },
 
@@ -495,12 +502,10 @@ const usersService = {
         let emailSent = false;
         
         if (user.roles && user.roles.includes('MERCHANT_OWNER')) {
-            const pool = require('../../../config/db');
             const mRes = await pool.query(`
                 SELECT m.merchant_name 
                 FROM merchants m
-                JOIN merchant_users mu ON m.id = mu.merchant_id
-                WHERE mu.user_id = $1
+                WHERE m.user_id = $1
             `, [targetUserId]);
             const merchantName = mRes.rows[0]?.merchant_name || 'Đối tác';
             

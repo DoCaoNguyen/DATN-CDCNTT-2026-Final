@@ -14,7 +14,7 @@ const merchantController = {
     register: async (req, res) => {
         try {
             const userId = req.user.userId;
-            const { merchant_name, contact_phone, callback_url } = req.body;
+            const { merchant_name, contact_phone, callback_url, redirect_url } = req.body;
 
             if (!merchant_name || !contact_phone) {
                 return res.status(400).json({ error: 'Tên và số điện thoại đối tác là bắt buộc' });
@@ -30,6 +30,7 @@ const merchantController = {
                 merchant_name,
                 contact_phone,
                 callback_url,
+                redirect_url,
                 user_id: userId,
                 secret_key: secretHash
             };
@@ -148,9 +149,6 @@ const merchantController = {
             const result = await merchantService.createApiKey(merchant_id, key_name, req.user.userId || req.user.id, ipAddress, userAgent);
             res.status(201).json({ success: true, message: 'Tạo API Key thành công', data: result });
         } catch (err) {
-            if (err.code === '23505' && err.constraint === 'uq_merchant_api_keys_active_env') {
-                return res.status(409).json({ success: false, message: 'Đã tồn tại API Key đang hoạt động trong môi trường này. Vui lòng thu hồi (revoke) hoặc làm mới (rotate) key cũ trước khi tạo key mới.' });
-            }
             console.error(err);
             res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
         }
@@ -564,82 +562,6 @@ const merchantController = {
         }
     },
 
-    withdrawToWallet: async (req, res) => {
-        try {
-            const userId = req.user.userId || req.user.id;
-            const { merchant_id: merchantId, is_owner, role_code } = req.merchantContext;
-            const { amount } = req.body;
-
-            const idempotencyKey = req.headers['idempotency-key'];
-
-            if (!amount || amount <= 0) {
-                return res.status(400).json({ error: 'Số tiền rút không hợp lệ' });
-            }
-
-            if (!is_owner && role_code !== 'MERCHANT_OWNER') {
-                return res.status(403).json({ error: 'Chỉ chủ cửa hàng mới có quyền rút doanh thu' });
-            }
-
-            const result = await merchantService.withdrawToWallet(merchantId, userId, amount, idempotencyKey);
-
-            res.status(200).json({
-                message: 'Rút doanh thu về ví cá nhân thành công',
-                data: result
-            });
-        } catch (error) {
-            console.error('Lỗi rút doanh thu merchant:', error);
-            if (
-                error.message.includes('Số dư cửa hàng không đủ') ||
-                error.message.includes('tối thiểu') ||
-                error.message.includes('tối đa') ||
-                error.message.includes('Rút tiền thất bại')
-            ) {
-                return res.status(400).json({ error: error.message });
-            }
-            res.status(500).json({ error: 'Lỗi hệ thống khi rút doanh thu' });
-        }
-    },
-
-    withdrawToBank: async (req, res) => {
-        try {
-            const userId = req.user.userId || req.user.id;
-            const { merchant_id: merchantId, is_owner, role_code } = req.merchantContext;
-            const { amount, pin, bank_code, account_number } = req.body;
-            const idempotencyKey = req.headers['idempotency-key'];
-
-            if (!amount || amount <= 0) {
-                return res.status(400).json({ error: 'Số tiền rút không hợp lệ' });
-            }
-
-            if (!is_owner && role_code !== 'MERCHANT_OWNER') {
-                return res.status(403).json({ error: 'Chỉ chủ cửa hàng mới có quyền rút doanh thu' });
-            }
-
-            if (!bank_code || !account_number) {
-                return res.status(400).json({ error: 'Vui lòng cung cấp ngân hàng và số tài khoản nhận' });
-            }
-
-            const result = await merchantService.withdrawToBank(merchantId, userId, amount, pin, bank_code, account_number, idempotencyKey);
-
-            res.status(200).json({
-                message: 'Rút doanh thu về tài khoản ngân hàng thành công',
-                data: result
-            });
-        } catch (error) {
-            console.error('Lỗi rút doanh thu merchant về ngân hàng:', error);
-            if (
-                error.message.includes('Số dư cửa hàng không đủ') ||
-                error.message.includes('tối thiểu') ||
-                error.message.includes('tối đa') ||
-                error.message.includes('Rút tiền thất bại') ||
-                error.message.includes('Mã PIN không chính xác') ||
-                error.message.includes('Không tìm thấy ví cá nhân')
-            ) {
-                return res.status(400).json({ error: error.message });
-            }
-            res.status(500).json({ error: 'Lỗi hệ thống khi rút doanh thu về ngân hàng' });
-        }
-    }
 
 };
 

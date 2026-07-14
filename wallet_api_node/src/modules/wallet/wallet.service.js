@@ -11,7 +11,7 @@ const walletService = {
         }
 
         return {
-            wallet_code: wallet.wallet_code,
+
             currency: wallet.currency,
             status: wallet.status,
             available_balance: wallet.available_balance ? wallet.available_balance.toString() : "0",

@@ -12,19 +12,12 @@ const merchantsService = {
         ensureWriteAccess(actor);
         
         // Validation Utilities
-        const { normalizeMerchantName, normalizeTaxCode, normalizeVietnamPhone, normalizeEmail, normalizeFullName, normalizeUsername } = require('../_shared/validation.util');
+        const { normalizeMerchantName, normalizeFullName, normalizeUsername, normalizeEmail, normalizeVietnamPhone } = require('../_shared/validation.util');
 
         // Normalize Merchant Data
         data.merchant_name = normalizeMerchantName(data.merchant_name);
-        data.email = normalizeEmail(data.email) || null;
-        data.phone = normalizeVietnamPhone(data.phone) || null;
-        data.tax_code = normalizeTaxCode(data.tax_code) || null;
-        data.representative_name = data.representative_name ? String(data.representative_name).trim() || null : null;
-        data.address = data.address ? String(data.address).trim() || null : null;
 
-        // Check Merchant Conflicts (Only Email for Merchant)
-        const merchantConflicts = await merchantsRepository.checkConflicts(data.email);
-        const allErrors = [...merchantConflicts];
+        const allErrors = [];
 
         // Normalize & Check Owner Conflicts
         if (data.owner_info) {
@@ -61,136 +54,109 @@ const merchantsService = {
             throw error;
         }
 
-        const MAX_RETRIES = 3;
-        let attempt = 0;
-
-        while (attempt < MAX_RETRIES) {
-            attempt++;
-            const pool = merchantsRepository.getPool();
-            const client = await pool.connect();
-            try {
-                await client.query('BEGIN');
-                
-                // 1. Tự sinh merchant_code
-                data.merchant_code = await merchantsRepository.generateNextMerchantCode(client);
-
-                // 2. Tạo merchant
-                const merchant = await merchantsRepository.createMerchant(data, client);
-
-                // 3. Tạo Merchant Owner user (nếu có yêu cầu)
-                let rawPassword = null;
-                let userId = null;
-                if (data.owner_info) {
-                    const usersRepository = require('../users/users.repository');
-                    const bcrypt = require('bcrypt');
-                    const cryptoStr = require('crypto');
-                    
-                    rawPassword = cryptoStr.randomBytes(6).toString('hex');
-                    const passwordHash = await bcrypt.hash(rawPassword, 10);
-                    
-                    userId = await usersRepository.createUser(client, {
-                        fullName: data.owner_info.full_name,
-                        username: data.owner_info.username,
-                        email: data.owner_info.email,
-                        phone: data.owner_info.phone,
-                        passwordHash,
-                        userType: 'MERCHANT_USER',
-                        status: 'ACTIVE',
-                        isForceChangePassword: true
-                    });
-
-                    await usersRepository.replaceRolesByCodes(client, userId, ['MERCHANT_OWNER']);
-                    
-                    const crypto = require('crypto');
-                    await client.query(`
-                        INSERT INTO merchant_users (id, merchant_id, user_id, role_code, is_owner)
-                        VALUES ($1, $2, $3, $4, $5)
-                    `, [crypto.randomUUID(), merchant.id, userId, 'MERCHANT_OWNER', true]);
+        const pool = merchantsRepository.getPool();
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            const usersRepository = require('../users/users.repository');
+            let userId = null;
+            
+            if (data.owner_info && data.owner_info.username) {
+                const existingUser = await usersRepository.findByUsernameOrEmail(client, data.owner_info.username);
+                if (existingUser) {
+                    throw new Error('Username_Already_Exists');
                 }
-                
-                // 4. Nếu có data callback thì tạo config
-                let callbackConfig = null;
-                const hasCallback = data.callback && (data.callback.default_callback_url || data.callback.default_redirect_url);
-                
-                if (hasCallback) {
-                    callbackConfig = await merchantsRepository.createCallbackConfig(merchant.id, data.callback, client);
-                }
-
-                // 5. Tạo merchant_balances = 0
-                await merchantsRepository.createMerchantBalance(merchant.id, client);
-
-                const sanitizeCallbackConfig = (config) => {
-                    if (!config) return null;
-                    const { webhook_secret_hash, ...rest } = config;
-                    return rest;
-                };
-
-                await writeAuditLog({
-                    actorId: actor.userId,
-                    action: 'merchant.create',
-                    entityType: 'MERCHANT',
-                    entityId: merchant.id,
-                    oldData: null,
-                    newData: { merchant_code: merchant.merchant_code, merchant_name: merchant.merchant_name },
-                    ipAddress: actor.ipAddress,
-                    userAgent: actor.userAgent
-                });
-
-                await client.query('COMMIT');
-
-                // 6. Gửi email onboarding sau khi commit xong
-                let emailSent = false;
-                if (data.owner_info && data.owner_info.email) {
-                    emailSent = await emailService.sendOnboardingEmail(data.owner_info.email, {
-                        merchantName: merchant.merchant_name,
-                        username: data.owner_info.username,
-                        password: rawPassword
-                    });
-                }
-
-                const responseData = {
-                    ...merchant,
-                    callback_config: sanitizeCallbackConfig(callbackConfig),
-                    email_sent: emailSent,
-                    owner_user_id: userId
-                };
-
-                return responseData;
-            } catch (error) {
-                await client.query('ROLLBACK');
-                
-                // Lỗi duplicate key trên merchant_code (23505)
-                if (error.code === '23505' && error.constraint === 'merchants_merchant_code_key') {
-                    if (attempt < MAX_RETRIES) {
-                        console.warn(`Duplicate merchant_code generated, retrying... (Attempt ${attempt}/${MAX_RETRIES})`);
-                        client.release();
-                        continue;
-                    } else {
-                        client.release();
-                        throw new Error('Failed to generate unique merchant_code after multiple attempts');
+                if (data.owner_info.email) {
+                    const existingEmail = await usersRepository.findByUsernameOrEmail(client, data.owner_info.email);
+                    if (existingEmail) {
+                        throw new Error('Email_Already_Exists');
                     }
                 }
                 
-                // Lỗi duplicate email (23505)
-                if (error.code === '23505' && error.constraint === 'merchants_email_unique') {
-                    client.release();
-                    const conflictErr = new Error('Resource Conflict');
-                    conflictErr.statusCode = 409;
-                    conflictErr.code = 'RESOURCE_CONFLICT';
-                    conflictErr.errors = [{ field: 'email', code: 'EMAIL_ALREADY_EXISTS', message: 'Email này đã được sử dụng cho một Merchant khác.' }];
-                    throw conflictErr;
-                }
+                const bcrypt = require('bcryptjs');
+                const passwordHash = await bcrypt.hash(data.owner_info.password || 'Merchant@123', 10);
+                
+                userId = await usersRepository.createUser(client, {
+                    fullName: data.owner_info.full_name,
+                    username: data.owner_info.username,
+                    email: data.owner_info.email,
+                    phone: data.owner_info.phone,
+                    passwordHash,
+                    userType: 'MERCHANT_USER',
+                    status: 'ACTIVE',
+                    isForceChangePassword: true
+                });
 
-                client.release();
-                throw error;
-            } finally {
-                // Ensure release only if not released in catch
-                if (client && typeof client.release === 'function' && !client._ending && !client._ended) {
-                    try { client.release(); } catch(e){}
-                }
+                await usersRepository.replaceRolesByCodes(client, userId, ['MERCHANT_OWNER']);
+            }
+
+            // 2. Tạo merchant với user_id
+            const merchantData = {
+                ...data,
+                user_id: userId
+            };
+            
+            const merchant = await merchantsRepository.createMerchant(merchantData, client);
+            
+            // 4. Nếu có data callback thì tạo config
+            let callbackConfig = null;
+            const hasCallback = data.callback && (data.callback.default_callback_url || data.callback.default_redirect_url);
+            
+            if (hasCallback) {
+                callbackConfig = await merchantsRepository.createCallbackConfig(merchant.id, data.callback, client);
+            }
+
+
+            const sanitizeCallbackConfig = (config) => {
+                if (!config) return null;
+                const { webhook_secret_hash, ...rest } = config;
+                return rest;
+            };
+
+            await writeAuditLog({
+                actorId: actor.userId,
+                action: 'merchant.create',
+                entityType: 'MERCHANT',
+                entityId: merchant.id,
+                oldData: null,
+                newData: { merchant_name: merchant.merchant_name },
+                ipAddress: actor.ipAddress,
+                userAgent: actor.userAgent
+            });
+
+            await client.query('COMMIT');
+
+            // 6. Gửi email onboarding sau khi commit xong
+            let emailSent = false;
+            if (data.owner_info && data.owner_info.email) {
+                emailSent = await emailService.sendOnboardingEmail(data.owner_info.email, {
+                    merchantName: merchant.merchant_name,
+                    username: data.owner_info.username,
+                    password: data.owner_info.password || 'Merchant@123'
+                });
+            }
+
+            const responseData = {
+                ...merchant,
+                callback_config: sanitizeCallbackConfig(callbackConfig),
+                email_sent: emailSent,
+                owner_user_id: userId
+            };
+
+            return responseData;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            client.release();
+            throw error;
+        } finally {
+            // Ensure release only if not released in catch
+            if (client && typeof client.release === 'function' && !client._ending && !client._ended) {
+                try { client.release(); } catch(e){}
             }
         }
     },
+
 
     updateMerchant: async (id, data, actor) => {
         ensureWriteAccess(actor);
@@ -410,7 +376,7 @@ const merchantsService = {
         if (!merchant) throw new Error('Merchant_Not_Found');
         if (merchant.status === 'ACTIVE') throw new Error('Merchant_Already_Active');
 
-        const updated = await merchantsRepository.updateMerchantStatus(id, 'ACTIVE', reason);
+        const updated = await merchantsRepository.updateMerchantStatus(id, 'ACTIVE');
 
         await writeAuditLog({
             actorId: actor.userId,
@@ -418,7 +384,7 @@ const merchantsService = {
             entityType: 'MERCHANT',
             entityId: id,
             oldData: { status: merchant.status },
-            newData: { status: 'ACTIVE', risk_note: reason || merchant.risk_note },
+            newData: { status: 'ACTIVE', reason },
             ipAddress: actor.ipAddress,
             userAgent: actor.userAgent
         });
@@ -435,7 +401,7 @@ const merchantsService = {
         if (!merchant) throw new Error('Merchant_Not_Found');
         if (merchant.status === 'REJECTED') throw new Error('Merchant_Already_Rejected');
 
-        const updated = await merchantsRepository.updateMerchantStatus(id, 'REJECTED', reason);
+        const updated = await merchantsRepository.updateMerchantStatus(id, 'REJECTED');
 
         await writeAuditLog({
             actorId: actor.userId,
@@ -443,7 +409,7 @@ const merchantsService = {
             entityType: 'MERCHANT',
             entityId: id,
             oldData: { status: merchant.status },
-            newData: { status: 'REJECTED', risk_note: reason },
+            newData: { status: 'REJECTED', reason },
             ipAddress: actor.ipAddress,
             userAgent: actor.userAgent
         });
@@ -460,7 +426,7 @@ const merchantsService = {
         if (!merchant) throw new Error('Merchant_Not_Found');
         if (merchant.status === 'SUSPENDED') throw new Error('Merchant_Already_Suspended');
 
-        const updated = await merchantsRepository.updateMerchantStatus(id, 'SUSPENDED', reason);
+        const updated = await merchantsRepository.updateMerchantStatus(id, 'SUSPENDED');
 
         await writeAuditLog({
             actorId: actor.userId,
@@ -468,7 +434,7 @@ const merchantsService = {
             entityType: 'MERCHANT',
             entityId: id,
             oldData: { status: merchant.status },
-            newData: { status: 'SUSPENDED', risk_note: reason },
+            newData: { status: 'SUSPENDED', reason },
             ipAddress: actor.ipAddress,
             userAgent: actor.userAgent
         });
@@ -484,7 +450,7 @@ const merchantsService = {
         if (!merchant) throw new Error('Merchant_Not_Found');
         if (merchant.status === 'ACTIVE') throw new Error('Merchant_Already_Active');
 
-        const updated = await merchantsRepository.updateMerchantStatus(id, 'ACTIVE', reason);
+        const updated = await merchantsRepository.updateMerchantStatus(id, 'ACTIVE');
 
         await writeAuditLog({
             actorId: actor.userId,
@@ -492,7 +458,7 @@ const merchantsService = {
             entityType: 'MERCHANT',
             entityId: id,
             oldData: { status: merchant.status },
-            newData: { status: 'ACTIVE', risk_note: reason || merchant.risk_note },
+            newData: { status: 'ACTIVE', reason },
             ipAddress: actor.ipAddress,
             userAgent: actor.userAgent
         });

@@ -1,26 +1,24 @@
 const crypto = require('crypto');
+const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
 const paymentRepo = require('./payment.repository');
 const txRepo = require('../transaction/transaction.repository');
 const traceEventService = require('../system/trace_event.service');
-// [SECURITY FIX] Import hàm xác thực bảo mật giao dịch (PIN + FaceID)
 const { verifyTransactionSecurity } = require('../../utils/security.util');
 const kycService = require('../kyc/kyc.service');
 const { broadcastToAdminDashboard } = require('../../utils/socket');
 
 const paymentService = {
-    createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null) => {
+    createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null, environment = 'SANDBOX') => {
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
-
-            const orderCode = `ORD-${Date.now()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+            const orderCode = `ORD_${uuidv7().replace(/-/g, '').toUpperCase()}`;
             const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
 
-
             const orderId = await paymentRepo.createOrder(
-                client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId
+                client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId, environment
             );
 
 
@@ -31,13 +29,11 @@ const paymentService = {
             const qrContent = `mio://pay?token=${qrToken}&amount=${amount}&description=${encodeURIComponent(description || '')}`;
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=L&data=${encodeURIComponent(qrContent)}`;
 
-            // Lưu thông tin mã QR
             await paymentRepo.createQrCode(client, orderId, qrContent, qrToken, expiredAt);
 
             await client.query('COMMIT');
 
             return {
-                // Định dạng chuẩn PayOS để dễ tích hợp
                 orderCode: orderCode,
                 amount: Number(amount),
                 description: description || null,
@@ -56,8 +52,7 @@ const paymentService = {
         }
     },
 
-    processQrPayment: async (userId, qrToken, pin, faceImagePath) => {
-        // Xác thực PIN/FaceID TRƯỚC khi bắt đầu giao dịch (giống transfer/deposit)
+    processQrPayment: async (userId, qrToken, pin, faceImagePath, idempotencyKey) => {
         const walletForPin = await txRepo.getWalletForPinCheck(userId);
         if (!walletForPin) throw new Error('Wallet_Not_Found');
 
@@ -74,13 +69,11 @@ const paymentService = {
             if (new Date() > new Date(order.expired_at)) throw new Error('QR_Expired');
             if (order.status !== 'PENDING') throw new Error('Order_Already_Processed');
 
-            // [SECURITY FIX] Xác thực bảo mật theo mức tiền (PIN < 30M, FaceID >= 30M)
             await verifyTransactionSecurity(order.amount, pin, faceImagePath, walletForPin, userId, txRepo, kycService);
 
             const wallet = await txRepo.getWalletByUserId(userId);
             if (!wallet) throw new Error('Wallet_Not_Found');
 
-            // [SECURITY FIX] Kiểm tra hạn mức thanh toán trong ngày (50 triệu VND)
             const dailyTotal = await txRepo.getDailyTotal(wallet.id, 'PAYMENT');
             if (dailyTotal + BigInt(order.amount) > 50000000n) {
                 throw new Error('Daily_Limit_Exceeded');
@@ -95,7 +88,7 @@ const paymentService = {
             await paymentRepo.updateQrCodeStatus(client, qrToken, 'USED');
 
 
-            const { v7: uuidv7 } = require('uuid');
+        
             const paymentTxId = uuidv7();
 
             const ledgerTxId = await txRepo.createLedgerTransaction(
@@ -109,12 +102,11 @@ const paymentService = {
             );
 
 
-            await paymentRepo.createPaymentTransaction(
-                client, order.order_id, userId, wallet.id, order.amount, paymentTxId
+              await paymentRepo.recordPaymentTransaction(
+                client, paymentTxId, order.order_id, userId, wallet.id, order.amount, idempotencyKey
             );
 
             let updatedMerchantBalance = null;
-            // [NEW] CREDIT TIỀN CHO MERCHANT VÀ THU PHÍ MDR
             if (order.merchant_id) {
                 // TÍNH PHÍ MDR TỪ CẤU HÌNH
                 let feeAmount = 0n;
@@ -128,13 +120,16 @@ const paymentService = {
                     netAmount = orderAmountBig - feeAmount;
                 }
 
-                // Cập nhật số dư vào merchant_balances (Thay vì wallet_balances cá nhân)
-                const mBalanceBefore = await txRepo.lockAndGetMerchantBalance(client, order.merchant_id);
-                const mBalanceAfter = await txRepo.addMerchantBalance(client, order.merchant_id, netAmount);
+                // Cập nhật số dư vào ví cá nhân của người sở hữu Merchant (Thay vì merchant_balances)
+                const merchantOwnerWalletId = await txRepo.getWalletIdByMerchantId(order.merchant_id);
+                if (!merchantOwnerWalletId) throw new Error('Không tìm thấy ví của chủ Merchant');
+                
+                const mBalanceBefore = await txRepo.lockAndGetBalance(client, merchantOwnerWalletId);
+                const mBalanceAfter = await txRepo.addBalance(client, merchantOwnerWalletId, netAmount);
                 updatedMerchantBalance = mBalanceAfter.toString();
 
                 await txRepo.createLedgerEntry(
-                    client, ledgerTxId, order.merchant_id, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT'
+                    client, ledgerTxId, merchantOwnerWalletId, 'CREDIT', netAmount, mBalanceBefore, mBalanceAfter, 'MERCHANT_OWNER_WALLET'
                 );
 
                 // GHI NHẬN DOANH THU PHÍ HỆ THỐNG
@@ -175,7 +170,8 @@ const paymentService = {
             if (order.merchant_id) {
                 let finalCallbackUrl = order.callback_url;
                 if (!finalCallbackUrl) {
-                    const merchantConfig = await webhookService.getMerchantSecret(order.merchant_id);
+                    const env = order.metadata ? order.metadata.environment : 'SANDBOX';
+                    const merchantConfig = await webhookService.getMerchantSecret(order.merchant_id, env);
                     if (merchantConfig && merchantConfig.callback_url) {
                         finalCallbackUrl = merchantConfig.callback_url;
                     }
@@ -192,7 +188,8 @@ const paymentService = {
                         amount: order.amount ? order.amount.toString() : '0',
                         wallet_transaction_id: paymentTxId.toString(),
                         phone_number: userProfile ? userProfile.phone : '',
-                        callback_url: finalCallbackUrl
+                        callback_url: finalCallbackUrl,
+                        environment: order.metadata ? order.metadata.environment : 'SANDBOX'
                     };
 
                     // Idempotency key using payment transaction ID to prevent duplicate logs
@@ -242,11 +239,8 @@ const paymentService = {
                 timestamp: new Date().toISOString()
             });
 
-            // ==========================================
-            // 🚀 BẮT ĐẦU BACKGROUND JOBS SAU KHI ĐÃ COMMIT
-            // ==========================================
+    
 
-            // 1. Tích điểm Loyalty ngầm (Không await)
             const LoyaltyIntegrationService = require('./LoyaltyIntegrationService');
             LoyaltyIntegrationService.syncPointsAfterPayment(userId, paymentTxId, order.amount)
                 .catch(err => console.error('[LOYALTY_BACKGROUND_JOB_ERROR]', err.message));
@@ -288,8 +282,8 @@ const paymentService = {
         try {
             await client.query('BEGIN');
 
-            const orderCode = 'REQ' + Date.now() + Math.floor(Math.random() * 1000);
-            const expiredAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+            const orderCode = `REQ_${uuidv7().replace(/-/g, '').toUpperCase()}`;
+            const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
 
             const orderId = await paymentRepo.createUserOrder(
                 client, orderCode, amount, description, expiredAt

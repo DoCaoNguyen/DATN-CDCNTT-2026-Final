@@ -3,16 +3,12 @@ const { v7: uuidv7 } = require('uuid');
 const { buildPagination } = require('../_shared');
 const { mapUserRow } = require('./users.mapper');
 
-/**
- * SQL SELECT dùng chung cho listUsers và findUserById
- * Tránh duplicate query
- */
 const USER_SELECT = `
     u.id, u.user_type, u.full_name, u.username, u.email, u.phone, u.status,
     u.failed_login_attempts, u.locked_until, u.last_login_at,
     u.is_kyc_verified, u.token_version, u.created_at, u.updated_at,
     COALESCE(ARRAY_AGG(DISTINCT r.code) FILTER (WHERE r.code IS NOT NULL), '{}') AS roles,
-    w.id AS wallet_id, w.wallet_no, w.wallet_code, w.wallet_type, w.currency,
+    w.id AS wallet_id, w.wallet_type, wb.currency,
     w.status AS wallet_status, wb.available_balance, wb.locked_balance,
     wb.updated_at AS balance_updated_at
 `;
@@ -46,7 +42,7 @@ const usersRepository = {
         }
         if (status) {
             params.push(status);
-            where.push(`u.status = $${params.length}::user_status`);
+            where.push(`u.status = $${params.length}`);
         }
         if (userType) {
             // Hỗ trợ cả chuỗi đơn ('USER') và chuỗi CSV ('ADMIN,SUPPORT_STAFF')
@@ -56,11 +52,11 @@ const usersRepository = {
 
             if (types.length === 1) {
                 params.push(types[0]);
-                where.push(`u.user_type = $${params.length}::user_type`);
+                where.push(`u.user_type = $${params.length}`);
             } else if (types.length > 1) {
                 // Dùng ANY với mảng cast để lọc nhiều user_type cùng lúc
                 params.push(types);
-                where.push(`u.user_type = ANY($${params.length}::user_type[])`);
+                where.push(`u.user_type = ANY($${params.length}::varchar[])`);
             }
         }
 
@@ -132,7 +128,7 @@ const usersRepository = {
                 id, user_type, full_name, username, email, phone, password_hash, status,
                 is_force_change_password, temporary_password_expires_at
             )
-            VALUES ($1, $2::user_type, $3, $4, $5, $6, $7, $8::user_status, $9, $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id
         `, [
             id,
@@ -199,7 +195,7 @@ const usersRepository = {
             if (Object.prototype.hasOwnProperty.call(updates, inputKey)) {
                 if (inputKey === 'user_type') {
                     params.push(updates[inputKey]);
-                    fields.push(`${column} = $${params.length}::user_type`);
+                    fields.push(`${column} = $${params.length}`);
                 } else {
                     params.push(updates[inputKey]);
                     fields.push(`${column} = $${params.length}`);

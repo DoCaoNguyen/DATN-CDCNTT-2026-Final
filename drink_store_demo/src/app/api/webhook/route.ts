@@ -4,21 +4,27 @@ import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    // Đọc raw body TEXT trước khi parse - để verify signature trên đúng chuỗi được gửi đến
+    const rawBody = await req.text();
     const signature = req.headers.get('x-vio-signature') || req.headers.get('x-webhook-signature');
     const secretKey = process.env.MERCHANT_SECRET_KEY;
 
-    // Nếu hệ thống Merchant có cấu hình SECRET_KEY, ta verify chữ ký
+    // Verify HMAC trên rawBody string (cùng chuỗi mà E-Wallet đã ký)
+    // Nếu verify trên JSON.stringify(JSON.parse(rawBody)) sẽ bị sai do key order bị đảo
     if (secretKey && signature) {
-      const hmac = crypto.createHmac('sha256', secretKey);
-      const computedSignature = hmac.update(JSON.stringify(body)).digest('hex');
+      const computedSignature = crypto
+        .createHmac('sha256', secretKey)
+        .update(rawBody)  // Ký trên chuỗi gốc, không phải re-serialized
+        .digest('hex');
       
       if (computedSignature !== signature) {
+        console.error(`[Webhook] Signature mismatch! Expected: ${computedSignature}, Got: ${signature}`);
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
 
-    // Body mong đợi: { order_code, merchant_order_id, amount, status }
+    // Parse JSON sau khi đã verify xong
+    const body = JSON.parse(rawBody);
     const { merchant_order_id, status } = body;
 
     if (!merchant_order_id || (status !== 'PAID' && status !== 'success')) {

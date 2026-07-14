@@ -14,15 +14,17 @@ const authenticateJwt = async (req, res, next) => {
     if (!header || !/^Bearer\s+/i.test(header)) {
         return unauthorized(res, 'UNAUTHORIZED', 'Thiếu access token');
     }
+    
+    const token = header.replace(/^Bearer\s+/i, '').trim();
+    
     try {
-        const token = header.replace(/^Bearer\s+/i, '').trim();
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.token_type && decoded.token_type !== 'ACCESS') {
             return unauthorized(res, 'UNAUTHORIZED', 'Token không đúng loại');
         }
         const userId = decoded.sub || decoded.userId || decoded.id;
         const result = await pool.query(`
-            SELECT id, user_type, status, token_version, is_force_change_password
+            SELECT id, user_type, status, token_version
             FROM users
             WHERE id = $1
         `, [userId]);
@@ -32,19 +34,6 @@ const authenticateJwt = async (req, res, next) => {
             return forbidden(res, 'Tài khoản đã bị khóa hoặc chưa kích hoạt');
         }
         
-        if (user.is_force_change_password) {
-            const isAllowed = 
-                (req.method === 'GET' && req.originalUrl.includes('/auth/me')) ||
-                (req.method === 'POST' && req.originalUrl.includes('/auth/change-password')) ||
-                (req.method === 'POST' && req.originalUrl.includes('/auth/logout'));
-            if (!isAllowed) {
-                return res.status(403).json({
-                    success: false,
-                    error_code: 'FORCE_CHANGE_PASSWORD',
-                    message: 'Bạn phải đổi mật khẩu trước khi tiếp tục sử dụng hệ thống'
-                });
-            }
-        }
 
         if (Number(decoded.tokenVersion) !== Number(user.token_version)) {
             return unauthorized(res, 'TOKEN_REVOKED', 'Token đã bị thu hồi');
@@ -67,6 +56,8 @@ const authenticateJwt = async (req, res, next) => {
         if (error.name === 'TokenExpiredError') {
             return unauthorized(res, 'TOKEN_EXPIRED', 'Access token đã hết hạn');
         }
+        console.error('INVALID TOKEN RECEIVED:', token, error.message);
+        console.log('INVALID TOKEN RECEIVED:', token, error.message);
         return unauthorized(res, 'UNAUTHORIZED', 'Access token không hợp lệ');
     }
 };

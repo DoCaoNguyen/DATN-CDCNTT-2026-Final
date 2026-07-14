@@ -38,27 +38,6 @@ const userRepository = {
         return result.rows[0];
     },
 
-
-    saveEmailOtp: async (userId, otpCode, minutesValid = 5) => {
-        const query = `
-            UPDATE users 
-            SET email_otp = $1, email_otp_expired_at = NOW() + INTERVAL '${minutesValid} minutes' 
-            WHERE id = $2
-        `;
-        await pool.query(query, [otpCode, userId]);
-    },
-
-    checkEmailOtp: async (userId) => {
-        const query = `SELECT email_otp, email_otp_expired_at FROM users WHERE id = $1`;
-        const result = await pool.query(query, [userId]);
-        return result.rows[0];
-    },
-
-    clearEmailOtp: async (userId) => {
-        const query = `UPDATE users SET email_otp = NULL, email_otp_expired_at = NULL WHERE id = $1`;
-        await pool.query(query, [userId]);
-    },
-
     updateUserEmail: async (userId, email) => {
         const query = `UPDATE users SET email = $1 WHERE id = $2`;
         await pool.query(query, [email, userId]);

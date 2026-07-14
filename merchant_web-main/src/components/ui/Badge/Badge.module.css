@@ -1,0 +1,45 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  white-space: nowrap;
+}
+
+.default {
+  background-color: var(--status-draft-bg);
+  color: var(--status-draft);
+}
+
+.success {
+  background-color: var(--status-active-bg);
+  color: var(--status-active);
+}
+
+.danger {
+  background-color: var(--status-failed-bg);
+  color: var(--status-failed);
+}
+
+.warning {
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning);
+}
+
+.pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending);
+}
+
+.info {
+  background-color: var(--status-sandbox-bg);
+  color: var(--status-sandbox);
+}
+
+.live {
+  background-color: var(--status-live-bg);
+  color: var(--status-live);
+}

@@ -36,7 +36,5 @@ router.use('/help-center', aiHelpRoutes);
 const merchantRoutes = require('../modules/merchant/merchant.routes');
 router.use('/merchant', merchantRoutes);
 
-const wealthBagRoutes = require('../modules/wealth_bag/wealth_bag.routes');
-router.use('/wealth-bag', wealthBagRoutes);
 
 module.exports = router;

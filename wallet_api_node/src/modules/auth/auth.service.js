@@ -54,7 +54,6 @@ function publicUser(user, context) {
         email: user.email,
         status: user.status,
         is_kyc_verified: user.is_kyc_verified,
-        is_force_change_password: user.is_force_change_password || false,
         roles: context.roles.map(role => role.code),
         permissions: context.permissions
     };
@@ -114,7 +113,6 @@ const authService = {
         if (!fullName || fullName.length < 2 || !phone || !password) throw new Error('Validation_Error');
         if (password !== payload.confirm_password) throw new Error('Password_Confirm_Not_Match');
         if (skipPasswordPolicy) {
-            // Mobile legacy flow keeps the old behavior: the Flutter app owns the 6-digit PIN validation.
         } else {
             validatePassword(password);
         }
@@ -412,7 +410,7 @@ const authService = {
         const phone = phoneOpt || emailOrPhone;
         const email = phoneOpt ? emailOrPhone : null;
         if (await authRepository.checkExists(email, phone)) throw new Error('Email_Phone_Exists');
-        const existing = await otpRepository.findByPhone(phone);
+        const existing = await otpRepository.findOtp({phone:phone});
         if (existing?.locked_until && new Date(existing.locked_until) > new Date()) throw new Error('Account_Locked');
         await otpRepository.upsertOtp(phone, email, tokenHash(opaqueToken()), 'REGISTER');
         const sent = await sendOTP(phone);
@@ -422,7 +420,7 @@ const authService = {
     forgotPasswordOtp: async phone => {
         const user = phone ? await authRepository.findByLoginId(phone) : null;
         if (!user) throw new Error('Phone_Not_Found');
-        const existing = await otpRepository.findByPhone(phone);
+        const existing = await otpRepository.findOtp({phone:phone});
         if (existing?.locked_until && new Date(existing.locked_until) > new Date()) throw new Error('Account_Locked');
         await otpRepository.upsertOtp(phone, null, tokenHash(opaqueToken()), 'FORGOT_PASSWORD');
         const sent = await sendOTP(phone);
@@ -430,7 +428,7 @@ const authService = {
     },
 
     verifyOtp: async (phone, otp) => {
-        const record = await otpRepository.findByPhone(phone);
+        const record = await otpRepository.findOtp({phone:phone});
         if (!record) throw new Error('OTP_Not_Found');
         if (new Date(record.expired_at) <= new Date()) throw new Error('OTP_Expired');
         if (record.locked_until && new Date(record.locked_until) > new Date()) throw new Error('Account_Locked');
@@ -446,7 +444,7 @@ const authService = {
             error.remainingAttempts = MAX_FAILED_LOGIN - attempts;
             throw error;
         }
-        await otpRepository.deleteByPhone(phone);
+        await otpRepository.deleteOtp(phone);
         return jwt.sign({
             phone,
             email: record.email,
@@ -462,7 +460,6 @@ const authService = {
             payload: {
                 full_name: fullName || `User ${String(decoded.phone).slice(-4)}`,
                 phone: decoded.phone,
-                email: decoded.email,
                 password,
                 confirm_password: password
             },

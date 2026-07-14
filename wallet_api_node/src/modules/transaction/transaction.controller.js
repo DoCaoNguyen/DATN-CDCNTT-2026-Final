@@ -7,9 +7,22 @@ const fs = require('fs');
 const transactionController = {
     deposit: async (req, res, next) => {
         const userId = req.user.userId;
-        const { amount, pin, external_reference } = req.body;
+        const { amount, pin, external_reference, linked_bank_id} = req.body;
         const faceImagePath = req.file ? req.file.path : null;
         const idempotencyKey = req.headers['idempotency-key'];
+        
+        if (!idempotencyKey) {
+            throw new Error('MISSING_IDEMPOTENCY_KEY');
+        }
+
+        if (!userId) {
+            throw new Error('MISSING_USER_ID');
+        }
+
+        if(!pin){
+            throw new Error('MISSING_PIN');
+        }
+
 
         let bigAmount;
         try {
@@ -20,7 +33,7 @@ const transactionController = {
         }
 
         try {
-            const result = await txService.deposit(userId, bigAmount, pin, faceImagePath, external_reference, idempotencyKey);
+            const result = await txService.deposit(userId, bigAmount, pin, faceImagePath,linked_bank_id, external_reference, idempotencyKey);
             return success(req, res, 200, 'Nạp tiền thành công', result );
         } catch (error) { next(error); }
     },
@@ -86,8 +99,9 @@ const transactionController = {
     transfer: async (req, res, next) => {
         const senderId = req.user.userId;
         
-        const { receiver_identifier, amount, note, reference_code, pin } = req.body;
+        const { receiver_identifier, amount, note, pin } = req.body;
         const faceImagePath = req.file ? req.file.path : null;
+        const idempotencyKey = req.headers['idempotency-key'];
 
         if (!receiver_identifier || !amount || !pin) {
             return res.status(400).json({ error: 'Vui lòng nhập người nhận, số tiền và mã PIN' });
@@ -104,7 +118,7 @@ const transactionController = {
         }
 
         try {
-            const result = await txService.transfer(senderId, receiver_identifier, bigAmount, note, reference_code, safePin, faceImagePath);
+            const result = await txService.transfer(senderId, receiver_identifier, bigAmount, note, safePin, faceImagePath, idempotencyKey);
             return success(req, res, 200, 'Chuyển tiền thành công', result );
         } catch (error) { next(error); }
     },

@@ -325,88 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleWealthBagTap() async {
-    if (!widget.isVerified) {
-      _showKycDialog();
-      return;
-    }
-    if (!_isPinSet) {
-      _showSetWalletCodeDialog();
-      return;
-    }
-
-    if (_isWealthBagAuthenticated && _hasWealthBag) {
-      // Navigate directly if already authenticated in this session
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WealthBagScreen(token: widget.token),
-        ),
-      ).then((_) => _fetchBalance());
-      return;
-    }
-
-    // Require PIN/Biometric authentication
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PinConfirmBottomSheet(
-        autoTriggerBiometric: true,
-        onPinEntered: (pin) async {
-          try {
-            final response = await _client.post(
-              Uri.parse(ApiConfig.verifyPin),
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({'pin': pin}),
-            );
-
-            if (response.statusCode == 200) {
-              _isWealthBagAuthenticated = true;
-              if (!_hasWealthBag) {
-                // Activate wealth bag
-                final WealthBagService wealthBagService = WealthBagService();
-                final result = await wealthBagService.activate(widget.token);
-                if (result != null) {
-                  setState(() {
-                    _hasWealthBag = true;
-                  });
-                  if (mounted) {
-                    Navigator.pop(context); // close bottom sheet
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            WealthBagScreen(token: widget.token),
-                      ),
-                    ).then((_) => _fetchBalance());
-                  }
-                } else {
-                  return "Lỗi kích hoạt Túi Thần Tài";
-                }
-              } else {
-                // Already has wealth bag, just navigate
-                if (mounted) {
-                  Navigator.pop(context); // close bottom sheet
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          WealthBagScreen(token: widget.token),
-                    ),
-                  ).then((_) => _fetchBalance());
-                }
-              }
-              return null;
-            } else {
-              final data = jsonDecode(response.body);
-              return data['error'] ?? "Mã PIN không chính xác";
-            }
-          } catch (e) {
-            return "Lỗi kết nối máy chủ";
-          }
-        },
-      ),
-    );
+    SnackbarUtils.showWarning(context, "Tính năng đang phát triển");
   }
 
   Future<void> _fetchUnreadCount() async {
@@ -624,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // Phần Tiện ích, Sự kiện, Đề xuất nằm trong container trắng phía dưới
                         Container(
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,

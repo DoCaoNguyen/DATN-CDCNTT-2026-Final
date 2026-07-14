@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_state.dart';
 import '../../../../core/constants/api_config.dart';
 import '../../login/screens/login_phone_screen.dart';
+import '../../login/screens/login_password_screen.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
@@ -77,19 +78,26 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
 
       final responseData = jsonDecode(response.body);
 
+      if (!mounted) return;
       if (response.statusCode == 201) {
         SnackbarUtils.showSuccess(
           context,
           'Tạo tài khoản và Ví thành công! Vui lòng đăng nhập.',
         );
 
-        Navigator.pushAndRemoveUntil(
-          context,
+        final navigator = Navigator.of(context);
+        navigator.pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) =>
                 LoginPhoneScreen(initialPhoneNumber: widget.phoneNumber),
           ),
           (route) => false,
+        );
+        navigator.push(
+          MaterialPageRoute(
+            builder: (context) =>
+                LoginPasswordScreen(phoneNumber: widget.phoneNumber),
+          ),
         );
       } else {
         String errorMsg =

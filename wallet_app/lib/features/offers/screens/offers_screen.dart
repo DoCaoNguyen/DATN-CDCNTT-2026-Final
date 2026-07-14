@@ -39,58 +39,18 @@ class _OffersScreenState extends State<OffersScreen>
 
   Future<void> _fetchData() async {
     final summary = await _loyaltyService.getLoyaltySummary(widget.token);
-    final checkinStatus = await _loyaltyService.getCheckinStatus(widget.token);
     if (mounted) {
       setState(() {
         _summary = summary;
-        _currentStreak = checkinStatus['currentStreak'] ?? 0;
-        _checkedInToday = checkinStatus['checkedInToday'] ?? false;
+        _currentStreak = 0;
+        _checkedInToday = false;
         _isLoadingCheckin = false;
       });
     }
   }
 
   Future<void> _handleCheckin() async {
-    if (_checkedInToday) return;
-
-    setState(() {
-      _isLoadingCheckin = true;
-    });
-
-    final result = await _loyaltyService.checkin(widget.token);
-    if (result['success'] == true) {
-      final data = result['data'];
-      final isGift = data['isGift'] ?? false;
-      final reward = data['rewardPoints'] ?? 50;
-
-      setState(() {
-        _checkedInToday = true;
-        _currentStreak = data['newStreak'] ?? _currentStreak + 1;
-        _isLoadingCheckin = false;
-      });
-
-      if (isGift) {
-        _showGiftAnimation(reward);
-      } else {
-        if (mounted) {
-          SnackbarUtils.showSuccess(
-            context,
-            'Điểm danh thành công! +$reward Xu',
-          );
-        }
-      }
-
-      // Refresh balance
-      widget.onRefresh();
-      _fetchData();
-    } else {
-      setState(() {
-        _isLoadingCheckin = false;
-      });
-      if (mounted) {
-        SnackbarUtils.showError(context, result['message'] ?? 'Lỗi điểm danh');
-      }
-    }
+    SnackbarUtils.showWarning(context, "Tính năng đang phát triển");
   }
 
   void _showGiftAnimation(int rewardPoints) {

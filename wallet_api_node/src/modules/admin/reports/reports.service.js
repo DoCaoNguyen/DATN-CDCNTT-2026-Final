@@ -119,7 +119,6 @@ const reportsService = {
             case 'merchants':
                 reportData = await reportsRepository.getMerchantReport(params);
                 columns = [
-                    { header: 'Mã ĐT', key: 'merchant_code', width: 20 },
                     { header: 'Tên đối tác', key: 'merchant_name', width: 30 },
                     { header: 'Số đơn', key: 'total_payments', width: 15 },
                     { header: 'Đơn T.Công', key: 'paid_payments', width: 15 },

@@ -17,11 +17,11 @@ const reportsRepository = {
             values.push(params.to);
         }
         if (params.type) {
-            conditions.push(`transaction_type = $${paramIndex++}::ledger_transaction_type`);
+            conditions.push(`transaction_type = $${paramIndex++}`);
             values.push(params.type);
         }
         if (params.status) {
-            conditions.push(`status = $${paramIndex++}::transaction_status`);
+            conditions.push(`status = $${paramIndex++}`);
             values.push(params.status);
         }
 
@@ -74,7 +74,7 @@ const reportsRepository = {
             values.push(params.to);
         }
         if (params.status) {
-            conditions.push(`d.status = $${paramIndex++}::deposit_status`);
+            conditions.push(`d.status = $${paramIndex++}`);
             values.push(params.status);
         }
 
@@ -125,7 +125,7 @@ const reportsRepository = {
             values.push(params.to);
         }
         if (params.status) {
-            conditions.push(`t.status = $${paramIndex++}::transfer_status`);
+            conditions.push(`t.status = $${paramIndex++}`);
             values.push(params.status);
         }
 
@@ -180,7 +180,7 @@ const reportsRepository = {
             values.push(params.to);
         }
         if (params.status) {
-            conditions.push(`p.status = $${paramIndex++}::payment_order_status`);
+            conditions.push(`p.status = $${paramIndex++}`);
             values.push(params.status);
         }
         if (params.merchant_id) {
@@ -235,7 +235,7 @@ const reportsRepository = {
             values.push(params.to);
         }
         if (params.status) {
-            conditions.push(`r.status = $${paramIndex++}::refund_status`);
+            conditions.push(`r.status = $${paramIndex++}`);
             values.push(params.status);
         }
         if (params.merchant_id) {
@@ -286,7 +286,7 @@ const reportsRepository = {
         let paramIndex = 1;
 
         if (params.status) {
-            conditions.push(`m.status = $${paramIndex++}::merchant_status`);
+            conditions.push(`m.status = $${paramIndex++}`);
             values.push(params.status);
         }
 
@@ -299,7 +299,7 @@ const reportsRepository = {
         `;
 
         const dataQuery = `
-            SELECT m.id, m.merchant_code, m.merchant_name, m.status, m.created_at,
+            SELECT m.id, m.merchant_name, m.status, m.created_at,
                    COUNT(p.id) as total_payments,
                    COUNT(p.id) FILTER (WHERE p.status = 'PAID') as paid_payments,
                    COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'PAID'), 0) as total_revenue

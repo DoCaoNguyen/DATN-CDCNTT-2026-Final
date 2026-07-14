@@ -1,6 +1,5 @@
 const mapMerchantRow = (row) => ({
     id: row.id,
-    merchant_code: row.merchant_code,
     merchant_name: row.merchant_name,
     business_type: row.business_type,
     email: row.email,
@@ -15,7 +14,6 @@ const mapMerchantRow = (row) => ({
 
 const mapMerchantDetailRow = (row) => ({
     id: row.id,
-    merchant_code: row.merchant_code,
     merchant_name: row.merchant_name,
     business_type: row.business_type,
     representative_name: row.representative_name,
@@ -24,7 +22,6 @@ const mapMerchantDetailRow = (row) => ({
     phone: row.phone,
     address: row.address,
     status: row.status,
-    risk_note: row.risk_note,
     created_at: row.created_at,
     updated_at: row.updated_at
 });

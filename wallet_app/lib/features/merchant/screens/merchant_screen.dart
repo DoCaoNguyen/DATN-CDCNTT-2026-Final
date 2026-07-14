@@ -13,7 +13,6 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import 'package:intl/intl.dart';
 import 'merchant_settings_screen.dart';
-import 'merchant_withdraw_screen.dart';
 
 class MerchantScreen extends StatefulWidget {
   final String token;
@@ -40,6 +39,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _webhookController = TextEditingController();
+  final _redirectUrlController = TextEditingController();
 
   bool _isRegistering = false;
   bool _keysVisible = false;
@@ -94,6 +94,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _webhookController.dispose();
+    _redirectUrlController.dispose();
     _searchStatementController.dispose();
     _statementScrollController.dispose();
     super.dispose();
@@ -466,6 +467,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
     final webhook = _webhookController.text.trim();
+    final redirectUrl = _redirectUrlController.text.trim();
 
     if (name.isEmpty || phone.isEmpty) {
       SnackbarUtils.showError(context, 'Vui lòng nhập Tên và SĐT doanh nghiệp');
@@ -489,7 +491,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
       }
 
       // Hiển thị hộp thoại OTP
-      _showOtpDialog(name, phone, webhook);
+      _showOtpDialog(name, phone, webhook, redirectUrl);
     } catch (e) {
       SnackbarUtils.showError(context, 'Lỗi kết nối máy chủ');
     } finally {
@@ -497,7 +499,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
     }
   }
 
-  void _showOtpDialog(String name, String phone, String webhook) {
+  void _showOtpDialog(String name, String phone, String webhook, String redirectUrl) {
     String currentOtp = "";
     bool isVerifying = false;
 
@@ -604,11 +606,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
                                       headers: {
                                         "Content-Type": "application/json",
                                       },
-                                      body: jsonEncode({
-                                        "merchant_name": name,
-                                        "contact_phone": phone,
-                                        "callback_url": webhook,
-                                      }),
+                                        body: jsonEncode({
+                                          "merchant_name": name,
+                                          "contact_phone": phone,
+                                          "callback_url": webhook,
+                                          "redirect_url": redirectUrl,
+                                        }),
                                     );
 
                                     if (!mounted) return;
@@ -857,6 +860,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
             _webhookController,
             Icons.link_rounded,
           ),
+          const SizedBox(height: 20),
+          _buildTextField(
+            "Redirect URL (Tùy chọn)",
+            _redirectUrlController,
+            Icons.link_rounded,
+          ),
           const SizedBox(height: 40),
           SizedBox(
             width: double.infinity,
@@ -1009,47 +1018,6 @@ class _MerchantScreenState extends State<MerchantScreen> {
                     color: Colors.white,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.pink,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      size: 20,
-                    ),
-                    label: const Text(
-                      "Rút Doanh Thu",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MerchantWithdrawScreen(
-                            token: widget.token,
-                            availableBalance: formattedBalance,
-                          ),
-                        ),
-                      ).then((changed) {
-                        if (changed == true) {
-                          _fetchData();
-                        }
-                      });
-                    },
                   ),
                 ),
               ],

@@ -59,6 +59,12 @@ const authController = {
                         remainingAttempts: remaining
                     });
                 }
+                if (error.message === 'USER_PENDING_VERIFY') {
+                    return res.status(403).json({ 
+                        error: 'Tài khoản chưa được kích hoạt. Vui lòng xác minh số điện thoại.',
+                        code: 'USER_PENDING_VERIFY'
+                    });
+                }
                 if (error.message === 'Account_Inactive') {
                     return res.status(403).json({ error: 'Tài khoản đã bị khóa hoặc chưa kích hoạt' });
                 }

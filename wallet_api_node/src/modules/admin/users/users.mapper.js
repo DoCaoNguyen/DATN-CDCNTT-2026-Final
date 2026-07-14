@@ -17,8 +17,7 @@ function mapUserRow(row) {
         roles: row.roles || [],
         wallet: row.wallet_id ? {
             id: row.wallet_id,
-            wallet_no: row.wallet_no,
-            wallet_code: row.wallet_code,
+
             wallet_type: row.wallet_type,
             currency: row.currency,
             status: row.wallet_status,

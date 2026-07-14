@@ -9,7 +9,6 @@ router.get('/balance', walletController.getBalance);
 
 router.get('/limits', walletController.getLimits);
 
-router.post('/set-code', walletController.setWalletCode);
 
 router.get('/qr', walletController.getPersonalQR);
 

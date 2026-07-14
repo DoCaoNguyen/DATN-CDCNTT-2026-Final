@@ -5,7 +5,6 @@ const walletController = {
     getBalance: async (req, res) => {
         try {
             const userId = req.user.userId;
-
             const result = await walletService.getWalletInfo(userId);
 
             res.status(200).json({
@@ -24,9 +23,7 @@ const walletController = {
     getLimits: async (req, res) => {
         try {
             const userId = req.user.userId;
-
             const result = await walletService.getLimits(userId);
-
             res.status(200).json({
                 message: 'Lấy thông tin hạn mức thành công',
                 data: result
@@ -40,42 +37,6 @@ const walletController = {
         }
     },
 
-    setWalletCode: async (req, res) => {
-        const userId = req.user.userId;
-        const { wallet_code } = req.body;
-
-        if (!wallet_code) {
-            return res.status(400).json({ error: 'Vui lòng nhập mã ví.' });
-        }
-
-        const cleanCode = wallet_code.trim();
-
-        const isValidFormat = /^\d{6}$/.test(cleanCode);
-        if (!isValidFormat) {
-            return res.status(400).json({ error: 'Mã ví không hợp lệ (Bắt buộc phải là 6 chữ số).' });
-        }
-
-        try {
-
-            await walletService.setWalletCode(userId, cleanCode);
-
-            // [SECURITY FIX] Không trả PIN plaintext trong HTTP response
-            res.status(200).json({
-                message: 'Tạo mã ví thành công'
-            });
-
-        } catch (error) {
-            if (error.message === 'Wallet_Not_Found') {
-                return res.status(404).json({ error: 'Không tìm thấy ví của người dùng.' });
-            }
-            if (error.message === 'Wallet_Code_Exists') {
-                return res.status(400).json({ error: 'Mã ví này đã có người sử dụng. Vui lòng chọn mã khác.' });
-            }
-
-            console.error('Lỗi set wallet code:', error);
-            res.status(500).json({ error: 'Lỗi hệ thống khi tạo mã ví' });
-        }
-    },
 
     getPersonalQR: async (req, res) => {
         const userId = req.user.userId;
@@ -258,11 +219,11 @@ const walletController = {
                 if (merchantId && walletAccount) {
                     // Dùng merchant_id trực tiếp (FK) - không cần fuzzy search theo tên nữa
                     const configRes = await pool.query(
-                        "SELECT unlink_callback_url, default_callback_url FROM merchant_callback_configs WHERE merchant_id = $1",
+                        "SELECT webhook_config->>'callback_url' as default_callback_url FROM merchants WHERE id = $1",
                         [merchantId]
                     );
                     if (configRes.rows.length > 0) {
-                        const callbackUrl = configRes.rows[0].unlink_callback_url || configRes.rows[0].default_callback_url;
+                        const callbackUrl = configRes.rows[0].default_callback_url;
                         if (callbackUrl) {
                             const axios = require('axios');
                             // Fire and forget

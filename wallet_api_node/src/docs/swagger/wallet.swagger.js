@@ -30,9 +30,7 @@
  *                     balance:
  *                       type: string
  *                       example: "5000000"
- *                     wallet_code:
- *                       type: string
- *                       example: "123456"
+
  *                     is_pin_set:
  *                       type: boolean
  *                       example: true
@@ -51,36 +49,6 @@
  *     responses:
  *       200:
  *         description: Lấy thông tin hạn mức thành công
- */
-
-/**
- * @swagger
- * /api/v1/wallet/set-code:
- *   post:
- *     summary: Thiết lập mã ví gồm 6 chữ số
- *     tags: [Wallet]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - wallet_code
- *             properties:
- *               wallet_code:
- *                 type: string
- *                 description: Mã ví gồm đúng 6 chữ số
- *                 example: "999999"
- *     responses:
- *       200:
- *         description: Thiết lập mã ví thành công
- *       400:
- *         description: Định dạng mã ví sai hoặc mã ví đã có người dùng
- *       404:
- *         description: Không tìm thấy ví
  */
 
 /**

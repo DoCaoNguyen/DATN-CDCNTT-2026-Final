@@ -90,7 +90,6 @@ class _LoginPasswordScreenState extends State<LoginPasswordScreen> {
             responseData['refresh_token'] ??
             responseData['data']['refresh_token'] ??
             '';
-
         String userId = userInfo['id'] ?? '';
         bool isVerified = userInfo['is_kyc_verified'] == true;
 

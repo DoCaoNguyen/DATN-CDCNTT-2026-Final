@@ -23,7 +23,8 @@ const paymentController = {
         }
 
         try {
-            const result = await paymentService.createDynamicQR(merchantId, bigAmount, null, description, merchant_order_id || null);
+            const environment = req.merchant.environment || 'SANDBOX';
+            const result = await paymentService.createDynamicQR(merchantId, bigAmount, null, description, merchant_order_id || null, environment);
             res.status(201).json({
                 message: 'Tạo đơn hàng thanh toán thành công',
                 data: result
@@ -38,13 +39,18 @@ const paymentController = {
         const userId = req.user.userId;
         const { qr_token, pin } = req.body;
         const faceImagePath = req.file ? req.file.path : null;
+        const idempotencyKey = req.headers['idempotency-key'];
+
+        if (!idempotencyKey) {
+            return res.status(400).json({ error: 'MISSING_IDEMPOTENCY_KEY' });
+        }
 
         if (!qr_token) return res.status(400).json({ error: 'Thiếu mã QR Token' });
+
         if (!pin) return res.status(400).json({ error: 'Vui lòng nhập mã PIN để xác nhận thanh toán' });
 
         try {
-            // Truyền pin + faceImagePath để xác thực bảo mật trước khi trừ tiền
-            const result = await paymentService.processQrPayment(userId, qr_token, pin, faceImagePath);
+            const result = await paymentService.processQrPayment(userId, qr_token, pin, faceImagePath, idempotencyKey);
             res.status(200).json({
                 message: 'Thanh toán thành công',
                 data: result

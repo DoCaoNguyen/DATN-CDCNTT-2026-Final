@@ -26,7 +26,7 @@ const walletsService = {
         
         return {
             wallet_id: wallet.id,
-            wallet_no: wallet.wallet_no,
+
             currency: wallet.currency,
             status: wallet.status,
             owner: wallet.user,

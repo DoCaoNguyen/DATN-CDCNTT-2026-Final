@@ -8,7 +8,6 @@ const merchantRepository = {
         try {
             await client.query('BEGIN');
             
-            // 0. Generate merchant code using code_sequences
             await client.query(`
                 INSERT INTO code_sequences (id, resource_name, prefix, current_value, padding, reset_policy)
                 SELECT gen_random_uuid(), 'MERCHANT', 'MER', COALESCE((
@@ -27,51 +26,36 @@ const merchantRepository = {
             `);
             const merchantCode = seqRes.rows[0].merchant_code;
 
-            // 1. Insert into merchants
+            
             const merchantId = uuidv7();
             const merchantQuery = `
-                INSERT INTO merchants (id, merchant_code, merchant_name, phone, status, business_type)
-                VALUES ($1, $2, $3, $4, 'ACTIVE', 'ONLINE')
+                INSERT INTO merchants (id, merchant_code, merchant_name, status, business_type, user_id)
+                VALUES ($1, $2, $3, 'ACTIVE', 'ONLINE', $4)
                 RETURNING id;
             `;
             const merchantValues = [
                 merchantId,
                 merchantCode,
                 merchantData.merchant_name,
-                merchantData.contact_phone
+                merchantData.user_id
             ];
             
             await client.query(merchantQuery, merchantValues);
-            
-            // 2. Insert into merchant_users
-            const muId = uuidv7();
+
+            // 3. Update webhook_config
             await client.query(
-                `INSERT INTO merchant_users (id, merchant_id, user_id, is_owner, is_active, role_code) VALUES ($1, $2, $3, true, true, 'MERCHANT_OWNER')`,
-                [muId, merchantId, merchantData.user_id]
+                `UPDATE merchants 
+                 SET webhook_config = jsonb_build_object(
+                    'api_key', $1::text,
+                    'callback_url', COALESCE($2::text, ''),
+                    'redirect_url', COALESCE($3::text, ''),
+                    'secret_hash', COALESCE($4::text, ''),
+                    'is_enabled', true,
+                    'retry_enabled', true
+                 )
+                 WHERE id = $5`,
+                [apiKey, merchantData.callback_url || '', merchantData.redirect_url || '', merchantData.secret_key, merchantId]
             );
-
-            // 3. Insert into merchant_callback_configs
-            const mccId = uuidv7();
-            await client.query(
-                `INSERT INTO merchant_callback_configs (id, merchant_id, default_callback_url, webhook_secret_hash, callback_enabled) VALUES ($1, $2, $3, $4, true)`,
-                [mccId, merchantId, merchantData.callback_url || '', merchantData.secret_key]
-            );
-
-            // 4. Insert into merchant_api_keys
-            const apiKeyId = uuidv7();
-            const apiKeyQuery = `
-                INSERT INTO merchant_api_keys (id, merchant_id, api_key, key_name, api_secret_hash)
-                VALUES ($1, $2, $3, 'Default Key', $4)
-            `;
-            const apiKeyValues = [apiKeyId, merchantId, apiKey, merchantData.secret_key];
-            
-            await client.query(apiKeyQuery, apiKeyValues);
-
-            // 5. Initialize merchant_balances
-            await client.query(`
-                INSERT INTO merchant_balances (merchant_id, available_balance, pending_balance, updated_at)
-                VALUES ($1, 0, 0, CURRENT_TIMESTAMP)
-            `, [merchantId]);
 
             // 6. Assign global MERCHANT_OWNER role to the user
             await client.query(`
@@ -91,9 +75,6 @@ const merchantRepository = {
         }
     },
 
-    getMerchantProfile: async (merchantId) => {
-        // Hàm này đã được chuyển xuống dưới
-    },
     
     findUserByPhone: async (phone) => {
         const query = 'SELECT id FROM users WHERE phone = $1';
@@ -113,7 +94,6 @@ const merchantRepository = {
     },
 
     getLinkedService: async (userId, merchantId) => {
-        // Tìm theo merchant_id (FK) thay vì tên - chính xác 100%
         const query = "SELECT limit_per_day, limit_per_transaction, status FROM user_linked_services WHERE user_id = $1 AND merchant_id = $2 LIMIT 1";
         const result = await pool.query(query, [userId, merchantId]);
         return result.rows.length > 0 ? result.rows[0] : null;
@@ -141,39 +121,34 @@ const merchantRepository = {
 
     getMerchantByApiKey: async (apiKey) => {
         const query = `
-            SELECT m.id, m.merchant_name, mu.user_id as merchant_user_id 
+            SELECT m.id, m.merchant_name, m.user_id as merchant_user_id 
             FROM merchants m
-            JOIN merchant_api_keys mak ON m.id = mak.merchant_id
-            JOIN merchant_users mu ON m.id = mu.merchant_id
-            WHERE mak.api_key = $1 AND mu.is_owner = true LIMIT 1
+            WHERE m.webhook_config->>'api_key' = $1 LIMIT 1
         `;
         const result = await pool.query(query, [apiKey]);
         return result.rows.length > 0 ? result.rows[0] : null;
     },
 
     checkMerchantExistsByUser: async (userId) => {
-        const query = 'SELECT id FROM merchant_users WHERE user_id = $1';
+        const query = 'SELECT id FROM merchants WHERE user_id = $1 LIMIT 1';
         const result = await pool.query(query, [userId]);
         return result.rows.length > 0;
     },
     
     getMerchantUserId: async (merchantId) => {
-        const query = 'SELECT user_id FROM merchant_users WHERE merchant_id = $1 AND is_owner = true LIMIT 1';
+        const query = 'SELECT user_id FROM merchants WHERE id = $1 LIMIT 1';
         const result = await pool.query(query, [merchantId]);
         return result.rows.length > 0 ? result.rows[0].user_id : null;
     },
 
     getMerchantByUserId: async (userId) => {
         const query = `
-            SELECT m.id as merchant_id, m.merchant_name, m.phone as contact_phone, 
-                   mcc.default_callback_url as callback_url, m.status, 
-                   mcc.webhook_secret_hash as secret_key,
-                   mak.api_key
+            SELECT m.id as merchant_id, m.merchant_name, 
+                   m.webhook_config->>'callback_url' as callback_url, m.status, 
+                   m.webhook_config->>'secret_hash' as secret_key,
+                   m.webhook_config->>'api_key' as api_key
             FROM merchants m
-            JOIN merchant_users mu ON m.id = mu.merchant_id
-            LEFT JOIN merchant_callback_configs mcc ON m.id = mcc.merchant_id
-            LEFT JOIN merchant_api_keys mak ON m.id = mak.merchant_id
-            WHERE mu.user_id = $1
+            WHERE m.user_id = $1
         `;
         const result = await pool.query(query, [userId]);
         return result.rows.length > 0 ? result.rows[0] : null;
@@ -181,10 +156,10 @@ const merchantRepository = {
 
     updateWebhookUrl: async (merchantId, callbackUrl) => {
         const query = `
-            UPDATE merchant_callback_configs 
-            SET default_callback_url = $1 
-            WHERE merchant_id = $2 
-            RETURNING default_callback_url as callback_url
+            UPDATE merchants 
+            SET webhook_config = jsonb_set(webhook_config, '{callback_url}', to_jsonb($1::text), true)
+            WHERE id = $2 
+            RETURNING webhook_config->>'callback_url' as callback_url
         `;
         const result = await pool.query(query, [callbackUrl, merchantId]);
         return result.rows[0].callback_url;
@@ -193,15 +168,15 @@ const merchantRepository = {
 
     getMerchantProfile: async (merchantId) => {
         const query = `
-            SELECT m.id, m.id AS merchant_id, mu.user_id AS merchant_user_id, m.merchant_code, m.merchant_name, m.business_type, m.representative_name, m.tax_code, m.phone AS contact_phone, m.email, m.address, m.status,
-                   mcc.default_callback_url AS callback_url, mcc.default_redirect_url, mcc.callback_enabled, mcc.retry_enabled,
-                   k.api_key, k.api_secret_hash AS secret_key
+            SELECT m.id, m.id AS merchant_id, m.user_id AS merchant_user_id, m.merchant_name, m.business_type, m.status,
+                   m.webhook_config->>'callback_url' AS callback_url, 
+                   m.webhook_config->>'redirect_url' AS default_redirect_url, 
+                   (m.webhook_config->>'is_enabled')::boolean AS callback_enabled, 
+                   (m.webhook_config->>'retry_enabled')::boolean AS retry_enabled,
+                   m.webhook_config->>'api_key' AS api_key, 
+                   m.webhook_config->>'secret_hash' AS secret_key
             FROM merchants m
-            LEFT JOIN merchant_callback_configs mcc ON m.id = mcc.merchant_id
-            LEFT JOIN merchant_api_keys k ON m.id = k.merchant_id
-            LEFT JOIN merchant_users mu ON m.id = mu.merchant_id AND mu.is_owner = true
             WHERE m.id = $1
-            ORDER BY k.created_at DESC
             LIMIT 1
         `;
         const result = await pool.query(query, [merchantId]);
@@ -210,12 +185,13 @@ const merchantRepository = {
 
     updateCallbackConfig: async (merchantId, data) => {
         const query = `
-            UPDATE merchant_callback_configs
-            SET default_callback_url = COALESCE($1, default_callback_url),
-                default_redirect_url = COALESCE($2, default_redirect_url),
-                updated_at = NOW()
-            WHERE merchant_id = $3
-            RETURNING default_callback_url, default_redirect_url
+            UPDATE merchants
+            SET webhook_config = jsonb_set(
+                jsonb_set(webhook_config, '{callback_url}', to_jsonb(COALESCE($1::text, webhook_config->>'callback_url')), true),
+                '{redirect_url}', to_jsonb(COALESCE($2::text, webhook_config->>'redirect_url')), true
+            )
+            WHERE id = $3
+            RETURNING webhook_config->>'callback_url' as default_callback_url, webhook_config->>'redirect_url' as default_redirect_url
         `;
         const result = await pool.query(query, [data.default_callback_url, data.default_redirect_url, merchantId]);
         return result.rows[0];
@@ -223,48 +199,58 @@ const merchantRepository = {
 
     getApiKeys: async (merchantId) => {
         const result = await pool.query(`
-            SELECT id, key_name, api_key, environment, status, created_at, last_used_at, expired_at
-            FROM merchant_api_keys
-            WHERE merchant_id = $1
-            ORDER BY created_at DESC
+            SELECT m.id as id, 'Default Key' as key_name, 
+                   m.webhook_config->>'api_key' as api_key, 
+                   m.webhook_config->>'secret_hash' as api_secret_hash, 
+                   'PRODUCTION' as environment, 'ACTIVE' as status, m.created_at
+            FROM merchants m
+            WHERE m.id = $1 AND m.webhook_config->>'api_key' IS NOT NULL
         `, [merchantId]);
         return result.rows;
     },
 
     createApiKey: async (merchantId, keyName, apiKey, apiSecretHash, environment) => {
-        const id = uuidv7();
         const query = `
-            INSERT INTO merchant_api_keys (id, merchant_id, key_name, api_key, api_secret_hash, environment, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', NOW())
-            RETURNING id, key_name, api_key, environment, status, created_at
+            UPDATE merchants
+            SET webhook_config = jsonb_set(
+                jsonb_set(webhook_config, '{api_key}', to_jsonb($1::text), true),
+                '{secret_hash}', to_jsonb($2::text), true
+            )
+            WHERE id = $3
+            RETURNING id, 'Default Key' as key_name, webhook_config->>'api_key' as api_key, 'PRODUCTION' as environment, 'ACTIVE' as status, updated_at as created_at
         `;
-        const result = await pool.query(query, [id, merchantId, keyName, apiKey, apiSecretHash, environment]);
+        const result = await pool.query(query, [apiKey, apiSecretHash, merchantId]);
         return result.rows[0];
     },
 
     getApiKeyByIdAndMerchant: async (keyId, merchantId) => {
+        // Now there is only one key per merchant in webhook_config. We can just check the merchant.
         const result = await pool.query(`
-            SELECT id, status, environment
-            FROM merchant_api_keys
-            WHERE id = $1 AND merchant_id = $2
-        `, [keyId, merchantId]);
+            SELECT m.id as id, 'ACTIVE' as status, 'PRODUCTION' as environment
+            FROM merchants m
+            WHERE m.id = $1 AND m.webhook_config->>'api_key' IS NOT NULL
+        `, [merchantId]);
         return result.rows[0];
     },
 
     updateApiSecretHash: async (keyId, secretHash) => {
+        // keyId is basically merchantId or not needed since we only have one key
+        // We will just use it as merchantId for simplicity or ignore.
+        // Wait, the API calls this with `keyId` which was previously the `merchant_api_keys.id`.
+        // We should fix the controller to pass `merchantId` instead of `keyId`.
         const result = await pool.query(`
-            UPDATE merchant_api_keys
-            SET api_secret_hash = $1, updated_at = NOW()
+            UPDATE merchants
+            SET webhook_config = jsonb_set(webhook_config, '{secret_hash}', to_jsonb($1::text), true)
             WHERE id = $2
-            RETURNING id, key_name, api_key, environment, status, created_at, updated_at
+            RETURNING id, 'Default Key' as key_name, webhook_config->>'api_key' as api_key, 'PRODUCTION' as environment, 'ACTIVE' as status, updated_at
         `, [secretHash, keyId]);
         return result.rows[0];
     },
 
     revokeApiKey: async (keyId) => {
         await pool.query(`
-            UPDATE merchant_api_keys
-            SET status = 'REVOKED', revoked_at = NOW(), updated_at = NOW()
+            UPDATE merchants
+            SET webhook_config = jsonb_set(webhook_config, '{api_key}', 'null'::jsonb, true)
             WHERE id = $1
         `, [keyId]);
     },
@@ -447,7 +433,13 @@ const merchantRepository = {
     },
 
     getMerchantBalance: async (merchantId) => {
-        const query = `SELECT available_balance, pending_balance FROM merchant_balances WHERE merchant_id = $1`;
+        const query = `
+            SELECT wb.available_balance, 0 as pending_balance 
+            FROM wallet_balances wb
+            JOIN wallets w ON w.id = wb.wallet_id
+            JOIN merchants m ON m.user_id = w.user_id
+            WHERE m.id = $1 AND wb.currency = 'VND'
+        `;
         const result = await pool.query(query, [merchantId]);
         return result.rows[0];
     },
