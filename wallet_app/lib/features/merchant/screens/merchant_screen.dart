@@ -126,15 +126,18 @@ class _MerchantScreenState extends State<MerchantScreen> {
         _merchantData = merchantData['data'];
         _isMerchant = true;
 
-        // Fetch Balance
-        final balanceRes = await _client.get(
-          Uri.parse('${ApiConfig.baseUrl}/merchant/balance'),
-        );
-        if (balanceRes.statusCode == 200) {
-          final balanceData = jsonDecode(balanceRes.body);
-          _merchantData['available_balance'] =
-              balanceData['data']['available_balance'];
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MerchantSettingsScreen(
+                token: widget.token,
+                merchantData: _merchantData,
+              ),
+            ),
+          );
         }
+        return;
       } else if (merchantRes.statusCode == 404) {
         _isMerchant = false;
       }
@@ -239,6 +242,47 @@ class _MerchantScreenState extends State<MerchantScreen> {
         return matchesKeyword && matchesType;
       }).toList();
     });
+  }
+
+  void _openSettings() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => PinConfirmBottomSheet(
+        onPinEntered: (pin) async {
+          try {
+            final response = await _client.post(
+              Uri.parse(ApiConfig.verifyPin),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'pin': pin}),
+            );
+
+            if (response.statusCode == 200) {
+              Navigator.pop(ctx);
+              if (!mounted) return null;
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MerchantSettingsScreen(
+                    token: widget.token,
+                    merchantData: _merchantData,
+                  ),
+                ),
+              ).then((_) => _fetchData());
+
+              return null;
+            } else {
+              final data = jsonDecode(response.body);
+              return data['error'] ?? "Mã PIN không chính xác";
+            }
+          } catch (e) {
+            return "Không thể kết nối máy chủ";
+          }
+        },
+      ),
+    );
   }
 
   bool _hasActiveFilter() {
@@ -749,10 +793,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
-      body: _isLoading
+      body: _isLoading || _isMerchant
           ? const Center(child: CircularProgressIndicator(color: Colors.pink))
-          : _isMerchant
-          ? _buildMerchantInfo()
           : _isEmailVerified
           ? _buildRegistrationForm()
           : _buildRequireEmail(),
@@ -937,47 +979,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                   color: Colors.pink,
                   size: 28,
                 ),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (ctx) => PinConfirmBottomSheet(
-                      onPinEntered: (pin) async {
-                        try {
-                          final response = await _client.post(
-                            Uri.parse(ApiConfig.verifyPin),
-                            headers: {'Content-Type': 'application/json'},
-                            body: jsonEncode({'pin': pin}),
-                          );
-
-                          if (response.statusCode == 200) {
-                            Navigator.pop(ctx); // Đóng bottom sheet
-                            if (!mounted) return null;
-
-                            // Điều hướng qua màn hình settings
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MerchantSettingsScreen(
-                                  token: widget.token,
-                                  merchantData: _merchantData,
-                                ),
-                              ),
-                            ).then((_) => _fetchData());
-
-                            return null; // Return null = success
-                          } else {
-                            final data = jsonDecode(response.body);
-                            return data['error'] ?? "Mã PIN không chính xác";
-                          }
-                        } catch (e) {
-                          return "Không thể kết nối máy chủ";
-                        }
-                      },
-                    ),
-                  );
-                },
+                onPressed: _openSettings,
               ),
             ],
           ),
@@ -1018,6 +1020,33 @@ class _MerchantScreenState extends State<MerchantScreen> {
                     color: Colors.white,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.pink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(
+                      Icons.settings_input_component_rounded,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "Cấu hình API & Webhook",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: _openSettings,
                   ),
                 ),
               ],

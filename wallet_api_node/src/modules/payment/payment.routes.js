@@ -21,11 +21,8 @@ router.get('/preview', verifyToken, paymentController.previewPayment);
 
 router.post('/request', verifyToken, paymentController.requestMoney);
 
-// Thêm upload.single('face_image') để hỗ trợ xác thực khuôn mặt cho giao dịch lớn
 router.post('/process', verifyToken, upload.single('face_image'), withIdempotency, paymentController.processPayment);
 
-router.post('/loyalty/redeem', verifyToken, paymentController.redeemLoyalty);
 
-router.post('/topup', verifyToken, withIdempotency, paymentController.processTopup);
 
 module.exports = router;

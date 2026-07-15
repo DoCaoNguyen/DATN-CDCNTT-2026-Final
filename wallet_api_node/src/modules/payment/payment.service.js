@@ -9,7 +9,7 @@ const kycService = require('../kyc/kyc.service');
 const { broadcastToAdminDashboard } = require('../../utils/socket');
 
 const paymentService = {
-    createDynamicQR: async (merchantId, amount, callbackUrl, description, merchantOrderId = null, environment = 'SANDBOX') => {
+    createDynamicQR: async (merchantId, amount, description, merchantOrderId = null, environment = 'SANDBOX') => {
         const client = await pool.connect();
 
         try {
@@ -18,7 +18,7 @@ const paymentService = {
             const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
 
             const orderId = await paymentRepo.createOrder(
-                client, merchantId, orderCode, amount, callbackUrl, description, expiredAt, merchantOrderId, environment
+                client, merchantId, orderCode, amount, description, expiredAt, merchantOrderId, environment
             );
 
 
@@ -168,14 +168,9 @@ const paymentService = {
             const webhookService = require('../webhook/webhook.service');
 
             if (order.merchant_id) {
-                let finalCallbackUrl = order.callback_url;
-                if (!finalCallbackUrl) {
-                    const env = order.metadata ? order.metadata.environment : 'SANDBOX';
-                    const merchantConfig = await webhookService.getMerchantSecret(order.merchant_id, env);
-                    if (merchantConfig && merchantConfig.callback_url) {
-                        finalCallbackUrl = merchantConfig.callback_url;
-                    }
-                }
+                const env = order.metadata ? order.metadata.environment : 'SANDBOX';
+                const merchantConfig = await webhookService.getMerchantSecret(order.merchant_id, env);
+                const finalCallbackUrl = merchantConfig && merchantConfig.callback_url ? merchantConfig.callback_url : null;
 
                 if (finalCallbackUrl) {
                     const userProfile = await userRepo.getUserProfile(userId);
@@ -240,10 +235,6 @@ const paymentService = {
             });
 
     
-
-            const LoyaltyIntegrationService = require('./LoyaltyIntegrationService');
-            LoyaltyIntegrationService.syncPointsAfterPayment(userId, paymentTxId, order.amount)
-                .catch(err => console.error('[LOYALTY_BACKGROUND_JOB_ERROR]', err.message));
 
             // 2. Đẩy Job Gửi Webhook vào Message Queue (BullMQ / Redis) với cơ chế Retry
             if (webhookLogId) {

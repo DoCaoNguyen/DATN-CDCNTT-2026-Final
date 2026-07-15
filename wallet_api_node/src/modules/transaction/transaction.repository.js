@@ -97,33 +97,25 @@ const transactionRepository = {
 
     createLedgerEntry: async (client, ledgerTransactionId, accountId, type, amount, balanceBefore, balanceAfter, accountType = 'PERSONAL') => {
         const newId = uuidv7();
-        let query, params;
         const mappedAccountType = accountType === 'PERSONAL' ? 'USER_WALLET' : accountType;
         
-        if (mappedAccountType === 'MERCHANT' || mappedAccountType === 'MERCHANT_BALANCE') {
-            query = `
-                INSERT INTO ledger_entries (id, ledger_transaction_id, merchant_id, entry_type, amount, balance_before, balance_after, account_type)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-            `;
-        } else {
-            query = `
-                INSERT INTO ledger_entries (id, ledger_transaction_id, wallet_id, entry_type, amount, balance_before, balance_after, account_type)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-            `;
-        }
+        const query = `
+            INSERT INTO ledger_entries (id, ledger_transaction_id, wallet_id, entry_type, amount, balance_before, balance_after, account_type)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+        `;
         
-        params = [newId, ledgerTransactionId, accountId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), mappedAccountType];
+        const params = [newId, ledgerTransactionId, accountId, type, amount.toString(), balanceBefore.toString(), balanceAfter.toString(), mappedAccountType];
         await client.query(query, params);
         return newId;
     },
 
-    createSystemLedgerEntry: async (client, ledgerTransactionId, systemAccountCode, type, amount, merchantId = null) => {
+    createSystemLedgerEntry: async (client, ledgerTransactionId, systemAccountCode, type, amount, _merchantId = null) => {
         const newId = uuidv7();
         const query = `
-            INSERT INTO ledger_entries (id, ledger_transaction_id, system_account_code, entry_type, amount, balance_before, balance_after, account_type, merchant_id)
-            VALUES ($1, $2, $3, $4, $5, 0, 0, 'SYSTEM_ACCOUNT', $6);
+            INSERT INTO ledger_entries (id, ledger_transaction_id, system_account_code, entry_type, amount, balance_before, balance_after, account_type)
+            VALUES ($1, $2, $3, $4, $5, 0, 0, 'SYSTEM_ACCOUNT');
         `;
-        await client.query(query, [newId, ledgerTransactionId, systemAccountCode, type, amount.toString(), merchantId]);
+        await client.query(query, [newId, ledgerTransactionId, systemAccountCode, type, amount.toString()]);
         return newId;
     },
 
@@ -187,11 +179,12 @@ const transactionRepository = {
 
         const query = `
             INSERT INTO transactions (id, transaction_no, transaction_type, user_id, wallet_id, amount, status, description, metadata, idempotency_key)
-            VALUES ($1, nextval('transaction_ref_seq')::text, 'TRANSFER', $2, $3, $4, 'COMPLETED', $5, $6::jsonb, $7);
+            VALUES ($1, nextval('transaction_ref_seq')::text, 'TRANSFER', $2, $3, $4, 'COMPLETED', $5, $6::jsonb, $7)
+            RETURNING transaction_no;
         `;
 
-        await client.query(query, [id, senderUserId, senderWalletId, amount.toString(), description, metadata, idempotencyKey]);
-        return id;
+        const result = await client.query(query, [id, senderUserId, senderWalletId, amount.toString(), description, metadata, idempotencyKey]);
+        return result.rows[0].transaction_no;
     },
 
 
@@ -310,7 +303,6 @@ const transactionRepository = {
             SELECT 
                 le.id AS entry_id,
                 le.ledger_transaction_id AS transaction_id,
-                -- transaction_no lấy từ bảng transactions (nguồn chính thức)
                 tx.transaction_no,
                 lt.transaction_type,
                 COALESCE(lt.category_name, lt.transaction_type) AS category_name,
@@ -328,7 +320,7 @@ const transactionRepository = {
                 -- Lấy thông tin người gửi qua tx.wallet_id (vì với TRANSFER thì tx.wallet_id là người gửi)
                 CASE WHEN lt.transaction_type = 'TRANSFER' THEN u_sender.full_name ELSE NULL END AS sender_name,
                 CASE WHEN lt.transaction_type = 'TRANSFER' THEN u_sender.phone ELSE NULL END AS sender_phone,
-                
+        
                 CASE WHEN lt.transaction_type IN ('TRANSFER', 'PAYMENT') THEN
                     COALESCE(
                         (tx.metadata->>'receiver_name'),
@@ -345,11 +337,6 @@ const transactionRepository = {
             -- Lấy thông tin sender cho TRANSFER
             LEFT JOIN wallets w_sender ON tx.wallet_id = w_sender.id
             LEFT JOIN users u_sender ON w_sender.user_id = u_sender.id
-            -- Red packet
-            LEFT JOIN group_fundings gf ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'PAYMENT' AND lt.source_id = gf.id
-            LEFT JOIN group_funding_members gfm ON lt.source_type = 'RED_PACKET' AND lt.transaction_type = 'RECEIVE' AND lt.source_id = gfm.id
-            LEFT JOIN group_fundings gf2 ON gfm.group_funding_id = gf2.id
-            LEFT JOIN users u_rp_creator ON gf2.creator_user_id = u_rp_creator.id
             WHERE le.wallet_id = $1 AND (lt.currency IS NULL OR lt.currency != 'POINT')${whereExtra}
             ORDER BY le.created_at DESC
             LIMIT $${limitParam} OFFSET $${offsetParam};
@@ -476,137 +463,6 @@ const transactionRepository = {
         return result.rows;
     },
 
-    getChatList: async (walletId) => {
-        const query = `
-            WITH CTE AS (
-                -- Lấy các giao dịch TRANSFER từ bảng transactions mới
-                SELECT 
-                    tx.id,
-                    tx.amount,
-                    tx.created_at,
-                    -- Nếu là người gửi: lấy receiver, nếu là người nhận: lấy sender
-                    CASE WHEN tx.wallet_id = $1 
-                        THEN (tx.metadata->>'receiver_wallet_id')::uuid
-                        ELSE tx.wallet_id
-                    END as counterparty_wallet_id,
-                    CASE WHEN tx.wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
-                    tx.description as note,
-                    'TRANSACTION' as message_type
-                FROM transactions tx
-                WHERE tx.transaction_type = 'TRANSFER'
-                  AND (tx.wallet_id = $1 OR (tx.metadata->>'receiver_wallet_id')::uuid = $1)
-                
-                UNION ALL
-                
-                SELECT 
-                    cm.id,
-                    0 as amount,
-                    cm.created_at,
-                    CASE WHEN cm.sender_wallet_id = $1 THEN cm.receiver_wallet_id ELSE cm.sender_wallet_id END as counterparty_wallet_id,
-                    CASE WHEN cm.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
-                    cm.content as note,
-                    cm.message_type
-                FROM chat_messages cm
-                WHERE cm.sender_wallet_id = $1 OR cm.receiver_wallet_id = $1
-            )
-            SELECT 
-                c.counterparty_wallet_id,
-                u.full_name as counterparty_name,
-                u.phone as counterparty_phone,
-                MAX(c.created_at) as latest_transaction_date
-            FROM CTE c
-            JOIN wallets w ON c.counterparty_wallet_id = w.id
-            JOIN users u ON w.user_id = u.id
-            GROUP BY c.counterparty_wallet_id, u.full_name, u.phone
-            ORDER BY latest_transaction_date DESC;
-        `;
-        const result = await pool.query(query, [walletId]);
-        return result.rows;
-    },
-
-    getChatHistory: async (walletId, counterpartyPhone, limit = 20, offset = 0) => {
-        const query = `
-            WITH AllMessages AS (
-                -- Lấy giao dịch TRANSFER từ bảng transactions mới
-                SELECT 
-                    tx.id as transfer_id,
-                    tx.amount, 
-                    tx.description as note, 
-                    tx.created_at,
-                    CASE WHEN tx.wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
-                    COALESCE(
-                        CASE WHEN tx.wallet_id = $1 THEN tx.metadata->>'receiver_name' END,
-                        u_wallet.full_name
-                    ) as counterparty_name,
-                    COALESCE(
-                        CASE WHEN tx.wallet_id = $1 THEN tx.metadata->>'receiver_phone' END,
-                        u_wallet.phone
-                    ) as counterparty_phone,
-                    'TRANSACTION' as message_type,
-                    NULL::json as red_packet_info
-                FROM transactions tx
-                LEFT JOIN wallets w_cp ON (tx.metadata->>'receiver_wallet_id')::uuid = w_cp.id AND tx.wallet_id = $1
-                LEFT JOIN wallets w_sender ON tx.wallet_id = w_sender.id AND tx.wallet_id != $1
-                LEFT JOIN users u_wallet ON COALESCE(w_cp.user_id, w_sender.user_id) = u_wallet.id
-                WHERE tx.transaction_type = 'TRANSFER'
-                  AND (
-                    -- Người gửi: lấy giao dịch mà receiver phone = $2
-                    (tx.wallet_id = $1 AND tx.metadata->>'receiver_phone' = $2)
-                    OR
-                    -- Người nhận: lấy giao dịch mà sender phone = $2
-                    ((tx.metadata->>'receiver_wallet_id')::uuid = $1 AND u_wallet.phone = $2)
-                  )
-                
-                UNION ALL
-                
-                SELECT 
-                    cm.id as transfer_id,
-                    0 as amount,
-                    cm.content as note,
-                    cm.created_at,
-                    CASE WHEN cm.sender_wallet_id = $1 THEN 'SEND' ELSE 'RECEIVE' END as direction,
-                    u_counterparty.full_name as counterparty_name,
-                    u_counterparty.phone as counterparty_phone,
-                    cm.message_type,
-                    CASE 
-                        WHEN cm.message_type = 'RED_PACKET' THEN (
-                            SELECT json_build_object(
-                                'is_claimed', EXISTS(SELECT 1 FROM group_funding_members gfm WHERE gfm.group_funding_id::text = cm.content AND gfm.wallet_id = $1),
-                                'status', gf.status
-                            )
-                            FROM group_fundings gf 
-                            WHERE gf.id::text = cm.content AND gf.type = 'RED_PACKET'
-                        )
-                        ELSE NULL
-                    END::json as red_packet_info
-                FROM chat_messages cm
-                JOIN wallets w_sender ON cm.sender_wallet_id = w_sender.id
-                JOIN wallets w_receiver ON cm.receiver_wallet_id = w_receiver.id
-                JOIN users u_sender ON w_sender.user_id = u_sender.id
-                JOIN users u_receiver ON w_receiver.user_id = u_receiver.id
-                JOIN users u_counterparty ON (CASE WHEN cm.sender_wallet_id = $1 THEN w_receiver.user_id ELSE w_sender.user_id END) = u_counterparty.id
-                WHERE 
-                    (cm.sender_wallet_id = $1 AND u_receiver.phone = $2)
-                    OR 
-                    (cm.receiver_wallet_id = $1 AND u_sender.phone = $2)
-            )
-            SELECT * FROM AllMessages
-            ORDER BY created_at DESC
-            LIMIT $3 OFFSET $4;
-        `;
-        const result = await pool.query(query, [walletId, counterpartyPhone, limit, offset]);
-        return result.rows;
-    },
-    saveChatMessage: async (senderWalletId, receiverWalletId, content, messageType = 'TEXT') => {
-        const newId = uuidv7();
-        const query = `
-            INSERT INTO chat_messages (id, sender_wallet_id, receiver_wallet_id, content, message_type)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *;
-        `;
-        const result = await pool.query(query, [newId, senderWalletId, receiverWalletId, content, messageType]);
-        return result.rows[0];
-    }
 };
 
 module.exports = transactionRepository;

@@ -9,8 +9,6 @@ import '../../../core/services/custom_http_client.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../../../core/constants/api_config.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../auth/kyc/widgets/camera_overlay_painter.dart';
 import 'deposit_withdraw_success_screen.dart';
 import 'bank_link_screen.dart';
@@ -339,7 +337,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final refId =
-            data['data']?['id'] ?? _currentTxRefCode ?? '132554346688';
+            data['data']?['transaction_no']?.toString() ?? data['data']?['id']?.toString() ?? _currentTxRefCode ?? '132554346688';
         final now = DateTime.now();
         final formattedTime =
             "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
@@ -352,7 +350,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
             builder: (_) => DepositWithdrawSuccessScreen(
               isDeposit: isDeposit,
               amount: amountVal.toString(),
-              referenceCode: refId,
+              transactionNo: refId,
               paymentTime: formattedTime,
             ),
           ),
@@ -419,7 +417,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final refId =
-            data['data']?['id'] ?? _currentTxRefCode ?? '132554346688';
+            data['data']?['transaction_no']?.toString() ?? data['data']?['id']?.toString() ?? _currentTxRefCode ?? '132554346688';
         final now = DateTime.now();
         final formattedTime =
             "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
@@ -431,7 +429,7 @@ class _DepositWithdrawScreenState extends State<DepositWithdrawScreen> {
             builder: (_) => DepositWithdrawSuccessScreen(
               isDeposit: isDeposit,
               amount: amountVal.toString(),
-              referenceCode: refId,
+              transactionNo: refId,
               paymentTime: formattedTime,
             ),
           ),

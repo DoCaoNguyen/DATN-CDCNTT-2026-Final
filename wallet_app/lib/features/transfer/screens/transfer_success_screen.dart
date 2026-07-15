@@ -6,7 +6,7 @@ class TransferSuccessScreen extends StatelessWidget {
   final String receiverPhone;
   final String amount;
   final String note;
-  final String referenceCode;
+  final String transactionNo;
   final String paymentTime;
   final String senderName; // Pass the sender name if possible
 
@@ -17,7 +17,7 @@ class TransferSuccessScreen extends StatelessWidget {
     required this.receiverPhone,
     required this.amount,
     required this.note,
-    required this.referenceCode,
+    required this.transactionNo,
     required this.paymentTime,
     this.senderName = 'Bạn', // Default to "Bạn" if not provided
   }) : super(key: key);
@@ -174,7 +174,7 @@ class TransferSuccessScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              referenceCode,
+                              transactionNo,
                               style: const TextStyle(
                                 color: Color(0xFFE91E63),
                                 fontWeight: FontWeight.w600,

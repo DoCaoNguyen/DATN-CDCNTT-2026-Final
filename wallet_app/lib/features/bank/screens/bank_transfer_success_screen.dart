@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class BankTransferSuccessScreen extends StatelessWidget {
   final String token;
   final String amount;
-  final String referenceCode;
+  final String transactionNo;
   final String paymentTime;
   final String receiverName;
   final String accountNumber;
@@ -15,7 +15,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
     Key? key,
     required this.token,
     required this.amount,
-    required this.referenceCode,
+    required this.transactionNo,
     required this.paymentTime,
     required this.receiverName,
     required this.accountNumber,
@@ -167,7 +167,7 @@ class BankTransferSuccessScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              referenceCode,
+                              transactionNo,
                               style: const TextStyle(
                                 color: Color(0xFFE91E63),
                                 fontWeight: FontWeight.w600,
@@ -295,6 +295,8 @@ class BankTransferSuccessScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
+                          _buildDetailRow('Mã giao dịch', transactionNo, true),
+                          const SizedBox(height: 16),
                           _buildDetailRow('Người nhận', receiverName, true),
                           const SizedBox(height: 16),
                           _buildDetailRow('Số thẻ/TK', accountNumber, true),

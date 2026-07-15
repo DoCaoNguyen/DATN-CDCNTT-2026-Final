@@ -29,7 +29,7 @@ const otpRepository = {
         if (existing.rows.length > 0) {
             const query = `
                 UPDATE otp_tracking 
-                SET phone = $1, email = $2, otp_hash = $3, purpose = $4, failed_attempts = 0, locked_until = NULL, expired_at = NOW() + INTERVAL '5 minutes', created_at = NOW()
+                SET phone = $1, email = $2, otp_hash = $3, purpose = $4, failed_attempts = 0, locked_until = NULL, expired_at = NOW() + INTERVAL '5 minutes', created_at = NOW(), used_at = NULL
                 WHERE ${searchCol} = $5
             `;
             await pool.query(query, [phone, email, otpHash, purpose, searchVal]);

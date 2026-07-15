@@ -10,21 +10,19 @@ const aiService = require('../ai/ai.service');
 const traceEventService = require('../system/trace_event.service');
 
 const transactionService = {
-    autoDebit: async (merchant, userPhone, amount, orderId) => {
+    autoDebit: async (merchant, userPhone, amount, orderId, walletToken) => {
         let client = null;
         try {
             // Lấy ví của user (dựa trên userPhone)
             const userWallet = await repo.getWalletByIdentifier(userPhone);
             if (!userWallet) throw new Error('Wallet_Not_Found');
-            if (userWallet.status !== 'ACTIVE') throw new Error('Wallet_Locked');
 
             // Lấy ví doanh nghiệp của merchant
             const mWalletRes = await pool.query(
-                "SELECT id, status FROM wallets WHERE user_id = $1 AND wallet_type = 'BUSINESS' LIMIT 1",
+                "SELECT id FROM wallets WHERE user_id = $1 AND wallet_type = 'BUSINESS' LIMIT 1",
                 [merchant.merchant_user_id]
             );
             if (mWalletRes.rows.length === 0) throw new Error('Merchant_Wallet_Not_Found');
-            if (mWalletRes.rows[0].status !== 'ACTIVE') throw new Error('Merchant_Wallet_Locked');
             const merchantWalletId = mWalletRes.rows[0].id;
 
             client = await pool.connect();
@@ -76,7 +74,7 @@ const transactionService = {
         }
     },
 
-    deposit: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference, idempotencyKey) => { 
+    deposit: async (userId, amount, pin, faceImagePath, externalReference, idempotencyKey = null) => { 
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);
@@ -105,14 +103,13 @@ const transactionService = {
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
             const ledgerTxId = await repo.createLedgerTransaction(client, 'DEPOSIT', depositId, 'DEPOSIT', 'Nạp tiền từ ngân hàng liên kết', amount, 'VND', null, idempotencyKey);
-
+            
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'CREDIT', amount, balanceBefore, balanceAfter);
 
-            // recordDeposit RETURNING transaction_no từ bảng transactions
-            const transaction_no = await repo.recordDeposit(client, depositId, userId, wallet.id, amount, linkedBankId, extRef, idempotencyKey);
+            const transaction_no = await repo.recordDeposit(client, depositId, userId, wallet.id, amount, 'LINKED_BANK', extRef, idempotencyKey);
 
-            await client.query('COMMIT');
-
+            await client.query('COMMIT'); 
+            
             emitToUser(userId, 'balance_update', {
                 type: 'DEPOSIT',
                 amount: amount.toString(),
@@ -145,7 +142,7 @@ const transactionService = {
             });
 
             return { 
-                id: transaction_no,
+                id: extRef,
                 external_reference: extRef,
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -154,20 +151,20 @@ const transactionService = {
         } catch (error) {
             if (client) await client.query('ROLLBACK');
             let failedTxId = 'FAIL-' + Date.now();
+            let failedTxNo = failedTxId;
             try { 
-                failedTxId = await repo.createFailedLedgerTransaction('DEPOSIT', `Nạp tiền thất bại: ${error.message}`, amount, userId);
-            } catch (e) {
-                console.error('Failed to create ledger log:', e);
-            }
+                failedTxId = await repo.createFailedLedgerTransaction('DEPOSIT', `Nạp tiền thất bại: ${error.message}`, amount, userId); 
+                failedTxNo = failedTxId;
+            } catch (e) {}
             traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'DEPOSIT', status: 'FAILED', amount: amount.toString(), actor: userId, event: `Nạp tiền thất bại: ${error.message}` });
-            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxId, amount: parseInt(amount.toString(), 10) || 0, type: 'DEPOSIT', status: 'FAILED', timestamp: new Date().toISOString() });
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxNo, amount: parseInt(amount.toString(), 10) || 0, type: 'DEPOSIT', status: 'FAILED', timestamp: new Date().toISOString() });
             throw error;
         } finally {
             if (client) client.release();
         }
     },
 
-    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference, idempotencyKey) => { 
+    withdraw: async (userId, amount, pin, faceImagePath, linkedBankId, externalReference, idempotencyKey = null) => { 
         let client = null;
         try {
             const wallet = await repo.getWalletForPinCheck(userId);
@@ -207,7 +204,6 @@ const transactionService = {
 
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            // recordWithdrawal RETURNING transaction_no từ bảng transactions
             const transaction_no = await repo.recordWithdrawal(client, withdrawId, userId, wallet.id, amount, linkedBankId, extRef, idempotencyKey);
 
             await client.query('COMMIT'); 
@@ -218,7 +214,6 @@ const transactionService = {
                 balance: balanceAfter.toString(),
                 newBalance: balanceAfter.toString()
             });
-
 
             broadcastToAdminDashboard('DASHBOARD_UPDATE', {
                 transaction_no,
@@ -245,7 +240,7 @@ const transactionService = {
             });
 
             return { 
-                id: transaction_no,
+                id: extRef,
                 external_reference: extRef,
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -254,11 +249,13 @@ const transactionService = {
         } catch (error) {
             if (client) await client.query('ROLLBACK');
             let failedTxId = 'FAIL-' + Date.now();
+            let failedTxNo = failedTxId;
             try { 
-                failedTxId = await repo.createFailedLedgerTransaction('WITHDRAW', `Rút tiền thất bại: ${error.message}`, amount, userId);
+                failedTxId = await repo.createFailedLedgerTransaction('WITHDRAW', `Rút tiền thất bại: ${error.message}`, amount, userId); 
+                failedTxNo = failedTxId;
             } catch (e) {}
             traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'WITHDRAWAL', status: 'FAILED', amount: amount.toString(), actor: userId, event: `Rút tiền thất bại: ${error.message}` });
-            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxId, amount: parseInt(amount.toString(), 10) || 0, type: 'WITHDRAW', status: 'FAILED', timestamp: new Date().toISOString() });
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxNo, amount: parseInt(amount.toString(), 10) || 0, type: 'WITHDRAW', status: 'FAILED', timestamp: new Date().toISOString() });
             throw error;
         } finally {
             if (client) client.release();
@@ -297,14 +294,13 @@ const transactionService = {
             const extRef = (externalReference && /^\d{12}$/.test(externalReference)) ? externalReference : BigInt('0x' + hex).toString().padStart(12, '0').slice(0, 12);
 
             const ledgerTxId = await repo.createLedgerTransaction(client, 'BANK_TRANSFER', transferId, 'BANK_TRANSFER', `Chuyển tiền đến tài khoản ${accountNumber} - ${bankName}`, amount, 'VND', null, idempotencyKey);
-
+            
             await repo.createLedgerEntry(client, ledgerTxId, wallet.id, 'DEBIT', amount, balanceBefore, balanceAfter);
 
-            // recordBankTransfer RETURNING transaction_no từ bảng transactions
             const transaction_no = await repo.recordBankTransfer(client, transferId, userId, wallet.id, amount, bankCode, accountNumber, extRef, idempotencyKey);
 
-            await client.query('COMMIT');
-
+            await client.query('COMMIT'); 
+            
             emitToUser(userId, 'balance_update', {
                 type: 'WITHDRAW',
                 amount: amount.toString(),
@@ -320,12 +316,12 @@ const transactionService = {
                 timestamp: new Date().toISOString()
             });
 
-            
+            // Gửi Push Notification biến động số dư
             notificationService.sendBalanceChangeNotification(userId, amount, 'WITHDRAWAL', ledgerTxId).catch(err => {
                 console.error('Lỗi gửi push notification chuyển tiền ngân hàng:', err);
             });
 
-        
+            // [NEW] Ghi log Payment Flow vào MongoDB
             traceEventService.logEvent({
                 trace_id: ledgerTxId,
                 entity_id: extRef,
@@ -337,7 +333,8 @@ const transactionService = {
             });
 
             return { 
-                id: transaction_no,
+                id: extRef,
+                transaction_no: transaction_no,
                 external_reference: extRef,
                 amount: amount.toString(), 
                 balanceBefore: balanceBefore.toString(), 
@@ -346,11 +343,13 @@ const transactionService = {
         } catch (error) {
             if (client) await client.query('ROLLBACK');
             let failedTxId = 'FAIL-' + Date.now();
+            let failedTxNo = failedTxId;
             try { 
-                failedTxId = await repo.createFailedLedgerTransaction('BANK_TRANSFER', `Chuyển tiền ngân hàng thất bại: ${error.message}`, amount, userId);
+                failedTxId = await repo.createFailedLedgerTransaction('BANK_TRANSFER', `Chuyển tiền ngân hàng thất bại: ${error.message}`, amount, userId); 
+                failedTxNo = failedTxId;
             } catch (e) {}
             traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'BANK_TRANSFER', status: 'FAILED', amount: amount.toString(), actor: userId, event: `Chuyển tiền ngân hàng thất bại: ${error.message}` });
-            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxId, amount: parseInt(amount.toString(), 10) || 0, type: 'BANK_TRANSFER', status: 'FAILED', timestamp: new Date().toISOString() });
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxNo, amount: parseInt(amount.toString(), 10) || 0, type: 'BANK_TRANSFER', status: 'FAILED', timestamp: new Date().toISOString() });
             throw error;
         } finally {
             if (client) client.release();
@@ -403,50 +402,17 @@ const transactionService = {
 
             const tId = uuidv7();
 
-            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', tId, 'TRANSFER', note, amount);
-
-
+            const ledgerTxId = await repo.createLedgerTransaction(client, 'TRANSFER', tId, 'TRANSFER', note || 'Chuyển tiền qua Ví', amount, 'VND', null, idempotencyKey);
+            
             await repo.createLedgerEntry(client, ledgerTxId, senderWallet.id, 'DEBIT', amount, senderBalanceBefore, senderBalanceAfter);
             await repo.createLedgerEntry(client, ledgerTxId, receiverWallet.id, 'CREDIT', amount, receiverBalanceBefore, receiverBalanceAfter);
 
-            const transaction_no = await repo.recordTransfer(client, tId, senderUserId, senderWallet.id, receiverWallet.user_id, receiverWallet.id, amount, note, idempotencyKey, receiverWallet.full_name, receiverWallet.phone);
+            const transaction_no = await repo.recordTransfer(client, tId, senderUserId, senderWallet.id, receiverWallet.user_id, receiverWallet.id, amount, note, idempotencyKey);
+            const finalRef = transaction_no;
 
-            // Auto check and mark split bill as paid if matched
-            if (senderUserId && receiverWallet.user_id) {
-                const fundingResult = await client.query(`
-                    SELECT gfm.id, gf.id as funding_id 
-                    FROM group_funding_members gfm
-                    JOIN group_fundings gf ON gfm.group_funding_id = gf.id
-                    WHERE gfm.user_id = $1 
-                      AND gf.creator_user_id = $2 
-                      AND gf.type = 'SPLIT_BILL'
-                      AND gfm.status != 'PAID'
-                      AND gfm.amount = $3
-                    LIMIT 1
-                `, [senderUserId, receiverWallet.user_id, amount]);
-
-                if (fundingResult.rows.length > 0) {
-                    const memberId = fundingResult.rows[0].id;
-                    const fundingId = fundingResult.rows[0].funding_id;
-                    
-                    await client.query(`
-                        UPDATE group_funding_members 
-                        SET status = 'PAID', paid_at = CURRENT_TIMESTAMP 
-                        WHERE id = $1
-                    `, [memberId]);
-
-                    const pendingResult = await client.query(`
-                        SELECT id FROM group_funding_members 
-                        WHERE group_funding_id = $1 AND status != 'PAID'
-                    `, [fundingId]);
-                    
-                    if (pendingResult.rows.length === 0) {
-                        await client.query(`
-                            UPDATE group_fundings SET status = 'COMPLETED' WHERE id = $1
-                        `, [fundingId]);
-                    }
-                }
-            }
+           
+    
+            
 
             await client.query('COMMIT');
 
@@ -473,12 +439,13 @@ const transactionService = {
             }
 
 
-            // broadcastToAdminDashboard('DASHBOARD_UPDATE', {
-            //     amount: parseInt(amount.toString(), 10),
-            //     type: 'TRANSFER',
-            //     status: 'SUCCESS',
-            //     timestamp: new Date().toISOString()
-            // });
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', {
+                transaction_no,
+                amount: parseInt(amount.toString(), 10),
+                type: 'TRANSFER',
+                status: 'SUCCESS',
+                timestamp: new Date().toISOString()
+            });
 
             // Gửi Push Notification cho người gửi (Biến động giảm)
             notificationService.sendBalanceChangeNotification(
@@ -507,27 +474,29 @@ const transactionService = {
             // [NEW] Ghi log Payment Flow vào MongoDB
             traceEventService.logEvent({
                 trace_id: ledgerTxId,
-                entity_id: transaction_no,
+                entity_id: finalRef,
                 event_type: 'TRANSFER',
                 status: 'SUCCESS',
                 amount: amount.toString(),
                 actor: senderUserId,
-                event: note
+                event: note || 'Chuyển tiền qua Ví'
             });
 
             return { 
-                id: transaction_no,
+                transaction_no: finalRef,
                 amount: amount.toString(), 
                 balanceAfter: senderBalanceAfter.toString() 
             };
         } catch (error) {
             if (client) await client.query('ROLLBACK');
             let failedTxId = 'FAIL-' + Date.now();
+            let failedTxNo = failedTxId;
             try { 
-                failedTxId = await repo.createFailedLedgerTransaction('TRANSFER', `Chuyển tiền thất bại: ${error.message}`, amount, senderUserId);
+                failedTxId = await repo.createFailedLedgerTransaction('TRANSFER', `Chuyển tiền thất bại: ${error.message}`, amount, senderUserId); 
+                failedTxNo = failedTxId;
             } catch (e) {}
             traceEventService.logEvent({ trace_id: failedTxId, entity_id: 'N/A', event_type: 'TRANSFER', status: 'FAILED', amount: amount.toString(), actor: senderUserId, event: `Chuyển tiền thất bại: ${error.message}` });
-            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxId, amount: parseInt(amount.toString(), 10) || 0, type: 'TRANSFER', status: 'FAILED', timestamp: new Date().toISOString() });
+            broadcastToAdminDashboard('DASHBOARD_UPDATE', { transaction_no: failedTxNo, amount: parseInt(amount.toString(), 10) || 0, type: 'TRANSFER', status: 'FAILED', timestamp: new Date().toISOString() });
             throw error;
         } finally {
             if (client) client.release();
@@ -608,29 +577,6 @@ const transactionService = {
         });
     },
 
-    getChatList: async (userId) => {
-        const wallet = await repo.getWalletByUserId(userId);
-        if (!wallet) throw new Error('Wallet_Not_Found');
-
-        const chats = await repo.getChatList(wallet.id);
-        return chats.map(item => ({
-            ...item,
-            latest_transaction_date: item.latest_transaction_date ? new Date(item.latest_transaction_date).toISOString() : null
-        }));
-    },
-
-    getChatHistory: async (userId, counterpartyPhone, page = 1, limit = 20) => {
-        const wallet = await repo.getWalletByUserId(userId);
-        if (!wallet) throw new Error('Wallet_Not_Found');
-
-        const offset = (page - 1) * limit;
-        const history = await repo.getChatHistory(wallet.id, counterpartyPhone, limit, offset);
-        return history.map(item => ({
-            ...item,
-            amount: item.amount ? item.amount.toString() : '0',
-            created_at: item.created_at ? new Date(item.created_at).toISOString() : null
-        }));
-    }
 };
 
 module.exports = transactionService;

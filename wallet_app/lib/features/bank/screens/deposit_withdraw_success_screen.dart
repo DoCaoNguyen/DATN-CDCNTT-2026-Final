@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 class DepositWithdrawSuccessScreen extends StatelessWidget {
   final bool isDeposit;
   final String amount;
-  final String referenceCode;
+  final String transactionNo;
   final String paymentTime;
 
   const DepositWithdrawSuccessScreen({
     Key? key,
     required this.isDeposit,
     required this.amount,
-    required this.referenceCode,
+    required this.transactionNo,
     required this.paymentTime,
   }) : super(key: key);
 
@@ -142,7 +142,7 @@ class DepositWithdrawSuccessScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              referenceCode,
+                              transactionNo,
                               style: const TextStyle(
                                 color: Color(0xFFE91E63),
                                 fontWeight: FontWeight.w600,

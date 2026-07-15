@@ -1,10 +1,7 @@
+import '../../../core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import '../../transfer/screens/transfer_main_screen.dart';
 import '../../bank/screens/bank_transfer_list_screen.dart';
-import '../../split_bill/screens/split_bill_management_screen.dart';
-import '../../chat/screens/red_packet_create_screen.dart';
-import '../../topup/screens/topup_main_screen.dart';
-import '../../online_savings/screens/online_savings_screen.dart';
 
 class ServicesGrid extends StatelessWidget {
   final String activeLang;
@@ -108,38 +105,16 @@ class ServicesGrid extends StatelessWidget {
                   onRefreshBalance();
                 } else if (service['name'].toString().contains('Nạp ĐT') ||
                     service['name'].toString().contains('Top up')) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TopupMainScreen(token: token),
-                    ),
-                  );
-                  onRefreshBalance();
+                  SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                 } else if (service['name'].toString().contains('Chia tiền') ||
                     service['name'].toString().contains('Split Bill')) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          SplitBillManagementScreen(token: token, me: const {}),
-                    ),
-                  );
+                  SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                 } else if (service['name'].toString().contains('Lì xì') ||
                     service['name'].toString().contains('Red Packet')) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RedPacketCreateScreen(token: token),
-                    ),
-                  );
+                  SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                 } else if (service['name'].toString().contains('Tiết Kiệm') ||
                     service['name'].toString().contains('Savings')) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const OnlineSavingsScreen(),
-                    ),
-                  );
+                  SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                 }
               }
             },

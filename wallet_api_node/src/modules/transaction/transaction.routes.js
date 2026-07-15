@@ -24,10 +24,6 @@ router.get('/stats', transactionController.getStats);
 
 router.get('/month', transactionController.getByMonth);
 
-router.get('/chat-list', transactionController.getChatList);
-
-router.get('/chat/:phone', transactionController.getChatHistory);
-
 router.put('/:id/category', transactionController.updateCategory);
 
 router.post('/export', transactionController.exportData);

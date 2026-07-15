@@ -1,3 +1,4 @@
+import '../../../core/utils/snackbar_utils.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/services/custom_http_client.dart';
@@ -5,7 +6,7 @@ import '../../../core/constants/api_config.dart';
 import 'transfer_search_screen.dart';
 import 'transfer_amount_screen.dart';
 import '../../bank/screens/bank_transfer_input_screen.dart';
-import '../../chat/screens/chat_list_screen.dart';
+
 import '../../split_bill/screens/split_bill_management_screen.dart';
 
 class TransferMainScreen extends StatefulWidget {
@@ -963,12 +964,7 @@ class _TransferMainScreenState extends State<TransferMainScreen> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatListScreen(token: widget.token),
-                    ),
-                  );
+                  SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                 },
                 child: _buildBottomNavItem(
                   Icons.chat_bubble_outline_rounded,

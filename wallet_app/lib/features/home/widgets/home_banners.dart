@@ -1,3 +1,4 @@
+import '../../../core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import '../../transfer/screens/transfer_main_screen.dart';
 import '../../bank/screens/bank_transfer_list_screen.dart';
@@ -150,13 +151,9 @@ class HomeEventBanner extends StatelessWidget {
                         const SizedBox(height: 16),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SplitBillManagementScreen(
-                                  token: token,
-                                  me: me,
-                                ),
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Tính năng đang phát triển"),
                               ),
                             );
                           },
@@ -327,13 +324,17 @@ class HomeRecommendations extends StatelessWidget {
                   null,
                   activeLang == 'VIE' ? "Chia tiền" : "Split bill",
                   Colors.orange,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          SplitBillManagementScreen(token: token, me: me),
-                    ),
-                  ),
+                  () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          activeLang == 'VIE'
+                              ? "Chức năng đang phát triển"
+                              : "Feature in development",
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 buildRecommendItem(
                   context,
@@ -341,12 +342,17 @@ class HomeRecommendations extends StatelessWidget {
                   null,
                   activeLang == 'VIE' ? "Nạp ĐT" : "Topup",
                   Colors.green,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TopupMainScreen(token: token),
-                    ),
-                  ),
+                  () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          activeLang == 'VIE'
+                              ? "Chức năng đang phát triển"
+                              : "Feature in development",
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 buildRecommendItem(
                   context,

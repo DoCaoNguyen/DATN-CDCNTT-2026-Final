@@ -11,6 +11,7 @@ import 'personal_profile_screen.dart';
 import 'login_security_screen.dart';
 import '../../chat/screens/help_center_screen.dart';
 import '../../merchant/screens/merchant_screen.dart';
+import '../../merchant/screens/merchant_settings_screen.dart';
 import '../../financial_center/screens/financial_center_screen.dart';
 import '../../home/screens/qr_main_screen.dart';
 import '../../auth/kyc/screens/kyc_flow_screen.dart';
@@ -659,17 +660,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildMoreSettingsItem(
               icon: Icons.storefront_rounded,
               title: 'Đối tác kinh doanh',
-              onTap: () {
+              onTap: () async {
                 if (!_isKycVerified) {
                   _showKycDialog();
                   return;
                 }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MerchantScreen(token: widget.token),
-                  ),
+                
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.pink)),
                 );
+
+                try {
+                  final res = await _client.get(Uri.parse('${ApiConfig.baseUrl}/merchant/me'));
+                  if (!mounted) return;
+                  Navigator.pop(context); // Đóng loading
+
+                  if (res.statusCode == 200) {
+                    final data = jsonDecode(res.body)['data'];
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MerchantSettingsScreen(
+                          token: widget.token,
+                          merchantData: data,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MerchantScreen(token: widget.token),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) Navigator.pop(context);
+                }
               },
             ),
             const Divider(height: 1, color: Color(0xFFF5F5F5), indent: 56),

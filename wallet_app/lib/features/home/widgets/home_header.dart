@@ -10,12 +10,11 @@ import '../../transfer/screens/transfer_confirm_screen.dart';
 import '../../bank/screens/deposit_withdraw_screen.dart';
 import '../../transfer/screens/transfer_search_screen.dart';
 
-import '../../chat/screens/chat_list_screen.dart';
+
 import '../../ai/screens/voice_transfer_dialog.dart';
 import '../services/home_service.dart';
 import '../screens/qr_main_screen.dart';
 import '../../offers/screens/redeem_scratch_card_screen.dart';
-import '../../topup/screens/topup_main_screen.dart';
 
 class HomeHeader extends StatefulWidget {
   final String activeLang;
@@ -70,20 +69,12 @@ class _HomeHeaderState extends State<HomeHeader> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text(
-                  "Sorry",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                content: const Text(
-                  "Tính năng sắp sửa ra mắt bạn vui lòng quay lại sau nhé!",
-                ),
+                title: const Text("Sorry", style: TextStyle(fontWeight: FontWeight.bold)),
+                content: const Text("Tính năng sắp sửa ra mắt bạn vui lòng quay lại sau nhé!"),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "OK",
-                      style: TextStyle(color: Colors.pink),
-                    ),
+                    child: const Text("OK", style: TextStyle(color: Colors.pink)),
                   ),
                 ],
               ),
@@ -148,8 +139,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              TransferSearchScreen(token: widget.token),
+                          builder: (context) => TransferSearchScreen(token: widget.token),
                         ),
                       );
                     },
@@ -269,19 +259,8 @@ class _HomeHeaderState extends State<HomeHeader> {
                           ),
                         );
                         return;
-                      } else if (actionType == "BUY_CARD" ||
-                          actionType == "REDEEM_CARD") {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TopupMainScreen(
-                              token: widget.token,
-                              initialTab: 0,
-                              initialProvider: result['receiver_name'],
-                              initialValue: result['amount'],
-                            ),
-                          ),
-                        );
+                      } else if (actionType == "BUY_CARD" || actionType == "REDEEM_CARD") {
+                        SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                         return;
                       }
 
@@ -483,12 +462,7 @@ class _HomeHeaderState extends State<HomeHeader> {
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatListScreen(token: widget.token),
-                    ),
-                  );
+                  SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
                 },
                 child: Container(
                   width: 38,

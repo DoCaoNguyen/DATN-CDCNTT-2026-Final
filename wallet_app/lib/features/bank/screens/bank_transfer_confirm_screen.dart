@@ -283,7 +283,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         final String returnedRefCode =
-            responseData['data']?['id']?.toString() ?? _refCode;
+            responseData['data']?['transaction_no']?.toString() ?? responseData['data']?['id']?.toString() ?? _refCode;
 
         if (!mounted) return null;
         Navigator.pop(context); // Close PIN Sheet
@@ -302,7 +302,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               accountNumber: widget.accountNumber,
               amount: widget.amount,
               note: widget.note,
-              referenceCode: returnedRefCode,
+              transactionNo: returnedRefCode,
               paymentTime: formattedTime,
               receiverName: widget.cardHolderName ?? '',
             ),
@@ -312,7 +312,9 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       } else {
         final data = jsonDecode(response.body);
         final String errorMessage =
-            data['error'] ?? 'Giao dịch thất bại. Vui lòng thử lại.';
+            data['message'] ??
+            data['error'] ??
+            'Giao dịch thất bại. Vui lòng thử lại.';
 
         if (errorMessage.contains('Mã PIN') || errorMessage.contains('khóa')) {
           return errorMessage;
@@ -365,7 +367,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         final String returnedRefCode =
-            responseData['data']?['id']?.toString() ?? _refCode;
+            responseData['data']?['transaction_no']?.toString() ?? responseData['data']?['id']?.toString() ?? _refCode;
 
         final now = DateTime.now();
         final formattedTime =
@@ -382,7 +384,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
               accountNumber: widget.accountNumber,
               amount: widget.amount,
               note: widget.note,
-              referenceCode: returnedRefCode,
+              transactionNo: returnedRefCode,
               paymentTime: formattedTime,
               receiverName: widget.cardHolderName ?? '',
             ),
@@ -391,7 +393,7 @@ class _BankTransferConfirmScreenState extends State<BankTransferConfirmScreen> {
       } else {
         final data = jsonDecode(response.body);
         _showBeautifulErrorDialog(
-          data['error'] ?? "Xác thực khuôn mặt thất bại.",
+          data['message'] ?? data['error'] ?? "Xác thực khuôn mặt thất bại.",
         );
       }
     } catch (e) {

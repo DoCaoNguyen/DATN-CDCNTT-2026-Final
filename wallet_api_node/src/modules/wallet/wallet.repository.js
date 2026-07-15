@@ -21,7 +21,6 @@ const walletRepository = {
                 w.status, 
                 wb.available_balance, 
                 wb.locked_balance,
-                wb.loyalty_points,
                 u.phone,
                 u.pin_hash
             FROM wallets w
@@ -138,18 +137,7 @@ const walletRepository = {
         const dailyTransactionUsage = await calcTxUsage('created_at >= CURRENT_DATE');
         const monthlyTransactionUsage = await calcTxUsage("created_at >= date_trunc('month', CURRENT_DATE)");
 
-        // Calculate Special Services (Topup + Lucky Money)
-        const topupRes = await pool.query(`
-            SELECT COALESCE(SUM(pt.amount), 0) as total
-            FROM payment_transactions pt
-            JOIN payment_orders po ON pt.payment_order_id = po.id
-            WHERE pt.payer_wallet_id = $1 AND pt.status = 'SUCCESS' 
-              AND pt.created_at >= date_trunc('month', CURRENT_DATE)
-              AND (po.description ILIKE '%nạp tiền điện thoại%' 
-                   OR po.description ILIKE '%mã thẻ%' 
-                   OR po.description ILIKE '%nạp gói data%')
-        `, [walletId]);
-        
+        // Calculate Special Services (Lucky Money)
         const luckyMoneyRes = await pool.query(`
             SELECT COALESCE(SUM(lt.amount), 0) as total
             FROM ledger_transactions lt
@@ -159,7 +147,7 @@ const walletRepository = {
               AND lt.completed_at >= date_trunc('month', CURRENT_DATE)
         `, [walletId]);
         
-        const monthlySpecialUsage = BigInt(topupRes.rows[0].total) + BigInt(luckyMoneyRes.rows[0].total);
+        const monthlySpecialUsage = BigInt(luckyMoneyRes.rows[0].total);
 
         return {
             limits: {

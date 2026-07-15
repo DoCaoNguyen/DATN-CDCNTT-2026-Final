@@ -103,13 +103,10 @@ const authRepository = {
                 ORDER BY r.code
             `, [userId]),
             pool.query(`
-                SELECT DISTINCT p.code
+                SELECT DISTINCT jsonb_array_elements_text(r.permissions) AS code
                 FROM user_roles ur
                 JOIN roles r ON r.id = ur.role_id
-                JOIN role_permissions rp ON rp.role_id = r.id
-                JOIN permissions p ON p.id = rp.permission_id
                 WHERE ur.user_id = $1 AND r.is_active = true
-                ORDER BY p.code
             `, [userId])
         ]);
         return {

@@ -195,33 +195,7 @@ const transactionController = {
         } catch (error) { next(error); }
     },
 
-    getChatList: async (req, res, next) => {
-        const userId = req.user.userId;
-        try {
-            const chats = await txService.getChatList(userId);
-            res.status(200).json({
-                success: true,
-                data: chats
-            });
-        } catch (error) { next(error); }
-    },
 
-    getChatHistory: async (req, res, next) => {
-        const userId = req.user.userId;
-        const phone = req.params.phone;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-
-        try {
-            const history = await txService.getChatHistory(userId, phone, page, limit);
-            res.status(200).json({
-                success: true,
-                page,
-                limit,
-                data: history
-            });
-        } catch (error) { next(error); }
-    },
 
     exportData: async (req, res, next) => {
         const { email, duration, startDate: reqStartDate, endDate: reqEndDate } = req.body;

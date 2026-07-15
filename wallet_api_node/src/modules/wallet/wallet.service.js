@@ -16,7 +16,7 @@ const walletService = {
             status: wallet.status,
             available_balance: wallet.available_balance ? wallet.available_balance.toString() : "0",
             locked_balance: wallet.locked_balance ? wallet.locked_balance.toString() : "0",
-            loyalty_points: wallet.loyalty_points ? Math.floor(Number(wallet.loyalty_points)).toString() : "0",
+
             is_pin_set: !!wallet.pin_hash
         };
     },
@@ -40,7 +40,6 @@ const walletService = {
         return {
             wallet,
             capabilities: {
-                can_topup: wallet.status === 'ACTIVE',
                 can_transfer: wallet.status === 'ACTIVE',
                 can_payment: wallet.status === 'ACTIVE'
             }

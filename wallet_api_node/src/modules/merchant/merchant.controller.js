@@ -3,11 +3,8 @@ const merchantService = require('./merchant.service');
 const crypto = require('crypto');
 const { v7: uuidv7 } = require('uuid');
 const pool = require('../../config/db');
-const bcrypt = require('bcrypt');
 const notificationService = require('../notification/notification.service');
 const { writeAuditLog } = require('../admin/_shared');
-// In-memory store for Auth Codes (Demo purpose only)
-// Trong thực tế sẽ dùng Redis có expire (TTL)
 const authCodeMap = new Map();
 
 const merchantController = {
@@ -61,11 +58,10 @@ const merchantController = {
     getMe: async (req, res) => {
         try {
             const userId = req.user.userId;
-            const pool = require('../../config/db');
             const result = await pool.query(`
-                SELECT merchant_id, role_code, is_owner
-                FROM merchant_users
-                WHERE user_id = $1 AND is_active = true
+                SELECT id AS merchant_id, 'MERCHANT_OWNER' AS role_code, true AS is_owner
+                FROM merchants
+                WHERE user_id = $1 AND status != 'CLOSED'
                 LIMIT 1
             `, [userId]);
 

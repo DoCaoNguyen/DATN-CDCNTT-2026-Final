@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class SnackbarUtils {
   static void showSuccess(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -130,8 +130,8 @@ class SnackbarUtils {
     );
   }
 
-  static void showWarning(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  static void showWarning(BuildContext context, String message, {EdgeInsetsGeometry? margin}) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -157,7 +157,7 @@ class SnackbarUtils {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Cảnh báo!',
+                      'Thông báo!',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -182,7 +182,7 @@ class SnackbarUtils {
         backgroundColor: const Color(0xFFF59E0B), // Orange color
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
+        margin: margin ?? const EdgeInsets.all(16),
         elevation: 8,
         duration: const Duration(seconds: 3),
       ),

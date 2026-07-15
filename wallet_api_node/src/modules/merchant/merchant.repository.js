@@ -8,34 +8,14 @@ const merchantRepository = {
         try {
             await client.query('BEGIN');
             
-            await client.query(`
-                INSERT INTO code_sequences (id, resource_name, prefix, current_value, padding, reset_policy)
-                SELECT gen_random_uuid(), 'MERCHANT', 'MER', COALESCE((
-                    SELECT MAX(CAST(SUBSTRING(merchant_code FROM 4) AS INTEGER))
-                    FROM merchants
-                    WHERE merchant_code ~ '^MER[0-9]{6}$'
-                ), 0), 6, 'NEVER'
-                WHERE NOT EXISTS (SELECT 1 FROM code_sequences WHERE resource_name = 'MERCHANT');
-            `);
-
-            const seqRes = await client.query(`
-                UPDATE code_sequences
-                SET current_value = current_value + 1, updated_at = CURRENT_TIMESTAMP
-                WHERE resource_name = 'MERCHANT'
-                RETURNING prefix || LPAD(current_value::text, padding, '0') AS merchant_code
-            `);
-            const merchantCode = seqRes.rows[0].merchant_code;
-
-            
             const merchantId = uuidv7();
             const merchantQuery = `
-                INSERT INTO merchants (id, merchant_code, merchant_name, status, business_type, user_id)
-                VALUES ($1, $2, $3, 'ACTIVE', 'ONLINE', $4)
+                INSERT INTO merchants (id, merchant_name, status, business_type, user_id)
+                VALUES ($1, $2, 'ACTIVE', 'ONLINE', $3)
                 RETURNING id;
             `;
             const merchantValues = [
                 merchantId,
-                merchantCode,
                 merchantData.merchant_name,
                 merchantData.user_id
             ];
@@ -285,7 +265,7 @@ const merchantRepository = {
 
         params.push(limit, offset);
         const result = await pool.query(`
-            SELECT id, payment_no, merchant_order_id, amount, currency, status, refund_status, refunded_amount, created_at, expired_at
+            SELECT id, payment_no, merchant_order_id, amount, currency, status, created_at, expired_at
             FROM payment_orders
             WHERE ${whereSql}
             ORDER BY ${sort_by} ${sort_order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'}
@@ -413,8 +393,7 @@ const merchantRepository = {
     },
 
     retryWebhook: async (merchantId, webhookId) => {
-        // Enqueue a new retry event. We find the original outbox_event, verify it belongs to merchant, 
-        // and insert a new outbox_event for retrying.
+        
         const original = await merchantRepository.getWebhookById(merchantId, webhookId);
         if (!original) throw new Error('Webhook event not found');
 
@@ -426,7 +405,6 @@ const merchantRepository = {
             VALUES ($1, $2, $3, $4, $5, 'PENDING')
             RETURNING id, status, created_at
         `;
-        // Add retry context to payload
         const newPayload = { ...original.payload, is_retry: true, original_event_id: original.id };
         const result = await pool.query(query, [newId, original.aggregate_type, original.aggregate_id, original.event_type, newPayload]);
         return result.rows[0];
@@ -448,7 +426,7 @@ const merchantRepository = {
         const { page = 1, limit = 20, date_from, date_to, type, sort_by = 'created_at', sort_order = 'desc' } = filters;
         const offset = (page - 1) * limit;
         const params = [merchantId];
-        const where = ['le.merchant_id = $1'];
+        const where = ["po.merchant_id = $1", "le.account_type = 'MERCHANT_OWNER_WALLET'"];
 
         if (date_from) {
             params.push(date_from);
@@ -465,7 +443,15 @@ const merchantRepository = {
 
         const whereSql = where.join(' AND ');
         
-        const countResult = await pool.query(`SELECT COUNT(*)::int as total FROM ledger_entries le WHERE ${whereSql}`, params);
+        const countQuery = `
+            SELECT COUNT(*)::int as total 
+            FROM ledger_entries le
+            JOIN ledger_transactions lt ON le.ledger_transaction_id = lt.id
+            JOIN payment_transactions pt ON lt.source_type = 'PAYMENT' AND lt.source_id = pt.id
+            JOIN payment_orders po ON pt.payment_order_id = po.id
+            WHERE ${whereSql}
+        `;
+        const countResult = await pool.query(countQuery, params);
         const total = countResult.rows[0].total;
 
         params.push(limit, offset);
@@ -477,7 +463,6 @@ const merchantRepository = {
                 le.amount,
                 le.balance_before,
                 le.balance_after,
-                le.description,
                 le.created_at,
                 lt.transaction_type,
                 lt.source_type,

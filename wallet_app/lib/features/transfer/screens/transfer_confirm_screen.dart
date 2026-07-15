@@ -111,7 +111,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         final String returnedRefCode =
-            responseData['data']?['id']?.toString() ?? _refCode;
+            responseData['data']?['transaction_no']?.toString() ?? responseData['data']?['id']?.toString() ?? _refCode;
 
         if (!mounted) return null;
         Navigator.pop(context);
@@ -130,7 +130,7 @@ class _TransferConfirmScreenState extends State<TransferConfirmScreen> {
               receiverPhone: widget.receiverPhone,
               amount: widget.amount,
               note: widget.note.isNotEmpty ? widget.note : 'Chuyển tiền',
-              referenceCode: returnedRefCode,
+              transactionNo: returnedRefCode,
               paymentTime: formattedTime,
             ),
           ),

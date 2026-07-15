@@ -6,7 +6,6 @@ let io;
 const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            // [SECURITY FIX] Thay "*" bằng whitelist domain cụ thể (đồng bộ với HTTP CORS)
             origin: [
                 'http://localhost:3000',
                 'http://localhost:5173',
@@ -17,7 +16,6 @@ const initSocket = (server) => {
         }
     });
 
-    // Middleware xác thực socket bằng JWT
     io.use((socket, next) => {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
 
@@ -38,10 +36,8 @@ const initSocket = (server) => {
         const userId = socket.user.userId || socket.user.id;
         console.log(`User connected: ${userId} (Socket ID: ${socket.id})`);
 
-        // Mỗi user tham gia vào một room riêng dựa trên userId
         socket.join(`user_${userId}`);
         
-        // Nếu là Admin, tham gia vào room admin_dashboard để nhận realtime KPI
         const isAdmin = 
             socket.user.role === 'ADMIN' || socket.user.role === 'SUPER_ADMIN' ||
             socket.user.role_code === 'ADMIN' || socket.user.role_code === 'SUPER_ADMIN' ||
@@ -53,65 +49,6 @@ const initSocket = (server) => {
             socket.join('admin_dashboard');
             console.log(`User ${userId} joined admin_dashboard`);
         }
-
-        socket.on('send_message', async (data) => {
-            console.log('--- Socket send_message received ---', data);
-            try {
-                const transactionRepository = require('../modules/transaction/transaction.repository');
-                const senderWallet = await transactionRepository.getWalletByUserId(userId);
-                const receiverWallet = await transactionRepository.getWalletByIdentifier(data.receiverPhone);
-
-                if (!senderWallet || !receiverWallet) {
-                    return socket.emit('error', { message: 'Không tìm thấy người dùng hợp lệ' });
-                }
-
-                const messageType = data.messageType || 'TEXT';
-                const msg = await transactionRepository.saveChatMessage(senderWallet.id, receiverWallet.id, data.content, messageType);
-
-                // Format msg để đồng nhất với API
-                const formattedMsg = {
-                    id: msg.id,
-                    amount: "0",
-                    note: msg.content,
-                    created_at: msg.created_at.toISOString(),
-                    message_type: messageType
-                };
-
-                // Gửi cho người nhận qua socket (Realtime)
-                io.to(`user_${receiverWallet.user_id}`).emit('receive_message', {
-                    ...formattedMsg,
-                    direction: 'RECEIVE',
-                    counterparty_name: senderWallet.full_name || 'Người lạ',
-                    counterparty_phone: senderWallet.phone || ''
-                });
-
-                // Chuẩn bị nội dung cho push notification
-                let notificationContent = data.content;
-                if (messageType === 'RED_PACKET') {
-                    notificationContent = 'Đã gửi một bao lì xì 🧧';
-                }
-
-                // Gửi Push Notification (FCM) cho người nhận
-                const notificationService = require('../modules/notification/notification.service');
-                notificationService.sendChatMessageNotification(
-                    receiverWallet.user_id,
-                    senderWallet.full_name,
-                    notificationContent,
-                    msg.id
-                ).catch(err => console.error("Lỗi gửi push notification chat:", err));
-
-                // Gửi lại cho người gửi (để xác nhận đã lưu thành công)
-                socket.emit('receive_message', {
-                    ...formattedMsg,
-                    direction: 'SEND',
-                    counterparty_name: receiverWallet.full_name,
-                    counterparty_phone: data.receiverPhone
-                });
-
-            } catch (error) {
-                console.error("Socket send_message error:", error);
-            }
-        });
 
         socket.on('disconnect', () => {
             console.log(`User disconnected: ${userId}`);

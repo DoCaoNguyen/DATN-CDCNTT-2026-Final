@@ -35,7 +35,7 @@ import '../../../core/utils/snackbar_utils.dart';
 import '../../ai/screens/voice_transfer_dialog.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../chat/screens/chat_list_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _balance = "0";
   String _wealthBagBalance = "0";
   bool _hasWealthBag = false;
-  String _loyaltyPoints = "0";
+
   String? _walletCode;
   bool _isPinSet = false;
   bool _isLoadingBalance = true;
@@ -303,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (data != null && mounted) {
       setState(() {
         _balance = data['available_balance']?.toString() ?? "0";
-        _loyaltyPoints = data['loyalty_points']?.toString() ?? "0";
+
         _walletCode = data['wallet_code'];
         _isPinSet = data['is_pin_set'] ?? false;
 
@@ -589,11 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : _selectedIndex == 1
-              ? OffersScreen(
-                  token: widget.token,
-                  loyaltyPoints: _loyaltyPoints,
-                  onRefresh: _fetchBalance,
-                )
+              ? const SizedBox.shrink()
               : _selectedIndex == 2
               ? TransactionHistoryScreen(token: widget.token)
               : ProfileScreen(token: widget.token),
@@ -698,6 +694,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return MaterialButton(
       minWidth: 40,
       onPressed: () {
+        if (index == 1) {
+          SnackbarUtils.showWarning(context, 'Tính năng đang phát triển', margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16));
+          return;
+        }
         setState(() {
           _selectedIndex = index;
         });

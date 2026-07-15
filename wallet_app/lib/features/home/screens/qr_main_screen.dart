@@ -53,48 +53,10 @@ class _QrMainScreenState extends State<QrMainScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _fetchMyProfile();
-    _listenToLoyaltyPoints();
+
   }
 
-  void _listenToLoyaltyPoints() {
-    _fcmSubscription = FirebaseMessaging.onMessage.listen((
-      RemoteMessage message,
-    ) {
-      if (message.data['type'] == 'LOYALTY_POINTS') {
-        final earnedPoints = message.data['earned_points'] ?? '0';
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Text('🎁', style: TextStyle(fontSize: 28)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Bạn vừa tích lũy thành công +$earnedPoints điểm!',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.primaryPink,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              duration: const Duration(seconds: 4),
-              elevation: 6,
-            ),
-          );
-        }
-      }
-    });
-  }
+
 
   @override
   void dispose() {
@@ -575,8 +537,8 @@ class _QrMainScreenState extends State<QrMainScreen> {
               receiverPhone: "Thanh toán dịch vụ",
               amount: amount.toString(),
               note: "Thanh toán qua mã QR",
-              referenceCode:
-                  data['reference_code'] ?? data['transaction_id'] ?? 'N/A',
+              transactionNo:
+                  data['transaction_no'] ?? data['reference_code'] ?? data['transaction_id'] ?? 'N/A',
               paymentTime: DateFormat('HH:mm - dd/MM/yyyy').format(
                 DateTime.parse(
                   data['timestamp'] ?? DateTime.now().toIso8601String(),
